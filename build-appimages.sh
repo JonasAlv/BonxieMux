@@ -120,7 +120,7 @@ Comment=Linux AQW client with advanced scripting and multi-account tabs
 Exec=AppRun %U
 Icon=bonxiemux
 Terminal=false
-Categories=Game;Utility;
+Categories=Game;RolePlaying;
 StartupWMClass=BonxieMux
 EOF
 cp "$skua_appdir/bonxiemux.desktop" "$skua_appdir/usr/share/applications/bonxiemux.desktop"
@@ -134,7 +134,7 @@ Comment=Account manager, script updater, and launcher for BonxieMux
 Exec=AppRun %U
 Icon=bonxiemux-manager
 Terminal=false
-Categories=Game;Utility;Settings;
+Categories=Game;
 StartupWMClass=BonxieMux-Manager
 EOF
 cp "$mgr_appdir/bonxiemux-manager.desktop" "$mgr_appdir/usr/share/applications/bonxiemux-manager.desktop"
