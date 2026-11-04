@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Skua.Core.Generators.Extensions;
 using Skua.Core.Generators.Models;
 using System;
@@ -84,7 +84,10 @@ public partial class ObjectBindingGenerator : GenericFieldAttributeGenerator<Obj
 
             source.Append("try{");
             if (info.Values.Select is not null)
-                source.Append($"{info.PropertyType}{(info.IsNullable ? string.Empty : "?")} returnValue = Newtonsoft.Json.JsonConvert.DeserializeObject<{info.PropertyType}>(Flash.Call(\"selectArrayObjects\", \"{info.Values.Paths[0]}\", \"{info.Values.Select}\"));");
+            {
+                source.Append($"string? rawSel = Flash.Call(\"selectArrayObjects\", \"{info.Values.Paths[0]}\", \"{info.Values.Select}\");");
+                source.Append($"{info.PropertyType}{(info.IsNullable ? string.Empty : "?")} returnValue = !string.IsNullOrWhiteSpace(rawSel) && rawSel != \"null\" && rawSel != \"undefined\" ? Newtonsoft.Json.JsonConvert.DeserializeObject<{info.PropertyType}>(rawSel) : {defaultValue};");
+            }
             else
                 source.Append($"{info.PropertyType}{(info.IsNullable ? string.Empty : "?")} returnValue = Flash.{(info.Values.IsStatic ? "GetGameObjectStatic" : "GetGameObject")}<{info.PropertyType}>(\"{info.Values.Paths[0]}\");");
 

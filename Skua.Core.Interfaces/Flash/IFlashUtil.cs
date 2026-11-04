@@ -145,6 +145,12 @@ public interface IFlashUtil : IDisposable
         MissingMemberHandling = MissingMemberHandling.Ignore,
         Error = (sender, args) =>
         {
+            if (args.ErrorContext.Error.Message.Contains("No JSON content found") ||
+                args.ErrorContext.Error.Message.Contains("Error converting value {null}"))
+            {
+                args.ErrorContext.Handled = true;
+                return;
+            }
             System.Diagnostics.Trace.WriteLine($"[JSON Warning] {args.ErrorContext.Path}: {args.ErrorContext.Error.Message}");
             args.ErrorContext.Handled = true;
         }
@@ -163,7 +169,7 @@ public interface IFlashUtil : IDisposable
         {
             string? raw = GetGameObject(path);
             string? trimmed = raw?.Trim();
-            if (string.IsNullOrWhiteSpace(trimmed) || trimmed == "null" || trimmed == "undefined" || trimmed == "\"\"")
+            if (string.IsNullOrWhiteSpace(trimmed) || trimmed == "null" || trimmed == "undefined" || trimmed == "\"\"" || trimmed == "''")
                 return def;
             var result = JsonConvert.DeserializeObject<T>(trimmed, SafeJsonSettings);
             return result is null ? def : result;
@@ -197,9 +203,10 @@ public interface IFlashUtil : IDisposable
         try
         {
             string? raw = GetGameObjectStatic(path);
-            if (string.IsNullOrWhiteSpace(raw) || raw == "null" || raw == "undefined")
+            string? trimmed = raw?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed) || trimmed == "null" || trimmed == "undefined" || trimmed == "\"\"" || trimmed == "''")
                 return def;
-            var result = JsonConvert.DeserializeObject<T>(raw, SafeJsonSettings);
+            var result = JsonConvert.DeserializeObject<T>(trimmed, SafeJsonSettings);
             return result is null ? def : result;
         }
         catch (Exception ex)
@@ -261,9 +268,10 @@ public interface IFlashUtil : IDisposable
         try
         {
             string? raw = CallGameFunction(path, args);
-            if (string.IsNullOrWhiteSpace(raw))
+            string? trimmed = raw?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed) || trimmed == "null" || trimmed == "undefined" || trimmed == "\"\"" || trimmed == "''")
                 return default;
-            return JsonConvert.DeserializeObject<T>(raw, SafeJsonSettings);
+            return JsonConvert.DeserializeObject<T>(trimmed, SafeJsonSettings);
         }
         catch (Exception ex)
         {
@@ -296,9 +304,10 @@ public interface IFlashUtil : IDisposable
         try
         {
             string? raw = GetArrayObject(path, index);
-            if (string.IsNullOrWhiteSpace(raw))
+            string? trimmed = raw?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed) || trimmed == "null" || trimmed == "undefined" || trimmed == "\"\"" || trimmed == "''")
                 return def;
-            return JsonConvert.DeserializeObject<T>(raw, SafeJsonSettings) ?? def;
+            return JsonConvert.DeserializeObject<T>(trimmed, SafeJsonSettings) ?? def;
         }
         catch (Exception ex)
         {
@@ -319,9 +328,10 @@ public interface IFlashUtil : IDisposable
         try
         {
             string? raw = Call("selectArrayObjects", path, selector);
-            if (string.IsNullOrWhiteSpace(raw))
+            string? trimmed = raw?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed) || trimmed == "null" || trimmed == "undefined" || trimmed == "\"\"" || trimmed == "''" || trimmed == "[]")
                 return new List<T>();
-            return JsonConvert.DeserializeObject<List<T>>(raw, SafeJsonSettings) ?? new List<T>();
+            return JsonConvert.DeserializeObject<List<T>>(trimmed, SafeJsonSettings) ?? new List<T>();
         }
         catch (Exception ex)
         {

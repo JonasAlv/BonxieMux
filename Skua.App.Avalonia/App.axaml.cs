@@ -118,6 +118,12 @@ public partial class App : Application
             Converters = { new Skua.Core.Models.Converters.WholeNumberConverter() },
             Error = (sender, args) =>
             {
+                if (args.ErrorContext.Error.Message.Contains("No JSON content found") ||
+                    args.ErrorContext.Error.Message.Contains("Error converting value {null}"))
+                {
+                    args.ErrorContext.Handled = true;
+                    return;
+                }
                 System.Diagnostics.Trace.WriteLine($"[JSON Warning] {args.ErrorContext.Path}: {args.ErrorContext.Error.Message}");
                 args.ErrorContext.Handled = true;
             }

@@ -148,9 +148,8 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
         if (versionSuffix >= 0)
             applicationVersion = applicationVersion[..versionSuffix];
 
-        Version = Version.TryParse(applicationVersion, out Version? parsedVersion)
-            ? parsedVersion
-            : ClientFileSources.ClientVersion;
+        // Compatibility with community scripts (CoreBots) that require 1.8.5.0 or 1.4.4.4 to bypass Windows-only update checks
+        Version = new Version(1, 8, 5, 0);
 
         _stateChannel = new GameStateChannel(_ => { }, 100);
         _stateChannel.Start();

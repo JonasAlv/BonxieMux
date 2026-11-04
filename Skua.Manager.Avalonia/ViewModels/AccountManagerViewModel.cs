@@ -1124,10 +1124,19 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
     [RelayCommand]
     public void ChangeScriptPath()
     {
-        string? folderPath = _fileService.OpenFile(ClientFileSources.SkuaScriptsDIR, "Skua Scripts (*.cs)|*.cs");
+        string initialDir = !string.IsNullOrWhiteSpace(ScriptPath) && File.Exists(ScriptPath)
+            ? Path.GetDirectoryName(ScriptPath) ?? ClientFileSources.SkuaScriptsDIR
+            : ClientFileSources.SkuaScriptsDIR;
+        string? folderPath = _fileService.OpenFile(initialDir, "Skua Scripts (*.cs)|*.cs|All Files (*.*)|*.*");
 
         if (!string.IsNullOrEmpty(folderPath))
             ScriptPath = folderPath;
+    }
+
+    [RelayCommand]
+    public void OpenScriptsFolder()
+    {
+        Ioc.Default.GetService<IProcessService>()?.OpenFolder(ClientFileSources.SkuaScriptsDIR);
     }
 
     [RelayCommand]

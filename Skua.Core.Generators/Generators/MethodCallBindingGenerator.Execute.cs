@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Skua.Core.Generators.Extensions;
@@ -105,8 +105,8 @@ public partial class MethodCallBindingGenerator
                 }
                 else
                 {
-                    source.Append($"try{{string ret = Flash.CallGameFunction(\"{info.Values.Path}\"{paramNames});");
-                    source.Append($"{info.ReturnTypeString}{(info.IsNullable ? string.Empty : "?")} returnValue = Newtonsoft.Json.JsonConvert.DeserializeObject<{info.ReturnTypeString}>(ret);");
+                    source.Append($"try{{string? ret = Flash.CallGameFunction(\"{info.Values.Path}\"{paramNames});");
+                    source.Append($"{info.ReturnTypeString}{(info.IsNullable ? string.Empty : "?")} returnValue = !string.IsNullOrWhiteSpace(ret) && ret != \"null\" && ret != \"undefined\" ? Newtonsoft.Json.JsonConvert.DeserializeObject<{info.ReturnTypeString}>(ret) : {defaultValue};");
                 }
             }
             else
@@ -119,8 +119,8 @@ public partial class MethodCallBindingGenerator
                 {
                     if (info.Values.ParseFromJson)
                     {
-                        source.Append($"try{{string ret = Flash.Call<string>(\"{info.Values.Path}\"{paramNames});");
-                        source.Append($"{info.ReturnTypeString}{(info.IsNullable ? string.Empty : "?")} returnValue = Newtonsoft.Json.JsonConvert.DeserializeObject<{info.ReturnTypeString}>(ret);");
+                        source.Append($"try{{string? ret = Flash.Call<string>(\"{info.Values.Path}\"{paramNames});");
+                        source.Append($"{info.ReturnTypeString}{(info.IsNullable ? string.Empty : "?")} returnValue = !string.IsNullOrWhiteSpace(ret) && ret != \"null\" && ret != \"undefined\" ? Newtonsoft.Json.JsonConvert.DeserializeObject<{info.ReturnTypeString}>(ret) : {defaultValue};");
                     }
                     else
                     {

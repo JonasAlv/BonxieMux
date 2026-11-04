@@ -78,7 +78,10 @@ public partial class ArmyQueueMemberViewModel : ObservableObject
     private void BrowseScript()
     {
         var fileService = CommunityToolkit.Mvvm.DependencyInjection.Ioc.Default.GetRequiredService<IFileDialogService>();
-        string? script = fileService.OpenFile(ClientFileSources.SkuaScriptsDIR, "Script Files (*.cs)|*.cs|All Files (*.*)|*.*");
+        string initialDir = !string.IsNullOrWhiteSpace(ScriptPath) && File.Exists(ScriptPath)
+            ? Path.GetDirectoryName(ScriptPath) ?? ClientFileSources.SkuaScriptsDIR
+            : ClientFileSources.SkuaScriptsDIR;
+        string? script = fileService.OpenFile(initialDir, "Script Files (*.cs)|*.cs|All Files (*.*)|*.*");
         if (!string.IsNullOrWhiteSpace(script))
         {
             ScriptPath = script;
@@ -123,7 +126,10 @@ public partial class ArmyQueueStepViewModel : ObservableObject
     private void BrowseStepScript()
     {
         var fileService = CommunityToolkit.Mvvm.DependencyInjection.Ioc.Default.GetRequiredService<IFileDialogService>();
-        string? script = fileService.OpenFile(ClientFileSources.SkuaScriptsDIR, "Script Files (*.cs)|*.cs|All Files (*.*)|*.*");
+        string initialDir = !string.IsNullOrWhiteSpace(StepScriptPath) && File.Exists(StepScriptPath)
+            ? Path.GetDirectoryName(StepScriptPath) ?? ClientFileSources.SkuaScriptsDIR
+            : ClientFileSources.SkuaScriptsDIR;
+        string? script = fileService.OpenFile(initialDir, "Script Files (*.cs)|*.cs|All Files (*.*)|*.*");
         if (!string.IsNullOrWhiteSpace(script))
         {
             StepScriptPath = script;

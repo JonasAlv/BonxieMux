@@ -93,22 +93,28 @@ public class Server {
     }
 
     public static function clickServer(serverName:String):String {
-        killLoginModals();
-        loadPolicyFiles();
-        var source:* = Main.instance.game.mcLogin.sl.iList;
-        for (var i:int = 0; i < source.numChildren; i++) {
-            var child:* = source.getChildAt(i);
-
-            if (child.tName.ti.text.toLowerCase().indexOf(serverName.toLowerCase()) > -1) {
-                try {
-                    var cServer:Object = child.server || child.objServer;
-                    if (cServer != null && cServer.sIP != null && cServer.iPort != null) {
-                        Security.loadPolicyFile("xmlsocket://" + String(cServer.sIP) + ":" + int(cServer.iPort));
-                    }
-                } catch (e:Error) {}
-                child.dispatchEvent(new MouseEvent(MouseEvent.CLICK));
-                return true.toString();
+        try {
+            killLoginModals();
+            loadPolicyFiles();
+            if (Main.instance.game == null || Main.instance.game.mcLogin == null || !("sl" in Main.instance.game.mcLogin) || Main.instance.game.mcLogin.sl == null || !("iList" in Main.instance.game.mcLogin.sl) || Main.instance.game.mcLogin.sl.iList == null) {
+                return false.toString();
             }
+            var source:* = Main.instance.game.mcLogin.sl.iList;
+            for (var i:int = 0; i < source.numChildren; i++) {
+                var child:* = source.getChildAt(i);
+                if (child != null && "tName" in child && child.tName != null && "ti" in child.tName && child.tName.ti != null && child.tName.ti.text != null && child.tName.ti.text.toLowerCase().indexOf(serverName.toLowerCase()) > -1) {
+                    try {
+                        var cServer:Object = child.server || child.objServer;
+                        if (cServer != null && cServer.sIP != null && cServer.iPort != null) {
+                            Security.loadPolicyFile("xmlsocket://" + String(cServer.sIP) + ":" + int(cServer.iPort));
+                        }
+                    } catch (e:Error) {}
+                    child.dispatchEvent(new MouseEvent(MouseEvent.CLICK));
+                    return true.toString();
+                }
+            }
+        } catch (e:Error) {
+            Main.instance.external.debug("Error in clickServer: " + e);
         }
         return false.toString();
     }
@@ -184,15 +190,19 @@ public class Server {
     }
 
     private static function showModal(message:String, glow:String, buttons:String):void {
-        var modal:ModalMC = new ModalMC();
-        var params:Object = {
-            strBody: message,
-            params: {},
-            glow: glow,
-            btns: buttons
-        };
-        Main.instance.game.mcLogin.ModalStack.addChild(modal);
-        modal.init(params);
+        try {
+            var modal:ModalMC = new ModalMC();
+            var params:Object = {
+                strBody: message,
+                params: {},
+                glow: glow,
+                btns: buttons
+            };
+            if (Main.instance.game != null && Main.instance.game.mcLogin != null && "ModalStack" in Main.instance.game.mcLogin && Main.instance.game.mcLogin.ModalStack != null) {
+                Main.instance.game.mcLogin.ModalStack.addChild(modal);
+                modal.init(params);
+            }
+        } catch (e:Error) {}
     }
 
     public static function killLoginModals():void {
@@ -200,27 +210,31 @@ public class Server {
             if (Main.instance.game == null) return;
 
             // 1. Clear mcLogin.ModalStack
-            if (Main.instance.game.mcLogin != null && Main.instance.game.mcLogin.ModalStack != null) {
-                cleanModalStack(Main.instance.game.mcLogin.ModalStack);
-            }
+            try {
+                if (Main.instance.game.mcLogin != null && "ModalStack" in Main.instance.game.mcLogin && Main.instance.game.mcLogin.ModalStack != null) {
+                    cleanModalStack(Main.instance.game.mcLogin.ModalStack);
+                }
+            } catch (e:Error) {}
 
             // 2. Clear mcO.ModalStack (root overlay modal stack)
-            if (Main.instance.game.mcO != null) {
-                if (Main.instance.game.mcO.ModalStack != null) {
-                    cleanModalStack(Main.instance.game.mcO.ModalStack);
-                }
-                // Disarm invisible blocker hitmask
-                try {
-                    if (Main.instance.game.mcO.cnt != null && Main.instance.game.mcO.cnt.hit != null) {
+            try {
+                if (Main.instance.game.mcO != null) {
+                    if ("ModalStack" in Main.instance.game.mcO && Main.instance.game.mcO.ModalStack != null) {
+                        cleanModalStack(Main.instance.game.mcO.ModalStack);
+                    }
+                    // Disarm invisible blocker hitmask
+                    if ("cnt" in Main.instance.game.mcO && Main.instance.game.mcO.cnt != null && "hit" in Main.instance.game.mcO.cnt && Main.instance.game.mcO.cnt.hit != null) {
                         Main.instance.game.mcO.cnt.hit.visible = false;
                     }
-                } catch (e:Error) {}
-            }
+                }
+            } catch (e:Error) {}
 
             // 3. Clear ui.ModalStack if present
-            if (Main.instance.game.ui != null && Main.instance.game.ui.ModalStack != null) {
-                cleanModalStack(Main.instance.game.ui.ModalStack);
-            }
+            try {
+                if (Main.instance.game.ui != null && "ModalStack" in Main.instance.game.ui && Main.instance.game.ui.ModalStack != null) {
+                    cleanModalStack(Main.instance.game.ui.ModalStack);
+                }
+            } catch (e:Error) {}
 
             // 4. Close any MsgBox popup
             try {
@@ -231,14 +245,14 @@ public class Server {
 
             // 5. Hide mcLogin.warning (kick / ban alert frame)
             try {
-                if (Main.instance.game.mcLogin != null && Main.instance.game.mcLogin.warning != null) {
+                if (Main.instance.game.mcLogin != null && "warning" in Main.instance.game.mcLogin && Main.instance.game.mcLogin.warning != null) {
                     Main.instance.game.mcLogin.warning.visible = false;
                 }
             } catch (e:Error) {}
 
             // 6. Clear in-game popups (ui.mcPopup)
             try {
-                if (Main.instance.game.ui != null && Main.instance.game.ui.mcPopup != null) {
+                if (Main.instance.game.ui != null && "mcPopup" in Main.instance.game.ui && Main.instance.game.ui.mcPopup != null) {
                     cleanModalStack(Main.instance.game.ui.mcPopup);
                 }
             } catch (e:Error) {}
@@ -280,42 +294,50 @@ public class Server {
             if (Main.instance.game == null) return "";
 
             // 1. Check mcO.ModalStack (overlay)
-            if (Main.instance.game.mcO != null && Main.instance.game.mcO.ModalStack != null) {
-                var stack:* = Main.instance.game.mcO.ModalStack;
-                if (stack.numChildren > 0) {
-                    var m:* = stack.getChildAt(0);
-                    if (m != null) {
-                        if (m.cnt != null && m.cnt.strBody != null && m.cnt.strBody.text != null) return String(m.cnt.strBody.text);
-                        if (m.strBody != null) return String(m.strBody);
+            try {
+                if (Main.instance.game.mcO != null && "ModalStack" in Main.instance.game.mcO && Main.instance.game.mcO.ModalStack != null) {
+                    var stack:* = Main.instance.game.mcO.ModalStack;
+                    if (stack.numChildren > 0) {
+                        var m:* = stack.getChildAt(0);
+                        if (m != null) {
+                            if ("cnt" in m && m.cnt != null && "strBody" in m.cnt && m.cnt.strBody != null && "text" in m.cnt.strBody && m.cnt.strBody.text != null) return String(m.cnt.strBody.text);
+                            if ("strBody" in m && m.strBody != null) return String(m.strBody);
+                        }
                     }
                 }
-            }
+            } catch (e:Error) {}
 
             // 2. Check mcLogin.ModalStack
-            if (Main.instance.game.mcLogin != null && Main.instance.game.mcLogin.ModalStack != null) {
-                var lStack:* = Main.instance.game.mcLogin.ModalStack;
-                if (lStack.numChildren > 0) {
-                    var lm:* = lStack.getChildAt(0);
-                    if (lm != null) {
-                        if (lm.cnt != null && lm.cnt.strBody != null && lm.cnt.strBody.text != null) return String(lm.cnt.strBody.text);
-                        if (lm.strBody != null) return String(lm.strBody);
+            try {
+                if (Main.instance.game.mcLogin != null && "ModalStack" in Main.instance.game.mcLogin && Main.instance.game.mcLogin.ModalStack != null) {
+                    var lStack:* = Main.instance.game.mcLogin.ModalStack;
+                    if (lStack.numChildren > 0) {
+                        var lm:* = lStack.getChildAt(0);
+                        if (lm != null) {
+                            if ("cnt" in lm && lm.cnt != null && "strBody" in lm.cnt && lm.cnt.strBody != null && "text" in lm.cnt.strBody && lm.cnt.strBody.text != null) return String(lm.cnt.strBody.text);
+                            if ("strBody" in lm && lm.strBody != null) return String(lm.strBody);
+                        }
                     }
                 }
-            }
+            } catch (e:Error) {}
 
             // 3. Check MsgBox
-            if (Main.instance.game.MsgBox != null && Main.instance.game.MsgBox.stage != null) {
-                if (Main.instance.game.MsgBox.cnt != null && Main.instance.game.MsgBox.cnt.strBody != null) {
-                    return String(Main.instance.game.MsgBox.cnt.strBody.text);
+            try {
+                if (Main.instance.game.MsgBox != null && "stage" in Main.instance.game.MsgBox && Main.instance.game.MsgBox.stage != null) {
+                    if ("cnt" in Main.instance.game.MsgBox && Main.instance.game.MsgBox.cnt != null && "strBody" in Main.instance.game.MsgBox.cnt && Main.instance.game.MsgBox.cnt.strBody != null) {
+                        return String(Main.instance.game.MsgBox.cnt.strBody.text);
+                    }
                 }
-            }
+            } catch (e:Error) {}
 
             // 4. Check mcLogin.warning (kick / ban alert message)
-            if (Main.instance.game.mcLogin != null && Main.instance.game.mcLogin.warning != null && Main.instance.game.mcLogin.warning.visible) {
-                if (Main.instance.game.mcLogin.warning.strMessage != null && Main.instance.game.mcLogin.warning.strMessage.text != null) {
-                    return String(Main.instance.game.mcLogin.warning.strMessage.text);
+            try {
+                if (Main.instance.game.mcLogin != null && "warning" in Main.instance.game.mcLogin && Main.instance.game.mcLogin.warning != null && Main.instance.game.mcLogin.warning.visible) {
+                    if ("strMessage" in Main.instance.game.mcLogin.warning && Main.instance.game.mcLogin.warning.strMessage != null && "text" in Main.instance.game.mcLogin.warning.strMessage && Main.instance.game.mcLogin.warning.strMessage.text != null) {
+                        return String(Main.instance.game.mcLogin.warning.strMessage.text);
+                    }
                 }
-            }
+            } catch (e:Error) {}
         } catch (e:Error) {}
         return "";
     }

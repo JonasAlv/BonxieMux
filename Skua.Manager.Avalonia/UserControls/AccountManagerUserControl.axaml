@@ -428,10 +428,16 @@
                             Command="{Binding ChangeScriptPathCommand}"
                             DockPanel.Dock="Right"
                             Classes="skua-button"
-                            ToolTip.Tip="Select script file from folder"
+                            ToolTip.Tip="Select script file from folder (Right click: Open folder)"
                             Padding="8,0"
                             Margin="4,0,0,0">
                         <materialIcons:MaterialIcon Kind="Folder" Width="16" Height="16" />
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Select script file..." Command="{Binding ChangeScriptPathCommand}" />
+                                <MenuItem Header="Open scripts folder in file manager" Command="{Binding OpenScriptsFolderCommand}" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
                     </Button>
                     <Border Height="34"
                             BorderBrush="{DynamicResource SkuaBorderBrush}"
