@@ -18,7 +18,7 @@ public partial class AppUpdaterViewModel : ObservableObject
 {
     private readonly IDispatcherService _dispatcherService;
     private const string RepoOwner = "JonasAlv";
-    private const string RepoName = "VibeSkua";
+    private const string RepoName = "BonxieMux";
     private const string ClientPrefix = "BonxieMux-";
     private const string ManagerPrefix = "BonxieMux-Manager-";
     private const string AppImageSuffix = "-x86_64.AppImage";

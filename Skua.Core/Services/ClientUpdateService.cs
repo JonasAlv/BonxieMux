@@ -9,7 +9,7 @@ namespace Skua.Core.Services;
 public class ClientUpdateService : IClientUpdateService
 {
     private const string RepoOwner = "JonasAlv";
-    private const string RepoName = "VibeSkua";
+    private const string RepoName = "BonxieMux";
     private const string ClientPrefix = "BonxieMux-";
     private const string ManagerPrefix = "BonxieMux-Manager-";
     private const string AppImageSuffix = "-x86_64.AppImage";

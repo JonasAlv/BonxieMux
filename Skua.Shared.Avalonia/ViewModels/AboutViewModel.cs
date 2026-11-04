@@ -37,7 +37,7 @@ public class AboutViewModel : BotControlViewModelBase
         {
             if (url.StartsWith("./"))
             {
-                _processService.OpenLink($"https://github.com/auqw/Skua/blob/master/{url.Substring(2)}");
+                _processService.OpenLink($"https://github.com/JonasAlv/BonxieMux/blob/main/{url.Substring(2)}");
             }
             else
             {
