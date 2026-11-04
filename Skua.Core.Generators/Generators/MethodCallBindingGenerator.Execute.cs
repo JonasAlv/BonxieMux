@@ -105,6 +105,9 @@ public partial class MethodCallBindingGenerator
                 }
                 else
                 {
+                    // Note (Linux Flash bridge): Flash functions return null or empty string ("") when a target
+                    // or world component is not yet initialized. Deserializing empty string into value types like
+                    // System.Boolean throws Newtonsoft JSON exceptions; guard with string checks before parsing.
                     source.Append($"try{{string? ret = Flash.CallGameFunction(\"{info.Values.Path}\"{paramNames});");
                     source.Append($"{info.ReturnTypeString}{(info.IsNullable ? string.Empty : "?")} returnValue = !string.IsNullOrWhiteSpace(ret) && ret != \"null\" && ret != \"undefined\" ? Newtonsoft.Json.JsonConvert.DeserializeObject<{info.ReturnTypeString}>(ret) : {defaultValue};");
                 }

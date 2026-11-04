@@ -148,7 +148,10 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
         if (versionSuffix >= 0)
             applicationVersion = applicationVersion[..versionSuffix];
 
-        // Compatibility with community scripts (CoreBots) that require 1.8.5.0 or 1.4.4.4 to bypass Windows-only update checks
+        // Note (Linux / Community Scripts): Upstream community scripts (CoreBots.cs) include a Windows-only
+        // version check (SkuaVersionCheckerAsync) that checks for Windows 10 and downloads .msi installers.
+        // It hardcodes an exemption for 1.8.5.0 and 1.4.4.4. We report 1.8.5.0 to scripts so they immediately
+        // bypass that Windows check on Linux, while the application UI displays the true ClientVersion.
         Version = new Version(1, 8, 5, 0);
 
         _stateChannel = new GameStateChannel(_ => { }, 100);

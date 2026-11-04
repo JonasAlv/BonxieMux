@@ -139,6 +139,9 @@ public interface IFlashUtil : IDisposable
         return sb.ToString().Replace("..", ".");
     }
 
+    // Note (Linux Flash bridge): During map transitions and world loading, Flash queries may return empty string
+    // or null before objects initialize. Suppress noisy "No JSON content found" warnings on non-nullable value types
+    // as callers handle defaults gracefully.
     private static readonly JsonSerializerSettings SafeJsonSettings = new()
     {
         NullValueHandling = NullValueHandling.Ignore,

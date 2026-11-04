@@ -291,9 +291,15 @@
                                                 Width="24"
                                                 Padding="0"
                                                 VerticalAlignment="Center"
-                                                ToolTip.Tip="Select script file from folder"
+                                                ToolTip.Tip="Select script file from folder (Right click: Open folder)"
                                                 Command="{Binding SelectedStep.BrowseStepScriptCommand}">
                                             <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="13" Height="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <Button.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="Select script file..." Command="{Binding SelectedStep.BrowseStepScriptCommand}" />
+                                                    <MenuItem Header="Open scripts folder in file manager" Command="{Binding SelectedStep.OpenScriptsFolderCommand}" />
+                                                </ContextMenu>
+                                            </Button.ContextMenu>
                                         </Button>
 
                                         <!-- Configure Options Button (Only visible when script is set!) -->
@@ -406,9 +412,15 @@
                                                             Height="24"
                                                             Width="24"
                                                             Padding="0"
-                                                            ToolTip.Tip="Select a script for this account from disk"
+                                                            ToolTip.Tip="Select a script for this account from disk (Right click: Open folder)"
                                                             Command="{Binding BrowseScriptCommand}">
                                                         <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        <Button.ContextMenu>
+                                                            <ContextMenu>
+                                                                <MenuItem Header="Select script file..." Command="{Binding BrowseScriptCommand}" />
+                                                                <MenuItem Header="Open scripts folder in file manager" Command="{Binding OpenScriptsFolderCommand}" />
+                                                            </ContextMenu>
+                                                        </Button.ContextMenu>
                                                     </Button>
 
                                                     <!-- Configure Options Button (Only visible when custom script is set!) -->

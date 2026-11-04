@@ -118,6 +118,8 @@ public partial class App : Application
             Converters = { new Skua.Core.Models.Converters.WholeNumberConverter() },
             Error = (sender, args) =>
             {
+                // Suppress benign warnings when ActionScript queries return null or empty string ("")
+                // for value types (e.g. booleans) while game screens/maps are still loading.
                 if (args.ErrorContext.Error.Message.Contains("No JSON content found") ||
                     args.ErrorContext.Error.Message.Contains("Error converting value {null}"))
                 {

@@ -357,6 +357,9 @@ public partial class GetScriptsService : ObservableObject, IGetScriptsService
         using HttpResponseMessage response = await ValidatedHttpExtensions.GetAsync(HttpClients.GitHubRaw, info.DownloadUrl, token);
         byte[] scriptBytes = await response.Content.ReadAsByteArrayAsync(token);
 
+        // Linux compatibility: Upstream CoreBots.cs includes Windows-specific updater code (SkuaVersionCheckerAsync)
+        // that queries GitHub atom feeds and halts execution on non-Windows OSes. We neutralize it on download
+        // so downloaded community scripts run out-of-the-box on Linux without manual patching.
         if (info.FilePath.EndsWith("CoreBots.cs", StringComparison.OrdinalIgnoreCase))
         {
             string content = System.Text.Encoding.UTF8.GetString(scriptBytes);

@@ -1121,6 +1121,9 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
         }
     }
 
+    // Opens a file picker to select a script for auto-start. Starts at the directory
+    // of the currently assigned script if one is loaded, or falls back to the user scripts folder
+    // using Avalonia StorageProvider with Linux portal / zenity / kdialog native fallbacks.
     [RelayCommand]
     public void ChangeScriptPath()
     {
@@ -1133,6 +1136,7 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
             ScriptPath = folderPath;
     }
 
+    // Opens the user's local scripts folder directly in the system file manager (via xdg-open).
     [RelayCommand]
     public void OpenScriptsFolder()
     {

@@ -205,6 +205,11 @@ public class Server {
         } catch (e:Error) {}
     }
 
+    // Clean all blocking login and overlay modals safely.
+    // NOTE (Linux/AQW runtime): Accessing non-existent properties on sealed AS3 classes
+    // (such as mcO which is an instance of sealed mcOption) throws ReferenceError #1069.
+    // We guard property reads with "prop" in target and try/catch blocks so modal cleanup
+    // continues uninterrupted on standalone Flash / Mugetsu runtimes.
     public static function killLoginModals():void {
         try {
             if (Main.instance.game == null) return;
@@ -289,6 +294,8 @@ public class Server {
         } catch (e:Error) {}
     }
 
+    // Safely retrieve any active modal message.
+    // NOTE: Uses "in" operator checks to guard against sealed class #1069 errors.
     public static function getActiveModalMessage():String {
         try {
             if (Main.instance.game == null) return "";

@@ -85,6 +85,7 @@ public partial class ObjectBindingGenerator : GenericFieldAttributeGenerator<Obj
             source.Append("try{");
             if (info.Values.Select is not null)
             {
+                // Guard against empty Flash array responses to avoid Newtonsoft deserialization warnings.
                 source.Append($"string? rawSel = Flash.Call(\"selectArrayObjects\", \"{info.Values.Paths[0]}\", \"{info.Values.Select}\");");
                 source.Append($"{info.PropertyType}{(info.IsNullable ? string.Empty : "?")} returnValue = !string.IsNullOrWhiteSpace(rawSel) && rawSel != \"null\" && rawSel != \"undefined\" ? Newtonsoft.Json.JsonConvert.DeserializeObject<{info.PropertyType}>(rawSel) : {defaultValue};");
             }
