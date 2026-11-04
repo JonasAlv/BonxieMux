@@ -1,0 +1,426 @@
+﻿using CommunityToolkit.Mvvm.Messaging;
+using Skua.Core.Interfaces;
+using Skua.Core.Messaging;
+using Skua.Core.Models;
+using Skua.Core.Models.Monsters;
+using Skua.Core.Utils;
+
+namespace Skua.Core.Scripts;
+
+public class ScriptHunt : IScriptHunt
+{
+    public ScriptHunt(
+        Lazy<IScriptOption> options,
+        Lazy<IScriptCombat> combat,
+        Lazy<IScriptPlayer> player,
+        Lazy<IScriptMonster> monsters,
+        Lazy<IScriptDrop> drops,
+        Lazy<IScriptInventory> inventory,
+        Lazy<IScriptTempInv> tempInv,
+        Lazy<IScriptManager> manager,
+        Lazy<IScriptMap> map,
+        Lazy<IScriptKill> kill,
+        ILogService logger)
+    {
+        _lazyOptions = options;
+        _lazyCombat = combat;
+        _lazyPlayer = player;
+        _lazyMonsters = monsters;
+        _lazyDrops = drops;
+        _lazyInventory = inventory;
+        _lazyTempInv = tempInv;
+        _lazyManager = manager;
+        _lazyMap = map;
+        _lazyKill = kill;
+        _logger = logger;
+        _lastHuntTick = Environment.TickCount;
+    }
+
+    private readonly Lazy<IScriptOption> _lazyOptions;
+    private readonly Lazy<IScriptCombat> _lazyCombat;
+    private readonly Lazy<IScriptPlayer> _lazyPlayer;
+    private readonly Lazy<IScriptMonster> _lazyMonsters;
+    private readonly Lazy<IScriptDrop> _lazyDrops;
+    private readonly Lazy<IScriptInventory> _lazyInventory;
+    private readonly Lazy<IScriptTempInv> _lazyTempInv;
+    private readonly Lazy<IScriptManager> _lazyManager;
+    private readonly Lazy<IScriptMap> _lazyMap;
+    private readonly Lazy<IScriptKill> _lazyKill;
+    private readonly ILogService _logger;
+
+    private IScriptOption Options => _lazyOptions.Value;
+    private IScriptCombat Combat => _lazyCombat.Value;
+    private IScriptPlayer Player => _lazyPlayer.Value;
+    private IScriptMonster Monsters => _lazyMonsters.Value;
+    private IScriptDrop Drops => _lazyDrops.Value;
+    private IScriptInventory Inventory => _lazyInventory.Value;
+    private IScriptTempInv TempInv => _lazyTempInv.Value;
+    private IScriptMap Map => _lazyMap.Value;
+    private IScriptKill Kill => _lazyKill.Value;
+    private IScriptManager Manager => _lazyManager.Value;
+
+    private int _lastHuntTick;
+
+    public void Monster(string name)
+    {
+        _Hunt(name, null);
+    }
+
+    public void Monster(string name, CancellationToken? token)
+    {
+        _Hunt(name, token);
+    }
+
+    public void Monster(int id)
+    {
+        _Hunt(id, null);
+    }
+
+    public void Monster(int id, CancellationToken? token)
+    {
+        _Hunt(id, token);
+    }
+
+    public void Monster(Monster monster)
+    {
+        _Hunt(monster.ID, null);
+    }
+
+    public void Monster(Monster monster, CancellationToken? token)
+    {
+        _Hunt(monster.ID, token);
+    }
+
+    public void WithPriority(string name, HuntPriorities priority)
+    {
+        _HuntWithPriority(name, priority, null);
+    }
+
+    public void WithPriority(string name, HuntPriorities priority, CancellationToken? token)
+    {
+        _HuntWithPriority(name, priority, token);
+    }
+
+    public void WithPriority(Monster monster, HuntPriorities priority)
+    {
+        _HuntWithPriority(monster.ID, priority, null);
+    }
+
+    public void WithPriority(Monster monster, HuntPriorities priority, CancellationToken? token)
+    {
+        _HuntWithPriority(monster.ID, priority, token);
+    }
+
+    public void WithPriority(int id, HuntPriorities priority)
+    {
+        _HuntWithPriority(id, priority, null);
+    }
+
+    public void WithPriority(int id, HuntPriorities priority, CancellationToken? token)
+    {
+        _HuntWithPriority(id, priority, token);
+    }
+
+    private void _Hunt(string name, CancellationToken? token)
+    {
+        string[] names = name.Split('|');
+        while ((!token?.IsCancellationRequested ?? true) && !Manager.ShouldExit)
+        {
+            HashSet<string> cellsSet = new();
+            foreach (string n in names)
+            {
+                foreach (string cell in Monsters.GetLivingMonsterCells(n))
+                    cellsSet.Add(cell);
+            }
+            List<string> cells = new(cellsSet);
+
+            if (cells.Count == 0)
+            {
+                cellsSet.Clear();
+                foreach (string n in names)
+                {
+                    foreach (string cell in Monsters.GetLivingMonsterDataLeafCells(n))
+                        cellsSet.Add(cell);
+                }
+                cells = new(cellsSet);
+            }
+
+            foreach (string cell in cells.TakeWhile(cell => !(token?.IsCancellationRequested ?? false)))
+            {
+                if ((!cells.Contains(Player.Cell) || cell != Player.Cell) && (!token?.IsCancellationRequested ?? true))
+                {
+                    if (Environment.TickCount - _lastHuntTick < Options.HuntDelay)
+                        Thread.Sleep(Options.HuntDelay - Environment.TickCount + _lastHuntTick);
+                    Map.Jump(cell, "Left");
+                    _lastHuntTick = Environment.TickCount;
+                }
+                foreach (string mon in names)
+                {
+                    if (token?.IsCancellationRequested ?? false)
+                        break;
+                    if (Monsters.Exists(mon) && (!token?.IsCancellationRequested ?? true))
+                    {
+                        if (!Combat.Attack(mon))
+                            continue;
+                        Thread.Sleep(Options.ActionDelay);
+                        Kill.Monster(mon, token);
+                        return;
+                    }
+                }
+                Thread.Sleep(200);
+            }
+        }
+    }
+
+    private void _Hunt(int id, CancellationToken? token)
+    {
+        while ((!token?.IsCancellationRequested ?? true) && !Manager.ShouldExit)
+        {
+            List<string> cells = Monsters.GetLivingMonsterCells(id);
+
+            if (cells.Count == 0)
+                cells = Monsters.GetLivingMonsterDataLeafCells(id);
+
+            foreach (string cell in cells.TakeWhile(cell => !(token?.IsCancellationRequested ?? false)))
+            {
+                if (!cells.Contains(Player.Cell) && (!token?.IsCancellationRequested ?? true))
+                {
+                    if (Environment.TickCount - _lastHuntTick < Options.HuntDelay)
+                        Thread.Sleep(Options.HuntDelay - Environment.TickCount + _lastHuntTick);
+                    Map.Jump(cell, "Left");
+                    _lastHuntTick = Environment.TickCount;
+                }
+                if (token?.IsCancellationRequested ?? false)
+                    break;
+                if (Monsters.Exists(id) && (!token?.IsCancellationRequested ?? true))
+                {
+                    if (!Combat.Attack(id))
+                        continue;
+                    Thread.Sleep(Options.ActionDelay);
+                    Kill.Monster(id, token);
+                    return;
+                }
+                Thread.Sleep(200);
+            }
+        }
+    }
+
+    private void _HuntWithPriority(string name, HuntPriorities priority, CancellationToken? token)
+    {
+        if (priority == HuntPriorities.None)
+        {
+            _Hunt(name, token);
+            return;
+        }
+        string[] names = name.Split('|');
+        for (int i = 0; i < names.Length; i++)
+            names[i] = names[i].ToLower();
+
+        while ((!token?.IsCancellationRequested ?? true) && !Manager.ShouldExit)
+        {
+            IOrderedEnumerable<Monster> ordered = Monsters.MapMonsters.OrderBy(x => 0);
+            if (priority.HasFlag(HuntPriorities.HighHP))
+                ordered = ordered.OrderByDescending(x => x.HP);
+            else if (priority.HasFlag(HuntPriorities.LowHP))
+                ordered = ordered.OrderBy(x => x.HP);
+            if (priority.HasFlag(HuntPriorities.Close))
+                ordered = ordered.OrderBy(x => x.Cell == Player.Cell ? 0 : 1);
+            List<Monster> targets = ordered.Where(m => names.Any(n => n == "*" || n.Trim().Equals(m.Name.Trim(), StringComparison.OrdinalIgnoreCase)) && m.Alive).ToList();
+            foreach (Monster target in targets)
+            {
+                if (token?.IsCancellationRequested ?? false)
+                    break;
+                bool sameCell = Monsters.Exists(target.Name);
+                if (sameCell || CanJumpForHunt())
+                {
+                    if (!sameCell && (!token?.IsCancellationRequested ?? true))
+                    {
+                        if (Player.Cell == target.Cell)
+                            continue;
+                        Map.Jump(target.Cell, "Left");
+                        _lastHuntTick = Environment.TickCount;
+                    }
+
+                    Kill.Monster(target.ID, token);
+                    return;
+                }
+
+                Kill.Monster(target.MapID, token);
+                return;
+            }
+            Thread.Sleep(200);
+        }
+    }
+
+    private void _HuntWithPriority(int id, HuntPriorities priority, CancellationToken? token)
+    {
+        if (priority == HuntPriorities.None)
+        {
+            _Hunt(id, token);
+            return;
+        }
+        while ((!token?.IsCancellationRequested ?? true) && !Manager.ShouldExit)
+        {
+            IOrderedEnumerable<Monster> ordered = Monsters.MapMonsters.OrderBy(x => 0);
+            if (priority.HasFlag(HuntPriorities.HighHP))
+                ordered = ordered.OrderByDescending(x => x.HP);
+            else if (priority.HasFlag(HuntPriorities.LowHP))
+                ordered = ordered.OrderBy(x => x.HP);
+            if (priority.HasFlag(HuntPriorities.Close))
+                ordered = ordered.OrderBy(x => x.Cell == Player.Cell ? 0 : 1);
+            List<Monster> targets = ordered.Where(m => m.ID == id && m.Alive).ToList();
+            foreach (Monster target in targets)
+            {
+                if (token?.IsCancellationRequested ?? false)
+                    break;
+                bool sameCell = Monsters.Exists(target.Name);
+                if (sameCell || CanJumpForHunt())
+                {
+                    if (!sameCell && (!token?.IsCancellationRequested ?? true))
+                    {
+                        if (Player.Cell == target.Cell)
+                            continue;
+                        Map.Jump(target.Cell, "Left");
+                        _lastHuntTick = Environment.TickCount;
+                    }
+
+                    Kill.Monster(target.ID, token);
+                    return;
+                }
+
+                Kill.Monster(target.ID, token);
+                return;
+            }
+            Thread.Sleep(200);
+        }
+    }
+
+    private (string name, int quantity, bool isTemp) _item = (string.Empty, 0, false);
+    private CancellationTokenSource? _ctsHunt;
+
+    public void ForItem(string name, string item, int quantity, bool tempItem = false)
+    {
+        if ((!tempItem && Inventory.Contains(item, quantity)) || (tempItem && TempInv.Contains(item, quantity)))
+            return;
+
+        _ctsHunt = new();
+        _item = (item, quantity, tempItem);
+        string[] names = name.Split('|');
+        HashSet<string> cellsSet = new();
+        foreach (string n in names)
+        {
+            foreach (string cell in Monsters.GetLivingMonsterDataLeafCells(n))
+                cellsSet.Add(cell);
+        }
+        List<string> cells = new(cellsSet);
+
+        StrongReferenceMessenger.Default.Register<ScriptHunt, ItemDroppedMessage, int>(this, (int)MessageChannels.GameEvents, ItemDropped);
+        try
+        {
+            while (!Manager.ShouldExit && !_ctsHunt.IsCancellationRequested)
+            {
+                if (_ctsHunt.IsCancellationRequested)
+                    break;
+
+                for (int i = cells.Count - 1; i >= 0; i--)
+                {
+                    if (Player.Cell != cells[i] && !_ctsHunt.IsCancellationRequested)
+                    {
+                        if (Environment.TickCount - _lastHuntTick < Options.HuntDelay)
+                            Thread.Sleep(Options.HuntDelay - Environment.TickCount + _lastHuntTick);
+                        Map.Jump(cells[i], "Left");
+                        _lastHuntTick = Environment.TickCount;
+                    }
+
+                    if (_ctsHunt.IsCancellationRequested)
+                        break;
+
+                    foreach (string mon in names)
+                    {
+                        if (_ctsHunt.IsCancellationRequested)
+                            break;
+
+                        if (Monsters.Exists(mon) && !_ctsHunt.IsCancellationRequested)
+                        {
+                            if (!Combat.Attack(mon))
+                            {
+                                cells.RemoveAt(i);
+                                continue;
+                            }
+                            Thread.Sleep(Options.ActionDelay);
+                            Kill.Monster(mon, _ctsHunt.Token);
+                            break;
+                        }
+                        else
+                        {
+                            cells.RemoveAt(i);
+                        }
+                    }
+                }
+            }
+        }
+        finally
+        {
+            StrongReferenceMessenger.Default.Unregister<ItemDroppedMessage, int>(this, (int)MessageChannels.GameEvents);
+            _ctsHunt?.Dispose();
+            _ctsHunt = null;
+        }
+    }
+
+    private void ItemDropped(ScriptHunt recipient, ItemDroppedMessage message)
+    {
+        if (message.Item.Name != recipient._item.name)
+            return;
+
+        if (message is { AddedToInv: true, Item.Temp: false } && message.QuantityNow >= recipient._item.quantity)
+        {
+            recipient._ctsHunt?.Cancel();
+            return;
+        }
+        recipient.Drops.Pickup(message.Item.Name);
+        int quant = recipient._item.isTemp ? recipient.TempInv.GetQuantity(message.Item.Name) : recipient.Inventory.GetQuantity(message.Item.Name);
+        if (quant >= recipient._item.quantity)
+            recipient._ctsHunt?.Cancel();
+    }
+
+    public void ForItems(string name, IEnumerable<string> items, IEnumerable<int> quantities, IEnumerable<bool> tempItems)
+    {
+        if (items.Count() != quantities.Count() || items.Count() != tempItems.Count())
+        {
+            _logger.ScriptLog("Item count does not match quantity/temp item count.");
+            return;
+        }
+        List<string> itemList = items.ToList();
+        List<int> quantList = quantities.ToList();
+        List<bool> tempList = tempItems.ToList();
+        for (int i = 0; i < itemList.Count; i++)
+        {
+            ForItem(name, itemList[i], quantList[i], tempList[i]);
+        }
+    }
+
+    public void ForItem(IEnumerable<string> names, string item, int quantity, bool tempItem = false)
+    {
+        ForItem(names.JoinWithPipeCharacter(), item, quantity, tempItem);
+    }
+
+    public void ForItems(string name, IEnumerable<string> items, IEnumerable<int> quantities, bool tempItems = false)
+    {
+        ForItems(name, items, quantities, Enumerable.Range(0, items.Count()).Select(i => tempItems));
+    }
+
+    public void ForItems(IEnumerable<string> names, IEnumerable<string> items, IEnumerable<int> quantities, IEnumerable<bool> tempItems)
+    {
+        ForItems(names.JoinWithPipeCharacter(), items, quantities, tempItems);
+    }
+
+    public void ForItems(IEnumerable<string> names, IEnumerable<string> items, IEnumerable<int> quantities, bool tempItems = false)
+    {
+        ForItems(names, items, quantities, Enumerable.Range(0, items.Count()).Select(i => tempItems));
+    }
+
+    private bool CanJumpForHunt()
+    {
+        return Environment.TickCount - _lastHuntTick >= Options.HuntDelay;
+    }
+}

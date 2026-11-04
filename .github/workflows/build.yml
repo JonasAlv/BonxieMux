@@ -1,0 +1,52 @@
+name: Build BonxieMux
+
+on:
+  push:
+    branches:
+      - main
+      - linux
+  pull_request:
+    branches:
+      - main
+      - linux
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build solution (.NET 10 / Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build portable Linux binaries
+        id: build_bin
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl file gcc gzip tar zip
+          chmod +x ./build-binaries.sh ./build-config.sh
+          source ./build-config.sh
+          echo "version=$APP_VERSION" >> "$GITHUB_OUTPUT"
+          ./build-binaries.sh
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: BonxieMux-${{ steps.build_bin.outputs.version }}-x86_64
+          path: |
+            Build/BonxieMux-${{ steps.build_bin.outputs.version }}-x86_64.tar.gz
+            Build/BonxieMux-${{ steps.build_bin.outputs.version }}-x86_64.zip

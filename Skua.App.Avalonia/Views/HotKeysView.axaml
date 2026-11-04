@@ -1,0 +1,161 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.HotKeys"
+             x:Class="Skua.App.Avalonia.Views.HotKeysView"
+             x:DataType="vms:HotKeysViewModel"
+             Background="{DynamicResource SkuaPageBrush}"
+             mc:Ignorable="d" d:DesignHeight="500" d:DesignWidth="480">
+  <UserControl.Styles>
+    <!-- Assigned hotkey rows: hover fill like list rows -->
+    <Style Selector="Border.hotkey-row">
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="Padding" Value="10,4,6,4" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Border.hotkey-row:pointerover">
+      <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
+    </Style>
+    <!-- Key badge: a small mono button; click to capture a new key -->
+    <Style Selector="Button.keycap">
+      <Setter Property="Height" Value="26" />
+      <Setter Property="MinWidth" Value="56" />
+      <Setter Property="Padding" Value="8,0" />
+      <Setter Property="FontFamily" Value="Cascadia Mono,Consolas,Courier New,monospace" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.keycap:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="12" RowSpacing="10">
+    <!-- Add an action -->
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+      <Grid Grid.Column="0">
+        <AutoCompleteBox x:Name="ActionAutoComplete"
+                         Padding="34,0,32,0"
+                         ItemsSource="{Binding AvailableCustomActions}"
+                         SelectedItem="{Binding SelectedCustomAction, Mode=TwoWay}"
+                         Text="{Binding SearchText, Mode=TwoWay}"
+                         MinimumPrefixLength="0"
+                         MaxDropDownHeight="320"
+                         Watermark="Add an action..."
+                         ValueMemberBinding="{Binding Title}">
+          <AutoCompleteBox.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Spacing="1" Margin="0,4">
+                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
+                <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" />
+              </StackPanel>
+            </DataTemplate>
+          </AutoCompleteBox.ItemTemplate>
+        </AutoCompleteBox>
+        <materialIcons:MaterialIcon Kind="PlusCircleOutline"
+                                    Width="16" Height="16"
+                                    Margin="10,0,0,0"
+                                    HorizontalAlignment="Left"
+                                    Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                    IsHitTestVisible="False" />
+        <Button Classes="icon"
+                HorizontalAlignment="Right"
+                Margin="0,0,3,0"
+                Click="ToggleDropdown_Click"
+                ToolTip.Tip="Browse all actions">
+          <materialIcons:MaterialIcon Kind="ChevronDown" Width="16" Height="16" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        </Button>
+      </Grid>
+
+      <Button Grid.Column="1"
+              Classes="skua-button skua-primary w84"
+              Command="{Binding AddCustomCommand}"
+              ToolTip.Tip="Add the chosen action to your hotkeys">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <materialIcons:MaterialIcon Kind="Plus" Width="15" Height="15" />
+          <TextBlock Text="Add" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </Grid>
+
+    <!-- Assigned hotkeys header with filter -->
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,200" ColumnSpacing="6">
+      <TextBlock Grid.Column="0" Classes="section-label" Text="ASSIGNED" />
+      <Border Grid.Column="1" Classes="count">
+        <TextBlock Text="{Binding HotKeys.Count}" />
+      </Border>
+      <TextBox Grid.Column="3"
+               Text="{Binding FilterHotKeysText, Mode=TwoWay}"
+               Watermark="Filter">
+        <TextBox.InnerLeftContent>
+          <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        </TextBox.InnerLeftContent>
+        <TextBox.InnerRightContent>
+          <Button Classes="icon"
+                  Margin="0,0,3,0"
+                  Command="{Binding ClearFilterCommand}"
+                  IsVisible="{Binding FilterHotKeysText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                  ToolTip.Tip="Clear filter">
+            <materialIcons:MaterialIcon Kind="Close" Width="13" Height="13" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+          </Button>
+        </TextBox.InnerRightContent>
+      </TextBox>
+    </Grid>
+
+    <!-- Assigned hotkeys -->
+    <Border Grid.Row="2"
+            Background="{DynamicResource SkuaSurfaceBrush}"
+            BorderBrush="{DynamicResource SkuaBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="4">
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <ItemsControl ItemsSource="{Binding FilteredHotKeys}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vms:HotKeyItemViewModel">
+              <Border Classes="hotkey-row" Margin="0,0,0,2">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                  <StackPanel Grid.Column="0" Spacing="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Description}"
+                               FontSize="10"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}"
+                               TextTrimming="CharacterEllipsis"
+                               IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                  </StackPanel>
+
+                  <Button Grid.Column="1"
+                          Classes="skua-button keycap"
+                          Command="{Binding EditHotKeyCommand}"
+                          ToolTip.Tip="Click to set a new key">
+                    <Panel>
+                      <TextBlock Text="{Binding KeyGesture}" IsVisible="{Binding !IsUnassigned}" />
+                      <TextBlock Text="Set key"
+                                 FontFamily="{DynamicResource ContentControlThemeFontFamily}"
+                                 FontWeight="Medium"
+                                 Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                 IsVisible="{Binding IsUnassigned}" />
+                    </Panel>
+                  </Button>
+
+                  <Button Grid.Column="2"
+                          Classes="icon danger-icon"
+                          Command="{Binding RemoveHotKeyCommand}"
+                          ToolTip.Tip="Remove this hotkey">
+                    <materialIcons:MaterialIcon Kind="TrashCanOutline" Width="15" Height="15" />
+                  </Button>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Border>
+
+    <TextBlock Grid.Row="3" Text="Click a key to change it." FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+  </Grid>
+</UserControl>

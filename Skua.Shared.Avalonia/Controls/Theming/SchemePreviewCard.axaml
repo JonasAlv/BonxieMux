@@ -1,0 +1,101 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:models="clr-namespace:Skua.Core.Models;assembly=Skua.Core.Models"
+             x:Class="Skua.Shared.Avalonia.Controls.Theming.SchemePreviewCard"
+             x:Name="Root">
+  <StackPanel Spacing="8">
+    <TextBlock FontWeight="Bold" FontSize="13" Text="Active Color Target" Foreground="{DynamicResource SkuaTextBrush}" />
+
+    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+      <Grid.Styles>
+        <Style Selector="Button.scheme-target">
+          <Setter Property="BorderThickness" Value="1" />
+          <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
+          <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.scheme-target.active">
+          <Setter Property="BorderThickness" Value="2" />
+          <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+          <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
+        </Style>
+      </Grid.Styles>
+
+      <!-- Target 1: Primary Accent -->
+      <Button Grid.Column="0"
+              Classes="skua-button scheme-target"
+              Classes.active="{Binding ThemeService.ActiveScheme, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:ColorScheme.Primary}}"
+              Height="48"
+              HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Stretch"
+              Command="{Binding ColorSchemeEditor.ChangeToPrimaryCommand}"
+              ToolTip.Tip="Target primary accent colors">
+        <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+          <Border Grid.Column="0"
+                  Width="24"
+                  Height="24"
+                  CornerRadius="12"
+                  Background="{DynamicResource SkuaAccentBrush}"
+                  BorderBrush="{DynamicResource SkuaBorderBrush}"
+                  BorderThickness="1"
+                  Margin="0,0,10,0" />
+          <TextBlock Grid.Column="1"
+                     Text="Primary Accent"
+                     FontWeight="SemiBold"
+                     FontSize="12"
+                     VerticalAlignment="Center" />
+          <materialIcons:MaterialIcon Grid.Column="2"
+                                      Kind="CheckCircle"
+                                      Width="16"
+                                      Height="16"
+                                      Foreground="{DynamicResource SkuaAccentBrush}"
+                                      IsVisible="{Binding ThemeService.ActiveScheme, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:ColorScheme.Primary}}" />
+          <materialIcons:MaterialIcon Grid.Column="2"
+                                      Kind="PaletteOutline"
+                                      Width="16"
+                                      Height="16"
+                                      Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                      IsVisible="{Binding ThemeService.ActiveScheme, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter={x:Static models:ColorScheme.Primary}}" />
+        </Grid>
+      </Button>
+
+      <!-- Target 2: Text on Primary -->
+      <Button Grid.Column="1"
+              Classes="skua-button scheme-target"
+              Classes.active="{Binding ThemeService.ActiveScheme, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:ColorScheme.PrimaryForeground}}"
+              Height="48"
+              HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Stretch"
+              Command="{Binding ColorSchemeEditor.ChangeToPrimaryForegroundCommand}"
+              ToolTip.Tip="Target foreground text on primary accent">
+        <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+          <Border Grid.Column="0"
+                  Width="24"
+                  Height="24"
+                  CornerRadius="12"
+                  Background="{DynamicResource SkuaAccentForegroundBrush}"
+                  BorderBrush="{DynamicResource SkuaBorderBrush}"
+                  BorderThickness="1"
+                  Margin="0,0,10,0" />
+          <TextBlock Grid.Column="1"
+                     Text="Text on Accent"
+                     FontWeight="SemiBold"
+                     FontSize="12"
+                     VerticalAlignment="Center" />
+          <materialIcons:MaterialIcon Grid.Column="2"
+                                      Kind="CheckCircle"
+                                      Width="16"
+                                      Height="16"
+                                      Foreground="{DynamicResource SkuaAccentBrush}"
+                                      IsVisible="{Binding ThemeService.ActiveScheme, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:ColorScheme.PrimaryForeground}}" />
+          <materialIcons:MaterialIcon Grid.Column="2"
+                                      Kind="PaletteOutline"
+                                      Width="16"
+                                      Height="16"
+                                      Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                      IsVisible="{Binding ThemeService.ActiveScheme, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter={x:Static models:ColorScheme.PrimaryForeground}}" />
+        </Grid>
+      </Button>
+    </Grid>
+  </StackPanel>
+</UserControl>

@@ -1,0 +1,280 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:sharedTheming="clr-namespace:Skua.Shared.Avalonia.Controls.Theming;assembly=Skua.Shared.Avalonia"
+             xmlns:cp="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.ColorPicker"
+             x:Class="Skua.Manager.Avalonia.UserControls.ApplicationThemesUserControl"
+             d:DesignWidth="800"
+             d:DesignHeight="600"
+             mc:Ignorable="d">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="6" Spacing="6">
+            <!-- Theme Settings & Color Editor Card -->
+            <Border Classes="card" Padding="8">
+                <StackPanel Spacing="8">
+                    <!-- Top row: Theme Name, Save, Light/Dark, Color Adjustment -->
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,0,12,0">
+                            <TextBox Grid.Column="0"
+                                     Watermark="Theme Name"
+                                     Text="{Binding ThemeSettings.ThemeName, Mode=TwoWay}" />
+                            <Button Grid.Column="1"
+                                    Margin="6,0,0,0"
+                                    Command="{Binding ThemeSettings.SaveThemeCommand}"
+                                    Content="Save"
+                                    Classes="skua-button" />
+                        </Grid>
+
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    Spacing="6"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="Light" VerticalAlignment="Center" />
+                            <ToggleSwitch IsChecked="{Binding ThemeService.IsDarkTheme, Mode=TwoWay}"
+                                          OnContent=""
+                                          OffContent=""
+                                          VerticalAlignment="Center" />
+                            <TextBlock Text="Dark" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2"
+                                    Orientation="Horizontal"
+                                    Spacing="6"
+                                    Margin="16,0,0,0"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="Color Adjustment" VerticalAlignment="Center" />
+                            <ToggleSwitch IsChecked="{Binding ThemeService.IsColorAdjusted, Mode=TwoWay}"
+                                          OnContent=""
+                                          OffContent=""
+                                          VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Manager title bar accent setting -->
+                    <Border Classes="card" Padding="10" Margin="0,2,0,0">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <StackPanel Grid.Column="0" Spacing="3" VerticalAlignment="Center">
+                                <TextBlock Text="Manager Title Bar Accent" FontWeight="SemiBold" />
+                                <TextBlock Text="Use the active theme's accent color on the Manager title bar. This setting is independent of the main client title bar."
+                                           FontSize="11"
+                                           Opacity="0.8"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1"
+                                          VerticalAlignment="Center"
+                                          IsChecked="{Binding ThemeService.UseAccentOnManagerTitleBar, Mode=TwoWay}"
+                                          OnContent="On"
+                                          OffContent="Off" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Manager title bar custom image -->
+                    <Border Classes="card" Padding="10" Margin="0,2,0,0">
+                        <StackPanel Spacing="8">
+                            <StackPanel Spacing="3">
+                                <TextBlock Text="Manager Title Bar Image" FontWeight="SemiBold" />
+                                <TextBlock Text="Choose a custom image for the Manager title bar. This image is separate from the main client's title-bar image."
+                                           FontSize="11"
+                                           Opacity="0.8"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding ManagerTitleBarArtworkPath, Mode=OneWay}"
+                                         IsReadOnly="True"
+                                         Watermark="No custom image selected"
+                                         VerticalContentAlignment="Center" />
+                                <Button Grid.Column="1"
+                                        Content="Browse"
+                                        Command="{Binding BrowseManagerTitleBarArtworkCommand}"
+                                        Classes="skua-button" />
+                                <Button Grid.Column="2"
+                                        Content="Clear"
+                                        Command="{Binding ClearManagerTitleBarArtworkCommand}"
+                                        Classes="skua-button" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Color Picker Section -->
+                    <Grid ColumnDefinitions="200,*" Margin="0,4,0,0">
+                        <StackPanel Grid.Column="0" Spacing="6" Margin="0,0,8,0">
+                            <TextBlock Text="Color Picker" FontWeight="SemiBold" />
+                            <Border Height="80"
+                                    CornerRadius="4"
+                                    Background="{DynamicResource SkuaAccentBrush}"
+                                    BorderBrush="{DynamicResource SkuaBorderBrush}"
+                                    BorderThickness="1">
+                                <TextBlock Text="{Binding ThemeService.SelectedColor}"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource SkuaAccentForegroundBrush}" />
+                            </Border>
+                        </StackPanel>
+
+                        <cp:ColorView Grid.Column="1"
+                                      Color="{Binding ThemeService.SelectedColor, Mode=TwoWay}"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Top"
+                                      Height="320"
+                                      IsAccentColorsVisible="True"
+                                      IsAlphaVisible="False"
+                                      IsColorPaletteVisible="True"
+                                      IsColorComponentsVisible="True"
+                                      IsHexInputVisible="True" />
+                    </Grid>
+
+                    <!-- Scheme Buttons: Primary & Text on Primary -->
+                    <TextBlock Text="Current Scheme"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               Margin="0,4,0,0" />
+                    <Grid ColumnDefinitions="*,*" Margin="0,2">
+                        <Button Grid.Column="0"
+                                Margin="0,0,4,0"
+                                Padding="0"
+                                MinHeight="60"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                Background="{DynamicResource SkuaAccentBrush}"
+                                Command="{Binding ColorSchemeEditor.ChangeToPrimaryCommand}">
+                            <Grid RowDefinitions="Auto,*" Margin="8,4">
+                                <TextBlock Text="Primary"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource SkuaAccentForegroundBrush}" />
+                                <TextBlock Grid.Row="1"
+                                           Text="P"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource SkuaAccentForegroundBrush}" />
+                            </Grid>
+                        </Button>
+
+                        <Button Grid.Column="1"
+                                Margin="4,0,0,0"
+                                Padding="0"
+                                MinHeight="60"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                Background="{DynamicResource SkuaAccentBrush}"
+                                Command="{Binding ColorSchemeEditor.ChangeToPrimaryForegroundCommand}">
+                            <Grid RowDefinitions="Auto,*" Margin="8,4">
+                                <TextBlock Text="Text on Primary"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource SkuaAccentForegroundBrush}" />
+                                <TextBlock Grid.Row="1"
+                                           Text="Text"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource SkuaAccentForegroundBrush}" />
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Defined Themes Expander -->
+            <Expander Margin="0,2" Header="Defined Themes" IsExpanded="False">
+                <StackPanel Spacing="6" Margin="0,4">
+                    <TextBlock Text="Presets" FontWeight="SemiBold" Opacity="0.8" />
+                    <ItemsControl ItemsSource="{Binding ThemeService.Presets}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Margin="3"
+                                        Background="{Binding PrimaryBrush}"
+                                        BorderBrush="{Binding PrimaryBrush}"
+                                        Foreground="{Binding PrimaryForegroundBrush}"
+                                        Command="{Binding DataContext.SetCurrentThemeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Content="{Binding Name}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="User Themes" FontWeight="SemiBold" Opacity="0.8" Margin="0,4,0,0" />
+                    <ItemsControl ItemsSource="{Binding ThemeService.UserThemes}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="3" ColumnDefinitions="*,Auto">
+                                    <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="0"
+                                            Background="{Binding PrimaryBrush}"
+                                            BorderBrush="{Binding PrimaryBrush}"
+                                            Foreground="{Binding PrimaryForegroundBrush}"
+                                            Command="{Binding DataContext.SetCurrentThemeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Content="{Binding Name}" />
+                                    <Button Grid.Column="1"
+                                            Width="34"
+                                            Margin="4,0,0,0"
+                                            Classes="icon"
+                                            Command="{Binding DataContext.RemoveThemeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <materialIcons:MaterialIcon Kind="DeleteOutline" Width="14" Height="14" />
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Expander>
+
+            <!-- Backgrounds Expander -->
+            <Expander Margin="0,2" Header="Backgrounds" IsExpanded="False">
+                <Grid DataContext="{Binding BackgroundTheme}"
+                      ColumnDefinitions="*,Auto,Auto"
+                      RowDefinitions="Auto,Auto"
+                      Margin="0,4">
+                    <!-- Background Selection -->
+                    <ComboBox Grid.Row="0" Grid.Column="0"
+                              Margin="3"
+                              HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding AvailableBackgrounds}"
+                              SelectedItem="{Binding SelectedBackground}"
+                              PlaceholderText="Select Background" />
+
+                    <Button Grid.Row="0" Grid.Column="1"
+                            Margin="3"
+                            Command="{Binding BrowseBackgroundCommand}"
+                            Content="Browse"
+                            ToolTip.Tip="Browse for local SWF file"
+                            Classes="skua-button" />
+
+                    <Button Grid.Row="0" Grid.Column="2"
+                            Margin="3"
+                            Command="{Binding RefreshBackgroundsCommand}"
+                            Content="Refresh"
+                            ToolTip.Tip="Refresh background list"
+                            Classes="skua-button" />
+
+                    <!-- Quick Actions -->
+                    <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Row="1" Grid.Column="0"
+                            Margin="3"
+                            Command="{Binding OpenThemesFolderCommand}"
+                            Content="Open Themes Folder"
+                            ToolTip.Tip="Open the themes folder in Explorer"
+                            Classes="skua-button" />
+
+                    <Button Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                            Margin="3"
+                            Command="{Binding GetBackgroundsCommand}"
+                            Content="Get Backgrounds"
+                            ToolTip.Tip="Open GitHub repository with more backgrounds"
+                            Classes="skua-button" />
+                </Grid>
+            </Expander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

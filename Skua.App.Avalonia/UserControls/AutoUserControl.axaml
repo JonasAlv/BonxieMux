@@ -1,0 +1,108 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels"
+             x:Class="Skua.App.Avalonia.UserControls.AutoUserControl"
+             x:DataType="vms:AutoViewModel">
+  <Border Background="{DynamicResource SkuaSurfaceBrush}"
+          BorderBrush="{DynamicResource SkuaBorderBrush}"
+          BorderThickness="1"
+          Padding="12"
+          CornerRadius="8"
+          MinWidth="360"
+          Width="360">
+    <StackPanel Spacing="10">
+      
+      <!-- Top Title & Running Status Badge -->
+      <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+          <materialIcons:MaterialIcon Kind="RobotOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
+          <TextBlock Text="Combat Automation" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <!-- Active Status Indicator -->
+        <Border Grid.Column="1"
+                CornerRadius="10"
+                Padding="8,2"
+                Background="#064E3B"
+                BorderBrush="#059669"
+                BorderThickness="1"
+                IsVisible="{Binding Auto.IsRunning}">
+          <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+            <materialIcons:MaterialIcon Kind="ProgressCheck" Width="12" Height="12" Foreground="#34D399" />
+            <TextBlock Text="RUNNING" FontSize="10" FontWeight="Bold" Foreground="#34D399" />
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
+
+      <!-- Auto Start / Stop Actions -->
+      <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+        <Button Grid.Column="0"
+                Classes="skua-button skua-primary"
+                Height="34"
+                HorizontalAlignment="Stretch"
+                Command="{Binding StartAutoAttackCommand}"
+                IsVisible="{Binding !Auto.IsRunning}">
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6" VerticalAlignment="Center">
+            <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="15" Height="15" VerticalAlignment="Center" />
+            <TextBlock Text="Auto Attack" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <Button Grid.Column="1"
+                Classes="skua-button"
+                Height="34"
+                HorizontalAlignment="Stretch"
+                Command="{Binding StartAutoHuntCommand}"
+                IsVisible="{Binding !Auto.IsRunning}">
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6" VerticalAlignment="Center">
+            <materialIcons:MaterialIcon Kind="CrosshairsGps" Width="15" Height="15" VerticalAlignment="Center" />
+            <TextBlock Text="Auto Hunt" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <Button Grid.Column="0"
+                Grid.ColumnSpan="2"
+                Classes="skua-button skua-danger"
+                Height="34"
+                HorizontalAlignment="Stretch"
+                Command="{Binding StopAutoAsyncCommand}"
+                IsVisible="{Binding Auto.IsRunning}">
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6" VerticalAlignment="Center">
+            <materialIcons:MaterialIcon Kind="StopCircleOutline" Width="15" Height="15" VerticalAlignment="Center" />
+            <TextBlock Text="Stop Automation" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+      </Grid>
+
+      <!-- Select Class & Mode -->
+      <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+        <ComboBox x:Name="ClassComboBox"
+                  Grid.Column="0"
+                  Height="34"
+                  MinWidth="160"
+                  HorizontalAlignment="Stretch"
+                  PlaceholderText="Select Class..."
+                  ItemsSource="{Binding PlayerClasses}"
+                  SelectedItem="{Binding SelectedClass}" />
+        <ComboBox Grid.Column="1"
+                  Height="34"
+                  MinWidth="160"
+                  HorizontalAlignment="Stretch"
+                  PlaceholderText="Select Mode..."
+                  ItemsSource="{Binding CurrentClassModeStrings}"
+                  SelectedItem="{Binding SelectedClassModeString}" />
+      </Grid>
+
+      <!-- Manual MapIDs -->
+      <TextBox Height="34"
+               CornerRadius="6"
+               VerticalContentAlignment="Center"
+               Text="{Binding ManualMapIDs, UpdateSourceTrigger=PropertyChanged}"
+               Watermark="Manual MapIDs (optional, e.g. 1, 2)"
+               ToolTip.Tip="Enter MapIDs separated by commas for priority targeting (e.g. 12345, 67890). First available monster in the list will be attacked." />
+    </StackPanel>
+  </Border>
+</UserControl>

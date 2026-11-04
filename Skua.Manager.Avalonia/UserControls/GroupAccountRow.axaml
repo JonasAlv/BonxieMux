@@ -1,0 +1,85 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:managerUc="clr-namespace:Skua.Manager.Avalonia.UserControls"
+             x:Class="Skua.Manager.Avalonia.UserControls.GroupAccountRow"
+             mc:Ignorable="d"
+             d:DesignWidth="520"
+             d:DesignHeight="62">
+    <Border Classes="card"
+            CornerRadius="2"
+            Padding="12,5,10,5"
+            Margin="0">
+        <Grid ColumnDefinitions="*,Auto,Auto"
+              ColumnSpacing="4">
+            <Grid Grid.Column="0"
+                  Classes="group-account-text"
+                  Classes.tags-visible="{Binding DataContext.ShowTags, RelativeSource={RelativeSource AncestorType=managerUc:AccountManagerUserControl}}"
+                  RowDefinitions="Auto,Auto"
+                  RowSpacing="1"
+                  VerticalAlignment="Center">
+                <TextBlock Grid.Row="0"
+                           Text="{Binding DisplayOrUsername}"
+                           FontSize="12"
+                           FontWeight="Medium"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" />
+                <ItemsControl ItemsSource="{Binding Tags}"
+                              Grid.Row="1"
+                              Margin="0,1,0,0"
+                              IsVisible="{Binding DataContext.ShowTags, RelativeSource={RelativeSource AncestorType=managerUc:AccountManagerUserControl}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="tag-chip">
+                                <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                    <materialIcons:MaterialIcon Kind="TagOutline"
+                                                                Width="9"
+                                                                Height="9"
+                                                                VerticalAlignment="Center"
+                                                                Opacity="0.75"
+                                                                Foreground="{DynamicResource SkuaTagTextBrush}" />
+                                    <TextBlock Text="{Binding}"
+                                               Classes="tag-chip-text" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+
+            <Button Grid.Column="1"
+                    Margin="2,0,0,0"
+                    Classes="icon icon-muted"
+                    VerticalAlignment="Center"
+                    Click="ReplaceButton_Click"
+                    ToolTip.Tip="Replace account in group">
+                <materialIcons:MaterialIcon Kind="Refresh"
+                                            Width="14"
+                                            Height="14"
+                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+            </Button>
+
+            <Button Grid.Column="2"
+                    Margin="2,0,0,0"
+                    Classes="icon icon-muted"
+                    VerticalAlignment="Center"
+                    Click="RemoveButton_Click"
+                    ToolTip.Tip="Remove from group">
+                <materialIcons:MaterialIcon Kind="Close"
+                                            Width="14"
+                                            Height="14"
+                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+            </Button>
+        </Grid>
+    </Border>
+</UserControl>
+
+
+

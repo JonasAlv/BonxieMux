@@ -1,0 +1,177 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.App.Avalonia.Views.PacketLoggerView">
+    
+    <Grid Margin="12" ColumnDefinitions="2*,*" ColumnSpacing="12">
+        
+        <!-- Left Side: Packet Logs Card -->
+        <Border Grid.Column="0"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="10">
+                <!-- Search Packets Bar -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
+                    <TextBox Grid.Column="0"
+                             Height="34"
+                             VerticalContentAlignment="Center"
+                             Watermark="Filter logged packets..."
+                             Text="{Binding PacketSearchText}" />
+                    <Border Grid.Column="1"
+                            Background="{DynamicResource SkuaSurfaceAltBrush}"
+                            BorderBrush="{DynamicResource SkuaBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="16"
+                            Padding="10,4">
+                        <TextBlock Text="{Binding FilteredPacketLogs.Count, StringFormat='Logged: {0}'}"
+                                   FontSize="11"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource SkuaTextBrush}" />
+                    </Border>
+                </Grid>
+
+                <!-- Packets List -->
+                <Border Grid.Row="1"
+                        Background="{DynamicResource SkuaPageBrush}"
+                        BorderBrush="{DynamicResource SkuaBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="4">
+                    <ListBox Classes="card-list" x:Name="PacketsListBox"
+                             ItemsSource="{Binding FilteredPacketLogs}"
+                             SelectionMode="Multiple"
+                             Background="Transparent"
+                             BorderThickness="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Classes="list-card"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Margin="0,0,0,3"
+                                        Padding="8,4">
+                                    <TextBlock Text="{Binding}"
+                                               FontFamily="JetBrains Mono,Consolas,Courier New,monospace"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource SkuaTextBrush}"
+                                               TextWrapping="Wrap" />
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+            
+                <!-- Action Buttons Toolbar -->
+                <Grid Grid.Row="2" ColumnDefinitions="Auto,*,*,*,*" ColumnSpacing="6">
+                    <Button Grid.Column="0"
+                            Classes="skua-button w112"
+                            Classes.skua-danger="{Binding IsReceivingPackets}"
+                            Classes.skua-primary="{Binding !IsReceivingPackets}"
+                            Height="32"
+                            Padding="10,0"
+                            Command="{Binding ToggleLoggingCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="14" Height="14" IsVisible="{Binding !IsReceivingPackets}" />
+                            <materialIcons:MaterialIcon Kind="StopCircleOutline" Width="14" Height="14" IsVisible="{Binding IsReceivingPackets}" />
+                            <TextBlock Text="{Binding StartStopText}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="1"
+                            Classes="skua-button outline"
+                            Height="32"
+                            Content="Unselect"
+                            Click="UnselectAllLogs_Click" />
+            
+                    <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="2"
+                            Classes="skua-button"
+                            Height="32"
+                            Content="Clear Filters"
+                            Command="{Binding ClearFiltersCommand}" />
+                
+                    <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="3"
+                            Classes="skua-button skua-danger"
+                            Height="32"
+                            Content="Clear Logs"
+                            Command="{Binding ClearPacketLogsCommand}" />
+                    
+                    <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="4"
+                            Classes="skua-button"
+                            Height="32"
+                            Command="{Binding SavePacketLogsCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <materialIcons:MaterialIcon Kind="ContentSave" Width="14" Height="14" />
+                            <TextBlock Text="Save" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Grid>
+        </Border>
+        
+        <!-- Right Side: Filters & Controls Card -->
+        <Border Grid.Column="1"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="10">
+                <StackPanel Grid.Row="0" Spacing="6">
+                    <TextBlock Text="PACKET FILTERS"
+                                FontSize="10"
+                                FontWeight="Bold"
+                                Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                    <TextBox Height="34"
+                             VerticalContentAlignment="Center"
+                             Watermark="Search filter tags..."
+                             Text="{Binding FilterSearchText}" />
+                </StackPanel>
+            
+                <Border Grid.Row="1"
+                        Background="{DynamicResource SkuaPageBrush}"
+                        BorderBrush="{DynamicResource SkuaBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="6">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding VisiblePacketFilters}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <ToggleButton Content="{Binding Content}"
+                                                  IsChecked="{Binding IsChecked}"
+                                                  Classes="option-chip"
+                                                  Margin="0,0,0,4"
+                                                  HorizontalAlignment="Stretch" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+            
+                <StackPanel Grid.Row="2" Spacing="8">
+                    <Button Classes="skua-button"
+                            Classes.skua-danger="{Binding IsReceivingPackets}"
+                            Classes.skua-primary="{Binding !IsReceivingPackets}"
+                            Height="36"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Command="{Binding ToggleLoggingCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                            <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="16" Height="16" IsVisible="{Binding !IsReceivingPackets}" />
+                            <materialIcons:MaterialIcon Kind="StopCircleOutline" Width="16" Height="16" IsVisible="{Binding IsReceivingPackets}" />
+                            <TextBlock Text="{Binding StartStopText}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <CheckBox Content="Log To File"
+                              IsChecked="{Binding LogToFile}"
+                              VerticalAlignment="Center" />
+                    <CheckBox Content="Log Client Only"
+                              IsChecked="{Binding LogClientOnly}"
+                              VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

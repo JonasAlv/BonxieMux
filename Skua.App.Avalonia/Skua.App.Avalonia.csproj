@@ -1,0 +1,95 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <AssemblyName>BonxieMux</AssemblyName>
+        <AssemblyTitle>BonxieMux</AssemblyTitle>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <AssemblyMetadata Include="Skua.ClientId" Value="BonxieMuxAvalonia" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" />
+        <PackageReference Include="Avalonia.Desktop" />
+        <PackageReference Include="Avalonia.Skia" />
+        <PackageReference Include="Avalonia.X11" />
+        <PackageReference Include="Avalonia.Controls.ColorPicker" />
+        <PackageReference Include="Avalonia.Themes.Fluent" />
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" />
+
+        <PackageReference Include="Material.Avalonia" />
+        <PackageReference Include="Material.Icons" />
+        <PackageReference Include="Material.Icons.Avalonia" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Skua.Core\Skua.Core.csproj" />
+        <ProjectReference Include="..\Skua.Core.Interfaces\Skua.Core.Interfaces.csproj" />
+        <ProjectReference Include="..\Skua.Core.Models\Skua.Core.Models.csproj" />
+        <ProjectReference Include="..\Skua.Shared.Avalonia\Skua.Shared.Avalonia.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <Content Include="QuestData.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="AdvancedSkills.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="UltraWiki.json" LogicalName="UltraWiki.json" />
+        <None Include="..\Skua.AS3\skua\bin\skua.swf" Link="skua.swf" Condition="Exists('..\Skua.AS3\skua\bin\skua.swf')">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <!--
+      The game player: official Skua build of Mugetsu (see https://github.com/retr0gr4d3/skua-mugetsu).
+      Downloaded once into player/<version>-linux/ and copied to output player/ folder.
+    -->
+    <PropertyGroup>
+        <SkuaPlayerArchive>Mugetsu-$(SkuaPlayerVersion)-$(SkuaPlayerOs).tar.gz</SkuaPlayerArchive>
+        <SkuaPlayerExe>Mugetsu</SkuaPlayerExe>
+        <SkuaPlayerUrl>https://github.com/retr0gr4d3/skua-mugetsu/releases/download/v$(SkuaPlayerVersion)/$(SkuaPlayerArchive)</SkuaPlayerUrl>
+        <SkuaPlayerCache>$(MSBuildThisFileDirectory)..\player\$(SkuaPlayerVersion)-$(SkuaPlayerOs)</SkuaPlayerCache>
+        <SkuaPlayerDir Condition="'$(SkuaPlayerLocal)' != ''">$(SkuaPlayerLocal)</SkuaPlayerDir>
+        <SkuaPlayerDir Condition="'$(SkuaPlayerLocal)' == ''">$(SkuaPlayerCache)\Mugetsu</SkuaPlayerDir>
+
+        <!-- x86-64-v2 player for CPUs without AVX2; the regular player is x86-64-v3. -->
+        <SkuaPlayerV2Archive>Mugetsu-$(SkuaPlayerVersion)-$(SkuaPlayerOs)-x86-64-v2.tar.gz</SkuaPlayerV2Archive>
+        <SkuaPlayerV2Url>https://github.com/retr0gr4d3/skua-mugetsu/releases/download/v$(SkuaPlayerVersion)/$(SkuaPlayerV2Archive)</SkuaPlayerV2Url>
+        <SkuaPlayerV2Cache>$(MSBuildThisFileDirectory)..\player\$(SkuaPlayerVersion)-$(SkuaPlayerOs)-x86-64-v2</SkuaPlayerV2Cache>
+        <SkuaPlayerV2Dir Condition="'$(SkuaPlayerV2Local)' != ''">$(SkuaPlayerV2Local)</SkuaPlayerV2Dir>
+        <SkuaPlayerV2Dir Condition="'$(SkuaPlayerV2Local)' == ''">$(SkuaPlayerV2Cache)\Mugetsu</SkuaPlayerV2Dir>
+    </PropertyGroup>
+
+    <Target Name="DownloadSkuaPlayer" Condition="'$(SkuaPlayerLocal)' == '' And !Exists('$(SkuaPlayerDir)\$(SkuaPlayerExe)')">
+        <DownloadFile SourceUrl="$(SkuaPlayerUrl)" DestinationFolder="$(SkuaPlayerCache)" />
+        <Exec Command="tar -xzf &quot;$(SkuaPlayerArchive)&quot;" WorkingDirectory="$(SkuaPlayerCache)" />
+    </Target>
+
+    <Target Name="DownloadSkuaPlayerV2" Condition="'$(SkuaPlayerLocal)' == '' And '$(SkuaPlayerV2Local)' == '' And !Exists('$(SkuaPlayerV2Dir)\$(SkuaPlayerExe)')">
+        <DownloadFile SourceUrl="$(SkuaPlayerV2Url)" DestinationFolder="$(SkuaPlayerV2Cache)" ContinueOnError="WarnAndContinue" />
+        <Exec Condition="Exists('$(SkuaPlayerV2Cache)\$(SkuaPlayerV2Archive)')" Command="tar -xzf &quot;$(SkuaPlayerV2Archive)&quot;" WorkingDirectory="$(SkuaPlayerV2Cache)" />
+    </Target>
+
+    <Target Name="AddSkuaPlayer" BeforeTargets="AssignTargetPaths" DependsOnTargets="DownloadSkuaPlayer;DownloadSkuaPlayerV2">
+        <ItemGroup>
+            <_SkuaPlayerFile Include="$(SkuaPlayerDir)\**" />
+            <None Include="@(_SkuaPlayerFile)" Link="player\%(_SkuaPlayerFile.RecursiveDir)%(_SkuaPlayerFile.Filename)%(_SkuaPlayerFile.Extension)" CopyToOutputDirectory="PreserveNewest" />
+            <_SkuaPlayerV2File Include="$(SkuaPlayerV2Dir)\**" Condition="Exists('$(SkuaPlayerV2Dir)')" />
+            <None Include="@(_SkuaPlayerV2File)" Link="player-x86-64-v2\%(_SkuaPlayerV2File.RecursiveDir)%(_SkuaPlayerV2File.Filename)%(_SkuaPlayerV2File.Extension)" CopyToOutputDirectory="PreserveNewest" />
+        </ItemGroup>
+    </Target>
+
+</Project>

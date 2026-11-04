@@ -1,0 +1,198 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.App.Avalonia.Views.RuntimeHelpersView">
+    
+    <Grid Margin="12" ColumnDefinitions="*,*" ColumnSpacing="12">
+        
+        <!-- Left Side: Drops Helper Card -->
+        <Border Grid.Column="0"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12"
+                DataContext="{Binding ToPickupDropsViewModel}">
+            <Grid RowDefinitions="Auto,*,Auto,Auto,Auto,Auto" RowSpacing="8">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                    <TextBlock Text="DROPS HELPER"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                    <Button Grid.Column="1"
+                            Classes="skua-button outline"
+                            Content="Remove Selected"
+                            Click="RemoveSelectedDrops_Click"
+                            Padding="8,2"
+                            Height="24"
+                            FontSize="11" />
+                </Grid>
+                
+                <Border Grid.Row="1" Classes="list-frame" MinHeight="160">
+                    <ListBox x:Name="DropList"
+                             ItemsSource="{Binding ToPickup}"
+                             SelectionMode="Multiple"
+                             Classes="embedded" />
+                </Border>
+
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <TextBox Grid.Column="0"
+                             Watermark="Drop Name (e.g. Unidentified 13)"
+                             Text="{Binding AddDropInput}" />
+                    <Button Grid.Column="1"
+                            Classes="skua-button skua-primary"
+                            Content="Add Drop"
+                            Command="{Binding AddDropCommand}" />
+                </Grid>
+                
+                <Grid Grid.Row="3" ColumnDefinitions="110,*,*" ColumnSpacing="8" VerticalAlignment="Center">
+                    <TextBox Grid.Column="0"
+                             Watermark="Interval (ms)"
+                             Text="{Binding Drops.Interval, UpdateSourceTrigger=PropertyChanged}"/>
+                    <CheckBox Grid.Column="1"
+                              Content="Reject Else"
+                              IsChecked="{Binding Drops.RejectElse}"
+                              VerticalAlignment="Center" />
+                    <CheckBox Grid.Column="2"
+                              Content="Accept AC Drops"
+                              IsChecked="{Binding Options.AcceptACDrops}"
+                              VerticalAlignment="Center" />
+                </Grid>
+                
+                <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <ToggleButton HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="0"
+                                  Margin="0"
+                                  Classes="option-chip"
+                                  Content="Pick Drops"
+                                  IsChecked="{Binding Drops.Enabled, Mode=OneWay}"
+                                  Command="{Binding ToggleDropsCommand}" />
+                    <Button Grid.Column="1"
+                            Classes="skua-button"
+                            Content="Notifications"
+                            Command="{Binding OpenNotifyDropCommand}" />
+                </Grid>
+            </Grid>
+        </Border>
+        
+        <!-- Right Side: Quests & Boosts Cards -->
+        <Grid Grid.Column="1" RowDefinitions="*, Auto" RowSpacing="12">
+            
+            <!-- Quests Helper Card -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SkuaSurfaceBrush}"
+                    BorderBrush="{DynamicResource SkuaBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12"
+                    DataContext="{Binding RegisteredQuestsViewModel}">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                        <TextBlock Text="QUESTS HELPER"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                        <Button Grid.Column="1"
+                                Classes="skua-button outline"
+                                Content="Remove Selected"
+                                Click="RemoveSelectedQuests_Click"
+                                Padding="8,2"
+                                Height="24"
+                                FontSize="11" />
+                    </Grid>
+                    
+                    <Border Grid.Row="1" Classes="list-frame" MinHeight="140">
+                        <ListBox x:Name="QuestRegList"
+                                 ItemsSource="{Binding CurrentAutoQuests}"
+                                 SelectionMode="Multiple"
+                                 Classes="embedded" />
+                    </Border>
+                    
+                    <Grid Grid.Row="2" ColumnDefinitions="*,130,Auto" ColumnSpacing="8">
+                        <TextBox Grid.Column="0"
+                                 Watermark="Quest ID"
+                                 Text="{Binding AddQuestInput}" />
+                        <TextBox Grid.Column="1"
+                                 Watermark="Reward ID (opt)"
+                                 Text="{Binding RewardIdInput}" />
+                        <Button Grid.Column="2"
+                                Classes="skua-button skua-primary"
+                                Content="Add Quest"
+                                Command="{Binding AddQuestCommand}" />
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- Boosts Helper Card -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource SkuaSurfaceBrush}"
+                    BorderBrush="{DynamicResource SkuaBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12"
+                    DataContext="{Binding BoostsViewModel}">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+                    <TextBlock Grid.Row="0"
+                               Text="BOOSTS HELPER"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+
+                    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="0"
+                                Classes="skua-button"
+                                Content="Search Inventory"
+                                Click="BoostIdsInventory_Click" />
+                        <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="1"
+                                Classes="skua-button"
+                                Content="Search Bank"
+                                Click="BoostIdsBank_Click" />
+                    </Grid>
+                    
+                    <Border Grid.Row="2"
+                            Background="{DynamicResource SkuaSurfaceAltBrush}"
+                            BorderBrush="{DynamicResource SkuaBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="8">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*, Auto" RowSpacing="4">
+                            <!-- Class boost -->
+                            <CheckBox Grid.Row="0" Grid.Column="0" Content="Class Boost"
+                                      IsChecked="{Binding Boosts.UseClassBoost}" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                       Text="{Binding Boosts.ClassBoostID, StringFormat='ID: {0}'}" />
+
+                            <!-- Gold boost -->
+                            <CheckBox Grid.Row="1" Grid.Column="0" Content="Gold Boost"
+                                      IsChecked="{Binding Boosts.UseGoldBoost}" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                       Text="{Binding Boosts.GoldBoostID, StringFormat='ID: {0}'}" />
+
+                            <!-- Exp boost -->
+                            <CheckBox Grid.Row="2" Grid.Column="0" Content="Experience Boost"
+                                      IsChecked="{Binding Boosts.UseExperienceBoost}" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                       Text="{Binding Boosts.ExperienceBoostID, StringFormat='ID: {0}'}" />
+
+                            <!-- Rep boost -->
+                            <CheckBox Grid.Row="3" Grid.Column="0" Content="Reputation Boost"
+                                      IsChecked="{Binding Boosts.UseReputationBoost}" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                       Text="{Binding Boosts.ReputationBoostID, StringFormat='ID: {0}'}" />
+                        </Grid>
+                    </Border>
+                    
+                    <ToggleButton Grid.Row="3" 
+                                  Margin="0"
+                                  Classes="option-chip"
+                                  Content="Use Boosts"
+                                  IsChecked="{Binding Boosts.Enabled, Mode=OneWay}"
+                                  Command="{Binding ToggleBoostsCommand}" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

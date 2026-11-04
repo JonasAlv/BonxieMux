@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.App.Avalonia.Views.PluginsView">
+
+  <Grid Margin="12" RowDefinitions="Auto,Auto,*" RowSpacing="10">
+    <!-- Search and load -->
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+      <TextBox Grid.Column="0" Watermark="Search plugins" Text="{Binding SearchText}">
+        <TextBox.InnerLeftContent>
+          <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        </TextBox.InnerLeftContent>
+      </TextBox>
+      <Button Grid.Column="1" Classes="skua-button skua-primary w112" Command="{Binding LoadPluginCommand}" ToolTip.Tip="Load a plugin DLL">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="15" Height="15" />
+          <TextBlock Text="Load..." VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </Grid>
+
+    <!-- Loaded header -->
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="6">
+      <TextBlock Grid.Column="0" Classes="section-label" Text="LOADED" />
+      <Border Grid.Column="1" Classes="count">
+        <TextBlock Text="{Binding Plugins.Count}" />
+      </Border>
+      <Button Grid.Column="3" Classes="skua-button small skua-danger-soft w112" Command="{Binding UnloadAllPluginsCommand}">
+        <StackPanel Orientation="Horizontal" Spacing="5">
+          <materialIcons:MaterialIcon Kind="Cancel" Width="14" Height="14" />
+          <TextBlock Text="Unload all" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </Grid>
+
+    <!-- Loaded plugins -->
+    <ListBox Grid.Row="2" ItemsSource="{Binding Plugins}" Padding="4">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" MinHeight="40" ToolTip.Tip="{Binding Description}">
+            <Border Grid.Column="0" Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SkuaSurfaceAltBrush}" VerticalAlignment="Center">
+              <materialIcons:MaterialIcon Kind="PuzzleOutline" Width="18" Height="18" Foreground="{DynamicResource SkuaAccentBrush}" />
+            </Border>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+              <TextBlock Text="{Binding Container.Plugin.Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+              <TextBlock FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis">
+                <TextBlock.Text>
+                  <MultiBinding StringFormat="{}by {0} · {1}">
+                    <Binding Path="Author" />
+                    <Binding Path="Description" />
+                  </MultiBinding>
+                </TextBlock.Text>
+              </TextBlock>
+            </StackPanel>
+            <Button Grid.Column="2" Classes="skua-button small w84" IsEnabled="{Binding HasOptions}" Command="{Binding EditPluginOptionsCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <materialIcons:MaterialIcon Kind="TuneVariant" Width="14" Height="14" />
+                <TextBlock Text="Options" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Grid.Column="3" Classes="skua-button small skua-danger-soft w84" Content="Unload" Command="{Binding UnloadCommand}" />
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+  </Grid>
+</UserControl>

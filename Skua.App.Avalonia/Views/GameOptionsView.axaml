@@ -1,0 +1,112 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.Options"
+             xmlns:views="clr-namespace:Skua.App.Avalonia.Views"
+             xmlns:sharedOptions="clr-namespace:Skua.Shared.Avalonia.Controls.Options;assembly=Skua.Shared.Avalonia"
+             x:Class="Skua.App.Avalonia.Views.GameOptionsView"
+             x:DataType="vms:GameOptionsViewModel"
+             mc:Ignorable="d" d:DesignHeight="680" d:DesignWidth="640">
+
+  <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="10">
+    <!-- Whose options these are: this client, or any other open account -->
+    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+      <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+        <materialIcons:MaterialIcon Kind="AccountSwitchOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" />
+        <TextBlock Text="Account" VerticalAlignment="Center" />
+      </StackPanel>
+      <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Accounts}" SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
+                ToolTip.Tip="Pick another open account to see and change its game options" />
+    </Grid>
+
+    <TextBox Grid.Row="1" Watermark="Search game options" Text="{Binding SearchText, Mode=TwoWay}">
+      <TextBox.InnerLeftContent>
+        <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+      </TextBox.InnerLeftContent>
+    </TextBox>
+
+    <!-- Sections: All, then each group -->
+    <ListBox Grid.Row="2" Classes="chips" ItemsSource="{Binding Sections}" SelectedItem="{Binding SelectedSection, Mode=TwoWay}">
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="vms:OptionGroupViewModel">
+          <StackPanel Orientation="Horizontal" Spacing="5" ToolTip.Tip="{Binding Title}">
+            <materialIcons:MaterialIcon Kind="{Binding Icon}" Width="14" Height="14" />
+            <TextBlock Text="{Binding ShortTitle}" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding Count}" Opacity="0.7" VerticalAlignment="Center" />
+          </StackPanel>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <!-- One list: a tinted header per section (under All), its options in two columns -->
+    <Border Grid.Row="3" Classes="option-list" VerticalAlignment="Top">
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" AllowAutoHide="False">
+        <StackPanel>
+        <ItemsControl ItemsSource="{Binding FilteredGroups}" Margin="0,0,0,-1">
+          <ItemsControl.Styles>
+            <!-- A line between the columns -->
+            <Style Selector="ContentPresenter:nth-child(2n+1) > Border.option-row">
+              <Setter Property="BorderThickness" Value="0,0,1,1" />
+            </Style>
+          </ItemsControl.Styles>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vms:OptionGroupViewModel">
+              <StackPanel>
+                <Border Classes="option-section"
+                        IsVisible="{Binding $parent[UserControl].DataContext.ShowSectionHeaders}">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <materialIcons:MaterialIcon Kind="{Binding Icon}" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" />
+                    <TextBlock Classes="section-label" Text="{Binding Title}" />
+                    <Border Classes="count">
+                      <TextBlock Text="{Binding Count}" />
+                    </Border>
+                  </StackPanel>
+                </Border>
+                <ItemsControl ItemsSource="{Binding Items}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <UniformGrid Columns="2" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Classes="option-row" MinHeight="38" Padding="12,3">
+                        <sharedOptions:OptionItemControl CompactText="True" />
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+
+    <Grid Grid.Row="4" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
+      <Button Grid.Column="0" Classes="skua-button w84" Command="{Binding ResetDefaultOptionsCommand}" ToolTip.Tip="Reset to application default values">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <materialIcons:MaterialIcon Kind="Restore" Width="15" Height="15" />
+          <TextBlock Text="Defaults" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button Grid.Column="1" Classes="skua-button w84" Command="{Binding ResetOptionsCommand}" ToolTip.Tip="Reset to saved user values">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <materialIcons:MaterialIcon Kind="Undo" Width="15" Height="15" />
+          <TextBlock Text="Reset" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <TextBlock Grid.Column="2" Text="{Binding FooterNote}" FontSize="11" HorizontalAlignment="Right"
+                 VerticalAlignment="Center" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+      <Button Grid.Column="3" Classes="skua-button skua-primary w112" Command="{Binding SaveOptionsCommand}" ToolTip.Tip="Keep these options for next time">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <materialIcons:MaterialIcon Kind="ContentSave" Width="15" Height="15" />
+          <TextBlock Text="Save" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </Grid>
+  </Grid>
+</UserControl>

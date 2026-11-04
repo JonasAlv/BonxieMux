@@ -1,0 +1,141 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        xmlns:shell="clr-namespace:Skua.Shared.Avalonia.Controls.Shell;assembly=Skua.Shared.Avalonia"
+        xmlns:local="clr-namespace:Skua.Plugin.DailyTracker"
+        x:Class="Skua.Plugin.DailyTracker.DailyTrackerWindow"
+        Classes="skua"
+        Title="Daily &amp; Weekly Tracker"
+        Width="520" Height="720"
+        MinWidth="440" MinHeight="500"
+        SystemDecorations="BorderOnly"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="32"
+        WindowStartupLocation="Manual">
+
+    <Border BorderBrush="{DynamicResource SkuaBorderBrush}"
+            BorderThickness="1"
+            Background="{DynamicResource SkuaSurfaceBrush}">
+        <Grid RowDefinitions="Auto,*">
+            <shell:WindowTitleBar Grid.Row="0" TitleText="Daily &amp; Weekly Tracker" />
+
+            <Grid Grid.Row="1" Margin="16" RowDefinitions="Auto,*">
+                <DockPanel Grid.Row="0" Margin="0,0,0,16">
+                    <TextBlock Text="Task Tracker"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaTextBrush}"
+                               DockPanel.Dock="Left"
+                               VerticalAlignment="Center"/>
+                    <Button Classes="skua-button"
+                            x:Name="RefreshBtn"
+                            MinWidth="112"
+                            DockPanel.Dock="Right"
+                            HorizontalAlignment="Right"
+                            Height="32"
+                            Padding="12,0"
+                            Click="Refresh_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <materialIcons:MaterialIcon Kind="Refresh" Width="16" Height="16" />
+                            <TextBlock x:Name="RefreshText" Text="Refresh" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12"/>
+                        </StackPanel>
+                    </Button>
+                </DockPanel>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="CategoriesControl" Grid.IsSharedSizeScope="True">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:QuestCategory">
+                                <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
+                                        BorderBrush="{DynamicResource SkuaBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        Margin="0,0,0,12">
+                                    <StackPanel Spacing="8">
+                                        <DockPanel Margin="0,0,0,4">
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontSize="15"
+                                                       FontWeight="Bold"
+                                                       Foreground="{DynamicResource SkuaAccentBrush}"
+                                                       DockPanel.Dock="Left"
+                                                       VerticalAlignment="Center"/>
+                                            <Button Classes="skua-button skua-primary"
+                                                    Content="Start"
+                                                    Height="26"
+                                                    Padding="12,0"
+                                                    DockPanel.Dock="Right"
+                                                    HorizontalAlignment="Right"
+                                                    Click="StartCategory_Click"
+                                                    Tag="{Binding Name}"
+                                                    IsVisible="{Binding HasCategoryScript}"
+                                                    FontSize="11"
+                                                    FontWeight="SemiBold"/>
+                                        </DockPanel>
+
+                                        <ItemsControl ItemsSource="{Binding Quests}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="local:QuestItem">
+                                                    <!-- Shared columns keep the status badges aligned whether or not a row has a Start button -->
+                                                    <Grid Margin="0,3">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="45" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" SharedSizeGroup="QuestStatus" />
+                                                            <ColumnDefinition Width="Auto" SharedSizeGroup="QuestStart" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0"
+                                                                   Text="{Binding ID}"
+                                                                   Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                                                   FontSize="12"
+                                                                   VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="1"
+                                                                   Text="{Binding Name}"
+                                                                   Foreground="{DynamicResource SkuaTextBrush}"
+                                                                   FontSize="12"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   Margin="6,0"
+                                                                   VerticalAlignment="Center"/>
+                                                        <Border Grid.Column="2"
+                                                                Background="{Binding StatusBrush}"
+                                                                CornerRadius="4"
+                                                                Height="22"
+                                                                MinWidth="80"
+                                                                Padding="8,0"
+                                                                Margin="4,0"
+                                                                VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding StatusText}"
+                                                                       Foreground="White"
+                                                                       FontWeight="SemiBold"
+                                                                       TextAlignment="Center"
+                                                                       FontSize="11"
+                                                                       VerticalAlignment="Center"
+                                                                       HorizontalAlignment="Center"/>
+                                                        </Border>
+                                                        <Button Grid.Column="3"
+                                                                Classes="skua-button"
+                                                                Content="Start"
+                                                                Height="24"
+                                                                Padding="10,0"
+                                                                Margin="6,0,0,0"
+                                                                VerticalAlignment="Center"
+                                                                IsVisible="{Binding ShowScript}"
+                                                                Click="StartScript_Click"
+                                                                Tag="{Binding ScriptName}"
+                                                                FontSize="11"
+                                                                FontWeight="SemiBold"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

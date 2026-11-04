@@ -1,0 +1,492 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:uc="clr-namespace:Skua.Manager.Avalonia.UserControls"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:sharedControls="clr-namespace:Skua.Shared.Avalonia.Controls.Buttons;assembly=Skua.Shared.Avalonia"
+             xmlns:sharedSettings="clr-namespace:Skua.Shared.Avalonia.Controls.Settings;assembly=Skua.Shared.Avalonia"
+             x:Class="Skua.Manager.Avalonia.UserControls.AccountManagerUserControl"
+             d:DesignWidth="800"
+             d:DesignHeight="600"
+             mc:Ignorable="d">
+    <Grid Margin="6" RowDefinitions="Auto,*,Auto,Auto">
+        <Border x:Name="AddAccountForm"
+                Grid.Row="0"
+                IsVisible="False"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="8"
+                Margin="0,0,0,6">
+            <Grid ColumnDefinitions="*,*,*,Auto,Auto" ColumnSpacing="6">
+                <TextBox Grid.Column="0"
+                         Watermark="Username"
+                         Text="{Binding UsernameInput}" />
+                <Grid Grid.Column="1">
+                    <TextBox x:Name="PswBox"
+                             TextChanged="PasswordBox_PasswordChanged"
+                             PasswordChar="*"
+                             Watermark="Password"
+                             Padding="8,6,32,6" />
+                    <Button x:Name="TogglePswVisibilityButton"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Classes="icon"
+                            Width="26"
+                            Height="26"
+                            Margin="0,0,2,0"
+                            Click="TogglePasswordVisibility_Click"
+                            ToolTip.Tip="Show/Hide Password">
+                        <materialIcons:MaterialIcon x:Name="PswVisibilityIcon"
+                                                    Kind="EyeOutline"
+                                                    Width="15"
+                                                    Height="15" />
+                    </Button>
+                </Grid>
+                <TextBox Grid.Column="2"
+                         Watermark="Display Name (optional)"
+                         Text="{Binding DisplayNameInput}" />
+                <Button Grid.Column="3"
+                        Classes="icon icon-28"
+                        Command="{Binding AddAccountCommand}"
+                        ToolTip.Tip="Add account">
+                    <materialIcons:MaterialIcon Kind="Check"
+                                                Width="14"
+                                                Height="14"
+                                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                </Button>
+                <Button Grid.Column="4"
+                        Classes="icon icon-28"
+                        Click="HideAddAccountButton_Click"
+                        ToolTip.Tip="Cancel">
+                    <materialIcons:MaterialIcon Kind="Close" Width="14" Height="14" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <TabControl Grid.Row="1"
+                    Classes="account-groups-switcher"
+                    Padding="0">
+            <TabItem Header="Accounts">
+                <Grid RowDefinitions="Auto,*" Margin="0,4,0,0">
+                    <Grid Grid.Row="0" Margin="0,4,0,6" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto">
+                        <!-- Select All -->
+                        <Button Grid.Column="0"
+                                Classes="skua-button"
+                                Height="28"
+                                Padding="6,4"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                Command="{Binding SelectAllCommand}"
+                                ToolTip.Tip="Select All Accounts">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <materialIcons:MaterialIcon Kind="SelectAll" Width="14" Height="14" VerticalAlignment="Center" />
+                                <TextBlock Text="Select All" FontSize="11" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Selected count -->
+                        <TextBlock Grid.Column="1"
+                                   Margin="0,0,8,0"
+                                   VerticalAlignment="Center"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Text="{Binding SelectedAccountQuant, StringFormat='Selected: {0}'}"
+                                   IsVisible="{Binding SelectedAccountQuant, Converter={StaticResource IntGreaterThanZeroConverter}}" />
+
+                        <!-- Unselect Selected -->
+                        <Button Grid.Column="2"
+                                Classes="skua-button"
+                                Height="28"
+                                Padding="6,4"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                Command="{Binding DeselectAllCommand}"
+                                ToolTip.Tip="Unselect Selected"
+                                IsVisible="{Binding SelectedAccountQuant, Converter={StaticResource IntGreaterThanZeroConverter}}">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <materialIcons:MaterialIcon Kind="SelectOff" Width="14" Height="14" VerticalAlignment="Center" />
+                                <TextBlock Text="Unselect Selected" FontSize="11" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Remove Selected -->
+                        <Button Grid.Column="3"
+                                Classes="skua-button"
+                                Height="28"
+                                Padding="6,4"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                Command="{Binding RemoveAccountsCommand}"
+                                ToolTip.Tip="Remove Selected"
+                                IsVisible="{Binding SelectedAccountQuant, Converter={StaticResource IntGreaterThanZeroConverter}}">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <materialIcons:MaterialIcon Kind="DeleteOutline" Width="14" Height="14" VerticalAlignment="Center" />
+                                <TextBlock Text="Remove Selected" FontSize="11" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Move Selected Up -->
+                        <Button Grid.Column="4"
+                                Classes="icon"
+                                Width="28"
+                                Height="28"
+                                Margin="0,0,4,0"
+                                VerticalAlignment="Center"
+                                Command="{Binding MoveSelectedUpCommand}"
+                                ToolTip.Tip="Move Selected Up"
+                                IsVisible="{Binding SelectedAccountQuant, Converter={StaticResource IntGreaterThanZeroConverter}}">
+                            <materialIcons:MaterialIcon Kind="ArrowUp" Width="16" Height="16" />
+                        </Button>
+
+                        <!-- Move Selected Down -->
+                        <Button Grid.Column="5"
+                                Classes="icon"
+                                Width="28"
+                                Height="28"
+                                Margin="0,0,12,0"
+                                VerticalAlignment="Center"
+                                Command="{Binding MoveSelectedDownCommand}"
+                                ToolTip.Tip="Move Selected Down"
+                                IsVisible="{Binding SelectedAccountQuant, Converter={StaticResource IntGreaterThanZeroConverter}}">
+                            <materialIcons:MaterialIcon Kind="ArrowDown" Width="16" Height="16" />
+                        </Button>
+
+                        <!-- Refresh Accounts Button -->
+                        <Button Grid.Column="6"
+                                Classes="icon"
+                                Width="28"
+                                Height="28"
+                                Margin="0,0,8,0"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Command="{Binding ReloadAccountsCommand}"
+                                ToolTip.Tip="Refresh Accounts &amp; Groups (F5)">
+                            <materialIcons:MaterialIcon Kind="Refresh" Width="15" Height="15" />
+                        </Button>
+
+                        <!-- Add Account Button -->
+                        <Button x:Name="ShowAddAccountButton"
+                                Grid.Column="7"
+                                Classes="skua-button"
+                                Height="30"
+                                Padding="8,4"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                Click="ShowAddAccountButton_Click"
+                                ToolTip.Tip="Add Account">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <materialIcons:MaterialIcon Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" />
+                                <TextBlock Text="Add Account" FontSize="11" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Grid Columns ComboBox -->
+                        <ComboBox Grid.Column="8"
+                                  Classes="columns-picker"
+                                  Height="30"
+                                  Margin="0,0,8,0"
+                                  VerticalAlignment="Center"
+                                  IsVisible="{Binding ShowGridView}"
+                                  ItemsSource="{Binding ColumnOptions}"
+                                  SelectedValueBinding="{Binding .}"
+                                  SelectedValue="{Binding Columns}"
+                                  ToolTip.Tip="Grid Columns">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" HorizontalAlignment="Center" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <!-- Tag Filter Button -->
+                        <ToggleButton x:Name="FilterPopupAnchor"
+                                      Grid.Column="9"
+                                      Classes="app-toggle"
+                                      Width="32"
+                                      Height="30"
+                                      Margin="0,0,8,0"
+                                      VerticalAlignment="Center"
+                                      IsChecked="{Binding IsFilterPopupOpen}"
+                                      ToolTip.Tip="Filter by tags">
+                            <materialIcons:MaterialIcon Kind="FilterOutline" Width="16" Height="16" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </ToggleButton>
+
+                        <!-- Toggle Tags Visibility -->
+                        <ToggleButton Grid.Column="10"
+                                      Classes="app-toggle"
+                                      Width="32"
+                                      Height="30"
+                                      Margin="0,0,8,0"
+                                      VerticalAlignment="Center"
+                                      IsChecked="{Binding ShowTags}"
+                                      ToolTip.Tip="Toggle Tag Visibility">
+                            <materialIcons:MaterialIcon Kind="Tag" Width="16" Height="16" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </ToggleButton>
+
+                        <!-- Toggle Grid/List View -->
+                        <ToggleButton Grid.Column="11"
+                                      Classes="app-toggle"
+                                      Width="32"
+                                      Height="30"
+                                      VerticalAlignment="Center"
+                                      IsChecked="{Binding ShowGridView}"
+                                      ToolTip.Tip="Toggle Grid/List View">
+                            <materialIcons:MaterialIcon Kind="ViewGrid" Width="16" Height="16" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </ToggleButton>
+
+                        <uc:AccountTagFilterPopup IsOpen="{Binding IsFilterPopupOpen}"
+                                                  Anchor="{Binding #FilterPopupAnchor}"
+                                                  TagSearchText="{Binding TagSearchText}"
+                                                  FilteredTags="{Binding FilteredTags}"
+                                                  ClearCommand="{Binding ClearTagFiltersCommand}" />
+                    </Grid>
+
+                    <Grid Grid.Row="1">
+                        <ScrollViewer
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      IsVisible="{Binding !ShowGridView}"
+                                      VerticalScrollBarVisibility="Auto">
+                            <ScrollViewer.ContextMenu>
+                                <uc:SelectedAccountsContextMenu />
+                            </ScrollViewer.ContextMenu>
+                            <ItemsControl ItemsSource="{Binding FilteredAccounts}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <uc:AccountListRow />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <ScrollViewer x:Name="AccountGridScrollViewer"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      IsVisible="{Binding ShowGridView}"
+                                      VerticalScrollBarVisibility="Auto">
+                            <ScrollViewer.ContextMenu>
+                                <uc:SelectedAccountsContextMenu />
+                            </ScrollViewer.ContextMenu>
+                            <ItemsControl ItemsSource="{Binding FilteredAccounts}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel>
+                                            <WrapPanel.ItemWidth>
+                                                <MultiBinding Converter="{StaticResource AccountGridItemWidthConverter}">
+                                                    <Binding ElementName="AccountGridScrollViewer"
+                                                             Path="Viewport.Width" />
+                                                    <Binding RelativeSource="{RelativeSource AncestorType=UserControl}"
+                                                             Path="DataContext.Columns" />
+                                                </MultiBinding>
+                                            </WrapPanel.ItemWidth>
+                                        </WrapPanel>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <uc:AccountGridTile />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Groups">
+                <Grid RowDefinitions="Auto,*" Margin="0,4,0,0">
+                    <DockPanel Grid.Row="0"
+                               Classes="header-row"
+                               LastChildFill="False">
+                        <ToggleButton DockPanel.Dock="Right"
+                                      Classes="app-toggle app-toggle-compact"
+                                      IsChecked="{Binding ShowTags}"
+                                      Margin="0"
+                                      ToolTip.Tip="Toggle group tag visibility">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <materialIcons:MaterialIcon Kind="Tag"
+                                                            Width="14"
+                                                            Height="14"
+                                                            VerticalAlignment="Center" />
+                                <TextBlock Text="Tags"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ToggleButton>
+                        <Button DockPanel.Dock="Left"
+                                Classes="icon header-gap"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                Click="AddGroup_Click"
+                                ToolTip.Tip="Create New Group">
+                            <materialIcons:MaterialIcon Kind="AccountMultiplePlus"
+                                                        Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                                        Width="14"
+                                                        Height="14" />
+                        </Button>
+                    </DockPanel>
+
+                    <ScrollViewer Grid.Row="1"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Groups}"
+                                      Margin="0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <uc:GroupItemUserControl />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Start Controls -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="8,6"
+                Margin="0,4,0,4">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="6">
+                <ComboBox Grid.Column="0"
+                          Height="34"
+                          HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding ServerList}"
+                          SelectedItem="{Binding SelectedServer}"
+                          VerticalAlignment="Center"
+                          DropDownOpened="ServerList_DropDownOpened"
+                          PlaceholderText="Loading servers…"
+                          ToolTip.Tip="Which server to login when launching accounts">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <sharedSettings:ServerStatusInline Server="{Binding .}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Grid.Column="1"
+                        Height="34"
+                        VerticalAlignment="Center"
+                        Classes="skua-button skua-primary"
+                        Command="{Binding StartAccountsCommand}"
+                        ToolTip.Tip="Launch and login all the accounts with the checkbox marked">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="16" Height="16" VerticalAlignment="Center" />
+                        <TextBlock Text="Start Selected" FontWeight="Bold" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="2" Height="34" VerticalAlignment="Center" Classes="icon" Command="{Binding StartAccountsInNewWindowCommand}" ToolTip.Tip="Start selected accounts in a separate window">
+                    <materialIcons:MaterialIcon Kind="OpenInNew" Width="16" Height="16" />
+                </Button>
+                <Button Grid.Column="3"
+                        Height="34"
+                        VerticalAlignment="Center"
+                        Classes="skua-button"
+                        Command="{Binding StartAllAccountsCommand}"
+                        ToolTip.Tip="Launch all saved accounts">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="PlayCircle" Width="16" Height="16" VerticalAlignment="Center" />
+                        <TextBlock Text="Start All" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="4" Height="34" VerticalAlignment="Center" Classes="icon" Command="{Binding StartAllAccountsInNewWindowCommand}" ToolTip.Tip="Start all accounts in a separate window">
+                    <materialIcons:MaterialIcon Kind="OpenInNew" Width="16" Height="16" />
+                </Button>
+                <CheckBox Grid.Column="5" VerticalAlignment="Center" IsChecked="{Binding StartInGridView}" Content="Grid" ToolTip.Tip="Open Grid View automatically when launching two or more accounts" />
+                <NumericUpDown Grid.Column="6" Width="70" Height="34" VerticalAlignment="Center" Minimum="0" Maximum="60" Value="{Binding LaunchDelaySeconds}" ToolTip.Tip="Seconds between launching accounts" />
+                <Button Grid.Column="7" Height="34" VerticalAlignment="Center" Classes="icon" Command="{Binding CancelLaunchCommand}" ToolTip.Tip="Cancel account launch batch">
+                    <materialIcons:MaterialIcon Kind="StopCircleOutline" Width="16" Height="16" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Script Section -->
+        <Border Grid.Row="3"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="8,6"
+                Margin="0,0,0,2">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
+                <!-- Script Path Box & Action Buttons -->
+                <DockPanel Grid.Column="0" Height="34">
+                    <Button Height="34"
+                            VerticalAlignment="Center"
+                            Command="{Binding OpenGetScriptsCommand}"
+                            DockPanel.Dock="Right"
+                            Classes="skua-button"
+                            ToolTip.Tip="Browse and download scripts"
+                            Padding="8,0"
+                            Margin="4,0,0,0">
+                        <materialIcons:MaterialIcon Kind="Magnify" Width="16" Height="16" />
+                    </Button>
+                    <Button Height="34"
+                            VerticalAlignment="Center"
+                            Command="{Binding ChangeScriptPathCommand}"
+                            DockPanel.Dock="Right"
+                            Classes="skua-button"
+                            ToolTip.Tip="Select script file from folder"
+                            Padding="8,0"
+                            Margin="4,0,0,0">
+                        <materialIcons:MaterialIcon Kind="Folder" Width="16" Height="16" />
+                    </Button>
+                    <Border Height="34"
+                            BorderBrush="{DynamicResource SkuaBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Background="{DynamicResource SkuaSurfaceAltBrush}"
+                            ToolTip.Tip="Path to a script which will be loaded and started after launching an account">
+                        <TextBlock Margin="10,0"
+                                   VerticalAlignment="Center"
+                                   Text="{Binding ScriptPath, FallbackValue='No script selected'}"
+                                   Foreground="{DynamicResource SkuaTextBrush}"
+                                   FontFamily="JetBrains Mono,Consolas,Courier New,monospace"
+                                   FontSize="12"
+                                   TextTrimming="CharacterEllipsis" />
+                    </Border>
+                </DockPanel>
+
+                <!-- Auto-start Checkbox -->
+                <CheckBox Grid.Column="1"
+                          VerticalAlignment="Center"
+                          Content="Auto-start"
+                          IsChecked="{Binding StartWithScript}"
+                          ToolTip.Tip="After launching and logging in to the accounts, starts the specified script" />
+
+                <!-- Edit Script Options Button -->
+                <Button Grid.Column="2"
+                        Height="34"
+                        VerticalAlignment="Center"
+                        Classes="skua-button"
+                        Command="{Binding EditScriptOptionsCommand}"
+                        IsVisible="{Binding HasScriptPath}"
+                        ToolTip.Tip="Edit the selected script's shared options">
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <materialIcons:MaterialIcon Kind="TuneVertical" Width="15" Height="15" />
+                        <TextBlock Text="Edit Options" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Save Setup Button -->
+                <Button Grid.Column="3"
+                        Height="34"
+                        VerticalAlignment="Center"
+                        Classes="skua-button"
+                        Command="{Binding SaveSetupCommand}"
+                        Content="Save Setup"
+                        ToolTip.Tip="Saves selected accounts, script path, and auto-start" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
+
+
+
+
+
+
+
+

@@ -1,0 +1,567 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Skua.Manager.Avalonia.ViewModels"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.Manager.Avalonia.UserControls.ArmyQueueUserControl"
+             x:DataType="vm:ArmyQueueViewModel"
+             d:DesignWidth="850"
+             d:DesignHeight="500"
+             mc:Ignorable="d">
+
+    <Grid Margin="10" RowDefinitions="Auto,*" RowSpacing="8">
+
+        <!-- 1. Pinned Header Bar (Always accessible: Title, How to Use toggle, Start/Stop Queue) -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <materialIcons:MaterialIcon Kind="AccountGroupOutline" Width="22" Height="22" Foreground="{DynamicResource SkuaAccentBrush}" />
+                <TextBlock Text="Army Queue" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+                
+                <!-- Help button -->
+                <Button Classes="skua-button"
+                        Padding="8,4"
+                        Height="26"
+                        VerticalAlignment="Center"
+                        ToolTip.Tip="Toggle Quick Guide"
+                        Command="{Binding ToggleHelpGuideCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <materialIcons:MaterialIcon Kind="HelpCircleOutline" Width="14" Height="14" />
+                        <TextBlock Text="How to Use" FontSize="11" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!-- Start / Pause / Resume / Stop Buttons -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <!-- Start Queue -->
+                <Button Classes="skua-button skua-primary"
+                        Height="34"
+                        Padding="16,0"
+                        IsVisible="{Binding !IsRunning}"
+                        Command="{Binding StartQueueCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="16" Height="16" />
+                        <TextBlock Text="Start Queue" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Pause Queue -->
+                <Button Classes="skua-button"
+                        Height="34"
+                        Padding="14,0"
+                        IsVisible="{Binding CanPause}"
+                        ToolTip.Tip="Pause after current squad finishes - will NOT start next squad"
+                        Command="{Binding PauseQueueCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="PauseCircleOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" />
+                        <TextBlock Text="Pause Queue" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Resume Queue -->
+                <Button Classes="skua-button skua-primary"
+                        Height="34"
+                        Padding="14,0"
+                        IsVisible="{Binding CanResume}"
+                        ToolTip.Tip="Resume queue and proceed to next squad"
+                        Command="{Binding ResumeQueueCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="16" Height="16" />
+                        <TextBlock Text="Resume Queue" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Stop Queue -->
+                <Button Classes="skua-button"
+                        Height="34"
+                        Padding="14,0"
+                        IsVisible="{Binding IsRunning}"
+                        ToolTip.Tip="Stop queue completely"
+                        Command="{Binding StopQueueCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="StopCircleOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaDangerBrush}" />
+                        <TextBlock Text="Stop Queue" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- 2. Scrollable Content Area: Scrolls when guide is open or content overflows, snaps to fit when guide is closed -->
+        <ScrollViewer Grid.Row="1"
+                      x:Name="ContentScrollViewer"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="8" Margin="0,0,4,0">
+
+                <!-- 2a. Quick Guide Banner (Collapsible) -->
+                <Border IsVisible="{Binding ShowHelpGuide}"
+                        Background="{DynamicResource SkuaSurfaceSubtleBrush}"
+                        BorderBrush="{DynamicResource SkuaAccentBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="12,10">
+                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <materialIcons:MaterialIcon Kind="InformationOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" />
+                                <TextBlock Text="Quick Guide: How Army Queue Works" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
+                            </StackPanel>
+                            <Button Grid.Column="1" Classes="skua-button" Padding="4" Height="22" Width="22" Command="{Binding DismissHelpGuideCommand}">
+                                <materialIcons:MaterialIcon Kind="Close" Width="12" Height="12" />
+                            </Button>
+                        </Grid>
+
+                        <StackPanel Grid.Row="1" Spacing="4" Margin="22,0,0,0">
+                            <TextBlock Text="1. Create Squads: Keep Squad 1 or click '+ Squad' to add more squads (runs one after another)." FontSize="11" Foreground="{DynamicResource SkuaTextBrush}" />
+                            <TextBlock Text="2. Pick Players: Click '+ Pick Accounts' to check off accounts directly from your list." FontSize="11" Foreground="{DynamicResource SkuaTextBrush}" />
+                            <TextBlock Text="3. Assign Scripts: Set a squad script, or choose an account's own Script to override it (e.g. LoO, AP, SC, DPS)." FontSize="11" Foreground="{DynamicResource SkuaTextBrush}" />
+                            <TextBlock Text="4. Hit 'Start Queue': Squad 1 runs -> auto-exits on completion -> Squad 2 starts automatically!" FontSize="11" Foreground="{DynamicResource SkuaTextBrush}" />
+                            <TextBlock Text="Tip: You can reuse the same account in multiple squads (e.g., your main buffer as carry in Squad 1 and Squad 2)." FontSize="10" FontStyle="Italic" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                        </StackPanel>
+
+                        <Button Grid.Row="2"
+                                Classes="skua-button"
+                                HorizontalAlignment="Right"
+                                Padding="10,3"
+                                Command="{Binding DismissHelpGuideCommand}">
+                            <TextBlock Text="Got it, hide guide" FontSize="10" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- 2b. Status Bar (Visible when running) -->
+                <Border IsVisible="{Binding IsRunning}"
+                        Background="{DynamicResource SkuaSurfaceBrush}"
+                        BorderBrush="{DynamicResource SkuaBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="10,6">
+                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ProgressValue, StringFormat={}{0:F0}%}" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                        <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Height="4" Value="{Binding ProgressValue}" Minimum="0" Maximum="100" />
+                    </Grid>
+                </Border>
+
+                <!-- 2c. Squads & Member List (Full Width, Crisp Card) -->
+                <Border Background="{DynamicResource SkuaSurfaceBrush}"
+                        BorderBrush="{DynamicResource SkuaBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="10">
+                    <StackPanel Spacing="8">
+
+                        <!-- Squad Tabs Header -->
+                        <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <ListBox ItemsSource="{Binding Steps}"
+                                             SelectedItem="{Binding SelectedStep, Mode=TwoWay}">
+                                        <ListBox.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" Spacing="4" />
+                                            </ItemsPanelTemplate>
+                                        </ListBox.ItemsPanel>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ArmyQueueStepViewModel">
+                                                <Border Padding="4,2"
+                                                        Background="Transparent"
+                                                        DragDrop.AllowDrop="True"
+                                                        PointerPressed="OnSquadTabPointerPressed"
+                                                        PointerMoved="OnSquadTabPointerMoved"
+                                                        DragDrop.DragOver="OnSquadTabDragOver"
+                                                        DragDrop.Drop="OnSquadTabDrop">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                        <materialIcons:MaterialIcon Kind="DragHorizontalVariant" Width="12" Height="12" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+                                                        <Border CornerRadius="8" Background="{DynamicResource SkuaSurfaceSubtleBrush}" Padding="6,1" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Members.Count}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                        </Border>
+                                                        <!-- Tab Close X Button -->
+                                                        <Button Classes="skua-button"
+                                                                Height="18"
+                                                                Width="18"
+                                                                Padding="0"
+                                                                CornerRadius="9"
+                                                                VerticalAlignment="Center"
+                                                                ToolTip.Tip="Close Squad"
+                                                                Command="{Binding $parent[UserControl].((vm:ArmyQueueViewModel)DataContext).RemoveStepSpecificCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <materialIcons:MaterialIcon Kind="Close" Width="10" Height="10" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+
+                                    <!-- + Add Squad Button (Icon only) -->
+                                    <Button Classes="skua-button"
+                                            Height="28"
+                                            Width="28"
+                                            Padding="0"
+                                            CornerRadius="14"
+                                            VerticalAlignment="Center"
+                                            ToolTip.Tip="Add Squad"
+                                            Command="{Binding AddStepCommand}">
+                                        <materialIcons:MaterialIcon Kind="Plus" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Button>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <!-- Squad Actions -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                <Button Classes="skua-button" Padding="8,4" ToolTip.Tip="Import an existing Manager Group as a Squad" Command="{Binding ImportGroupAsStepCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <materialIcons:MaterialIcon Kind="FolderAccountOutline" Width="14" Height="14" />
+                                        <TextBlock Text="Import Group" FontSize="11" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+
+                        <Separator Height="1" Background="{DynamicResource SkuaBorderBrush}" Margin="0,2" />
+
+                        <!-- Active Squad Details & Players -->
+                        <StackPanel Spacing="6"
+                                    IsVisible="{Binding SelectedStep, Converter={x:Static ObjectConverters.IsNotNull}}">
+
+                            <!-- Squad Settings Row: Name, Default Script Box, + Pick Accounts Button -->
+                            <Grid ColumnDefinitions="150,*,Auto" ColumnSpacing="10" VerticalAlignment="Center">
+                                <!-- Squad Name input -->
+                                <TextBox Text="{Binding SelectedStep.Name}"
+                                         Height="32"
+                                         FontSize="12"
+                                         FontWeight="SemiBold"
+                                         CornerRadius="6"
+                                         Watermark="Squad Name" />
+
+                                <!-- Default Squad Script Box -->
+                                <Border Grid.Column="1"
+                                        Height="32"
+                                        Background="{DynamicResource SkuaSurfaceSubtleBrush}"
+                                        BorderBrush="{DynamicResource SkuaBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="10,0">
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto" ColumnSpacing="6" VerticalAlignment="Center">
+                                        <materialIcons:MaterialIcon Grid.Column="0"
+                                                                    Kind="FileCodeOutline"
+                                                                    Width="16"
+                                                                    Height="16"
+                                                                    Foreground="{DynamicResource SkuaAccentBrush}"
+                                                                    VerticalAlignment="Center" />
+
+                                        <!-- Script Name or Placeholder -->
+                                        <Panel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="Default Script (Optional - applies to all squad members)"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       IsVisible="{Binding !SelectedStep.HasStepScript}" />
+                                            <TextBlock Text="{Binding SelectedStep.DisplayStepScriptName}"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource SkuaTextBrush}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip.Tip="{Binding SelectedStep.StepScriptPath}"
+                                                       IsVisible="{Binding SelectedStep.HasStepScript}" />
+                                        </Panel>
+
+                                        <!-- Browse Repo Button -->
+                                        <Button Grid.Column="2"
+                                                Classes="skua-button"
+                                                Height="24"
+                                                Padding="8,0"
+                                                VerticalAlignment="Center"
+                                                ToolTip.Tip="Browse and download scripts from repository"
+                                                Command="{Binding OpenScriptRepoForStepCommand}"
+                                                CommandParameter="{Binding SelectedStep}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                <materialIcons:MaterialIcon Kind="Magnify" Width="13" Height="13" />
+                                                <TextBlock Text="Browse" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Select from disk (Folder) Button -->
+                                        <Button Grid.Column="3"
+                                                Classes="skua-button"
+                                                Height="24"
+                                                Width="24"
+                                                Padding="0"
+                                                VerticalAlignment="Center"
+                                                ToolTip.Tip="Select script file from folder"
+                                                Command="{Binding SelectedStep.BrowseStepScriptCommand}">
+                                            <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="13" Height="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Button>
+
+                                        <!-- Configure Options Button (Only visible when script is set!) -->
+                                        <Button Grid.Column="4"
+                                                Classes="skua-button"
+                                                Height="24"
+                                                Padding="8,0"
+                                                VerticalAlignment="Center"
+                                                ToolTip.Tip="Configure options for this squad's script"
+                                                IsVisible="{Binding SelectedStep.HasStepScript}"
+                                                Command="{Binding EditStepScriptConfigCommand}"
+                                                CommandParameter="{Binding SelectedStep}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                <materialIcons:MaterialIcon Kind="TuneVertical" Width="13" Height="13" />
+                                                <TextBlock Text="Options" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Clear Button (Only visible when script is set!) -->
+                                        <Button Grid.Column="5"
+                                                Classes="skua-button"
+                                                Height="20"
+                                                Width="20"
+                                                Padding="0"
+                                                CornerRadius="10"
+                                                VerticalAlignment="Center"
+                                                ToolTip.Tip="Clear default script"
+                                                IsVisible="{Binding SelectedStep.HasStepScript}"
+                                                Command="{Binding SelectedStep.ClearStepScriptCommand}">
+                                            <materialIcons:MaterialIcon Kind="Close" Width="11" Height="11" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Button>
+                                    </Grid>
+                                </Border>
+
+                                <!-- + Pick Accounts Button -->
+                                <Button Grid.Column="2"
+                                        Classes="skua-button skua-primary"
+                                        Height="32"
+                                        Padding="14,0"
+                                        ToolTip.Tip="Pick individual accounts to add to this squad"
+                                        Command="{Binding OpenAccountPickerCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <materialIcons:MaterialIcon Kind="AccountPlusOutline" Width="15" Height="15" />
+                                        <TextBlock Text="+ Pick Accounts" FontSize="12" FontWeight="Bold" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+
+                            <!-- Empty squad notice -->
+                            <Border IsVisible="{Binding !SelectedStep.Members.Count}"
+                                    Padding="16"
+                                    HorizontalAlignment="Center">
+                                <TextBlock Text="No players in this squad yet. Click '+ Pick Accounts' above to pick players."
+                                           FontStyle="Italic"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                            </Border>
+
+                            <!-- Players List (Clean Rows via ItemsControl for non-interfering scrolling) -->
+                            <ItemsControl ItemsSource="{Binding SelectedStep.Members}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ArmyQueueMemberViewModel">
+                                        <Border Background="{DynamicResource SkuaSurfaceSubtleBrush}"
+                                                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="5"
+                                                Padding="8,5"
+                                                Margin="0,2">
+                                            <Grid ColumnDefinitions="150,*,Auto,Auto,Auto" ColumnSpacing="8" VerticalAlignment="Center">
+                                                <!-- Player Name & Status -->
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                    <materialIcons:MaterialIcon Kind="Account" Width="16" Height="16" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                    <TextBlock Text="{Binding DisplayOrUsername}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+
+                                                <!-- Script Info -->
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayScriptName}"
+                                                           FontSize="11"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource SkuaTextBrush}"
+                                                           TextTrimming="CharacterEllipsis" />
+
+                                                <!-- Status Badge -->
+                                                <Border Grid.Column="2"
+                                                        CornerRadius="4"
+                                                        Background="{DynamicResource SkuaSurfaceBrush}"
+                                                        Padding="6,2"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding RuntimeStatus}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                </Border>
+
+                                                <!-- Per-account Script Override -->
+                                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                    <!-- Browse Repo for Account Script -->
+                                                    <Button Classes="skua-button"
+                                                            Height="24"
+                                                            Padding="6,0"
+                                                            ToolTip.Tip="Choose a script for this account (overrides the squad default)"
+                                                            Command="{Binding $parent[UserControl].((vm:ArmyQueueViewModel)DataContext).OpenScriptRepoForMemberCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                            <materialIcons:MaterialIcon Kind="Magnify" Width="12" Height="12" />
+                                                            <TextBlock Text="Script" FontSize="10" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </Button>
+
+                                                    <!-- Select from disk (Folder) -->
+                                                    <Button Classes="skua-button"
+                                                            Height="24"
+                                                            Width="24"
+                                                            Padding="0"
+                                                            ToolTip.Tip="Select a script for this account from disk"
+                                                            Command="{Binding BrowseScriptCommand}">
+                                                        <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Button>
+
+                                                    <!-- Configure Options Button (Only visible when custom script is set!) -->
+                                                    <Button Classes="skua-button"
+                                                            Height="24"
+                                                            Width="24"
+                                                            Padding="0"
+                                                            ToolTip.Tip="Configure options for this account's script"
+                                                            IsVisible="{Binding HasCustomScript}"
+                                                            Command="{Binding $parent[UserControl].((vm:ArmyQueueViewModel)DataContext).EditMemberScriptConfigCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <materialIcons:MaterialIcon Kind="TuneVertical" Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Button>
+
+                                                    <!-- Clear Custom Script -->
+                                                    <Button Classes="skua-button"
+                                                            Height="20"
+                                                            Width="20"
+                                                            Padding="0"
+                                                            CornerRadius="10"
+                                                            IsVisible="{Binding HasCustomScript}"
+                                                            ToolTip.Tip="Revert to squad default script"
+                                                            Command="{Binding ClearScriptCommand}">
+                                                        <materialIcons:MaterialIcon Kind="Close" Width="10" Height="10" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Button>
+                                                </StackPanel>
+
+                                                <!-- Remove Player -->
+                                                <Button Grid.Column="4"
+                                                        Classes="skua-button"
+                                                        Padding="4,3"
+                                                        ToolTip.Tip="Remove account from squad"
+                                                        Command="{Binding $parent[UserControl].((vm:ArmyQueueViewModel)DataContext).RemoveMemberCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <materialIcons:MaterialIcon Kind="DeleteOutline" Width="14" Height="14" />
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- 2d. Footer: Presets -->
+                <Border Background="{DynamicResource SkuaSurfaceBrush}"
+                        BorderBrush="{DynamicResource SkuaBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="10,6">
+                    <Grid ColumnDefinitions="Auto,160,Auto,*,140,Auto" ColumnSpacing="8" VerticalAlignment="Center">
+                        <TextBlock Grid.Column="0" Text="Preset:" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" />
+
+                        <!-- Presets dropdown -->
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding Presets}"
+                                  SelectedItem="{Binding SelectedPreset}"
+                                  Height="28"
+                                  HorizontalAlignment="Stretch" />
+
+                        <Button Grid.Column="2" Classes="skua-button" Padding="10,4" Command="{Binding LoadSelectedPresetCommand}">
+                            <TextBlock Text="Load" FontSize="11" />
+                        </Button>
+
+                        <!-- Save Preset input -->
+                        <TextBox Grid.Column="4"
+                                 Text="{Binding QueueName}"
+                                 Watermark="Preset Name"
+                                 FontSize="11"
+                                 Height="28" />
+
+                        <Button Grid.Column="5" Classes="skua-button" Padding="10,4" Command="{Binding SavePresetCommand}">
+                            <TextBlock Text="Save Preset" FontSize="11" />
+                        </Button>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 3. Account Picker Modal Overlay -->
+        <Border Grid.Row="0" Grid.RowSpan="2"
+                IsVisible="{Binding ShowAccountPicker}"
+                Background="#99000000"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
+            <Border Background="{DynamicResource SkuaSurfaceBrush}"
+                    BorderBrush="{DynamicResource SkuaBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Width="380"
+                    MaxHeight="420"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Padding="14">
+                <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
+                    <!-- Title & Close -->
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                        <TextBlock Text="Pick Accounts for Squad" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}" />
+                        <Button Grid.Column="1" Classes="skua-button" Padding="4" Height="22" Width="22" Command="{Binding CancelAccountPickerCommand}">
+                            <materialIcons:MaterialIcon Kind="Close" Width="12" Height="12" />
+                        </Button>
+                    </Grid>
+
+                    <!-- Search & Quick select -->
+                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding AccountPickerSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 Watermark="Search accounts..."
+                                 FontSize="11"
+                                 Height="28" />
+                        <Button Grid.Column="1" Classes="skua-button" Padding="6,2" Command="{Binding SelectAllPickerCommand}">
+                            <TextBlock Text="All" FontSize="10" />
+                        </Button>
+                        <Button Grid.Column="2" Classes="skua-button" Padding="6,2" Command="{Binding DeselectAllPickerCommand}">
+                            <TextBlock Text="None" FontSize="10" />
+                        </Button>
+                    </Grid>
+
+                    <!-- Accounts Checklist -->
+                    <ListBox Grid.Row="2"
+                             ItemsSource="{Binding AvailableAccounts}"
+                             Height="240">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:AccountPickerItemViewModel">
+                                <CheckBox IsChecked="{Binding IsSelected}"
+                                          Margin="2,1">
+                                    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="12" Margin="4,0" />
+                                </CheckBox>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Confirm Actions -->
+                    <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button Grid.Column="0"
+                                Classes="skua-button skua-primary"
+                                HorizontalAlignment="Stretch"
+                                Height="32"
+                                Command="{Binding ConfirmAccountPickerCommand}">
+                            <TextBlock Text="Done" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" />
+                        </Button>
+                        <Button Grid.Column="1"
+                                Classes="skua-button"
+                                HorizontalAlignment="Stretch"
+                                Height="32"
+                                Command="{Binding CancelAccountPickerCommand}">
+                            <TextBlock Text="Cancel" FontSize="12" HorizontalAlignment="Center" />
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Border>
+
+    </Grid>
+</UserControl>

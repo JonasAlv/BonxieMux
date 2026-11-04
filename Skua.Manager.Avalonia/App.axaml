@@ -1,0 +1,87 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:material="clr-namespace:Material.Styles.Themes;assembly=Material.Styles"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:managerVms="clr-namespace:Skua.Manager.Avalonia.ViewModels"
+             xmlns:conv="clr-namespace:Skua.Manager.Avalonia.Converters"
+             xmlns:uc="clr-namespace:Skua.Manager.Avalonia.UserControls"
+             xmlns:sharedVms="clr-namespace:Skua.Shared.Avalonia.ViewModels;assembly=Skua.Shared.Avalonia"
+             xmlns:scriptRepo="clr-namespace:Skua.Shared.Avalonia.ViewModels.ScriptRepo;assembly=Skua.Shared.Avalonia"
+             xmlns:sharedScriptRepo="clr-namespace:Skua.Shared.Avalonia.Controls.ScriptRepo;assembly=Skua.Shared.Avalonia"
+             xmlns:views="clr-namespace:Skua.Manager.Avalonia.Views"
+             x:Class="Skua.Manager.Avalonia.App"
+             RequestedThemeVariant="Dark">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Skua.Shared.Avalonia/Theming/Colors.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:AccountGridItemWidthConverter x:Key="AccountGridItemWidthConverter" />
+            <conv:IntGreaterThanZeroConverter x:Key="IntGreaterThanZeroConverter" />
+            <conv:ServerMembershipTextConverter x:Key="ServerMembershipTextConverter" />
+            <conv:ServerPingBrushConverter x:Key="ServerPingBrushConverter" />
+        </ResourceDictionary>
+    </Application.Resources>
+    <Application.Styles>
+        <FluentTheme />
+        <materialIcons:MaterialIconStyles />
+        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+        
+        <StyleInclude Source="avares://Skua.Shared.Avalonia/Theming/BaseTheme.axaml" />
+    </Application.Styles>
+    <TrayIcon.Icons>
+        <TrayIcons>
+            <TrayIcon Icon="avares://Skua.Shared.Avalonia/Assets/SkuaIcon.png"
+                      ToolTipText="BonxieMux Manager"
+                      Clicked="TrayIcon_Clicked">
+                <TrayIcon.Menu>
+                    <NativeMenu>
+                        <NativeMenuItem Header="Show Manager" Click="TrayShowManager_Click" />
+                        <NativeMenuItem Header="BonxieMux Bot AQW" Click="TrayLaunchClient_Click" />
+                        <NativeMenuItem Header="Update Scripts" Click="TrayUpdateScripts_Click" />
+                        <NativeMenuItem Header="Reset Scripts" Click="TrayResetScripts_Click" />
+                        <NativeMenuItem Header="Check Client Update" Click="TrayCheckUpdate_Click" />
+                        <NativeMenuItemSeparator />
+                        <NativeMenuItem Header="Exit" Click="TrayExit_Click" />
+                    </NativeMenu>
+                </TrayIcon.Menu>
+            </TrayIcon>
+        </TrayIcons>
+    </TrayIcon.Icons>
+    <Application.DataTemplates>
+        <DataTemplate DataType="managerVms:AccountManagerViewModel">
+            <uc:AccountManagerUserControl />
+        </DataTemplate>
+        <DataTemplate DataType="managerVms:ArmyQueueViewModel">
+            <uc:ArmyQueueUserControl />
+        </DataTemplate>
+        <DataTemplate DataType="managerVms:LauncherViewModel">
+            <uc:LauncherUserControl />
+        </DataTemplate>
+        <DataTemplate DataType="managerVms:AppUpdaterViewModel">
+            <views:AppUpdaterView />
+        </DataTemplate>
+        <DataTemplate DataType="managerVms:ScriptUpdaterViewModel">
+            <views:ScriptUpdaterView />
+        </DataTemplate>
+        <DataTemplate DataType="managerVms:ClientUpdatesViewModel">
+            <uc:ClientUpdatesUserControl />
+        </DataTemplate>
+        <DataTemplate DataType="managerVms:ManagerOptionsViewModel">
+            <uc:ManagerOptionsUserControl />
+        </DataTemplate>
+        <DataTemplate DataType="sharedVms:ApplicationThemesViewModel">
+            <uc:ApplicationThemesUserControl />
+        </DataTemplate>
+        <DataTemplate DataType="sharedVms:AboutViewModel">
+            <uc:AboutUserControl />
+        </DataTemplate>
+        <DataTemplate DataType="sharedVms:ChangeLogsViewModel">
+            <uc:ChangeLogsUserControl />
+        </DataTemplate>
+        <DataTemplate DataType="scriptRepo:ScriptRepoViewModel">
+            <sharedScriptRepo:ScriptRepoControl />
+        </DataTemplate>
+    </Application.DataTemplates>
+</Application>

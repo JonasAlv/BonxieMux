@@ -1,0 +1,132 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.App.Avalonia.Views.LoaderView"
+             x:DataType="vms:LoaderViewModel"
+             mc:Ignorable="d" d:DesignHeight="520" d:DesignWidth="720">
+
+  <Grid Margin="14" RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="12">
+    <!-- Load a shop or quests by ID -->
+    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+      <ListBox Grid.Column="0" Classes="segmented" Width="136" SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}">
+        <ListBoxItem Content="Shop" />
+        <ListBoxItem Content="Quests" />
+      </ListBox>
+      <TextBox Grid.Column="1"
+               Watermark="IDs, e.g. 2566 or 101, 102"
+               Text="{Binding InputIDs, Mode=TwoWay}">
+        <TextBox.InnerLeftContent>
+          <materialIcons:MaterialIcon Kind="Pound" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        </TextBox.InnerLeftContent>
+      </TextBox>
+      <Button Grid.Column="2" Classes="skua-button skua-primary w84" Command="{Binding LoadCommand}">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <materialIcons:MaterialIcon Kind="Download" Width="15" Height="15" />
+          <TextBlock Text="Load" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </Grid>
+
+    <!-- Quest cache header -->
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,240" ColumnSpacing="6">
+      <TextBlock Grid.Column="0" Classes="section-label" Text="QUEST CACHE" />
+      <Border Grid.Column="1" Classes="count">
+        <TextBlock Text="{Binding FilteredQuestIDs.Count}" />
+      </Border>
+      <TextBox Grid.Column="3"
+               Watermark="Search by name"
+               Text="{Binding SearchText, Mode=TwoWay}">
+        <TextBox.InnerLeftContent>
+          <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        </TextBox.InnerLeftContent>
+      </TextBox>
+    </Grid>
+
+    <!-- Cached quests -->
+    <ListBox Grid.Row="2"
+             x:Name="QuestList"
+             ItemsSource="{Binding FilteredQuestIDs}"
+             SelectedItem="{Binding SelectedQuest, Mode=TwoWay}"
+             SelectionMode="Multiple"
+             SelectionChanged="QuestList_SelectionChanged"
+             Padding="4">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" MinHeight="22">
+            <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            <TextBlock Grid.Column="1"
+                       Text="{Binding ID}"
+                       FontFamily="Cascadia Mono,Consolas,Courier New,monospace"
+                       FontSize="11"
+                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                       VerticalAlignment="Center" />
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <!-- Update the quest cache; shows progress and Cancel while it runs -->
+    <Border Grid.Row="3"
+            Background="{DynamicResource SkuaSurfaceBrush}"
+            BorderBrush="{DynamicResource SkuaBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="10"
+            Padding="12,8,8,8">
+      <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" ColumnSpacing="6">
+        <TextBlock Grid.Column="0" Text="Update cache" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" Margin="0,0,4,0"
+                   IsVisible="{Binding !IsLoading}" />
+        <Button Grid.Column="1" Classes="skua-button small w112" Click="UpdateMissing_Click" IsVisible="{Binding !IsLoading}"
+                ToolTip.Tip="Keep the quests already cached and add new ones">
+          <StackPanel Orientation="Horizontal" Spacing="5">
+            <materialIcons:MaterialIcon Kind="Plus" Width="14" Height="14" />
+            <TextBlock Text="Add missing" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Grid.Column="2" Classes="skua-button small w84" Content="Rebuild all" Click="UpdateAll_Click" IsVisible="{Binding !IsLoading}"
+                ToolTip.Tip="Replace every quest in the cache" />
+        <StackPanel Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsLoading}" VerticalAlignment="Center">
+          <TextBlock Text="{Binding ProgressReport}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+          <Button Classes="skua-button small skua-danger-soft w84" Content="Cancel" Command="{Binding CancelQuestLoadCommand}" />
+        </StackPanel>
+        <Border Grid.Column="3" Width="1" Height="16" Background="{DynamicResource SkuaBorderBrush}" Margin="2,0" />
+        <TextBox Grid.Column="4" Height="26" Watermark="Range, e.g. 2566, 2599" Text="{Binding QuestRange, Mode=TwoWay}" />
+        <Button Grid.Column="5" Classes="skua-button small w112" Content="Update range" Command="{Binding UpdateQuestsRangeCommand}" />
+      </Grid>
+    </Border>
+
+    <!-- Act on the selected quests -->
+    <Grid Grid.Row="4" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
+      <TextBlock Grid.Column="0" x:Name="SelectedCountText" Text="None selected" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+      <Button Grid.Column="1" Classes="skua-button w84" ToolTip.Tip="Copy the selected quests">
+        <StackPanel Orientation="Horizontal" Spacing="5">
+          <materialIcons:MaterialIcon Kind="ContentCopy" Width="15" Height="15" />
+          <TextBlock Text="Copy" VerticalAlignment="Center" />
+          <materialIcons:MaterialIcon Kind="ChevronDown" Width="14" Height="14" />
+        </StackPanel>
+        <Button.Flyout>
+          <MenuFlyout Placement="TopEdgeAlignedRight">
+            <MenuItem Header="Copy IDs" Click="CopyIds_Click" />
+            <MenuItem Header="Copy names" Click="CopyNames_Click" />
+            <MenuItem Header="Copy as // Name | ID" Click="CopyNamesAndIds_Click" />
+          </MenuFlyout>
+        </Button.Flyout>
+      </Button>
+      <Button Grid.Column="2" Classes="skua-button w112" Command="{Binding UpdateSelectedQuestCommand}" CommandParameter="{Binding SelectedQuest}"
+              ToolTip.Tip="Send a quest-complete packet to the client">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <materialIcons:MaterialIcon Kind="CheckAll" Width="15" Height="15" />
+          <TextBlock Text="Fake complete" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button Grid.Column="3" Classes="skua-button skua-primary w140" Click="LoadSelected_Click" ToolTip.Tip="Load the selected quests in game">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <materialIcons:MaterialIcon Kind="Download" Width="15" Height="15" />
+          <TextBlock Text="Load selected" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </Grid>
+  </Grid>
+</UserControl>

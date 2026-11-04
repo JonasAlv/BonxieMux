@@ -1,0 +1,98 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.Runtime"
+             x:Class="Skua.App.Avalonia.Views.NotifyDropView"
+             x:DataType="vms:NotifyDropViewModel">
+  <UserControl.Styles>
+    <!-- The per-row remove button shows on hover and on selected rows -->
+    <Style Selector="ListBoxItem Button.row-remove">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <Style Selector="ListBoxItem:pointerover Button.row-remove, ListBoxItem:selected Button.row-remove">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid Margin="12" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="10">
+    <!-- Add items to watch -->
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+      <TextBox Grid.Column="0"
+               Watermark="Item name (separate several with |)"
+               Text="{Binding AddDropInput}"
+               ToolTip.Tip="Use the exact in-game item names">
+        <TextBox.InnerLeftContent>
+          <materialIcons:MaterialIcon Kind="BellPlusOutline" Width="16" Height="16" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        </TextBox.InnerLeftContent>
+      </TextBox>
+      <Button Grid.Column="1" Classes="skua-button skua-primary w84" Command="{Binding AddDropCommand}">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <materialIcons:MaterialIcon Kind="Plus" Width="15" Height="15" />
+          <TextBlock Text="Add" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </Grid>
+
+    <!-- Watched items header -->
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="6">
+      <TextBlock Grid.Column="0" Classes="section-label" Text="WATCHING" />
+      <Border Grid.Column="1" Classes="count">
+        <TextBlock Text="{Binding NotifyDropList.Count}" />
+      </Border>
+      <Button Grid.Column="3" Classes="skua-button small skua-danger-soft w84" Content="Clear all" Command="{Binding RemoveAllDropsCommand}" />
+    </Grid>
+
+    <!-- Watched items: Delete removes the selection, each row has its own remove button -->
+    <ListBox Grid.Row="2"
+             x:Name="NotifyDropListBox"
+             ItemsSource="{Binding NotifyDropList}"
+             SelectionMode="Multiple"
+             KeyDown="NotifyDropListBox_KeyDown"
+             Padding="4">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" MinHeight="22">
+            <materialIcons:MaterialIcon Grid.Column="0"
+                                        Kind="BellOutline"
+                                        Width="15" Height="15"
+                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                        VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="{Binding}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            <Button Grid.Column="2"
+                    Classes="icon danger-icon row-remove"
+                    Width="22" Height="22"
+                    Command="{Binding $parent[ListBox].((vms:NotifyDropViewModel)DataContext).RemoveDropCommand}"
+                    CommandParameter="{Binding}"
+                    ToolTip.Tip="Stop watching this item">
+              <materialIcons:MaterialIcon Kind="Close" Width="13" Height="13" />
+            </Button>
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+      <ListBox.ContextMenu>
+        <ContextMenu>
+          <MenuItem Header="Remove Selected" Click="RemoveSelected_Click" />
+          <MenuItem Header="Clear All" Command="{Binding RemoveAllDropsCommand}" />
+        </ContextMenu>
+      </ListBox.ContextMenu>
+    </ListBox>
+
+    <!-- Alert sound -->
+    <Grid Grid.Row="3" ColumnDefinitions="Auto,96,Auto,110,*,Auto" ColumnSpacing="8">
+      <TextBlock Grid.Column="0" Text="Beep" VerticalAlignment="Center" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+      <NumericUpDown Grid.Column="1" Minimum="1" Maximum="25" Value="{Binding SoundCount}" FormatString="0" ToolTip.Tip="How many beeps per drop" />
+      <TextBlock Grid.Column="2" Text="times every" VerticalAlignment="Center" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+      <NumericUpDown Grid.Column="3" Minimum="10" Maximum="2000" Increment="10" Value="{Binding SoundDelay}" FormatString="0" ToolTip.Tip="Milliseconds between beeps">
+        <NumericUpDown.InnerRightContent>
+          <TextBlock Text="ms" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" Margin="0,0,4,0" />
+        </NumericUpDown.InnerRightContent>
+      </NumericUpDown>
+      <Button Grid.Column="5" Classes="skua-button w84" Command="{Binding TestBeepCommand}" ToolTip.Tip="Play the alert">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <materialIcons:MaterialIcon Kind="VolumeHigh" Width="15" Height="15" />
+          <TextBlock Text="Test" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </Grid>
+  </Grid>
+</UserControl>

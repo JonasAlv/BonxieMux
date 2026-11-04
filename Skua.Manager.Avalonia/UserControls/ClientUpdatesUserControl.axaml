@@ -1,0 +1,156 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.Manager.Avalonia.UserControls.ClientUpdatesUserControl"
+             d:DesignWidth="900"
+             d:DesignHeight="600"
+             mc:Ignorable="d">
+    <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="12">
+        
+        <!-- Header Status Card -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16,14">
+            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" Spacing="3">
+                    <TextBlock Text="SYSTEM &amp; CLIENT UPDATES"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                    <TextBlock FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaTextBrush}"
+                               Text="{Binding Status}" />
+                    <TextBlock Text="{Binding Current, StringFormat='Installed Build: {0}'}"
+                               FontSize="12"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                </StackPanel>
+
+                <Border Grid.Column="1"
+                        Background="{DynamicResource SkuaSurfaceAltBrush}"
+                        BorderBrush="{DynamicResource SkuaBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="20"
+                        Padding="12,6"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="Auto-Channel Active"
+                               FontSize="11"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaTextBrush}" />
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Update Action Card -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="App Release Channel"
+                               FontWeight="Bold"
+                               FontSize="14"
+                               Foreground="{DynamicResource SkuaTextBrush}" />
+                    <TextBlock Text="Check for the latest binaries and stability patches from the official distribution."
+                               FontSize="12"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Classes="skua-button"
+                            Height="36"
+                            Command="{Binding RefreshCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <materialIcons:MaterialIcon Kind="Refresh" Width="14" Height="14" />
+                            <TextBlock Text="Check for Updates" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Classes="skua-button skua-primary"
+                            Height="36"
+                            Command="{Binding UpdateCommand}"
+                            IsVisible="{Binding UpdateVisible}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <materialIcons:MaterialIcon Kind="ArrowDownBoldCircleOutline" Width="16" Height="16" />
+                            <TextBlock Text="Download &amp; Install" VerticalAlignment="Center" FontWeight="Bold" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Scripts Repository Sync Card -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="Script Repository Maintenance"
+                               FontWeight="Bold"
+                               FontSize="14"
+                               Foreground="{DynamicResource SkuaTextBrush}" />
+                    <TextBlock Text="Synchronize your local script library with the central Skua community repository."
+                               FontSize="12"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Classes="skua-button outline"
+                            Height="34"
+                            Content="Reset Script Cache"
+                            Command="{Binding ResetScriptsCommand}"
+                            ToolTip.Tip="Deletes the local Scripts cache folder and refetches everything fresh." />
+
+                    <Button Classes="skua-button"
+                            Height="34"
+                            Command="{Binding UpdateScriptsCommand}"
+                            ToolTip.Tip="Checks and pulls newly updated script files.">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <materialIcons:MaterialIcon Kind="Sync" Width="14" Height="14" />
+                            <TextBlock Text="Update Scripts" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Progress Indicator & Status Card -->
+        <Border Grid.Row="3"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16"
+                IsVisible="{Binding IsBusy}">
+            <StackPanel Spacing="8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding ProgressStatus}"
+                               FontWeight="SemiBold"
+                               FontSize="12"
+                               Foreground="{DynamicResource SkuaTextBrush}" />
+                    <materialIcons:MaterialIcon Grid.Column="1"
+                                                Kind="Loading"
+                                                Width="16"
+                                                Height="16"
+                                                Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                </Grid>
+                <ProgressBar IsIndeterminate="{Binding IsBusy}"
+                             Height="4"
+                             HorizontalAlignment="Stretch" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

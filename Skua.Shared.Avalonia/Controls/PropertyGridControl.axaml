@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             x:Class="Skua.Shared.Avalonia.Controls.PropertyGridControl"
+             mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="300">
+  <Grid RowDefinitions="*">
+    <TextBlock x:Name="EmptyTextBlock"
+               Text="Select an item to view properties."
+               VerticalAlignment="Center"
+               HorizontalAlignment="Center"
+               Opacity="0.5"
+               IsVisible="False" />
+
+    <ScrollViewer x:Name="ContentScrollViewer"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+      <ItemsControl x:Name="PropertiesItemsControl">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Grid ColumnDefinitions="140,*"
+                  Margin="4,2"
+                  Background="Transparent">
+              <TextBlock Grid.Column="0"
+                         FontWeight="SemiBold"
+                         VerticalAlignment="Center"
+                         Text="{Binding Name}"
+                         Opacity="0.8"
+                         ToolTip.Tip="{Binding Description}" />
+              <TextBox Grid.Column="1"
+                       Classes="option-pill-input"
+                       IsReadOnly="True"
+                       VerticalAlignment="Center"
+                       Text="{Binding Value}"
+                       IsVisible="{Binding IsNotCollection}" />
+              <StackPanel Grid.Column="1"
+                          Orientation="Horizontal"
+                          Spacing="6"
+                          IsVisible="{Binding IsCollection}">
+                <TextBlock Text="{Binding Value}"
+                           VerticalAlignment="Center" />
+                <Button Content="..."
+                        Padding="8,2"
+                        MinWidth="32"
+                        VerticalAlignment="Center"
+                        Click="OpenCollection_Click" />
+              </StackPanel>
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

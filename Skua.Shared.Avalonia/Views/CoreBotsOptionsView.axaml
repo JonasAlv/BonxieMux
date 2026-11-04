@@ -1,0 +1,132 @@
+<UserControl
+    x:Class="Skua.Shared.Avalonia.Views.CoreBotsOptionsView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Skua.Shared.Avalonia.Views"
+    xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vms="clr-namespace:Skua.Core.ViewModels;assembly=Skua.Core"
+    d:DataContext="{d:DesignInstance vms:CoreBotsViewModel}"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <Grid Margin="12" RowDefinitions="Auto,*" RowSpacing="10">
+        
+        <!-- Top Toolbar Header Card -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="8">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8" VerticalAlignment="Center">
+                
+                <!-- Category Tabs (Sleek pill tabs) -->
+                <ListBox Grid.Column="0"
+                         ItemsSource="{Binding CoreBotsTabs}"
+                         SelectedItem="{Binding SelectedTab}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         Background="Transparent"
+                         BorderThickness="0">
+                    <ListBox.Styles>
+                        <Style Selector="ListBoxItem">
+                            <Setter Property="Padding" Value="12,6" />
+                            <Setter Property="Margin" Value="0,0,4,0" />
+                            <Setter Property="CornerRadius" Value="6" />
+                            <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
+                            <Setter Property="BorderThickness" Value="1" />
+                            <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                            <Setter Property="FontSize" Value="12" />
+                            <Setter Property="Transitions">
+                                <Transitions>
+                                    <BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+                                    <BrushTransition Property="BorderBrush" Duration="0:0:0.12" Easing="CubicEaseOut" />
+                                </Transitions>
+                            </Setter>
+                        </Style>
+                        <Style Selector="ListBoxItem:pointerover">
+                            <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+                        </Style>
+                        <Style Selector="ListBoxItem:selected">
+                            <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+                            <Setter Property="FontWeight" Value="Bold" />
+                        </Style>
+                        <Style Selector="ListBoxItem:selected:pointerover">
+                            <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+                        </Style>
+                    </ListBox.Styles>
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="4" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Header}"
+                                       VerticalAlignment="Center" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- Current Player Badge -->
+                <Border Grid.Column="1"
+                        Background="{DynamicResource SkuaSurfaceAltBrush}"
+                        BorderBrush="{DynamicResource SkuaBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="16"
+                        Padding="10,4"
+                        VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <materialIcons:MaterialIcon Kind="Account" Width="14" Height="14" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                        <TextBlock Text="{Binding CurrentPlayer, FallbackValue='Player'}"
+                                   FontWeight="Bold"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource SkuaTextBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Action Buttons -->
+                <Button Grid.Column="2"
+                        Classes="skua-button"
+                        Command="{Binding LoadCommand}"
+                        ToolTip.Tip="Load CoreBots settings">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="FolderOpen" Width="14" Height="14" />
+                        <TextBlock Text="Load" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <Button Grid.Column="3"
+                        Classes="skua-button skua-primary"
+                        Command="{Binding SaveCommand}"
+                        ToolTip.Tip="Save CoreBots settings">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="ContentSave" Width="14" Height="14" />
+                        <TextBlock Text="Save" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Tab Content Frame -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource SkuaPageBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="8">
+            <ContentPresenter Content="{Binding SelectedTab.Content}" />
+        </Border>
+    </Grid>
+</UserControl>

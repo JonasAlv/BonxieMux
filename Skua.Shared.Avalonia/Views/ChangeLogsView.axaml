@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vms="clr-namespace:Skua.Shared.Avalonia.ViewModels;assembly=Skua.Shared.Avalonia"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.Shared.Avalonia.Views.ChangeLogsView"
+             x:DataType="vms:ChangeLogsViewModel"
+             d:DesignHeight="700" d:DesignWidth="600"
+             mc:Ignorable="d">
+    <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="10">
+        <!-- Header Card -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12,10">
+            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock Text="UPDATES &amp; RELEASES"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                    <TextBlock FontSize="16"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaTextBrush}"
+                               Text="Change Logs" />
+                </StackPanel>
+                <materialIcons:MaterialIcon Grid.Column="1"
+                                            Kind="History"
+                                            Width="22" Height="22"
+                                            Foreground="{DynamicResource SkuaAccentBrush}" />
+            </Grid>
+        </Border>
+
+        <!-- Logs Content Card -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <SelectableTextBlock Text="{Binding MarkdownDoc}"
+                                     TextWrapping="Wrap"
+                                     Foreground="{DynamicResource SkuaTextBrush}"
+                                     FontSize="13"
+                                     LineHeight="20" />
+            </ScrollViewer>
+        </Border>
+
+        <!-- Donation Card -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12">
+            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                    <TextBlock Text="Support Development" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" />
+                    <TextBlock Text="Donations can be made via Ko-fi to support continuous improvements." FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Classes="skua-button skua-primary"
+                        Command="{Binding OpenDonationLink}"
+                        Content="Open Ko-fi" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
+
+
+
+

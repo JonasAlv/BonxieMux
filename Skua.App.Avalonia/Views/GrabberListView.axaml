@@ -1,0 +1,150 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.Grabber"
+             xmlns:controls="clr-namespace:Skua.Shared.Avalonia.Controls;assembly=Skua.Shared.Avalonia"
+             xmlns:converters="clr-namespace:Skua.App.Avalonia.Converters"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.App.Avalonia.Views.GrabberListView"
+             x:DataType="vms:GrabberListViewModel"
+             mc:Ignorable="d" d:DesignHeight="520" d:DesignWidth="620">
+
+  <UserControl.Resources>
+    <converters:GrabberItemDisplayConverter x:Key="GrabberItemDisplayConverter" />
+    <converters:BooleanToSelectionModeConverter x:Key="BooleanToSelectionModeConverter" />
+  </UserControl.Resources>
+
+  <!-- The window's 12px margin sits on the sidebar side; this side adds the rest -->
+  <Grid Margin="14,0,14,14" RowDefinitions="Auto,*,Auto" RowSpacing="12">
+    <!-- Grab, search, multi-select -->
+    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+      <Button Grid.Column="0"
+              Classes="skua-button skua-primary w112"
+              Command="{Binding GrabCommand}"
+              IsEnabled="{Binding !IsBusy}">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <materialIcons:MaterialIcon Kind="Refresh" Width="15" Height="15" />
+          <TextBlock Text="Grab" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <TextBox Grid.Column="1"
+               Watermark="Search"
+               Text="{Binding SearchText, Mode=TwoWay}">
+        <TextBox.InnerLeftContent>
+          <materialIcons:MaterialIcon Kind="Magnify" Width="16" Height="16" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        </TextBox.InnerLeftContent>
+      </TextBox>
+      <ToggleButton Grid.Column="2"
+                    Classes="option-chip"
+                    Margin="0"
+                    IsVisible="{Binding SelectMultiple}"
+                    IsChecked="{Binding IsMultipleSelection, Mode=TwoWay}"
+                    ToolTip.Tip="Select several items at once">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <materialIcons:MaterialIcon Kind="FormatListChecks" Width="15" Height="15" />
+          <TextBlock Text="Multi-select" VerticalAlignment="Center" />
+        </StackPanel>
+      </ToggleButton>
+    </Grid>
+
+    <!-- Grabbed items and the selected item's details -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,10,232" RowDefinitions="Auto,*" RowSpacing="8">
+      <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="6" MinHeight="26">
+        <TextBlock Grid.Column="0" Classes="section-label" Text="ITEMS" />
+        <Border Grid.Column="1" Classes="count">
+          <TextBlock Text="{Binding GrabbedItems.Count}" />
+        </Border>
+        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <TextBlock Text="{Binding ProgressReportMessage}"
+                     FontSize="11"
+                     FontWeight="SemiBold"
+                     Foreground="{DynamicResource SkuaMutedTextBrush}"
+                     VerticalAlignment="Center"
+                     IsVisible="{Binding ShowMessage}" />
+          <Button Classes="skua-button small skua-danger-soft w64"
+                  Content="Cancel"
+                  Command="{Binding CancelTaskCommand}"
+                  IsVisible="{Binding IsBusy}" />
+          <TextBlock x:Name="SelectedCountText"
+                     FontSize="11"
+                     Foreground="{DynamicResource SkuaMutedTextBrush}"
+                     VerticalAlignment="Center"
+                     IsVisible="{Binding !ShowMessage}" />
+          <StackPanel Orientation="Horizontal" Spacing="2" IsEnabled="{Binding !IsBusy}">
+            <Button Classes="icon icon-muted" Click="UnselectAll_Click" ToolTip.Tip="Unselect all">
+              <materialIcons:MaterialIcon Kind="SelectionRemove" Width="16" Height="16" />
+            </Button>
+            <Button Classes="icon icon-muted" Click="CopyButton_Click" ToolTip.Tip="Copy the selected items (or all) to the clipboard">
+              <materialIcons:MaterialIcon Kind="ContentCopy" Width="16" Height="16" />
+            </Button>
+            <Button Classes="icon icon-muted" Click="ExportButton_Click" ToolTip.Tip="Export everything grabbed for the selected items (or all) to a .txt file">
+              <materialIcons:MaterialIcon Kind="FileExportOutline" Width="16" Height="16" />
+            </Button>
+          </StackPanel>
+        </StackPanel>
+      </Grid>
+
+      <ListBox Grid.Row="1" Grid.Column="0"
+               x:Name="GrabbedItemsList"
+               ItemsSource="{Binding GrabbedItems}"
+               SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+               SelectionMode="{Binding IsMultipleSelection, Converter={StaticResource BooleanToSelectionModeConverter}}"
+               SelectionChanged="GrabbedItemsList_SelectionChanged"
+               Padding="4">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid ColumnDefinitions="52,*,Auto" ColumnSpacing="8" MinHeight="22">
+              <TextBlock Grid.Column="0"
+                         Text="{ReflectionBinding ID}"
+                         FontFamily="Cascadia Mono,Consolas,Courier New,monospace"
+                         FontSize="11"
+                         Foreground="{DynamicResource SkuaMutedTextBrush}"
+                         VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1"
+                         Text="{ReflectionBinding Converter={StaticResource GrabberItemDisplayConverter}, ConverterParameter=row}"
+                         TextTrimming="CharacterEllipsis"
+                         VerticalAlignment="Center" />
+              <Border Grid.Column="2" Classes="chip danger"
+                      IsVisible="{ReflectionBinding Converter={StaticResource GrabberItemDisplayConverter}, ConverterParameter=junk}">
+                <TextBlock Text="Junk" />
+              </Border>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Width="10" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+
+      <TextBlock Grid.Row="0" Grid.Column="2" Classes="section-label" Text="DETAILS" />
+      <Border Grid.Row="1" Grid.Column="2"
+              Background="{DynamicResource SkuaSurfaceBrush}"
+              BorderBrush="{DynamicResource SkuaBorderBrush}"
+              BorderThickness="1"
+              CornerRadius="10"
+              Padding="10">
+        <controls:PropertyGridControl SelectedObject="{Binding SelectedItem}" />
+      </Border>
+    </Grid>
+
+    <!-- The tab's own commands, right-aligned; they wrap if a tab has many -->
+    <Grid Grid.Row="2">
+      <ItemsControl HorizontalAlignment="Right" ItemsSource="{Binding GrabberCommands}" IsEnabled="{Binding !IsBusy}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel Orientation="Horizontal" ItemSpacing="6" LineSpacing="6" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vms:GrabberTaskViewModel">
+            <Button Classes="skua-button"
+                    Classes.skua-danger-soft="{Binding IsDestructive}"
+                    MinWidth="84"
+                    Content="{Binding Content}"
+                    Click="GrabberTaskButton_Click" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </Grid>
+  </Grid>
+</UserControl>

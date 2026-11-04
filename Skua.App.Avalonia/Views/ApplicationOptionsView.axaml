@@ -1,0 +1,99 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.Options"
+             xmlns:sharedOptions="clr-namespace:Skua.Shared.Avalonia.Controls.Options;assembly=Skua.Shared.Avalonia"
+             x:Class="Skua.App.Avalonia.Views.ApplicationOptionsView"
+             x:DataType="vms:ApplicationOptionsViewModel">
+  <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="10">
+    
+    <!-- Top Filter Bar -->
+    <Border Grid.Row="0"
+            Background="{DynamicResource SkuaSurfaceBrush}"
+            BorderBrush="{DynamicResource SkuaBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="8">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
+        <TextBox Grid.Column="0"
+                 Height="34"
+                 VerticalContentAlignment="Center"
+                 Text="{Binding SearchText, Mode=TwoWay}"
+                 Watermark="Search application options..." />
+
+        <!-- Category Filter Selector -->
+        <ComboBox Grid.Column="1"
+                  Width="180"
+                  Height="34"
+                  ItemsSource="{Binding Categories}"
+                  SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" />
+      </Grid>
+    </Border>
+
+    <!-- Grouped Option Cards ScrollViewer -->
+    <ScrollViewer Grid.Row="1"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+      <ItemsControl ItemsSource="{Binding FilteredGroups}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vms:OptionGroupViewModel">
+            <Border Background="{DynamicResource SkuaSurfaceBrush}"
+                    BorderBrush="{DynamicResource SkuaBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Margin="0,0,0,10"
+                    Padding="14,12">
+              <StackPanel Spacing="10">
+                
+                <!-- Category Section Header -->
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" VerticalAlignment="Center">
+                  <materialIcons:MaterialIcon Grid.Column="0"
+                                              Kind="{Binding Icon}"
+                                              Width="20"
+                                              Height="20"
+                                              Foreground="{DynamicResource SkuaTextBrush}"
+                                              VerticalAlignment="Center" />
+                  <StackPanel Grid.Column="1" Spacing="1">
+                    <TextBlock Text="{Binding Title}"
+                               FontWeight="Bold"
+                               FontSize="14"
+                               Foreground="{DynamicResource SkuaTextBrush}" />
+                    <TextBlock Text="{Binding Description}"
+                               FontSize="11"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                </Grid>
+
+                <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" Margin="0,2,0,4" />
+
+                <!-- Options Item List -->
+                <ItemsControl ItemsSource="{Binding Items}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <sharedOptions:OptionItemControl Margin="0,2" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <!-- Footnote Status / Notice -->
+    <Border Grid.Row="2"
+            Background="{DynamicResource SkuaSurfaceBrush}"
+            BorderBrush="{DynamicResource SkuaBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="6"
+            Padding="10,6">
+      <TextBlock Text="* Options marked with an asterisk require an application restart to take effect."
+                 FontSize="11"
+                 Foreground="{DynamicResource SkuaMutedTextBrush}" />
+    </Border>
+
+  </Grid>
+</UserControl>

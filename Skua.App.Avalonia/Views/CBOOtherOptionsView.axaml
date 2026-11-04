@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.CoreBotsOptions"
+             xmlns:sharedOptions="clr-namespace:Skua.Shared.Avalonia.Controls.Options;assembly=Skua.Shared.Avalonia"
+             x:DataType="vms:CBOOtherOptionsViewModel"
+             x:Class="Skua.App.Avalonia.Views.CBOOtherOptionsView">
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="10" Margin="2">
+      <ItemsControl ItemsSource="{Binding Options}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Expander Margin="0,0,0,8"
+                      IsExpanded="True"
+                      Background="{DynamicResource SkuaSurfaceBrush}"
+                      BorderBrush="{DynamicResource SkuaBorderBrush}"
+                      BorderThickness="1"
+                      CornerRadius="8"
+                      Padding="0"
+                      HorizontalAlignment="Stretch">
+              <Expander.Header>
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                  <materialIcons:MaterialIcon Kind="TuneVerticalVariant" Width="15" Height="15" Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
+                  <TextBlock Text="{Binding Category}"
+                             FontWeight="Bold"
+                             FontSize="12"
+                             Foreground="{DynamicResource SkuaTextBrush}"
+                             VerticalAlignment="Center" />
+                </StackPanel>
+              </Expander.Header>
+              <Border Padding="10,6,10,10">
+                <ItemsControl ItemsSource="{Binding Items}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Margin="0,2"
+                              Padding="8,6"
+                              Background="{DynamicResource SkuaSurfaceAltBrush}"
+                              BorderBrush="{DynamicResource SkuaBorderBrush}"
+                              BorderThickness="1"
+                              CornerRadius="6">
+                        <sharedOptions:OptionItemControl />
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </Border>
+            </Expander>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

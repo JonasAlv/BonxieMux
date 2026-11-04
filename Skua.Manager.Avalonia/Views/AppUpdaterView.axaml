@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:managerVMs="clr-namespace:Skua.Manager.Avalonia.ViewModels"
+             x:Class="Skua.Manager.Avalonia.Views.AppUpdaterView"
+             d:DataContext="{d:DesignInstance managerVMs:AppUpdaterViewModel}"
+             mc:Ignorable="d"
+             d:DesignHeight="400"
+             d:DesignWidth="600">
+    <Grid Margin="16">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <materialIcons:MaterialIcon Kind="Update"
+                                        Width="100"
+                                        Height="100"
+                                        HorizontalAlignment="Center"
+                                        Foreground="{DynamicResource SkuaAccentBrush}"
+                                        Margin="0,0,0,24" />
+
+            <TextBlock Text="BonxieMux Client Updater"
+                       FontSize="26"
+                       FontWeight="Light"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,8" />
+
+            <TextBlock Text="{Binding UpdateStatus}"
+                       FontSize="15"
+                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,24" />
+
+            <ProgressBar Value="{Binding ProgressValue}"
+                         Minimum="0"
+                         Maximum="100"
+                         Height="10"
+                         Margin="0,0,0,24"
+                         IsVisible="{Binding UpdateAvailable}" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Command="{Binding CheckForUpdateCommand}"
+                        Content="Check for Updates"
+                        IsEnabled="{Binding !IsChecking}"
+                        Margin="0,0,16,0"
+                        Width="160"
+                        Classes="skua-button" />
+
+                <Button Command="{Binding DownloadAndInstallCommand}"
+                        Content="Update &amp; Restart"
+                        IsVisible="{Binding UpdateAvailable}"
+                        IsEnabled="{Binding !IsChecking}"
+                        Width="160"
+                        Classes="skua-button skua-primary" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

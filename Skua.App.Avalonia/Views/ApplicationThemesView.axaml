@@ -1,0 +1,222 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:sharedTheming="clr-namespace:Skua.Shared.Avalonia.Controls.Theming;assembly=Skua.Shared.Avalonia"
+             xmlns:sharedViews="clr-namespace:Skua.Shared.Avalonia.ViewModels;assembly=Skua.Shared.Avalonia"
+             x:Class="Skua.App.Avalonia.Views.ApplicationThemesView"
+             x:DataType="sharedViews:ApplicationThemesViewModel">
+
+  <Grid Margin="12" RowDefinitions="Auto,*" RowSpacing="10">
+    
+    <!-- Top Pill Tabs Navigation Header -->
+    <Border Grid.Row="0"
+            Background="{DynamicResource SkuaSurfaceBrush}"
+            BorderBrush="{DynamicResource SkuaBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="8">
+      <ListBox ItemsSource="{Binding Tabs}"
+               SelectedItem="{Binding SelectedTab, Mode=TwoWay}"
+               ScrollViewer.HorizontalScrollBarVisibility="Auto"
+               ScrollViewer.VerticalScrollBarVisibility="Disabled"
+               Background="Transparent"
+               BorderThickness="0">
+        <ListBox.Styles>
+          <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Transitions">
+              <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.12" Easing="CubicEaseOut" />
+              </Transitions>
+            </Setter>
+          </Style>
+          <Style Selector="ListBoxItem:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+          </Style>
+          <Style Selector="ListBoxItem:selected">
+            <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+            <Setter Property="FontWeight" Value="Bold" />
+          </Style>
+        </ListBox.Styles>
+        <ListBox.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal" Spacing="4" />
+          </ItemsPanelTemplate>
+        </ListBox.ItemsPanel>
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </Border>
+
+    <!-- Main Content Area -->
+    <ScrollViewer Grid.Row="1"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="10">
+
+        <!-- TAB 1: PALETTE & ACCENTS -->
+        <Border Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="14"
+                IsVisible="{Binding SelectedTab, Converter={x:Static ObjectConverters.Equal}, ConverterParameter='Palette &amp; Accents'}">
+          <StackPanel Spacing="14">
+            
+            <!-- Save Theme Bar -->
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" VerticalAlignment="Center">
+              <TextBox Grid.Column="0"
+                       Height="34"
+                       VerticalContentAlignment="Center"
+                       Watermark="Theme Name"
+                       Text="{Binding ThemeSettings.ThemeName, Mode=TwoWay}" />
+              <Button Grid.Column="1"
+                      Classes="skua-button skua-primary"
+                      Height="34"
+                      Command="{Binding ThemeSettings.SaveThemeCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <materialIcons:MaterialIcon Kind="ContentSave" Width="14" Height="14" />
+                  <TextBlock Text="Save Preset" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </Grid>
+
+            <StackPanel Spacing="3">
+              <CheckBox Content="Use theme accent on the main title bar"
+                        IsChecked="{Binding UseAccentOnMainTitleBar, Mode=TwoWay}" />
+              <TextBlock Text="When enabled, the main BonxieMux window follows the active built-in or custom theme. Turn it off to keep the title bar's normal surface color."
+                         FontSize="11"
+                         Foreground="{DynamicResource SkuaMutedTextBrush}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
+
+            <!-- Accent Color Settings -->
+            <sharedTheming:AccentEditorPanel SeparatorBrush="{DynamicResource SkuaBorderBrush}" />
+
+            <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
+
+            <!-- Scheme Preview Card -->
+            <sharedTheming:SchemePreviewCard PreviewBorderBrush="{DynamicResource SkuaBorderBrush}" />
+          </StackPanel>
+        </Border>
+
+        <!-- TAB 2: THEME LIBRARY -->
+        <Border Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="14"
+                IsVisible="{Binding SelectedTab, Converter={x:Static ObjectConverters.Equal}, ConverterParameter='Theme Library'}">
+          <sharedTheming:ThemeLibraryPanel />
+        </Border>
+
+        <!-- TAB 3: CUSTOM BACKGROUNDS -->
+        <Border Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="14"
+                IsVisible="{Binding SelectedTab, Converter={x:Static ObjectConverters.Equal}, ConverterParameter='Custom Backgrounds'}">
+          <StackPanel Spacing="12">
+            <StackPanel Spacing="2">
+              <TextBlock Text="Window Appearance" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" />
+              <TextBlock Text="Choose artwork for the top title bar. Your existing color theme controls the rest of the window." FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" />
+            </StackPanel>
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+              <TextBox Grid.Column="0" IsReadOnly="True" Text="{Binding BackgroundTheme.TitleBarArtworkPath}" Watermark="No title bar artwork selected" VerticalContentAlignment="Center" />
+              <Button Grid.Column="1" Classes="skua-button" Command="{Binding BackgroundTheme.BrowseTitleBarArtworkCommand}">Choose Image</Button>
+              <Button Grid.Column="2" Classes="skua-button" Command="{Binding BackgroundTheme.ClearTitleBarArtworkCommand}">Clear</Button>
+            </Grid>
+            <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
+            <StackPanel Spacing="2">
+              <TextBlock Text="Custom Background Images"
+                         FontWeight="Bold"
+                         FontSize="13"
+                         Foreground="{DynamicResource SkuaTextBrush}" />
+              <TextBlock Text="Select, manage, or import custom wallpaper backgrounds for Skua"
+                         FontSize="11"
+                         Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            </StackPanel>
+
+            <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
+
+            <Grid DataContext="{Binding BackgroundTheme}"
+                  ColumnDefinitions="*,Auto,Auto"
+                  RowDefinitions="Auto,Auto"
+                  RowSpacing="10"
+                  ColumnSpacing="10">
+              <ComboBox Grid.Row="0"
+                        Grid.Column="0"
+                        Height="34"
+                        HorizontalAlignment="Stretch"
+                        ItemsSource="{Binding AvailableBackgrounds}"
+                        SelectedItem="{Binding SelectedBackground}" />
+              <Button Grid.Row="0"
+                      Grid.Column="1"
+                      Classes="skua-button"
+                      Height="34"
+                      Command="{Binding BrowseBackgroundCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <materialIcons:MaterialIcon Kind="FolderOpen" Width="14" Height="14" />
+                  <TextBlock Text="Browse" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Grid.Row="0"
+                      Grid.Column="2"
+                      Classes="skua-button"
+                      Height="34"
+                      Command="{Binding RefreshBackgroundsCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <materialIcons:MaterialIcon Kind="Refresh" Width="14" Height="14" />
+                  <TextBlock Text="Refresh" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+
+              <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Row="1"
+                      Grid.Column="0"
+                      Classes="skua-button"
+                      Height="34"
+                      Command="{Binding OpenThemesFolderCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <materialIcons:MaterialIcon Kind="Folder" Width="14" Height="14" />
+                  <TextBlock Text="Open Themes Folder" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Grid.Row="1"
+                      Grid.Column="1"
+                      Grid.ColumnSpan="2"
+                      Classes="skua-button skua-primary"
+                      Height="34"
+                      Command="{Binding GetBackgroundsCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <materialIcons:MaterialIcon Kind="Download" Width="14" Height="14" />
+                  <TextBlock Text="Get Backgrounds" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </Grid>
+          </StackPanel>
+        </Border>
+
+      </StackPanel>
+    </ScrollViewer>
+
+  </Grid>
+</UserControl>

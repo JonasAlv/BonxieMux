@@ -1,0 +1,348 @@
+using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.Messaging.Messages;
+using Skua.Core.Interfaces;
+using Skua.Core.Models;
+using Skua.Core.Models.Servers;
+using Skua.Core.Utils;
+using Skua.Shared.Avalonia.ViewModels;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+
+namespace Skua.App.Avalonia.ViewModels.Packets;
+
+public partial class PacketInterceptorViewModel : BotControlViewModelBase
+{
+    private readonly ICaptureProxy _gameProxy;
+    private readonly IScriptServers _server;
+    private readonly InterceptorLogger _logger;
+    private readonly List<PacketLogFilterViewModel> _allPacketFilters;
+
+    [ObservableProperty]
+    private Server? _selectedServer;
+
+    [ObservableProperty]
+    private RangedObservableCollection<InterceptedPacketViewModel> _packets = new();
+
+    [ObservableProperty]
+    private ObservableCollection<InterceptedPacketViewModel> _filteredPackets = new();
+
+    [ObservableProperty]
+    private ObservableCollection<PacketLogFilterViewModel> _visiblePacketFilters = new();
+
+    [ObservableProperty]
+    private string _packetSearchText = string.Empty;
+
+    [ObservableProperty]
+    private string _filterSearchText = string.Empty;
+
+    private bool _isLogging;
+
+    public bool IsLogging
+    {
+        get => _isLogging;
+        set
+        {
+            if (SetProperty(ref _isLogging, value))
+            {
+                if (value)
+                    _gameProxy.Interceptors.Add(_logger);
+                else
+                    _gameProxy.Interceptors.Remove(_logger);
+            }
+        }
+    }
+
+    [ObservableProperty]
+    private ObservableCollection<Server> _serverList = new();
+
+    public bool Running => _gameProxy.Running;
+    public IReadOnlyList<PacketLogFilterViewModel> PacketFilters => _allPacketFilters;
+
+    public PacketInterceptorViewModel(IEnumerable<PacketLogFilterViewModel> filters, ICaptureProxy gameProxy, IScriptServers server)
+        : base("Packet Interceptor")
+    {
+        _gameProxy = gameProxy;
+        _server = server;
+        _allPacketFilters = filters.ToList();
+
+        foreach (var filter in _allPacketFilters)
+        {
+            filter.PropertyChanged += OnFilterPropertyChanged;
+        }
+
+        UpdateVisibleFilters();
+
+        _logger = new InterceptorLogger(OnPacketIntercepted);
+        IsLogging = true;
+
+        LoadServersAsync();
+    }
+
+    [RelayCommand]
+    private async Task RefreshServersAsync()
+    {
+        await LoadServersInternalAsync(forceUpdate: true);
+    }
+
+    private async void LoadServersAsync()
+    {
+        await LoadServersInternalAsync(forceUpdate: false);
+    }
+
+    private async Task LoadServersInternalAsync(bool forceUpdate)
+    {
+        List<Server>? servers = null;
+        try
+        {
+            servers = await _server.GetServers(forceUpdate);
+        }
+        catch
+        {
+            // fallback
+        }
+
+        if (servers == null || servers.Count == 0)
+        {
+            servers = new List<Server>
+            {
+                new() { Name = "Artix", IP = "game.aq.com", Port = 5588 },
+                new() { Name = "Galanoth", IP = "game.aq.com", Port = 5588 },
+                new() { Name = "Safiria", IP = "game.aq.com", Port = 5588 },
+                new() { Name = "Twilly", IP = "game.aq.com", Port = 5588 },
+                new() { Name = "Twig", IP = "game.aq.com", Port = 5588 },
+                new() { Name = "Yorumi", IP = "game.aq.com", Port = 5588 },
+                new() { Name = "Yokai", IP = "game.aq.com", Port = 5588 },
+                new() { Name = "Espada", IP = "game.aq.com", Port = 5588 },
+                new() { Name = "Sir Ver", IP = "game.aq.com", Port = 5588 }
+            };
+        }
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            ServerList = new ObservableCollection<Server>(servers);
+            if (SelectedServer == null && ServerList.Count > 0)
+                SelectedServer = ServerList[0];
+        });
+    }
+
+    private void OnPacketIntercepted(InterceptedPacketViewModel packet)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            Packets.Add(packet);
+            if (Packets.Count > 1000)
+                Packets.RemoveAt(0);
+
+            if (MatchesPacket(packet))
+            {
+                FilteredPackets.Add(packet);
+                if (FilteredPackets.Count > 1000)
+                    FilteredPackets.RemoveAt(0);
+            }
+        });
+    }
+
+    partial void OnPacketSearchTextChanged(string value)
+    {
+        RefreshFilteredPackets();
+    }
+
+    partial void OnFilterSearchTextChanged(string value)
+    {
+        UpdateVisibleFilters();
+    }
+
+    private void OnFilterPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(PacketLogFilterViewModel.IsChecked))
+        {
+            RefreshFilteredPackets();
+        }
+    }
+
+    private void UpdateVisibleFilters()
+    {
+        VisiblePacketFilters.Clear();
+        string query = FilterSearchText?.Trim() ?? string.Empty;
+        foreach (var filter in _allPacketFilters)
+        {
+            if (string.IsNullOrEmpty(query) || filter.Content.Contains(query, StringComparison.OrdinalIgnoreCase))
+            {
+                VisiblePacketFilters.Add(filter);
+            }
+        }
+    }
+
+    private bool MatchesPacket(InterceptedPacketViewModel pkt)
+    {
+        if (!string.IsNullOrWhiteSpace(PacketSearchText) &&
+            !pkt.Packet.Contains(PacketSearchText, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        string[] parts = new[] { pkt.Packet };
+        foreach (PacketLogFilterViewModel filter in _allPacketFilters)
+        {
+            if (filter.IsChecked)
+                continue;
+
+            if (filter.Filter.Invoke(parts))
+                return false;
+        }
+
+        return true;
+    }
+
+    public void RefreshFilteredPackets()
+    {
+        FilteredPackets.Clear();
+        foreach (var pkt in Packets)
+        {
+            if (MatchesPacket(pkt))
+            {
+                FilteredPackets.Add(pkt);
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void ClearPackets()
+    {
+        Packets.Clear();
+        FilteredPackets.Clear();
+    }
+
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        foreach (var filter in _allPacketFilters)
+        {
+            filter.IsChecked = false;
+        }
+        RefreshFilteredPackets();
+    }
+
+    [RelayCommand]
+    private void SelectAllFilters()
+    {
+        foreach (var filter in _allPacketFilters)
+        {
+            filter.IsChecked = true;
+        }
+        RefreshFilteredPackets();
+    }
+
+    [RelayCommand]
+    private void InvertFilters()
+    {
+        foreach (var filter in _allPacketFilters)
+        {
+            filter.IsChecked = !filter.IsChecked;
+        }
+        RefreshFilteredPackets();
+    }
+
+    [RelayCommand]
+    private void ConnectInterceptor()
+    {
+        if (_gameProxy.Running)
+        {
+            _gameProxy.Stop();
+            OnPropertyChanged(nameof(Running));
+            return;
+        }
+
+        if (SelectedServer is null)
+            return;
+
+        IScriptOption options = Ioc.Default.GetRequiredService<IScriptOption>();
+        bool relogin = options.AutoRelogin;
+        options.AutoRelogin = false;
+        IPAddress ip = IPAddress.TryParse((string?)SelectedServer.IP, out IPAddress? addr) ? addr : Dns.GetHostEntry((string)SelectedServer.IP).AddressList[0];
+        int port = SelectedServer.Port != 0 ? SelectedServer.Port : 5588;
+        _gameProxy.Destination = new IPEndPoint(ip, port);
+        _gameProxy.Start();
+        _server.Logout();
+        _server.Login();
+        _server.ConnectIP("127.0.0.1", port);
+        OnPropertyChanged(nameof(Running));
+        options.AutoRelogin = relogin;
+    }
+
+    protected override void OnActivated()
+    {
+        Messenger.Register<PacketInterceptorViewModel, PropertyChangedMessage<bool>>(this, RunningChanged);
+        OnPropertyChanged(nameof(Running));
+        if (ServerList.Count == 0)
+            LoadServersAsync();
+    }
+
+    private void RunningChanged(PacketInterceptorViewModel recipient, PropertyChangedMessage<bool> message)
+    {
+        if (message.PropertyName == nameof(ICaptureProxy.Running))
+            recipient.OnPropertyChanged(nameof(recipient.Running));
+    }
+
+    ~PacketInterceptorViewModel()
+    {
+        foreach (var filter in _allPacketFilters)
+        {
+            filter.PropertyChanged -= OnFilterPropertyChanged;
+        }
+        _logger?.Dispose();
+    }
+}
+
+public class InterceptorLogger : IInterceptor, IDisposable
+{
+    public static readonly bool LogToFile = false;
+
+    private readonly Action<InterceptedPacketViewModel> _addFunc;
+    private readonly StreamWriter? _logWriter;
+    private readonly object _logLock = new();
+
+    public int Priority => int.MaxValue;
+
+    public InterceptorLogger(Action<InterceptedPacketViewModel> addFunc)
+    {
+        _addFunc = addFunc;
+        if (LogToFile)
+        {
+            string logPath = Path.Combine(ClientFileSources.SkuaDIR, "InterceptedLogs.txt");
+            _logWriter = new StreamWriter(logPath, append: true) { AutoFlush = true };
+        }
+    }
+
+    public void Intercept(MessageInfo message, bool outbound)
+    {
+        _addFunc(new(message.Content, message.Send ? outbound : null));
+
+        if (LogToFile)
+        {
+            lock (_logLock)
+            {
+                string direction = message.Send ? (outbound ? "OUT" : "IN") : "UNKNOWN";
+                _logWriter?.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [{direction}] {message.Content}");
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_logWriter != null)
+        {
+            _logWriter?.Dispose();
+        }
+    }
+}

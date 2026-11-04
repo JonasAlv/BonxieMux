@@ -1,0 +1,62 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:managerVMs="clr-namespace:Skua.Manager.Avalonia.ViewModels"
+             x:Class="Skua.Manager.Avalonia.Views.ScriptUpdaterView"
+             d:DataContext="{d:DesignInstance managerVMs:ScriptUpdaterViewModel}"
+             mc:Ignorable="d"
+             d:DesignHeight="400"
+             d:DesignWidth="600">
+    <Grid Margin="16" IsEnabled="{Binding !IsBusy}">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <materialIcons:MaterialIcon Kind="CodeTags"
+                                        Width="100"
+                                        Height="100"
+                                        HorizontalAlignment="Center"
+                                        Foreground="{DynamicResource SkuaAccentBrush}"
+                                        Margin="0,0,0,24" />
+
+            <TextBlock Text="BonxieMux Scripts Updater"
+                       FontSize="26"
+                       FontWeight="Light"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,8" />
+
+            <TextBlock Text="{Binding Status}"
+                       FontSize="15"
+                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,24" />
+
+            <ProgressBar Value="0"
+                         IsIndeterminate="{Binding IsBusy}"
+                         Minimum="0"
+                         Maximum="100"
+                         Height="10"
+                         Margin="0,0,0,24"
+                         IsVisible="{Binding IsBusy}" />
+
+            <TextBlock Text="{Binding ProgressStatus}"
+                       FontSize="13"
+                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,24"
+                       IsVisible="{Binding IsBusy}" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Command="{Binding UpdateScriptsCommand}"
+                        Content="Update Scripts"
+                        Margin="0,0,16,0"
+                        Width="160"
+                        Classes="skua-button" />
+
+                <Button Command="{Binding ResetScriptsCommand}"
+                        Content="Reset Scripts"
+                        Classes="skua-button outline"
+                        Width="160" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

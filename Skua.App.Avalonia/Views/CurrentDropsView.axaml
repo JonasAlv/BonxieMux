@@ -1,0 +1,109 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.App.Avalonia.Views.CurrentDropsView"
+             x:DataType="vms:CurrentDropsViewModel"
+             mc:Ignorable="d" d:DesignHeight="400" d:DesignWidth="500">
+
+  <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="10">
+    <!-- Search and count -->
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+      <TextBox Grid.Column="0"
+               Watermark="Search drops"
+               Text="{Binding SearchText, Mode=TwoWay}">
+        <TextBox.InnerLeftContent>
+          <materialIcons:MaterialIcon Kind="Magnify" Width="16" Height="16" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        </TextBox.InnerLeftContent>
+      </TextBox>
+      <TextBlock Grid.Column="1"
+                 x:Name="SelectedCountText"
+                 Text="None selected"
+                 FontSize="11"
+                 Foreground="{DynamicResource SkuaMutedTextBrush}"
+                 VerticalAlignment="Center" />
+      <Border Grid.Column="2" Classes="chip">
+        <TextBlock Text="{Binding FilteredCurrentDrops.Count, StringFormat='{}{0} drops'}" />
+      </Border>
+    </Grid>
+
+    <!-- Drops on the floor; select several to pick them up together -->
+    <ListBox Grid.Row="1"
+             x:Name="DropsList"
+             ItemsSource="{Binding FilteredCurrentDrops}"
+             SelectedItem="{Binding SelectedDrop, Mode=TwoWay}"
+             SelectionMode="Multiple"
+             SelectionChanged="DropsList_SelectionChanged"
+             Padding="4">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8" MinHeight="24">
+            <materialIcons:MaterialIcon Grid.Column="0"
+                                        Kind="PackageVariantClosed"
+                                        Width="16" Height="16"
+                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                        VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            <Border Grid.Column="2" Classes="chip gold" IsVisible="{Binding Coins}">
+              <TextBlock Text="AC" />
+            </Border>
+            <Border Grid.Column="3" Classes="count">
+              <TextBlock Text="{Binding Quantity, StringFormat='x{0}'}" />
+            </Border>
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <!-- Actions -->
+    <Grid Grid.Row="2" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*,*" RowSpacing="8" ColumnSpacing="8">
+      <Button Grid.Row="0" Grid.Column="0" Classes="skua-button" Command="{Binding PickupACCommand}" ToolTip.Tip="Pick up only AC items">
+        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+          <materialIcons:MaterialIcon Kind="Star" Width="15" Height="15" Foreground="{DynamicResource SkuaGoldBrush}" />
+          <TextBlock Text="AC only" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button Grid.Row="0" Grid.Column="1" Classes="skua-button" Command="{Binding PickupAllCommand}">
+        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+          <materialIcons:MaterialIcon Kind="SelectAll" Width="15" Height="15" />
+          <TextBlock Text="Pick up all" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button Grid.Row="0" Grid.Column="2" Classes="skua-button skua-primary" Click="PickupSelected_Click">
+        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+          <materialIcons:MaterialIcon Kind="HandBackRightOutline" Width="15" Height="15" />
+          <TextBlock Text="Pick up selected" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+
+      <Button Grid.Row="1" Grid.Column="0" Classes="skua-button"
+              IsEnabled="{Binding !Banking}"
+              ToolTip.Tip="Picks up only the AC drops, then sends each picked-up item to the bank."
+              Command="{Binding PickupACToBankCommand}">
+        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+          <materialIcons:MaterialIcon Kind="Bank" Width="15" Height="15" Foreground="#FFD700" />
+          <TextBlock Text="Pickup AC &amp; Bank" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button Grid.Row="1" Grid.Column="1" Classes="skua-button" Command="{Binding RejectAllCommand}">
+        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+          <materialIcons:MaterialIcon Kind="CloseCircleOutline" Width="15" Height="15" />
+          <TextBlock Text="Reject All" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button Grid.Row="1" Grid.Column="2" Classes="skua-button" Command="{Binding RejectNonACCommand}">
+        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+          <materialIcons:MaterialIcon Kind="ShieldStarOutline" Width="15" Height="15" />
+          <TextBlock Text="Reject Except AC" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+
+      <TextBlock Grid.Row="2" Grid.ColumnSpan="3"
+                 Text="{Binding Status}"
+                 IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                 TextWrapping="Wrap" FontSize="11" Opacity="0.8" />
+    </Grid>
+  </Grid>
+</UserControl>

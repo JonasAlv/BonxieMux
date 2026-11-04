@@ -1,0 +1,164 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.FastTravel"
+             x:Class="Skua.App.Avalonia.Views.FastTravelView"
+             x:DataType="vms:FastTravelViewModel">
+  <UserControl.Styles>
+    <!-- Destination card: the whole card travels; edit and remove show on hover -->
+    <Style Selector="Border.travel-card">
+      <Setter Property="Height" Value="48" />
+      <Setter Property="Margin" Value="3" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
+    </Style>
+    <Style Selector="Border.travel-card:pointerover">
+      <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
+    </Style>
+    <Style Selector="Border.travel-card Button.card-action">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <Style Selector="Border.travel-card:pointerover Button.card-action">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+    <Style Selector="Button.card-hit">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="10,0" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="VerticalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.card-hit /template/ ContentPresenter#PART_ContentPresenter, Button.card-hit:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.card-hit:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid Margin="12" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="10">
+    <!-- Search and private room -->
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,96" ColumnSpacing="8">
+      <TextBox Grid.Column="0" Watermark="Search name, map or cell" Text="{Binding SearchText, Mode=TwoWay}">
+        <TextBox.InnerLeftContent>
+          <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        </TextBox.InnerLeftContent>
+      </TextBox>
+      <ToggleSwitch Grid.Column="1"
+                    Margin="6,0,0,0"
+                    VerticalAlignment="Center"
+                    OnContent=""
+                    OffContent=""
+                    IsChecked="{Binding MapService.UsePrivateRoom, Mode=TwoWay}"
+                    ToolTip.Tip="Join private rooms with this number" />
+      <TextBlock Grid.Column="2" Text="Private room" VerticalAlignment="Center" />
+      <TextBox Grid.Column="3" Watermark="Room" Text="{Binding MapService.PrivateRoomNumber, Mode=TwoWay}">
+        <TextBox.InnerLeftContent>
+          <materialIcons:MaterialIcon Kind="Pound" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        </TextBox.InnerLeftContent>
+      </TextBox>
+    </Grid>
+
+    <!-- Destinations header -->
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="6">
+      <TextBlock Grid.Column="0" Classes="section-label" Text="DESTINATIONS" />
+      <Border Grid.Column="1" Classes="count">
+        <TextBlock Text="{Binding FilteredFastTravelItems.Count}" />
+      </Border>
+      <Button Grid.Column="3" Classes="skua-button small skua-danger-soft w84" Command="{Binding ClearFastTravelsCommand}" ToolTip.Tip="Remove every destination">
+        <StackPanel Orientation="Horizontal" Spacing="5">
+          <materialIcons:MaterialIcon Kind="DeleteSweepOutline" Width="14" Height="14" />
+          <TextBlock Text="Clear" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button Grid.Column="4" Classes="skua-button small w84" Command="{Binding SaveFastTravelsCommand}" ToolTip.Tip="Save the list">
+        <StackPanel Orientation="Horizontal" Spacing="5">
+          <materialIcons:MaterialIcon Kind="ContentSaveOutline" Width="14" Height="14" />
+          <TextBlock Text="Save" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </Grid>
+
+    <!-- Destination cards, three per row -->
+    <ScrollViewer Grid.Row="2" Margin="-3" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+      <ItemsControl ItemsSource="{Binding FilteredFastTravelItems}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <UniformGrid Columns="3" VerticalAlignment="Top" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Classes="travel-card">
+              <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,6,0">
+                <Button Grid.Column="0"
+                        Classes="card-hit"
+                        Command="{Binding TravelCommand}"
+                        CommandParameter="{Binding}"
+                        ToolTip.Tip="Travel here">
+                  <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <materialIcons:MaterialIcon Grid.Column="0" Kind="NavigationVariantOutline" Width="17" Height="17"
+                                                Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                      <TextBlock Text="{Binding DescriptionName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                      <TextBlock FontFamily="Cascadia Mono,Consolas,Courier New,monospace" FontSize="11"
+                                 Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis">
+                        <TextBlock.Text>
+                          <MultiBinding StringFormat="{}{0} · {1} · {2}">
+                            <Binding Path="MapName" />
+                            <Binding Path="Cell" />
+                            <Binding Path="Pad" />
+                          </MultiBinding>
+                        </TextBlock.Text>
+                      </TextBlock>
+                    </StackPanel>
+                  </Grid>
+                </Button>
+                <Button Grid.Column="1" Classes="icon card-action" Width="26" Height="26"
+                        Command="{Binding EditCommand}" ToolTip.Tip="Edit">
+                  <materialIcons:MaterialIcon Kind="PencilOutline" Width="14" Height="14" />
+                </Button>
+                <Button Grid.Column="2" Classes="icon danger-icon card-action" Width="26" Height="26"
+                        Command="{Binding RemoveCommand}" ToolTip.Tip="Remove">
+                  <materialIcons:MaterialIcon Kind="Close" Width="14" Height="14" />
+                </Button>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <!-- Add a destination -->
+    <Border Grid.Row="3"
+            Background="{DynamicResource SkuaSurfaceBrush}"
+            BorderBrush="{DynamicResource SkuaBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="6">
+      <Grid ColumnDefinitions="1.4*,*,84,84,Auto,Auto" ColumnSpacing="6">
+        <TextBox Grid.Column="0" Height="26" Watermark="Name, e.g. Ultra Alteon" Text="{Binding Editor.Travel.DescriptionName, Mode=TwoWay}" />
+        <TextBox Grid.Column="1" Height="26" Watermark="Map" Text="{Binding Editor.Travel.MapName, Mode=TwoWay}" />
+        <TextBox Grid.Column="2" Height="26" Watermark="Cell" Text="{Binding Editor.Travel.Cell, Mode=TwoWay}" />
+        <TextBox Grid.Column="3" Height="26" Watermark="Pad" Text="{Binding Editor.Travel.Pad, Mode=TwoWay}" />
+        <Button Grid.Column="4" Classes="skua-button small w112" Command="{Binding Editor.GetCurrentCommand}" ToolTip.Tip="Fill in the map, cell and pad you are in">
+          <StackPanel Orientation="Horizontal" Spacing="5">
+            <materialIcons:MaterialIcon Kind="CrosshairsGps" Width="14" Height="14" />
+            <TextBlock Text="Get current" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Grid.Column="5" Classes="skua-button small skua-primary w84" Command="{Binding AddFastTravelCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="5">
+            <materialIcons:MaterialIcon Kind="Plus" Width="14" Height="14" />
+            <TextBlock Text="Add" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

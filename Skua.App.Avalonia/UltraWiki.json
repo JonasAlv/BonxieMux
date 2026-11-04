@@ -1,0 +1,5647 @@
+{
+ "source": "https://docs.google.com/spreadsheets/d/1yytxo6x0XlvbTIYLLD6TCEF_v1EKV59e_N-gas9Fi8Y",
+ "ultras": [
+  {
+   "tab": "Fourth Lynaria",
+   "boss": "Fourth Lynaria",
+   "note": "✔ Forge Helm",
+   "tags": [
+    "Debuffs",
+    "Self-Buff"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": null
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": null
+    },
+    {
+     "cls": "StoneCrusher",
+     "enh": null
+    },
+    {
+     "cls": "Verus DoomKnight",
+     "enh": null
+    }
+   ],
+   "recommended": [
+    "Legion Revenant",
+    "Lord of Order",
+    "StoneCrusher",
+    "Verus DoomKnight",
+    "DPS / Support",
+    "DPS / Support",
+    "DPS"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 5
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 3
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 4
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 3
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 2
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 4
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 4
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 2
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 4
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 4
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 2
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 2
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 2
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Shaman",
+      "stars": 3
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 5
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 4
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 2
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 4
+     },
+     {
+      "cls": "Lich",
+      "stars": 4
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 3
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 4
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 3
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 3
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 3
+     }
+    ]
+   },
+   "mechanics": "The boss will gain temporary dodge every few seconds, as well as a small chance to give a massive debuff to any magical classes.\n\n This doesn't make the magical classes useless, just makes so they are at a small disadvantage.\n\n Outside of that, there are no notable mechanics, as long as the group has the main 4 core classes."
+  },
+  {
+   "tab": "Void Bosses",
+   "boss": "Void Flibbi",
+   "note": "✔ Forge Helm",
+   "tags": [
+    "Self-Buff",
+    "Debuffs",
+    "%HP Damage"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Verus DoomKnight",
+     "enh": {
+      "weapon": "Dauntless",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Legendary Hero",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "ArchFiend",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "DPS / Support",
+    "DPS / Support",
+    "DPS / Support",
+    "DPS",
+    "DPS"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 5
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 4
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 5
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 5
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 5
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 4
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 5
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 2
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 3
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 4
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 4
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 3
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 3
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Shaman",
+      "stars": 3
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 4
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 4
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 5
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 5
+     },
+     {
+      "cls": "Lich",
+      "stars": 4
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 5
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 5
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 2
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 4
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 3
+     }
+    ]
+   },
+   "mechanics": "If you want to use Shaman, do not press 5."
+  },
+  {
+   "tab": "Void Bosses",
+   "boss": "Void Nightbane",
+   "note": "❌ Vainglory",
+   "tags": [
+    "Reduced Healing",
+    "%HP Damage",
+    "True Damage"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Verus DoomKnight",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legendary Hero",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "ArchFiend",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Lucky Health Vamp",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Lucky Health Vamp",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Penitence"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "Healer / Support",
+    "DPS / Support",
+    "DPS / Support",
+    "DPS",
+    "DPS"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 5
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 3
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 5
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 4
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 4
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 5
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 1
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 3
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 4
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 3
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 2
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 2
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 2
+     },
+     {
+      "cls": "Shaman",
+      "stars": 2
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 3
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 3
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 5
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 4
+     },
+     {
+      "cls": "Lich",
+      "stars": 4
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 4
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 1
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 4
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 2
+     }
+    ]
+   },
+   "mechanics": "CANNOT BE DECAYED.\n\n\n\n Use classes that deal damage fast, instead of classes with very high damage.\n \n Using Vainglory will result in instant death (boss reduces healing by 80%). Only use if you have Dauntless on (it is risky)."
+  },
+  {
+   "tab": "Void Bosses",
+   "boss": "Void Xyfrag",
+   "note": "✔ Forge Helm",
+   "tags": [
+    "Debuffs over time",
+    "%HP Damage",
+    "Timed Taunts"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Verus DoomKnight",
+     "enh": {
+      "weapon": "Dauntless",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Legendary Hero",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "ArchFiend",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "DPS / Support",
+    "DPS / Support",
+    "DPS / Support",
+    "DPS",
+    "DPS"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 5
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 3
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 5
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 4
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 4
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 5
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 1
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 3
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 4
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 3
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 2
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 2
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 2
+     },
+     {
+      "cls": "Shaman",
+      "stars": 2
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 3
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 3
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 5
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 4
+     },
+     {
+      "cls": "Lich",
+      "stars": 4
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 4
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 1
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 4
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 2
+     }
+    ]
+   },
+   "mechanics": "Use classes that deal damage fast, instead of classes with very high damage.\n\n 1. Legion Revenant should taunt.\n\n 2. Taunt when the \"BLEEEECH\" text appears.\n\n 3. Deal damage.\n\n Verus DoomKnight can also taunt, if there is one in your group. Any class with self-healing can do it, but prefer the tanky ones.\n\n\n\n IF YOU TAKE TOO LONG TO KILL, IT WILL BECOME IMMORTAL!"
+  },
+  {
+   "tab": "Void Bosses",
+   "boss": "NerfKitten",
+   "note": "✔ Forge Helm",
+   "tags": [
+    "Debuffs over time",
+    "%HP Damage",
+    "True Damage",
+    "Timed Taunts"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Verus DoomKnight",
+     "enh": {
+      "weapon": "Dauntless",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Legendary Hero",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "ArchFiend",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "Healer / Support",
+    "DPS / Support",
+    "DPS / Support",
+    "DPS",
+    "DPS"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 5
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 4
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 5
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 4
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 4
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 5
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 1
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 3
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 4
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 3
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 3
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 3
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Shaman",
+      "stars": 3
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 4
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 4
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 5
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 5
+     },
+     {
+      "cls": "Lich",
+      "stars": 4
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 5
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 5
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 3
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 4
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 4
+     }
+    ]
+   },
+   "mechanics": "TAUNTING WILL DEBUFF YOU!!\n\n Use classes that deal damage fast, instead of classes with very high damage.\n\n 1. Legion Revenant should taunt.\n\n 2. Taunt when the \"Meow!\" text appears.\n\n 3. Deal damage.\n\n If possible, have someone else alternate taunts with Legion Revenant. Preferably a Verus DoomKnight."
+  },
+  {
+   "tab": "Lavarock Shore",
+   "boss": "Kasuko + Whirlpool",
+   "note": "✔ Forge Helm",
+   "tags": [
+    "Nuke",
+    "Time Limit"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Verus DoomKnight",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "StoneCrusher",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Fighter",
+      "helm": "Anima",
+      "cape": "Absolution"
+     }
+    },
+    {
+     "cls": "ArchFiend",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "Verus DoomKnight",
+    "StoneCrusher",
+    "DPS / Support",
+    "DPS / Support",
+    "DPS"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 4
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 3
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 5
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 5
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 4
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 4
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 4
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 3
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 5
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 3
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 3
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 2
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 2
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Shaman",
+      "stars": 5
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 4
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 4
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 4
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 5
+     },
+     {
+      "cls": "Lich",
+      "stars": 4
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 4
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 2
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 4
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 2
+     }
+    ]
+   },
+   "mechanics": "The boss will nuke everyone, dealing 90% Health damage (cannot be reduced) every time it loses some health.\n\n Just make sure to be constantly healing and have some class like StoneCrusher or Scion of Flame to keep everyone always full.\n\n If your group is mostly multi-target classes for DPS, or the DPS is very fast, then you can just focus Kasuko (the dragon) the entire time without worries.\n\n Otherwise, focus the Whirlpool first."
+  },
+  {
+   "tab": "Temple Shrine",
+   "boss": "Shrine - Left",
+   "note": "✔ Forge Helm",
+   "tags": [
+    "Stun",
+    "Nuke",
+    "Debuffs over Time",
+    "Timed Taunts"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Praxis",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "StoneCrusher",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Fighter",
+      "helm": "Anima",
+      "cape": "Absolution"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "StoneCrusher",
+    "DPS"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 5
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 2
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 4
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 3
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 4
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 2
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 2
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 3
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 1
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 1
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 2
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 1
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 3
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 3
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 3
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Shaman",
+      "stars": 2
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 4
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 3
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 2
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 2
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 4
+     },
+     {
+      "cls": "Lich",
+      "stars": 2
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 2
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 2
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 2
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 4
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 3
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 3
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 3
+     }
+    ]
+   },
+   "mechanics": "Lunar Haze:\n\n Lord of Order must Taunt Haze as soon as the text \"You Gaze into the Moon\" disappears.\n\n \n\n Boss:\n\n Legion Revenant should taunt when \"The Moon Converges\" message appears, using Praxis together with taunt to make the hit 0."
+  },
+  {
+   "tab": "Temple Shrine",
+   "boss": "Shrine - Right",
+   "note": "Avoid Forge Helm",
+   "tags": [
+    "Debuffs",
+    "Nuke",
+    "Debuffs over Time",
+    "Timed Taunts"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Praxis",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Verus DoomKnight",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "DPS / Support",
+    "DPS"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 4
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 2
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 4
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 3
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 5
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 4
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 3
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 5
+     },
+     {
+      "cls": "Guardian",
+      "stars": 4
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 3
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 1
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 1
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 3
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 3
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 2
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 2
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 2
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 2
+     },
+     {
+      "cls": "Shaman",
+      "stars": 4
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 4
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 3
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 5
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 4
+     },
+     {
+      "cls": "Lich",
+      "stars": 4
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 3
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 3
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 3
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 2
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 3
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 3
+     }
+    ]
+   },
+   "mechanics": "Dawn Knight:\n\n Legion Revenant must taunt Knight as soon as the text \"You feel the Warmth of the Sun\" disappears.\n\n \n\n Boss:\n\n Legion Revenant should taunt when \"The Sun Converges\" message appears, using Praxis together with taunt to make the hit 0."
+  },
+  {
+   "tab": "Temple Shrine",
+   "boss": "Shrine - Middle",
+   "note": "Avoid Forge Helm",
+   "tags": [
+    "Debuffs",
+    "Nuke",
+    "Debuffs over Time",
+    "Timed Taunts"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Praxis",
+      "base": "Wizard",
+      "helm": "Wizard",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "ArchPaladin",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "ArchPaladin",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 5
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 4
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 3
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 5
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 3
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 3
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 4
+     },
+     {
+      "cls": "Guardian",
+      "stars": 4
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 3
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 2
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 1
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 1
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 3
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 1
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 2
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 2
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 2
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 2
+     },
+     {
+      "cls": "Shaman",
+      "stars": 5
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 3
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 3
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 4
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 3
+     },
+     {
+      "cls": "Lich",
+      "stars": 3
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 3
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 2
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 2
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 2
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 2
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 2
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 2
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 2
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 2
+     }
+    ]
+   },
+   "mechanics": "Dying Light:\n ArchPaladin must taunt as soon as the text \"The Sunlight Gathers\" appears, using Skill 4 at the same time to reduce damage taken.\n\n Lunar Haze:\n Lord of Order must Taunt Haze as soon as the text \"You Gaze into the Moon\" disappears\n\n Dawn Knight:\n Legion Revenant must Knight as soon as the text \"You feel the Warmth of the Sun\" disappears.\n\n Ascended Sunlight:\n Legion Revenant should taunt when \"The Sun Converges\" message appears, using Praxis together with taunt to make the hit 0. DPS takes every other taunt with it (LR Praxis those too).\n\n Ascended Moonlight:\n Lord of Order and ArchPaladin should alternate taunts between the two of them, taunting when \"The Moon Converges\" message appears."
+  },
+  {
+   "tab": "Astral Shrine",
+   "boss": "Astral Empyrean",
+   "note": "❌ Vainglory",
+   "tags": [
+    "Zone of Death",
+    "%HP Damage",
+    "Reduced Healing",
+    "Timed Taunts"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Verus DoomKnight",
+     "enh": {
+      "weapon": "Dauntless",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "StoneCrusher",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Fighter",
+      "helm": "Anima",
+      "cape": "Absolution"
+     }
+    },
+    {
+     "cls": "ArchFiend",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Glaceran Warlord",
+     "enh": {
+      "weapon": "Dauntless",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Phantom Chronomancer",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Penitence"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "Verus DoomKnight",
+    "StoneCrusher",
+    "ArchFiend",
+    "DPS / Support",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 5
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 4
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 5
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 5
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 4
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 3
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 5
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 2
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 3
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 4
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 3
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 3
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 3
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Shaman",
+      "stars": 4
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 5
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 3
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 3
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 4
+     },
+     {
+      "cls": "Lich",
+      "stars": 4
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 4
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 2
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 4
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 3
+     }
+    ]
+   },
+   "mechanics": "Using Vainglory will result in instant death (boss reduces healing by 80%).\n\n 1. No one should stay in the red zone.\n\n 2. When text \"Behold our starfire!\" appears, a player should taunt (Verus DoomKnight or Legion Revenant).\n\n 3. Players MUST alternate taunts. Taunting twice may result in death.\n\n\n\n\n Boss gains massive stats boosts when it kills a player. Two or three deaths are often enough for a complete wipe."
+  },
+  {
+   "tab": "Kathool",
+   "boss": "Kathool",
+   "note": "✔ Forge Helm",
+   "tags": [
+    "Summons",
+    "Debuffs",
+    "True Damage",
+    "Vigil"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Verus DoomKnight",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "StoneCrusher",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Fighter",
+      "helm": "Anima",
+      "cape": "Absolution"
+     }
+    },
+    {
+     "cls": "ArchFiend",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Glaceran Warlord",
+     "enh": {
+      "weapon": "Dauntless",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Arcana Invoker",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "Verus DoomKnight",
+    "StoneCrusher",
+    "ArchFiend",
+    "DPS / Support",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 5
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 3
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 5
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 4
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 5
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 5
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 3
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 3
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 4
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 2
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 3
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 2
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 3
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 2
+     },
+     {
+      "cls": "Shaman",
+      "stars": 5
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 0
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 3
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 3
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 4
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 3
+     },
+     {
+      "cls": "Lich",
+      "stars": 3
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 3
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 3
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 4
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 3
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 3
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 3
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 3
+     }
+    ]
+   },
+   "mechanics": "Must use Vigil when text \"You cannot resist\" appears.\n\n Supports should focus Tentacles when they spawn, leaving DPS and debuffing supports (Verus DoomKnight, Arachnomancer, etc) to attack the eyes.\n\n If DPS is single-target (Infinity Knight, Guardian, etc), then it is recommended that most players, except DPS, focus tentacles when they respawn."
+  },
+  {
+   "tab": "Grimchallenge",
+   "boss": "Mechabinky 2.0",
+   "note": "Avoid Forge Helm",
+   "tags": [
+    "Multiple Mechanics",
+    "Lock",
+    "Looped Taunts",
+    "Vigil"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Wizard",
+      "helm": "Wizard",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Verus DoomKnight",
+     "enh": {
+      "weapon": "Dauntless",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Legendary Hero",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Lucky",
+      "helm": "Forge",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "ArchPaladin",
+     "enh": {
+      "weapon": "Praxis",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Glaceran Warlord",
+     "enh": {
+      "weapon": "Dauntless",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Phantom Chronomancer",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "Verus DoomKnight",
+    "Legendary Hero",
+    "ArchPaladin",
+    "DPS / Support",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 5
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 4
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 5
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 5
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 3
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 4
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 5
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 2
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 2
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 3
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 4
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 3
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 2
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 3
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Shaman",
+      "stars": 4
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 0
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 5
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 3
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 3
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 5
+     },
+     {
+      "cls": "Lich",
+      "stars": 3
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 3
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 4
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 2
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 3
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 2
+     }
+    ]
+   },
+   "mechanics": "ALL PLAYERS, EXCEPT THE TWO TAUNTERS, MUST HAVE VIGIL EQUIPPED.\n\n 45m HP: Inverts healing (should be taunted) - All healers must stop healing for about 5-6 seconds.\n\n 40m HP: Should be taunted by one of the taunters.\n\n 35m HP: Should be taunted by the other taunter.\n\n 30m HP: Leaves all targets on 1 HP - SPAM HEALS!\n\n 25m HP: Gains massive damage and crit chance.\n\n 20m HP: Gains 60% Dodge\n\n 15m HP: Charges up, healing itself (SPAM DECAY) - Then, deals massive damage (ArchPaladin should use Seal prior to the damage)\n\n 10m HP: \"You cannot resist\" - USE VIGIL WHEN TEXT APPEARS!\n\n 5m HP: Self-destruction - DPS CHECK!"
+  },
+  {
+   "tab": "Timeinn Trio",
+   "boss": "Ultra Ezrajal",
+   "note": "Minimum 3175 HP",
+   "tags": [
+    "Nuke",
+    "Reflect",
+    "Heal",
+    "Lock"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Wizard",
+      "helm": "Wizard",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "ArchPaladin",
+     "enh": {
+      "weapon": "Praxis",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Valiance",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "ArchPaladin",
+    "Healer / Support",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 5
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 5
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 4
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 5
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 5
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 5
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 5
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 2
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 3
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 5
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 4
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 4
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 4
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Shaman",
+      "stars": 4
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 3
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 5
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 5
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 5
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 5
+     },
+     {
+      "cls": "Lich",
+      "stars": 5
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 5
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 5
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 5
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 3
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 4
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 3
+     }
+    ]
+   },
+   "mechanics": "1. Attack Ezrajal with mana vamp weapon, until the weapon locks\n\n 2. Quickly swap weapon to an actual enhancement and start the fight\n\n Ezrajal cannot lock your skills now, as long as you start the fight soon after locking.\n\n It is possible to coordinate this, if all players attack Ezrajal roughly at the same time.\n\n Restart the fight together after locking, so no one gets caught by a stray nuke."
+  },
+  {
+   "tab": "Timeinn Trio",
+   "boss": "Ultra Warden",
+   "note": "✔ Forge Helm",
+   "tags": [
+    "Heal",
+    "Nuke",
+    "Petrify",
+    "Timed Taunts"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "StoneCrusher",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Fighter",
+      "helm": "Anima",
+      "cape": "Absolution"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "StoneCrusher",
+    "DPS"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 3
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 4
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 5
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 5
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 5
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 5
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 2
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 3
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 4
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 4
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 4
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 4
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Shaman",
+      "stars": 4
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 3
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 5
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 5
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 5
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 5
+     },
+     {
+      "cls": "Lich",
+      "stars": 5
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 5
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 5
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 5
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 2
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 4
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 3
+     }
+    ]
+   },
+   "mechanics": "Simply have someone (preferably with some kind of healing over time) taunt Warden when he goes berserk.\n\n At the same time, Lord of Order uses their Skill 5 to negate all damage, just in case.\n\n Then, Legendary Hero, or some other fast healer, spams all of their healing skills.\n\n Warden is now dead."
+  },
+  {
+   "tab": "Timeinn Trio",
+   "boss": "Ultra Engineer",
+   "note": "Avoid Forge Helm",
+   "tags": [
+    "Summons",
+    "Nuke",
+    "Invulnerability"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "StoneCrusher",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Fighter",
+      "helm": "Anima",
+      "cape": "Absolution"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "StoneCrusher",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 5
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 4
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 5
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 4
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 5
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 3
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 2
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 2
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 4
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 3
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 4
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 4
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Shaman",
+      "stars": 3
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 2
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 5
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 5
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 5
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 5
+     },
+     {
+      "cls": "Lich",
+      "stars": 5
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 3
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 5
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 5
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 5
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 3
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 4
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 4
+     }
+    ]
+   },
+   "mechanics": "Engineer cannot be hit while the Drones are alive!\n\n Players must use all buffs before starting!\n\n ArchPaladin must nuke the Defense Drone with 2 4 5 combo.\n\n Meanwhile Lord of Order uses 5 on Attack Drone to debuff it.\n \n DPS and Legion Revenant should focus Defense Drone quickly, then Attack Drone as fast as possible.\n\n If done right, Engineer should die before the Drones come back even once."
+  },
+  {
+   "tab": "Tyndarius",
+   "boss": "Ultra Tyndarius",
+   "note": "✔ Forge Helm*",
+   "tags": [
+    "Debuffs over Time",
+    "Self-Buff",
+    "Nuke",
+    "Looped Taunts"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "StoneCrusher",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Fighter",
+      "helm": "Anima",
+      "cape": "Absolution"
+     }
+    },
+    {
+     "cls": "ArchPaladin",
+     "enh": {
+      "weapon": "Praxis",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "StoneCrusher",
+    "ArchPaladin",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 4
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 5
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 4
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 4
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 5
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 5
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 3
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 2
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 1
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 4
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 2
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 3
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 3
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Shaman",
+      "stars": 3
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 5
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 5
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 5
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 5
+     },
+     {
+      "cls": "Lich",
+      "stars": 5
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 3
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 5
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 5
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 5
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 3
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 4
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 4
+     }
+    ]
+   },
+   "mechanics": "Both Orbs occasionally debuff the entire group. DPS and Legion Revenant should taunt one orb each, to prevent the debuffs from stacking too high.\n\n Killing the Orbs as fast as possible is a key part of this fight.\n\n It is not necessary for ArchPaladin to loop taunt with Lord of Order, but it makes the fight significantly easier.\n\n If the DPS is fast, taunting is not necessary at all."
+  },
+  {
+   "tab": "Drakath",
+   "boss": "Champion Drakath",
+   "note": "Avoid Forge Helm",
+   "tags": [
+    "Nuke",
+    "Self-Buff",
+    "Debuffs",
+    "Timed Taunts"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Wizard",
+      "helm": "Wizard",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Paladin Chronomancer",
+     "enh": {
+      "weapon": "Fighter Mana Vamp",
+      "base": "Fighter",
+      "helm": "Hearty",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Lament"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "Healer / Support",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 3
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 3
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 5
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 5
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 5
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 2
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 3
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 2
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 3
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 1
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 2
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 5
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 4
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 2
+     },
+     {
+      "cls": "Shaman",
+      "stars": 3
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 0
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 5
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 3
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 4
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 4
+     },
+     {
+      "cls": "Lich",
+      "stars": 4
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 3
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 4
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 4
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 3
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 3
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 4
+     }
+    ]
+   },
+   "mechanics": "Simply spam all attacks, while trying to keep your health always full.\n\n Healers should always try to not overlap their healings.\n\n A healer, or Legion Revenant, should taunt Drakath on every 2m HP lost, otherwise the run will be basically lost on the spot, even if no one dies, since Drakath stacks too many buffs on himself.\n\n Legion Revenant and Healer may alternate taunts, if necessary.\n\n Minimum of 3500 HP (while buffed) required for being a taunter.\n\n Other players do not have a minimum HP requirement, although 3000 HP buffed is recommended for safety."
+  },
+  {
+   "tab": "Dage",
+   "boss": "The Dark Lord",
+   "note": "✔ Forge Helm",
+   "tags": [
+    "Inverted Healing",
+    "Heal",
+    "Debuffs over Time",
+    "CAv Solo Taunt"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Chaos Avenger",
+     "enh": {
+      "weapon": "Dauntless",
+      "base": "Lucky",
+      "helm": "Anima",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "ArchFiend",
+     "enh": {
+      "weapon": "Dauntless",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Verus DoomKnight",
+     "enh": {
+      "weapon": "Dauntless",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Vainglory"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Lucky Health Vamp",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Vainglory"
+     }
+    }
+   ],
+   "recommended": [
+    "Chaos Avenger",
+    "Support",
+    "Support",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 4
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 4
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 5
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 0
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 4
+     },
+     {
+      "cls": "Guardian",
+      "stars": 1
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 3
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 2
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 1
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 0
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 0
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 0
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 1
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 1
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 3
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 3
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Shaman",
+      "stars": 1
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 1
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 1
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 5
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 1
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 5
+     },
+     {
+      "cls": "Lich",
+      "stars": 4
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 2
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 1
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 4
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 4
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 3
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 3
+     }
+    ]
+   },
+   "mechanics": "Recommended to have at least 1 \"Decay\" class in your group.\n\n DO NOT use healing skills! Players may use Health Vamp enhancement and / or Scroll of Life Steal (reminder that they scale with your damage, so don't shoot yourself in the foot by trying to increase your HP).\n\n Spam your Decay skill on Dage once he says \"I possess the full power of the Legion at my disposal\".\n\n ArchPaladin may also \"Decay\" Dage by simply playing the fight as normal, but using Skill 4 as soon as Dage starts healing. This turns his healing into self-damage.\n\n Players should go towards the glowing blue zones every time they appear, then immediately attack Dage once they take damage.\n\n Recommended to have a player with Dauntless playing Chaos Avenger."
+  },
+  {
+   "tab": "Nulgath",
+   "boss": "The Archfiend",
+   "note": "✔ Forge Helm",
+   "tags": [
+    "Debuffs over Time",
+    "Time Limit",
+    "Instant Kill",
+    "Timed Taunts"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "StoneCrusher",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Fighter",
+      "helm": "Anima",
+      "cape": "Absolution"
+     }
+    },
+    {
+     "cls": "Guardian",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Vim",
+      "cape": "Lament"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "StoneCrusher",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 5
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 3
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 4
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 4
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 5
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 3
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 1
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 1
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 3
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 2
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 3
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 3
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 3
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Shaman",
+      "stars": 2
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 5
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 4
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 5
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 5
+     },
+     {
+      "cls": "Lich",
+      "stars": 5
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 4
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 3
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 4
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 4
+     }
+    ]
+   },
+   "mechanics": "TAUNTING:\n\n Lord of Order and Legion Revenant should Taunt Nulgath.\n\n 1. Either of them should taunt first one or two seconds of the fight starting (DO NOT START THE FIGHT WITH THE TAUNT, I WILL FIND YOU AND END YOU BEFORE NULGATH DOES)!\n\n 2. The next person Taunts Nulgath as soon as he says \"Behold the power of the Abyss!\"\n\n 3. Then, the first player Taunts again once that Taunt ends.\n\n 4. Repeat the previous 2 steps until the fight ends.\n\n DPS:\n\n DPS and second Support should focus Nulgath with all they have.\n\n If you are not a gigachad player using potions, you may attack the Sword and leave it with 50% HP before focusing Nulgath. Kill the Sword if it ever acts weird."
+  },
+  {
+   "tab": "Drago",
+   "boss": "King Drago",
+   "note": "✔ Forge Helm",
+   "tags": [
+    "Summons",
+    "Invulnerability",
+    "Time Limit",
+    "Looped Taunts"
+   ],
+   "bestGroup": [
+    {
+     "cls": "StoneCrusher",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Fighter",
+      "helm": "Anima",
+      "cape": "Absolution"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Wizard Aweblast",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "ArchPaladin",
+     "enh": {
+      "weapon": "Praxis",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Guardian",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Vim",
+      "cape": "Lament"
+     }
+    }
+   ],
+   "recommended": [
+    "StoneCrusher",
+    "Legion Revenant",
+    "ArchPaladin",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 0
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 5
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 4
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 0
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 0
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 4
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 0
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 0
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 0
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 0
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 0
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 0
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 3
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 1
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 0
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 0
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 0
+     },
+     {
+      "cls": "Shaman",
+      "stars": 0
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 0
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 5
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 0
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 3
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 0
+     },
+     {
+      "cls": "Lich",
+      "stars": 5
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 0
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 5
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 3
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 0
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 5
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 0
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 3
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 0
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 4
+     }
+    ]
+   },
+   "mechanics": "ArchPaladin and Lord of Order should Loop their Taunts on the Executiuoner (left side).\n\n Looping is not strictly necessary, but makes the fight a lot safer for everyone involved.\n\n \n Legion Revenant should spam taunts on the Bowmaster (right side) until it dies.\n\n\n DPS should kill the Bowmaster, then the Executioner. Drago should immediately die once they are down."
+  },
+  {
+   "tab": "Darkon",
+   "boss": "The Conductor",
+   "note": "❌ Vainglory",
+   "tags": [
+    "True Damage",
+    "Reduced Healing",
+    "Time Limit",
+    "Looped Taunts"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Absolution"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Wizard",
+      "helm": "Pneuma",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Paladin Chronomancer",
+     "enh": {
+      "weapon": "Lacerate",
+      "base": "Fighter",
+      "helm": "Vim",
+      "cape": "Fighter"
+     }
+    },
+    {
+     "cls": "Chrono ShadowHunter",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Lucky",
+      "helm": "Examen",
+      "cape": "Base Forge"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "StoneCrusher",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 2
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 3
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 2
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 1
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 2
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 4
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 4
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 1
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 4
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 3
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 5
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 3
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 4
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 3
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 3
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 2
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 3
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Shaman",
+      "stars": 3
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 3
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 4
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 4
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 5
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 1
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 3
+     },
+     {
+      "cls": "Lich",
+      "stars": 4
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 4
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 3
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 3
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 3
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 3
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 2
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 3
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 3
+     }
+    ]
+   },
+   "mechanics": "Lord of Order and Legion Revenant should Taunt on Darkon for the entire fight:\n\n 1. First one (doesn't matter who) taunts at start;\n\n 2. Next one taunts when Darkon does tentacles animation, or every 2 auto attacks if animations off;\n\n 3. Repeat step 2 until Darkon regens his entire HP, then start looping taunt until he dies.\n\n Healer and Lord of Order should manage their healings to always keep the group alive.\n\n Lord of Order should save Skill 5 until Darkon has 4.6~4.5m HP remaining, to avoid the Nuke. After that, spam it as much as you can for debuffs.\n\n \n Ideally, the secondary Healer should be using Potent Honor Potion to guarantee their healing will be enough for the final Phase for the fight.\n\n DPS should deal damage.\n\n\n DO NOT USE VAINGLORY IN HERE."
+  },
+  {
+   "tab": "Gramiel",
+   "boss": "The Graceful",
+   "note": "✔ Forge Helm",
+   "tags": [
+    "Looped Taunts",
+    "Summons",
+    "Invulnerability"
+   ],
+   "bestGroup": [
+    {
+     "cls": "Lord of Order",
+     "enh": {
+      "weapon": "Lucky Aweblast",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Penitence"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Wizard",
+      "helm": "Wizard",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "StoneCrusher",
+     "enh": {
+      "weapon": "Praxis",
+      "base": "Fighter",
+      "helm": "Anima",
+      "cape": "Absolution"
+     }
+    },
+    {
+     "cls": "Shaman",
+     "enh": {
+      "weapon": "Elysium",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Lament"
+     }
+    }
+   ],
+   "recommended": [
+    "Lord of Order",
+    "Legion Revenant",
+    "StoneCrusher",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 2
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 3
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 4
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 2
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 5
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 4
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 3
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 3
+     },
+     {
+      "cls": "Guardian",
+      "stars": 4
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 4
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 3
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 4
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 2
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 3
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 2
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 1
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 1
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 2
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 1
+     },
+     {
+      "cls": "Shaman",
+      "stars": 5
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 5
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 2
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 2
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 2
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 3
+     },
+     {
+      "cls": "Lich",
+      "stars": 1
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 2
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 3
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 3
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 3
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 3
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 2
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 1
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 2
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 1
+     }
+    ]
+   },
+   "mechanics": "CRYSTALS:\n\n DPS and Lord of Order should focus a Crystal, alternating taunt on it.\n\n Legion Revenant and Healer should focus the other.\n\n One member from each pair should taunt when the text \"The Grace Crystal prepares a defense shattering attack!\" appears.\n\n Alternate taunts like that until the Crystals die. BOTH CRYSTALS MUST DIE WITHIN 5 SECONDS OF EACH OTHER.\n\n\n\n GRAMIEL:\n\n Each player must Taunt Gramiel at least once per cycle. As soon as Crystals die, wait for the explosion damage, then:\n\n Player taunts, receives 2 auto attacks, next player taunts. You can also time by the halfway mark of the taunt's duration, if that is easier.\n\n Keep doing that until Gramiel charges his beam.\n\n After the beam, repeat.\n\n Do this until Gramiel dies."
+  },
+  {
+   "tab": "Speaker",
+   "boss": "Your Son",
+   "note": "Minimum ~3k HP",
+   "tags": [
+    "Heal",
+    "Debuffs",
+    "Zone of Death",
+    "Timed Taunts"
+   ],
+   "bestGroup": [
+    {
+     "cls": "StoneCrusher",
+     "enh": {
+      "weapon": "Valiance",
+      "base": "Fighter",
+      "helm": "Anima",
+      "cape": "Absolution"
+     }
+    },
+    {
+     "cls": "Legion Revenant",
+     "enh": {
+      "weapon": "Arcana Concerto",
+      "base": "Wizard",
+      "helm": "Wizard",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "ArchPaladin",
+     "enh": {
+      "weapon": "Praxis",
+      "base": "Lucky",
+      "helm": "Base Forge",
+      "cape": "Lament"
+     }
+    },
+    {
+     "cls": "Guardian",
+     "enh": {
+      "weapon": "Ravenous",
+      "base": "Lucky",
+      "helm": "Vim",
+      "cape": "Lament"
+     }
+    }
+   ],
+   "recommended": [
+    "StoneCrusher",
+    "Legion Revenant",
+    "ArchPaladin",
+    "DPS / Support"
+   ],
+   "ratings": {
+    "Support": [
+     {
+      "cls": "Legion Revenant",
+      "stars": 5
+     },
+     {
+      "cls": "Verus DoomKnight",
+      "stars": 4
+     },
+     {
+      "cls": "ArchPaladin",
+      "stars": 5
+     },
+     {
+      "cls": "ArchFiend",
+      "stars": 4
+     },
+     {
+      "cls": "Arachnomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Glaceran Warlord",
+      "stars": 4
+     },
+     {
+      "cls": "Scion of Flames",
+      "stars": 2
+     }
+    ],
+    "Chrono DPS": [
+     {
+      "cls": "Chrono ShadowHunter",
+      "stars": 5
+     },
+     {
+      "cls": "Great Thief",
+      "stars": 5
+     },
+     {
+      "cls": "Phantom Chronomancer",
+      "stars": 2
+     },
+     {
+      "cls": "Quantum Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Infinity Knight",
+      "stars": 1
+     },
+     {
+      "cls": "Guardian",
+      "stars": 5
+     },
+     {
+      "cls": "Archivist of Time",
+      "stars": 3
+     }
+    ],
+    "Healer": [
+     {
+      "cls": "Lord of Order",
+      "stars": 5
+     },
+     {
+      "cls": "Legendary Hero",
+      "stars": 2
+     },
+     {
+      "cls": "StoneCrusher",
+      "stars": 0
+     },
+     {
+      "cls": "Paladin Chronomancer",
+      "stars": 3
+     },
+     {
+      "cls": "Frostval Barbarian",
+      "stars": 0
+     },
+     {
+      "cls": "Master of Moglins",
+      "stars": 1
+     }
+    ],
+    "Early DPS": [
+     {
+      "cls": "Light Caster",
+      "stars": 1
+     },
+     {
+      "cls": "Elemental Warrior",
+      "stars": 3
+     },
+     {
+      "cls": "Chaos Slayer",
+      "stars": 3
+     },
+     {
+      "cls": "Yami no Ronin",
+      "stars": 4
+     },
+     {
+      "cls": "Legion DoomKnight",
+      "stars": 4
+     },
+     {
+      "cls": "Shaman",
+      "stars": 1
+     },
+     {
+      "cls": "Alpha Omega",
+      "stars": 1
+     }
+    ],
+    "Endgame DPS": [
+     {
+      "cls": "Arcana Invoker",
+      "stars": 3
+     },
+     {
+      "cls": "King's Echo",
+      "stars": 3
+     },
+     {
+      "cls": "Hollowborn Vindicator",
+      "stars": 2
+     },
+     {
+      "cls": "Dragon of Time",
+      "stars": 0
+     },
+     {
+      "cls": "Martial Artist",
+      "stars": 5
+     },
+     {
+      "cls": "Lich",
+      "stars": 3
+     },
+     {
+      "cls": "Legion Paladin",
+      "stars": 3
+     },
+     {
+      "cls": "Immortal DarkCaster",
+      "stars": 1
+     },
+     {
+      "cls": "Timeless DarkCaster",
+      "stars": 2
+     },
+     {
+      "cls": "Ultra OmniKnight",
+      "stars": 1
+     },
+     {
+      "cls": "Chaos Shaper",
+      "stars": 3
+     },
+     {
+      "cls": "Unundead Goat",
+      "stars": 4
+     },
+     {
+      "cls": "Chaos Avenger",
+      "stars": 3
+     },
+     {
+      "cls": "Void HighLord",
+      "stars": 3
+     },
+     {
+      "cls": "Sentinel",
+      "stars": 4
+     }
+    ]
+   },
+   "mechanics": "Auto Attack = Applies an infinitely stacking Resistance debuff.\n\n Truth = Deals Magical damage and applies a debuff, increasing the damage of the next Truth (always fades before the one after).\n\n Listen = Petrifies the player for 6 seconds.\n\n Zone = Kills petrified players or players marked by Truth. Also deals bonus damage for every player standing on it. Removes debuffs from Auto Attacks.\n\n\n The logic is simple: Taunt Truths and Listens so that no one gets hit twice by a truth, while also making so one player can always stay in the Zone every time, so that they reset their debuffs.\n\n One player can taunt every second truth, without exception.\n\n Lord of Order can time Skill 5 (35 seconds cooldown) to make so that one player can tank two Truths in a row, which can often save a run.\n\n ArchPaladin's Skill 4 can significantly reduce the damage from Truths and Auto Attacks, but has no effect on Zones (or on someone that got Truths stacked on them)."
+  }
+ ]
+}

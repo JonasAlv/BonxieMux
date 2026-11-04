@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.App.Avalonia.UserControls.LogTabUserControl">
+  <Grid RowDefinitions="*,Auto" RowSpacing="8">
+    <!-- Log lines: Ctrl+C or the context menu copies the selection -->
+    <ListBox x:Name="LogsListBox"
+             Grid.Row="0"
+             ItemsSource="{Binding Logs}"
+             SelectionMode="Multiple"
+             KeyDown="LogsListBox_KeyDown"
+             SelectionChanged="LogsListBox_SelectionChanged"
+             Padding="4"
+             ScrollViewer.VerticalScrollBarVisibility="Visible"
+             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+             ScrollViewer.AllowAutoHide="False"
+             FontFamily="JetBrains Mono,Noto Sans Symbols,Noto Sans Symbols 2,Noto Color Emoji,Consolas,Courier New,monospace"
+             FontSize="11"
+             Foreground="{DynamicResource SkuaTextBrush}">
+      <ListBox.ContextMenu>
+        <ContextMenu>
+          <MenuItem Header="Copy Selected" Click="CopySelected_Click">
+            <MenuItem.Icon>
+              <materialIcons:MaterialIcon Kind="ContentCopy" Width="14" Height="14" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="Copy All" Command="{Binding CopyLogCommand}">
+            <MenuItem.Icon>
+              <materialIcons:MaterialIcon Kind="SelectAll" Width="14" Height="14" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator />
+          <MenuItem Header="Clear Logs" Command="{Binding ClearLogCommand}">
+            <MenuItem.Icon>
+              <materialIcons:MaterialIcon Kind="TrashCanOutline" Width="14" Height="14" />
+            </MenuItem.Icon>
+          </MenuItem>
+        </ContextMenu>
+      </ListBox.ContextMenu>
+      <ListBox.Styles>
+        <Style Selector="ListBoxItem">
+          <Setter Property="Padding" Value="4,2" />
+          <Setter Property="MinHeight" Value="18" />
+          <Setter Property="CornerRadius" Value="3" />
+        </Style>
+        <!-- WrapLines: long lines wrap instead of running off the edge -->
+        <Style Selector="ListBox.wrap TextBlock">
+          <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+      </ListBox.Styles>
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <TextBlock Text="{Binding}" />
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+      <TextBlock Grid.Column="0" x:Name="CountText" Text="0 lines" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+      <TextBlock Grid.Column="1" x:Name="CopyHint" Text="Ctrl+C or right-click to copy selected lines" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+    </Grid>
+  </Grid>
+</UserControl>
+
+
+

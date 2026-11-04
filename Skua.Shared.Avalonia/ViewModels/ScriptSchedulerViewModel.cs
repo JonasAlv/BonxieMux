@@ -1,0 +1,496 @@
+using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using Skua.Core.Interfaces;
+using Skua.Core.Messaging;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using System.IO;
+using System.Diagnostics;
+using System.Linq;
+using System;
+using Skua.Core.Models;
+
+namespace Skua.Shared.Avalonia.ViewModels;
+
+public partial class ScriptSchedulerViewModel : BotControlViewModelBase
+{
+    private readonly IScriptManager _manager;
+    private readonly IFileDialogService _fileDialog;
+    private readonly ISettingsService _settingsService;
+    private readonly IWindowService _windowService;
+    private readonly IDialogService _dialogService;
+    private Stopwatch _scriptStopwatch = new();
+    private System.Threading.CancellationTokenSource? _queueCts;
+    
+    public ScriptSchedulerViewModel(IScriptManager manager, IFileDialogService fileDialog, ISettingsService settingsService, IWindowService windowService, IDialogService dialogService) : base("Scheduler")
+    {
+        _manager = manager;
+        _fileDialog = fileDialog;
+        _settingsService = settingsService;
+        _windowService = windowService;
+        _dialogService = dialogService;
+        _scriptQueue.CollectionChanged += ScriptQueue_CollectionChanged;
+
+        StrongReferenceMessenger.Default.Register<ScriptSchedulerViewModel, ScriptStoppedMessage, int>(this, (int)MessageChannels.ScriptStatus, (r, m) => Dispatcher.UIThread.Post(r.OnScriptStopped));
+        StrongReferenceMessenger.Default.Register<ScriptSchedulerViewModel, QueueScriptMessage, int>(this, (int)MessageChannels.ScriptStatus, (r, m) => r.OnQueueScript(m));
+    }
+
+    private void OnQueueScript(QueueScriptMessage message)
+    {
+        if (IsRunningQueue)
+        {
+            _dialogService.ShowMessageBox("Cannot add scripts while the playlist is running.", "Scheduler Running");
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(message.Path))
+        {
+            var item = new ScriptItemViewModel(message.Path);
+            int count = ScriptQueue.Count(x => x.Path == message.Path);
+            if (count > 0)
+                item.Name = $"{Path.GetFileNameWithoutExtension(message.Path)} ({count + 1}){Path.GetExtension(message.Path)}";
+            
+            ScriptQueue.Add(item);
+        }
+    }
+
+    [ObservableProperty]
+    private ObservableCollection<ScriptItemViewModel> _scriptQueue = new();
+
+    [ObservableProperty]
+    private bool _isRunningQueue;
+
+    [ObservableProperty]
+    private string _queueStartedTime = string.Empty;
+
+    public string ToggleQueueText => IsRunningQueue ? "Stop queue" : "Start queue";
+
+    // "Started at 22:10:05 · running 2 of 4", or "4 scripts" while stopped
+    public string QueueSummary => IsRunningQueue
+        ? $"{QueueStartedTime} · running {Math.Min(CurrentIndex + 1, ScriptQueue.Count)} of {ScriptQueue.Count}"
+        : ScriptQueue.Count == 1 ? "1 script" : $"{ScriptQueue.Count} scripts";
+
+    partial void OnIsRunningQueueChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ToggleQueueText));
+        if (!value)
+            QueueStartedTime = string.Empty;
+        OnPropertyChanged(nameof(QueueSummary));
+    }
+
+    partial void OnQueueStartedTimeChanged(string value) => OnPropertyChanged(nameof(QueueSummary));
+
+    partial void OnCurrentIndexChanged(int value) => OnPropertyChanged(nameof(QueueSummary));
+
+    partial void OnScriptQueueChanged(ObservableCollection<ScriptItemViewModel>? oldValue, ObservableCollection<ScriptItemViewModel> newValue)
+    {
+        if (oldValue is not null)
+            oldValue.CollectionChanged -= ScriptQueue_CollectionChanged;
+        newValue.CollectionChanged += ScriptQueue_CollectionChanged;
+        OnPropertyChanged(nameof(QueueSummary));
+    }
+
+    private void ScriptQueue_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        => OnPropertyChanged(nameof(QueueSummary));
+
+    [ObservableProperty]
+    private int _currentIndex = 0;
+
+    [RelayCommand]
+    private void OpenScriptRepo()
+    {
+        _windowService.ShowManagedWindow("Script Repo");
+    }
+
+    [ObservableProperty]
+    private ScriptItemViewModel? _selectedScript;
+
+    [RelayCommand]
+    private void MoveScriptUp(ScriptItemViewModel item)
+    {
+        if (IsRunningQueue)
+        {
+            _dialogService.ShowMessageBox("Cannot reorder scripts while the playlist is running.", "Scheduler Running");
+            return;
+        }
+
+        if (item == null) return;
+        int index = ScriptQueue.IndexOf(item);
+        if (index > 0)
+        {
+            ScriptQueue.Move(index, index - 1);
+            SelectedScript = item;
+        }
+    }
+
+    [RelayCommand]
+    private void MoveScriptDown(ScriptItemViewModel item)
+    {
+        if (IsRunningQueue)
+        {
+            _dialogService.ShowMessageBox("Cannot reorder scripts while the playlist is running.", "Scheduler Running");
+            return;
+        }
+
+        if (item == null) return;
+        int index = ScriptQueue.IndexOf(item);
+        if (index >= 0 && index < ScriptQueue.Count - 1)
+        {
+            ScriptQueue.Move(index, index + 1);
+            SelectedScript = item;
+        }
+    }
+
+    [RelayCommand]
+    private void MoveSelectedUp()
+    {
+        if (SelectedScript != null)
+            MoveScriptUp(SelectedScript);
+    }
+
+    [RelayCommand]
+    private void MoveSelectedDown()
+    {
+        if (SelectedScript != null)
+            MoveScriptDown(SelectedScript);
+    }
+
+    [RelayCommand]
+    private void RemoveScript(ScriptItemViewModel item)
+    {
+        if (IsRunningQueue)
+        {
+            _dialogService.ShowMessageBox("Cannot remove scripts while the playlist is running.", "Scheduler Running");
+            return;
+        }
+
+        if (ScriptQueue.Contains(item))
+            ScriptQueue.Remove(item);
+    }
+
+    [RelayCommand]
+    private async Task EditScriptConfig(ScriptItemViewModel item)
+    {
+        if (_manager.ScriptRunning)
+        {
+            _dialogService.ShowMessageBox("Script currently running. Stop the script to change its options.", "Script Running");
+            return;
+        }
+
+        try
+        {
+            object compiled = await Task.Run(() => _manager.Compile(File.ReadAllText(item.Path))!);
+            _manager.OverrideStorage = item.Storage;
+            _manager.LoadScriptConfig(compiled);
+            if (_manager.Config!.Options.Count > 0 || _manager.Config.MultipleOptions.Count > 0)
+                _manager.Config.Configure();
+            else
+                _dialogService.ShowMessageBox("The loaded script has no options to configure.", "No Options");
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowMessageBox($"Script cannot be configured as it has compilation errors:\r\n{ex}", "Script Error");
+        }
+        finally
+        {
+            _manager.OverrideStorage = null;
+        }
+    }
+
+    public class ArmySchedulerMessage
+    {
+        public System.Collections.Generic.IEnumerable<ScriptItemViewModel> Queue { get; }
+        public bool Handled { get; set; } = false;
+        public ArmySchedulerMessage(System.Collections.Generic.IEnumerable<ScriptItemViewModel> queue) { Queue = queue; }
+    }
+
+    public class ArmySchedulerStopMessage
+    {
+        public bool Handled { get; set; } = false;
+    }
+
+    [RelayCommand]
+    private async Task ToggleQueue()
+    {
+        if (IsRunningQueue)
+            await StopQueue();
+        else
+            StartQueue();
+    }
+
+    [RelayCommand]
+    private void StartQueue()
+    {
+        if (ScriptQueue.Count == 0 || IsRunningQueue) return;
+        
+        var msg = new ArmySchedulerMessage(ScriptQueue);
+        StrongReferenceMessenger.Default.Send(msg);
+        if (msg.Handled) return;
+
+        IsRunningQueue = true;
+        QueueStartedTime = $"Started at {DateTime.Now:HH:mm:ss}";
+        _queueCts = new System.Threading.CancellationTokenSource();
+        CurrentIndex = 0;
+        
+        foreach (var item in ScriptQueue)
+            item.Status = "Queued";
+            
+        RunNextScript();
+    }
+
+    [RelayCommand]
+    private async Task StopQueue()
+    {
+        var msg = new ArmySchedulerStopMessage();
+        StrongReferenceMessenger.Default.Send(msg);
+        if (msg.Handled) return;
+
+        IsRunningQueue = false;
+        QueueStartedTime = string.Empty;
+        _queueCts?.Cancel();
+        if (CurrentIndex < ScriptQueue.Count)
+        {
+            ScriptQueue[CurrentIndex].Status = "Stopped";
+            ScriptQueue[CurrentIndex].Duration = GetFormattedDuration();
+        }
+
+        try
+        {
+            await _manager.StopScript();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Trace.WriteLine($"Failed to stop the current scheduler script: {ex}");
+        }
+        finally
+        {
+            _queueCts?.Dispose();
+            _queueCts = null;
+        }
+    }
+
+    public class SavedScriptItem
+    {
+        public string Path { get; set; } = string.Empty;
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
+    [RelayCommand]
+    private void SavePlaylist()
+    {
+        if (ScriptQueue.Count == 0)
+        {
+            _dialogService.ShowMessageBox("The playlist is empty.", "Save Playlist");
+            return;
+        }
+
+        string? path = _fileDialog.Save("JSON Files (*.json)|*.json|All files (*.*)|*.*");
+        if (path == null)
+            return;
+
+        try
+        {
+            var data = ScriptQueue.Select(x => new SavedScriptItem { Path = x.Path, Id = x.Id, Name = x.Name }).ToList();
+            File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(data, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+            _dialogService.ShowMessageBox("Playlist saved successfully.", "Save Playlist");
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowMessageBox($"Failed to save playlist: {ex.Message}", "Save Error");
+        }
+    }
+
+    [RelayCommand]
+    private void LoadPlaylist()
+    {
+        if (IsRunningQueue)
+        {
+            _dialogService.ShowMessageBox("Cannot load a playlist while the queue is running.", "Scheduler Running");
+            return;
+        }
+
+        string? path = _fileDialog.OpenFile("JSON Files (*.json)|*.json|All files (*.*)|*.*");
+        if (path != null && File.Exists(path))
+        {
+            try
+            {
+                var data = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.List<SavedScriptItem>>(File.ReadAllText(path));
+                if (data != null)
+                {
+                    ScriptQueue.Clear();
+                    foreach (var item in data)
+                    {
+                        if (File.Exists(item.Path))
+                        {
+                            var vm = new ScriptItemViewModel(item.Path) { Id = item.Id };
+                            if (!string.IsNullOrEmpty(item.Name))
+                                vm.Name = item.Name;
+                            ScriptQueue.Add(vm);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowMessageBox($"Failed to load playlist: {ex.Message}", "Load Error");
+            }
+        }
+    }
+
+    private string GetFormattedDuration()
+    {
+        var ts = _scriptStopwatch.Elapsed;
+        return $"{(int)ts.TotalHours:00}:{ts.Minutes:00}:{ts.Seconds:00}";
+    }
+
+    private async void RunNextScript()
+    {
+        if (!IsRunningQueue || _queueCts?.IsCancellationRequested == true) return;
+
+        IScriptPlayer? player = CommunityToolkit.Mvvm.DependencyInjection.Ioc.Default.GetService<IScriptPlayer>();
+
+        if (player != null && !player.LoggedIn)
+        {
+            while (!player.LoggedIn && IsRunningQueue && _queueCts?.IsCancellationRequested != true)
+            {
+                await Task.Delay(1500);
+            }
+            if (!IsRunningQueue || _queueCts?.IsCancellationRequested == true)
+                return;
+            await Task.Delay(3000);
+        }
+
+        if (CurrentIndex >= ScriptQueue.Count)
+        {
+            IsRunningQueue = false;
+            QueueStartedTime = string.Empty;
+            _queueCts?.Dispose();
+            _queueCts = null;
+            return;
+        }
+
+        var nextScript = ScriptQueue[CurrentIndex];
+        
+        if (File.Exists(nextScript.Path))
+        {
+            if (_manager.ScriptRunning)
+            {
+                string currentLoaded = _manager.LoadedScript ?? string.Empty;
+                bool isSameScript = false;
+                try
+                {
+                    if (!string.IsNullOrEmpty(currentLoaded))
+                    {
+                        string fullLoaded = Path.GetFullPath(currentLoaded);
+                        string fullNext = Path.GetFullPath(nextScript.Path);
+                        isSameScript = string.Equals(fullLoaded, fullNext, StringComparison.OrdinalIgnoreCase);
+                    }
+                }
+                catch
+                {
+                    isSameScript = string.Equals(currentLoaded, nextScript.Path, StringComparison.OrdinalIgnoreCase);
+                }
+
+                if (isSameScript)
+                {
+                    nextScript.Status = "Running";
+                    _scriptStopwatch.Restart();
+                    return;
+                }
+                else
+                {
+                    System.Diagnostics.Trace.WriteLine($"Stopping lingering script ({currentLoaded}) before launching scheduled script ({nextScript.Name})...");
+                    try { await _manager.StopScript(); } catch { }
+                    await Task.Delay(1500);
+                }
+            }
+
+            nextScript.Status = "Running";
+            _scriptStopwatch.Restart();
+            
+            try
+            {
+                _manager.OverrideStorage = nextScript.Storage;
+                _manager.SetLoadedScript(nextScript.Path);
+                _manager.SilentConfig = true;
+                Exception? startEx;
+                try { startEx = await _manager.StartScript(); }
+                finally { _manager.SilentConfig = false; }
+
+                if (startEx != null)
+                {
+                    _manager.OverrideStorage = null;
+                    nextScript.Status = "Failed";
+                    nextScript.Duration = GetFormattedDuration();
+                    var actualStartEx = startEx is System.Reflection.TargetInvocationException && startEx.InnerException != null ? startEx.InnerException : startEx;
+                    System.Diagnostics.Trace.WriteLine($"Scheduler script failed to start: {actualStartEx.Message}");
+                    CurrentIndex++;
+                    if (!IsRunningQueue || _queueCts?.IsCancellationRequested == true) return;
+                    await Task.Delay(3000);
+                    RunNextScript();
+                }
+            }
+            catch (Exception ex)
+            {
+                _manager.OverrideStorage = null;
+                nextScript.Status = "Crashed";
+                nextScript.Duration = GetFormattedDuration();
+                var actualEx = ex is System.Reflection.TargetInvocationException && ex.InnerException != null ? ex.InnerException : ex;
+                System.Diagnostics.Trace.WriteLine($"Scheduler script crash: {actualEx.Message}");
+                CurrentIndex++;
+                if (!IsRunningQueue || _queueCts?.IsCancellationRequested == true) return;
+                await Task.Delay(3000);
+                RunNextScript();
+            }
+        }
+        else
+        {
+            nextScript.Status = "File Not Found";
+            CurrentIndex++;
+            if (!IsRunningQueue || _queueCts?.IsCancellationRequested == true) return;
+            await Task.Delay(1500);
+            RunNextScript();
+        }
+    }
+
+    private void OnScriptStopped()
+    {
+        _manager.OverrideStorage = null;
+
+        if (!IsRunningQueue || _queueCts?.IsCancellationRequested == true) return;
+
+        if (CurrentIndex < ScriptQueue.Count)
+        {
+            _scriptStopwatch.Stop();
+            IScriptPlayer? player = CommunityToolkit.Mvvm.DependencyInjection.Ioc.Default.GetService<IScriptPlayer>();
+
+            if (player != null && !player.LoggedIn)
+            {
+                ScriptQueue[CurrentIndex].Status = "Disconnected";
+            }
+            else
+            {
+                ScriptQueue[CurrentIndex].Status = "Completed";
+                ScriptQueue[CurrentIndex].Duration = GetFormattedDuration();
+                CurrentIndex++;
+            }
+        }
+
+        System.Threading.CancellationToken queueToken = _queueCts?.Token ?? System.Threading.CancellationToken.None;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(2000, queueToken);
+                Dispatcher.UIThread.Post(RunNextScript);
+            }
+            catch (TaskCanceledException)
+            {
+                // The queue was stopped while waiting to start the next script.
+            }
+        });
+    }
+}

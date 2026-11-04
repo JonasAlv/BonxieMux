@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Skua.App.Avalonia.Views"
+             xmlns:grabber="clr-namespace:Skua.App.Avalonia.ViewModels.Grabber"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.App.Avalonia.Views.GrabberView">
+
+    <UserControl.DataTemplates>
+        <DataTemplate DataType="grabber:GrabberListViewModel">
+            <views:GrabberListView/>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
+    <UserControl.Styles>
+        <!-- Sidebar: boxed page tabs stacked vertically, with group headers that can't be selected -->
+        <Style Selector="ListBox.grabber-nav">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="ListBox.grabber-nav ListBoxItem">
+            <Setter Property="IsEnabled" Value="{ReflectionBinding IsSelectable}" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="ListBox.grabber-nav ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+        </Style>
+        <Style Selector="ListBox.grabber-nav ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBox.grabber-nav ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SkuaAccentTintBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+        </Style>
+        <Style Selector="ListBox.grabber-nav ListBoxItem:selected TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="ListBox.grabber-nav ListBoxItem:selected materialIcons|MaterialIcon">
+            <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
+        </Style>
+        <!-- Group headers: no box, no hover, not faded -->
+        <Style Selector="ListBox.grabber-nav ListBoxItem:disabled">
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="2,6,2,2" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+        <Style Selector="ListBox.grabber-nav ListBoxItem:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="164,*" Margin="14,12,0,0" ColumnSpacing="0">
+        <ListBox Grid.Column="0"
+                 Classes="grabber-nav"
+                 Margin="0,0,0,12"
+                 ItemsSource="{Binding NavItems}"
+                 SelectedItem="{Binding SelectedTab}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.DataTemplates>
+                <DataTemplate DataType="grabber:GrabberNavHeader">
+                    <TextBlock Classes="section-label" Text="{Binding Title}" />
+                </DataTemplate>
+                <DataTemplate DataType="grabber:GrabberListViewModel">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <materialIcons:MaterialIcon Kind="{Binding Icon}" Width="16" Height="16" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.DataTemplates>
+        </ListBox>
+
+        <ContentControl Grid.Column="1" Content="{Binding SelectedTab}" />
+    </Grid>
+</UserControl>

@@ -1,0 +1,105 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:uc="clr-namespace:Skua.Manager.Avalonia.UserControls"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.Manager.Avalonia.UserControls.LauncherUserControl"
+             d:DesignWidth="800"
+             d:DesignHeight="600"
+             mc:Ignorable="d">
+    <Grid Margin="12" RowDefinitions="Auto,Auto,*" RowSpacing="12">
+        
+        <!-- Header & Quick Launch Card -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16,14">
+            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock Text="INSTANCE MANAGEMENT"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                    <TextBlock FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaTextBrush}"
+                               Text="BonxieMux Process Launcher" />
+                    <TextBlock Text="Spin up new game client instances and manage active processes."
+                               FontSize="12"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Classes="skua-button skua-primary"
+                        Height="38"
+                        Padding="16,0"
+                        Command="{Binding LaunchSkuaCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="18" Height="18" />
+                        <TextBlock Text="Launch Instance" VerticalAlignment="Center" FontWeight="Bold" FontSize="13" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Process Monitor Bar Card -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12,10">
+            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock Text="ACTIVE PROCESSES"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}"
+                               VerticalAlignment="Center" />
+                    <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
+                            BorderBrush="{DynamicResource SkuaBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="8,2"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SkuaProcesses.Count, StringFormat='Running: {0}'}"
+                                   FontSize="11"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource SkuaTextBrush}" />
+                    </Border>
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Classes="skua-button skua-danger"
+                        Height="30"
+                        Click="KillAll_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="CloseCircleOutline" Width="14" Height="14" />
+                        <TextBlock Text="Kill All Instances" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Process List Card -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource SkuaPageBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="6">
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding SkuaProcesses}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <uc:LauncherProcessRow StopCommand="{Binding DataContext.StopProcessCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

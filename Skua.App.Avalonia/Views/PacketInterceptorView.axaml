@@ -1,0 +1,216 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:models="clr-namespace:Skua.Core.Models.Servers;assembly=Skua.Core.Models"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.Packets"
+             xmlns:conv="clr-namespace:Skua.App.Avalonia.Converters"
+             x:Class="Skua.App.Avalonia.Views.PacketInterceptorView"
+             x:DataType="vms:PacketInterceptorViewModel">
+
+    <UserControl.Resources>
+        <conv:InterceptedPacketBackgroundConverter x:Key="PacketBgConverter" />
+        <conv:InterceptedPacketBorderBrushConverter x:Key="PacketBorderConverter" />
+        <conv:InterceptedPacketTagConverter x:Key="PacketTagConverter" />
+        <conv:InterceptedPacketTagForegroundConverter x:Key="PacketTagFgConverter" />
+    </UserControl.Resources>
+
+    <Grid Margin="8" ColumnDefinitions="2*,*" ColumnSpacing="8">
+        
+        <!-- Left Column: Packet Interception Controls & Log -->
+        <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="6">
+            
+            <!-- Row 0: Server Select & Connect/Disconnect -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+                <ComboBox Grid.Column="0"
+                          Height="32"
+                          HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding ServerList}"
+                          SelectedItem="{Binding SelectedServer}"
+                          PlaceholderText="Select Server...">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate DataType="models:Server">
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                
+                <Button Grid.Column="1"
+                        Classes="skua-button outline"
+                        Height="32"
+                        Width="36"
+                        Padding="0"
+                        ToolTip.Tip="Refresh server list"
+                        Command="{Binding RefreshServersCommand}">
+                    <materialIcons:MaterialIcon Kind="Refresh" Width="16" Height="16" />
+                </Button>
+
+                <Button Grid.Column="2"
+                        Classes="skua-button"
+                        MinWidth="110"
+                        Command="{Binding ConnectInterceptorCommand}">
+                    <Button.Styles>
+                        <Style Selector="Button">
+                            <Setter Property="Content" Value="Connect" />
+                        </Style>
+                        <Style Selector="Button[Tag=True]">
+                            <Setter Property="Content" Value="Disconnect" />
+                        </Style>
+                    </Button.Styles>
+                    <Button.Tag>
+                        <Binding Path="Running" />
+                    </Button.Tag>
+                </Button>
+            </Grid>
+
+            <!-- Row 1: Search Packets -->
+            <TextBox Grid.Row="1"
+                     Watermark="Search packets..."
+                     Text="{Binding PacketSearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+            <!-- Row 2: Log Packets Toggle, Visual Legend, & Clear -->
+            <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <CheckBox Grid.Column="0"
+                          Content="Log Packets"
+                          IsChecked="{Binding IsLogging}"
+                          VerticalAlignment="Center" />
+
+                <!-- Visual Direction Legend -->
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="4">
+                    <Border CornerRadius="4"
+                            Background="#28FFD54F"
+                            BorderBrush="#66FFD54F"
+                            BorderThickness="1"
+                            Padding="8,3">
+                        <TextBlock Text="Outbound"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource SkuaWarningBrush}"
+                                   VerticalAlignment="Center" />
+                    </Border>
+                    <Border CornerRadius="4"
+                            Background="#2829B6F6"
+                            BorderBrush="#6629B6F6"
+                            BorderThickness="1"
+                            Padding="8,3">
+                        <TextBlock Text="Inbound"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource SkuaInfoBrush}"
+                                   VerticalAlignment="Center" />
+                    </Border>
+                    <Border CornerRadius="4"
+                            Background="#28EF5350"
+                            BorderBrush="#66EF5350"
+                            BorderThickness="1"
+                            Padding="8,3">
+                        <TextBlock Text="Blocked"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource SkuaDangerBrush}"
+                                   VerticalAlignment="Center" />
+                    </Border>
+                </StackPanel>
+
+                <Button Grid.Column="2"
+                        Classes="skua-button"
+                        Content="Clear"
+                        Command="{Binding ClearPacketsCommand}" />
+            </Grid>
+
+            <!-- Row 3: Packets List -->
+            <Border Grid.Row="3" Classes="list-frame">
+                <ListBox x:Name="PacketsListBox"
+                         ItemsSource="{Binding FilteredPackets}"
+                         SelectionMode="Multiple"
+                         Classes="embedded">
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Copy Selected" Click="CopySelectedPackets_Click" />
+                            <MenuItem Header="Copy All" Click="CopyAllPackets_Click" />
+                            <MenuItem Header="Unselect All" Click="UnselectAllPackets_Click" />
+                            <Separator />
+                            <MenuItem Header="Clear Packets" Command="{Binding ClearPacketsCommand}" />
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="vms:InterceptedPacketViewModel">
+                            <Border CornerRadius="4"
+                                    Margin="0,1"
+                                    Padding="6,3"
+                                    Background="{Binding Outbound, Converter={StaticResource PacketBgConverter}}"
+                                    BorderBrush="{Binding Outbound, Converter={StaticResource PacketBorderConverter}}"
+                                    BorderThickness="1">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                                    <Border Grid.Column="0"
+                                            CornerRadius="3"
+                                            Padding="4,1"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Outbound, Converter={StaticResource PacketTagConverter}}"
+                                                   FontSize="10"
+                                                   FontWeight="Bold"
+                                                   Foreground="{Binding Outbound, Converter={StaticResource PacketTagFgConverter}}" />
+                                    </Border>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Packet}"
+                                               FontFamily="Consolas,Cascadia Code,Courier New,Monospace"
+                                               FontSize="12"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="NoWrap" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+        </Grid>
+
+        <!-- Right Column: Packet Filters -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" RowSpacing="6">
+            
+            <!-- Row 0: Search Filters -->
+            <TextBox Grid.Row="0"
+                     Watermark="Search filters..."
+                     Text="{Binding FilterSearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+            <!-- Row 1: Filters List -->
+            <Border Grid.Row="1" Classes="list-frame" Padding="6">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Select All" Command="{Binding SelectAllFiltersCommand}" />
+                            <MenuItem Header="Clear Filters" Command="{Binding ClearFiltersCommand}" />
+                            <MenuItem Header="Invert Selection" Command="{Binding InvertFiltersCommand}" />
+                        </ContextMenu>
+                    </ScrollViewer.ContextMenu>
+                    <ItemsControl ItemsSource="{Binding VisiblePacketFilters}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vms:PacketLogFilterViewModel">
+                                <ToggleButton Content="{Binding Content}"
+                                              IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                              Classes="option-chip"
+                                              Margin="0,0,0,4"
+                                              HorizontalAlignment="Stretch" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Row 2: Filter Quick Actions -->
+            <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="6">
+                <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="0"
+                        Classes="skua-button"
+                        Content="Select All"
+                        Command="{Binding SelectAllFiltersCommand}" />
+                <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="1"
+                        Classes="skua-button"
+                        Content="Clear Filters"
+                        Command="{Binding ClearFiltersCommand}" />
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

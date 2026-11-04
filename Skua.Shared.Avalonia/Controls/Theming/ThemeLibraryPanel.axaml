@@ -1,0 +1,119 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.Shared.Avalonia.Controls.Theming.ThemeLibraryPanel">
+  <StackPanel Spacing="12">
+    
+    <!-- Presets Section -->
+    <StackPanel Spacing="8">
+      <StackPanel Spacing="2">
+        <TextBlock Text="Built-in Theme Presets"
+                   FontWeight="Bold"
+                   FontSize="13"
+                   Foreground="{DynamicResource SkuaTextBrush}" />
+        <TextBlock Text="Quick 1-click color palette themes"
+                   FontSize="11"
+                   Foreground="{DynamicResource SkuaMutedTextBrush}" />
+      </StackPanel>
+
+      <ItemsControl ItemsSource="{Binding ThemeService.Presets}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <UniformGrid Columns="3" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Button Margin="4"
+                    Height="44"
+                    Classes="skua-button"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Command="{Binding DataContext.SetCurrentThemeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}"
+                    ToolTip.Tip="{Binding Name, StringFormat='Apply {0} theme'}">
+              <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
+                <Border Grid.Column="0"
+                        Width="18"
+                        Height="18"
+                        CornerRadius="9"
+                        Background="{Binding PrimaryBrush}"
+                        BorderBrush="{DynamicResource SkuaBorderBrush}"
+                        BorderThickness="1"
+                        Margin="0,0,8,0" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding Name}"
+                           FontWeight="SemiBold"
+                           FontSize="12"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" />
+              </Grid>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+
+    <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" Margin="0,4" />
+
+    <!-- User Saved Themes Section -->
+    <StackPanel Spacing="8">
+      <StackPanel Spacing="2">
+        <TextBlock Text="Custom Saved Themes"
+                   FontWeight="Bold"
+                   FontSize="13"
+                   Foreground="{DynamicResource SkuaTextBrush}" />
+        <TextBlock Text="Your personalized saved color schemes"
+                   FontSize="11"
+                   Foreground="{DynamicResource SkuaMutedTextBrush}" />
+      </StackPanel>
+
+      <ItemsControl ItemsSource="{Binding ThemeService.UserThemes}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Background="{DynamicResource SkuaSurfaceBrush}"
+                    BorderBrush="{DynamicResource SkuaBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Margin="0,0,0,6"
+                    Padding="8,6">
+              <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <Border Grid.Column="0"
+                        Width="20"
+                        Height="20"
+                        CornerRadius="10"
+                        Background="{Binding PrimaryBrush}"
+                        BorderBrush="{DynamicResource SkuaBorderBrush}"
+                        BorderThickness="1"
+                        Margin="0,0,10,0" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding Name}"
+                           FontWeight="SemiBold"
+                           FontSize="12"
+                           VerticalAlignment="Center" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                  <Button Classes="skua-button"
+                          Height="30"
+                          Padding="10,0"
+                          Content="Apply"
+                          Command="{Binding DataContext.SetCurrentThemeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          CommandParameter="{Binding}" />
+                  <Button Classes="skua-button skua-danger"
+                          Width="30"
+                          Height="30"
+                          Padding="0"
+                          Command="{Binding DataContext.RemoveThemeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          CommandParameter="{Binding}"
+                          ToolTip.Tip="Delete custom theme">
+                    <materialIcons:MaterialIcon Kind="DeleteOutline" Width="14" Height="14" />
+                  </Button>
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+
+  </StackPanel>
+</UserControl>

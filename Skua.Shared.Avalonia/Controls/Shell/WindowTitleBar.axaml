@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Name="Root"
+             x:Class="Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar">
+  <Grid Height="32"
+        Background="{DynamicResource SkuaSurfaceAltBrush}">
+    <Border Grid.ColumnSpan="3"
+            Background="{DynamicResource SkuaAccentBrush}"
+            IsVisible="{Binding UseAccentBackground, ElementName=Root}"
+            IsHitTestVisible="False" />
+    <Image x:Name="ArtworkImage" Grid.ColumnSpan="3" Stretch="UniformToFill" Opacity="0.62" IsHitTestVisible="False" />
+    <Border Grid.ColumnSpan="3" Background="{DynamicResource SkuaTitleBarOverlayBrush}" IsHitTestVisible="False" />
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto" />
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+
+    <Grid Grid.Column="0"
+          Width="30"
+          Height="30"
+          Margin="6,0"
+          HorizontalAlignment="Center">
+      <Border Width="30"
+              Height="30"
+              Classes="titlebar-app-badge"
+              CornerRadius="15" />
+      <Image Source="{Binding IconSource, ElementName=Root}"
+             Width="30"
+             Height="30"
+             Stretch="Uniform"
+             RenderOptions.BitmapInterpolationMode="HighQuality"
+             HorizontalAlignment="Center"
+             VerticalAlignment="Center" />
+    </Grid>
+
+    <TextBlock x:Name="TitleTextBlock"
+               Grid.Column="1"
+               Margin="6,0,8,0"
+               VerticalAlignment="Center"
+               Text="{Binding TitleText, ElementName=Root}"
+               TextTrimming="CharacterEllipsis"
+               Classes="titlebar-title" />
+
+    <StackPanel Grid.Column="2"
+                Height="28"
+                VerticalAlignment="Top"
+                Orientation="Horizontal">
+      <Button x:Name="MinimizeButton"
+              Classes="titlebar"
+              Content="{materialIcons:MaterialIconExt Kind=WindowMinimize, IconSize=12}" />
+      <Button x:Name="MaximizeButton"
+              Classes="titlebar"
+              Content="{materialIcons:MaterialIconExt Kind=WindowMaximize, IconSize=12}" />
+      <Button x:Name="CloseButton"
+              Classes="titlebar titlebar-close"
+              Content="{materialIcons:MaterialIconExt Kind=WindowClose, IconSize=12}" />
+    </StackPanel>
+  </Grid>
+</UserControl>
+
+
+

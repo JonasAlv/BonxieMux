@@ -1,0 +1,132 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:managerUc="clr-namespace:Skua.Manager.Avalonia.UserControls"
+             xmlns:uc="clr-namespace:Skua.Manager.Avalonia.UserControls"
+             x:Class="Skua.Manager.Avalonia.UserControls.AccountGridTile"
+             mc:Ignorable="d"
+             d:DesignWidth="220"
+             d:DesignHeight="80">
+    <Border Classes="account-row account-row-grid"
+            Classes.selected="{Binding UseCheck}"
+            Padding="12,6"
+            Margin="2"
+            PointerReleased="Border_PointerReleased">
+        <Border.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Start" Command="{Binding StartCommand}">
+                    <MenuItem.Icon>
+                        <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="14" Height="14" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Start With Script" Command="{Binding StartWithScriptCommand}">
+                    <MenuItem.Icon>
+                        <materialIcons:MaterialIcon Kind="ScriptTextPlayOutline" Width="14" Height="14" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Select / Check" Command="{Binding ToggleSelectionCommand}">
+                    <MenuItem.Icon>
+                        <materialIcons:MaterialIcon Kind="CheckboxMarkedOutline" Width="14" Height="14" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="Add to Group" Command="{Binding AddToGroupCommand}">
+                    <MenuItem.Icon>
+                        <materialIcons:MaterialIcon Kind="AccountMultiplePlus" Width="14" Height="14" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Edit Tags" Command="{Binding AddTagsCommand}">
+                    <MenuItem.Icon>
+                        <materialIcons:MaterialIcon Kind="Tag" Width="14" Height="14" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Edit Account" Command="{Binding EditCommand}">
+                    <MenuItem.Icon>
+                        <materialIcons:MaterialIcon Kind="PencilOutline" Width="14" Height="14" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="Copy Username" Click="CopyUsername_Click">
+                    <MenuItem.Icon>
+                        <materialIcons:MaterialIcon Kind="ContentCopy" Width="14" Height="14" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="Remove" Command="{Binding RemoveCommand}">
+                    <MenuItem.Icon>
+                        <materialIcons:MaterialIcon Kind="DeleteOutline" Width="14" Height="14" />
+                    </MenuItem.Icon>
+                </MenuItem>
+            </ContextMenu>
+        </Border.ContextMenu>
+        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,Auto">
+            <CheckBox Grid.Row="0"
+                      Grid.Column="0"
+                      IsChecked="{Binding UseCheck}"
+                      VerticalAlignment="Center"
+                      Padding="0"
+                      Margin="0,0,6,0" />
+            <TextBlock Grid.Row="0"
+                       Grid.Column="1"
+                       Text="{Binding DisplayOrUsername}"
+                       FontSize="14"
+                       Margin="0,0,8,0"
+                       VerticalAlignment="Center"
+                       FontWeight="Medium"
+                       TextTrimming="CharacterEllipsis" />
+            <StackPanel Grid.Row="0"
+                        Grid.Column="2"
+                        Orientation="Horizontal"
+                        Spacing="2"
+                        VerticalAlignment="Center">
+                <Button Command="{Binding EditCommand}"
+                        Classes="icon"
+                        VerticalAlignment="Center"
+                        ToolTip.Tip="Edit Account">
+                    <materialIcons:MaterialIcon Kind="PencilOutline"
+                                                Width="13"
+                                                Height="13"
+                                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                </Button>
+                <Button Command="{Binding RemoveCommand}"
+                        Classes="icon"
+                        VerticalAlignment="Center"
+                        ToolTip.Tip="Remove Account">
+                    <materialIcons:MaterialIcon Kind="DeleteOutline"
+                                                Width="13"
+                                                Height="13"
+                                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                </Button>
+            </StackPanel>
+            <ItemsControl Grid.Row="1"
+                          Grid.Column="1"
+                          Margin="0,3,0,0"
+                          ItemsSource="{Binding Tags}"
+                          IsVisible="{Binding DataContext.ShowTags, RelativeSource={RelativeSource AncestorType=managerUc:AccountManagerUserControl}}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Classes="tag-chip">
+                            <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                <materialIcons:MaterialIcon Kind="TagOutline"
+                                                            Width="9"
+                                                            Height="9"
+                                                            VerticalAlignment="Center"
+                                                            Opacity="0.75"
+                                                            Foreground="{DynamicResource SkuaTagTextBrush}" />
+                                <TextBlock Text="{Binding}"
+                                           Classes="tag-chip-text" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+    </Border>
+</UserControl>
