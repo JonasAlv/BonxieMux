@@ -356,6 +356,25 @@ public partial class GetScriptsService : ObservableObject, IGetScriptsService
 
         using HttpResponseMessage response = await ValidatedHttpExtensions.GetAsync(HttpClients.GitHubRaw, info.DownloadUrl, token);
         byte[] scriptBytes = await response.Content.ReadAsByteArrayAsync(token);
+
+        if (info.FilePath.EndsWith("CoreBots.cs", StringComparison.OrdinalIgnoreCase))
+        {
+            string content = System.Text.Encoding.UTF8.GetString(scriptBytes);
+            bool modified = false;
+            if (content.Contains("RunSync(() => SkuaVersionCheckerAsync());"))
+            {
+                content = content.Replace("RunSync(() => SkuaVersionCheckerAsync());", "// RunSync(() => SkuaVersionCheckerAsync()); // Neutralized Windows update check on Linux");
+                modified = true;
+            }
+            if (!content.Contains("!OperatingSystem.IsWindows()") && content.Contains("private async Task SkuaVersionCheckerAsync()"))
+            {
+                content = content.Replace("private async Task SkuaVersionCheckerAsync()", "private async Task SkuaVersionCheckerAsync() => await Task.CompletedTask; private async Task __OldSkuaVersionCheckerAsync()");
+                modified = true;
+            }
+            if (modified)
+                scriptBytes = System.Text.Encoding.UTF8.GetBytes(content);
+        }
+
         // Write beside the target and move it in, so a script being started never reads a half-written file.
         string temporaryFile = info.LocalFile + $".{Environment.ProcessId}.{Guid.NewGuid():N}.tmp";
         try
