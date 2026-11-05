@@ -129,7 +129,7 @@ public partial class MainWindow : Window
             int currentFPS = bot.Flash?.GetGameObject<int>("stage.frameRate") ?? -1;
             int targetFPS = _preThrottleFPS > 2 ? _preThrottleFPS : (currentFPS > 2 ? currentFPS : options.SetFPS);
             if (targetFPS <= 2)
-                targetFPS = options.SetFPS > 0 ? options.SetFPS : 24;
+                targetFPS = options.SetFPS > 0 ? options.SetFPS : 30;
 
             string? targetQuality = _preThrottleQuality;
             
@@ -350,7 +350,7 @@ public partial class MainWindow : Window
                             int currentFPS = bot.Flash?.GetGameObject<int>("stage.frameRate") ?? -1;
                             int targetFPS = _preThrottleFPS > 2 ? _preThrottleFPS : (currentFPS > 2 ? currentFPS : options.SetFPS);
                             if (targetFPS <= 2)
-                                targetFPS = options.SetFPS > 0 ? options.SetFPS : 24;
+                                targetFPS = options.SetFPS > 0 ? options.SetFPS : 30;
 
                             string? targetQuality = _preThrottleQuality;
                             _preThrottleFPS = -1;

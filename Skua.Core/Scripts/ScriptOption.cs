@@ -226,7 +226,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     }
 
     [ObjectBinding("stage.frameRate", Get = false, HasSetter = true)]
-    private int _setFPS = 24;
+    private int _setFPS = 30;
 
     [ObjectBinding("ui.mcFPS.visible", HasSetter = true)]
     private bool _showFPS = false;
@@ -307,7 +307,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             }
             else
             {
-                _lazyFlash.Value.Call("setGameObject", "stage.frameRate", SetFPS > 2 ? SetFPS : 24);
+                _lazyFlash.Value.Call("setGameObject", "stage.frameRate", SetFPS > 2 ? SetFPS : 30);
                 _lazyFlash.Value.Call("setGameObject", "stage.quality", "HIGH");
                 _lazyFlash.Value.Call("world.rootClass.mixer.soundTransform.volume", 1);
             }

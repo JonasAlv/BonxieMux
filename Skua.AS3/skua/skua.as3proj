@@ -1,11 +1,11 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <project version="2">
   <!-- Output SWF options -->
   <output>
     <movie outputType="Application" />
     <movie input="" />
     <movie path="bin\skua.swf" />
-    <movie fps="24" />
+    <movie fps="30" />
     <movie width="958" />
     <movie height="550" />
     <movie version="28" />
