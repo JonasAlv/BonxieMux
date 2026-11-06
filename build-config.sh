@@ -102,23 +102,14 @@ assemble_payload() {
     fi
     dotnet build "${dotnet_args[@]}"
 
-    local required_outputs=(
-        "$APP_BIN/BonxieMux"
-        "$APP_BIN/BonxieMux.dll"
-        "$APP_BIN/BonxieMux.runtimeconfig.json"
-        "$MGR_BIN/BonxieMux.Manager"
-        "$MGR_BIN/BonxieMux.Manager.dll"
-        "$MGR_BIN/BonxieMux.Manager.runtimeconfig.json"
-        "$SCRIPT_DIR/Skua.Plugin.DailyTracker/bin/Release/net10.0/Skua.Plugin.DailyTracker.dll"
-        "$SCRIPT_DIR/Skua.Plugin.ButlerV5/bin/Release/net10.0/ButlerV5.dll"
-        "$SCRIPT_DIR/Skua.Plugin.Cosmetics/bin/Release/net10.0/Skua.Plugin.Cosmetics.dll"
-    )
-    for req in "${required_outputs[@]}"; do
-        if [[ ! -s "$req" ]]; then
-            echo "Error: Required build output is missing or empty: $req" >&2
-            exit 1
-        fi
-    done
+    echo "--- Publishing self-contained .NET runtime (linux-x64) ---"
+    local pub_app="$BUILD_DIR/.publish_app"
+    local pub_mgr="$BUILD_DIR/.publish_mgr"
+    rm -rf "$pub_app" "$pub_mgr"
+    mkdir -p "$pub_app" "$pub_mgr"
+
+    dotnet publish "$SCRIPT_DIR/Skua.App.Avalonia/Skua.App.Avalonia.csproj" -c Release -r linux-x64 --self-contained -o "$pub_app"
+    dotnet publish "$SCRIPT_DIR/Skua.Manager.Avalonia/Skua.Manager.Avalonia.csproj" -c Release -r linux-x64 --self-contained -o "$pub_mgr"
 
     echo "--- Assembling application payload in $CURRENT_DIR ---"
     rm -rf "$CURRENT_DIR"
@@ -128,34 +119,42 @@ assemble_payload() {
     mkdir -p "$CURRENT_DIR/plugins"
     mkdir -p "$CURRENT_DIR/FFDec"
 
-    # Copy root executables & core files
-    cp -f "$APP_BIN"/BonxieMux "$CURRENT_DIR/"
-    cp -f "$APP_BIN"/BonxieMux.dll "$CURRENT_DIR/"
-    cp -f "$APP_BIN"/BonxieMux.runtimeconfig.json "$CURRENT_DIR/"
-    cp -f "$APP_BIN"/BonxieMux.deps.json "$CURRENT_DIR/"
-    cp -f "$APP_BIN"/*.pdb "$CURRENT_DIR/" 2>/dev/null || true
+    # Copy self-contained application and manager outputs
+    cp -a "$pub_app/." "$CURRENT_DIR/"
+    cp -a "$pub_mgr/." "$CURRENT_DIR/"
+    rm -rf "$pub_app" "$pub_mgr"
 
-    cp -f "$MGR_BIN"/BonxieMux.Manager "$CURRENT_DIR/"
-    cp -f "$MGR_BIN"/BonxieMux.Manager.dll "$CURRENT_DIR/"
-    cp -f "$MGR_BIN"/BonxieMux.Manager.runtimeconfig.json "$CURRENT_DIR/"
-    cp -f "$MGR_BIN"/BonxieMux.Manager.deps.json "$CURRENT_DIR/"
-    cp -f "$MGR_BIN"/*.pdb "$CURRENT_DIR/" 2>/dev/null || true
+    local required_outputs=(
+        "$CURRENT_DIR/BonxieMux"
+        "$CURRENT_DIR/BonxieMux.dll"
+        "$CURRENT_DIR/BonxieMux.runtimeconfig.json"
+        "$CURRENT_DIR/BonxieMux.Manager"
+        "$CURRENT_DIR/BonxieMux.Manager.dll"
+        "$CURRENT_DIR/BonxieMux.Manager.runtimeconfig.json"
+        "$CURRENT_DIR/libcoreclr.so"
+        "$SCRIPT_DIR/Skua.Plugin.DailyTracker/bin/Release/net10.0/Skua.Plugin.DailyTracker.dll"
+        "$SCRIPT_DIR/Skua.Plugin.ButlerV5/bin/Release/net10.0/ButlerV5.dll"
+        "$SCRIPT_DIR/Skua.Plugin.Cosmetics/bin/Release/net10.0/Skua.Plugin.Cosmetics.dll"
+    )
+    for req in "${required_outputs[@]}"; do
+        if [[ ! -s "$req" ]]; then
+            echo "Error: Required payload output is missing or empty: $req" >&2
+            exit 1
+        fi
+    done
 
     # Copy JSON data assets
     [ -f "$APP_BIN/QuestData.json" ] && cp -f "$APP_BIN/QuestData.json" "$CURRENT_DIR/"
     [ -f "$APP_BIN/AdvancedSkills.json" ] && cp -f "$APP_BIN/AdvancedSkills.json" "$CURRENT_DIR/"
     [ -f "$SCRIPT_DIR/Skua.Core/ScriptDates.json" ] && cp -f "$SCRIPT_DIR/Skua.Core/ScriptDates.json" "$CURRENT_DIR/"
 
-    # Copy all dependent DLLs to Assemblies/ and current/
-    cp -f "$APP_BIN"/*.dll "$CURRENT_DIR/Assemblies/"
-    cp -f "$MGR_BIN"/*.dll "$CURRENT_DIR/Assemblies/"
+    # Copy all dependent DLLs to Assemblies/
+    cp -f "$CURRENT_DIR"/*.dll "$CURRENT_DIR/Assemblies/"
     rm -f "$CURRENT_DIR/Assemblies/BonxieMux.dll" "$CURRENT_DIR/Assemblies/BonxieMux.Manager.dll"
-    cp -f "$CURRENT_DIR/Assemblies/"*.dll "$CURRENT_DIR/"
 
     # Copy runtimes native libraries
-    if [ -d "$APP_BIN/runtimes" ]; then
-        cp -rf "$APP_BIN/runtimes" "$CURRENT_DIR/"
-        cp -rf "$APP_BIN/runtimes" "$CURRENT_DIR/Assemblies/"
+    if [ -d "$CURRENT_DIR/runtimes" ]; then
+        cp -rf "$CURRENT_DIR/runtimes" "$CURRENT_DIR/Assemblies/"
     fi
 
     # Copy plugins

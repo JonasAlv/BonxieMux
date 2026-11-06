@@ -133,7 +133,14 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "crash_program.txt"), ex.ToString());
+            try
+            {
+                File.WriteAllText(Path.Combine(ClientFileSources.SkuaDIR, "crash_program.txt"), ex.ToString());
+            }
+            catch
+            {
+                Console.Error.WriteLine(ex);
+            }
         }
     }
 
