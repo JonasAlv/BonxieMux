@@ -33,6 +33,14 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Cache skua-mugetsu player binaries
+        uses: actions/cache@v4
+        with:
+          path: player/
+          key: skua-mugetsu-${{ runner.os }}-${{ hashFiles('Directory.Build.props') }}
+          restore-keys: |
+            skua-mugetsu-${{ runner.os }}-
+
       - name: Build portable Linux binaries
         id: build_bin
         run: |

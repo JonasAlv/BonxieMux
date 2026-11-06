@@ -23,6 +23,7 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
     private readonly ILogService _logger;
     private readonly IDialogService _dialogService;
     private readonly ISettingsService _settingsService;
+    private bool _playerDead;
 
     public bool ShouldExit => Manager.ShouldExit;
     public Version Version { get; }
@@ -302,6 +303,24 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
 
                 bool currentInGame = Flash.IsWorldLoaded && Player.LoggedIn;
                 bool currentPlaying = currentInGame && Player.Alive;
+
+                // Track connected gameplay regardless of whether a script is running.
+                _limit.LimitedRun("gameplayStats", 1000, () =>
+                {
+                    if (!currentInGame)
+                    {
+                        Stats.UpdateGameplaySnapshot(0, 0, 0, 0, 0, 0, 0, 0, false);
+                        return;
+                    }
+
+                    InventoryItem? equippedClass = Inventory.Items?.Find(item => item is { Equipped: true, Category: ItemCategory.Class });
+                    // iCurCP is progress within the current class rank; iCPToRank is that rank's point requirement.
+                    int currentClassPoints = Flash.GetGameObject<int>("world.myAvatar.objData.iCurCP", 0);
+                    int classPointsToRank = Flash.GetGameObject<int>("world.myAvatar.objData.iCPToRank", 0);
+                    Stats.UpdateGameplaySnapshot(Player.XP, Player.RequiredXP, Player.Level, Player.Gold,
+                        equippedClass?.ID ?? 0, currentClassPoints, classPointsToRank, Player.CurrentClassRank, true);
+                });
+
                 if (currentInGame)
                 {
                     if (!wasPlaying)
@@ -594,10 +613,19 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                             dynamic p = data.p?[Player.Username.ToLower()]!;
                             if (p is not null && p.intHP == 0)
                             {
-                                Stats.Deaths++;
-                                Messenger.Send<PlayerDeathMessage, int>((int)MessageChannels.GameEvents);
+                                // Combat-state packets can repeat while the player remains dead.
+                                if (!_playerDead)
+                                {
+                                    Stats.Deaths++;
+                                    Messenger.Send<PlayerDeathMessage, int>((int)MessageChannels.GameEvents);
+                                }
+
+                                _playerDead = true;
                                 break;
                             }
+
+                            if (p is not null)
+                                _playerDead = false;
                             dynamic anims = data.anims?[0]!;
                             if (anims is not null)
                             {
@@ -727,6 +755,7 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                             break;
 
                         case "loginResponse":
+                            _playerDead = false;
                             if (Flash.IsWorldLoaded)
                                 Stats.GetSpace();
                             Options.CustomName = string.Empty;

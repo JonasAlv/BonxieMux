@@ -13,10 +13,10 @@ public class Broadcaster
     private readonly IScriptInterface _bot;
     private readonly Func<bool> _enabled;
     private readonly Func<bool> _questClone;
+    private readonly Func<bool> _questSync;
     private readonly Action<string> _log;
-    private readonly string _followersDirectory;
-    private DateTime _lastWriteUtc = DateTime.MinValue;
     private DateTime _lastQuestPublish = DateTime.MinValue;
+    private DateTime _lastQuestSyncPublish = DateTime.MinValue;
     private DateTime _lastAttackingSeen = DateTime.MinValue;
     private volatile bool _publishing;
     private readonly object _writeLock = new();
@@ -38,25 +38,29 @@ public class Broadcaster
     private bool _wasEnabled = true;
 
     private List<string> _followers = new();
+    private string _sendAllTarget = "";
+    private string _sendAllCommand = "";
+    private List<string> _sendAllRecipients = new();
+    private long _sendAllIssuedUtcTicks;
 
     private readonly Func<string?> _followingProvider;
     private readonly Func<string?> _scriptNameProvider; // null = no script running
     private readonly Func<string?> _declinedProvider;
     private readonly Func<bool> _parkingProvider;
 
-    public Broadcaster(IScriptInterface bot, Func<bool> enabled, Func<bool> questClone,
+    public Broadcaster(IScriptInterface bot, Func<bool> enabled, Func<bool> questClone, Func<bool> questSync,
         Func<string?> followingProvider, Func<string?> scriptNameProvider,
-        Func<string?> declinedProvider, Func<bool> parkingProvider, Action<string> log, string? followersDirectory = null)
+        Func<string?> declinedProvider, Func<bool> parkingProvider, Action<string> log)
     {
         _bot = bot;
         _enabled = enabled;
         _questClone = questClone;
+        _questSync = questSync;
         _followingProvider = followingProvider;
         _scriptNameProvider = scriptNameProvider;
         _declinedProvider = declinedProvider;
         _parkingProvider = parkingProvider;
         _log = log;
-        _followersDirectory = followersDirectory ?? Path.Combine(SyncFile.Directory, "followers");
     }
 
     /// <summary>Usernames this account (as master) has ordered to follow it.</summary>
@@ -67,57 +71,32 @@ public class Broadcaster
 
     public void SetFollowers(IEnumerable<string> followers)
     {
-        List<string> list;
         lock (_writeLock)
-            list = _followers = followers.Select(f => f.Trim()).Where(f => f.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        SaveFollowers(list);
+            _followers = followers.Select(f => f.Trim()).Where(f => f.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         WriteNow();
     }
 
-    private string FollowersPath(string username) =>
-        Path.Combine(_followersDirectory, $"{username.ToLowerInvariant()}.txt");
-
-    private void SaveFollowers(List<string> list)
+    public void PublishSendAllGoto(string target, IEnumerable<string> recipients)
     {
-        try
-        {
-            string user = _bot.Player?.LoggedIn == true ? _bot.Player.Username ?? _lastUsername : _lastUsername;
-            if (string.IsNullOrWhiteSpace(user))
-                return;
-            string path = FollowersPath(user);
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            string temporary = path + $".{Environment.ProcessId}.tmp";
-            File.WriteAllLines(temporary, list);
-            File.Move(temporary, path, true);
-        }
-        catch { }
-    }
+        string normalizedTarget = target.Trim();
+        List<string> normalizedRecipients = recipients
+            .Select(name => name.Trim())
+            .Where(name => name.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (normalizedTarget.Length == 0 || normalizedRecipients.Count == 0)
+            return;
 
-    private void RestoreFollowers(string? username)
-    {
-        try
+        lock (_writeLock)
         {
-            if (string.IsNullOrWhiteSpace(username))
-                return;
-            lock (_writeLock)
-            {
-                if (_lastUsername.Length > 0 && !_lastUsername.Equals(username, StringComparison.OrdinalIgnoreCase))
-                    _followers = new();
-                if (_followers.Count > 0) return;
-            }
-            string path = FollowersPath(username);
-            if (!File.Exists(path))
-                return;
-            List<string> saved = File.ReadAllLines(path).Select(l => l.Trim()).Where(l => l.Length > 0).ToList();
-            if (saved.Count == 0)
-                return;
-            lock (_writeLock)
-                _followers = saved;
-            File.SetLastWriteTimeUtc(path, DateTime.UtcNow);
-            DebugLog.Log("Broadcaster", $"restored followers after a restart: {string.Join(",", saved)}");
-            _log($"Restored {saved.Count} follower{(saved.Count == 1 ? "" : "s")} from before the restart; they follow again.");
+            _sendAllTarget = normalizedTarget;
+            _sendAllCommand = Guid.NewGuid().ToString("N");
+            _sendAllRecipients = normalizedRecipients;
+            _sendAllIssuedUtcTicks = DateTime.UtcNow.Ticks;
         }
-        catch { }
+
+        WriteNow();
+        DebugLog.Log("Broadcaster", $"published send-all goto to {normalizedRecipients.Count} accounts: {normalizedTarget}");
     }
 
     public void Start()
@@ -157,13 +136,21 @@ public class Broadcaster
                         DebugLog.Log("Broadcaster", $"login state flipped -> {(loggedIn ? "logged in as " + _bot.Player?.Username : "logged out")}");
                         if (!loggedIn)
                             WriteOffline();
-                        else
-                            RestoreFollowers(_bot.Player?.Username);
                     }
 
                     if (loggedIn)
                     {
                         WriteNow(); // no-op unless something actually changed
+                        string publishUser = _bot.Player!.Username;
+
+                        // Publish active/registered quest IDs cheaply and frequently.
+                        // Followers register these quests locally for their own drops and turn-ins.
+                        if (_questSync() &&
+                            (DateTime.UtcNow - _lastQuestSyncPublish).TotalSeconds >= 2)
+                        {
+                            _lastQuestSyncPublish = DateTime.UtcNow;
+                            QuestSync.Publish(_bot, publishUser);
+                        }
 
                         // EXPERIMENTAL quest-state publishing: at login, then every 2
                         // minutes. Runs on a background task - the 800 flash-call read
@@ -175,7 +162,6 @@ public class Broadcaster
                         {
                             _lastQuestPublish = DateTime.UtcNow;
                             _publishing = true;
-                            string publishUser = _bot.Player!.Username;
                             Task.Run(() =>
                             {
                                 try { QuestClone.Publish(_bot, publishUser); }
@@ -253,19 +239,13 @@ public class Broadcaster
                 }
                 _lastUsername = player.Username;
 
-                // Read the equipped class name directly from Flash eqp.ar.sName to avoid
-                // scanning inventory via CurrentClass (which would serialize all owned items to JSON).
+                // CurrentClass scans inventory; sample at roster cadence rather than
+                // on every 250ms location poll. A transient read failure keeps the
+                // last known class until the next sample.
                 if ((DateTime.UtcNow - _lastClassCheck).TotalSeconds >= 2)
                 {
                     _lastClassCheck = DateTime.UtcNow;
-                    try
-                    {
-                        string? className = _bot.Flash.GetGameObject<string>("world.myAvatar.objData.eqp.ar.sName");
-                        if (!string.IsNullOrWhiteSpace(className))
-                            _lastClassName = className;
-                        else
-                            _lastClassName = player.CurrentClass?.Name ?? _lastClassName;
-                    }
+                    try { _lastClassName = player.CurrentClass?.Name ?? _lastClassName; }
                     catch { }
                 }
 
@@ -288,6 +268,10 @@ public class Broadcaster
                     ScriptName = SafeGet(_scriptNameProvider) ?? "",
                     Declined = SafeGet(_declinedProvider) ?? "",
                     Parking = SafeGetBool(_parkingProvider),
+                    SendAllTarget = _sendAllTarget,
+                    SendAllCommand = _sendAllCommand,
+                    SendAllRecipients = _sendAllRecipients.ToList(),
+                    SendAllIssuedUtcTicks = _sendAllIssuedUtcTicks,
                 };
 
                 WriteIfChanged(data);
@@ -344,13 +328,12 @@ public class Broadcaster
     private void WriteIfChanged(SyncData data)
     {
         string serialized = data.Serialize();
-        if (serialized == _lastWritten && DateTime.UtcNow - _lastWriteUtc < TimeSpan.FromMinutes(1))
+        if (serialized == _lastWritten)
             return;
 
         if (SyncFile.Write(data))
         {
             _lastWritten = serialized;
-            _lastWriteUtc = DateTime.UtcNow;
             DebugLog.Log("Broadcaster", $"wrote: {DebugLog.Describe(data)}");
         }
         else

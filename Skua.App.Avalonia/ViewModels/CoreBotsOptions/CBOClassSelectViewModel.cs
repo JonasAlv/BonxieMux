@@ -385,11 +385,6 @@ public partial class CBOClassSelectViewModel : ObservableObject, IManageCBOption
 
     private void SortPlayerClasses()
     {
-        if (PlayerClasses.Count <= 1)
-        {
-            return;
-        }
-
         List<string> sortedClasses = PlayerClasses
             .Where(name => name != CurrentClassOption)
             .OrderBy(name => name, System.StringComparer.OrdinalIgnoreCase)
@@ -422,33 +417,77 @@ public partial class CBOClassSelectViewModel : ObservableObject, IManageCBOption
     [RelayCommand]
     private void ReloadClasses()
     {
+        // Runs every time the view is shown, so it must refresh the list without clearing the user's picks.
+        string? solo = SelectedSoloClass, farm = SelectedFarmClass, dodge = SelectedDodgeClass, boss = SelectedBossClass;
+
         PlayerClasses = new List<string> { CurrentClassOption };
         if (_inventory.Items is not null)
         {
             foreach (InventoryItem item in _inventory.Items)
             {
-                if (item.Category == ItemCategory.Class && item.EnhancementLevel > 0)
+                if (item.Category == ItemCategory.Class)
                     PlayerClasses.Add(item.Name);
             }
         }
 
+        foreach (string? picked in new[] { solo, farm, dodge, boss })
+        {
+            if (!string.IsNullOrEmpty(picked) && !PlayerClasses.Contains(picked))
+                PlayerClasses.Add(picked);
+        }
+
         SortPlayerClasses();
 
-        SoloUseModes = new();
-        SelectedSoloClass = null;
-        SelectedSoloUseMode = null;
+        // The ComboBoxes may push null back while their ItemsSource is swapped; restore the picks.
+        SelectedSoloClass = solo;
+        SelectedFarmClass = farm;
+        SelectedDodgeClass = dodge;
+        SelectedBossClass = boss;
+    }
 
-        FarmUseModes = new();
-        SelectedFarmClass = null;
-        SelectedFarmUseMode = null;
+    // The view is rebuilt each time the Loadout tab is shown, so it must not clear the selections.
+    // SetValues resets the checkbox and mode of a slot with no class and swaps a named preset for the
+    // class's first mode, so those are put back afterwards.
+    [RelayCommand]
+    private void RefreshClasses()
+    {
+        (bool Equip, ClassUseMode? Mode, string? Preset) solo = (UseSoloEquipment, SelectedSoloUseMode, SelectedSoloModeString);
+        (bool Equip, ClassUseMode? Mode, string? Preset) farm = (UseFarmEquipment, SelectedFarmUseMode, SelectedFarmModeString);
+        (bool Equip, ClassUseMode? Mode, string? Preset) dodge = (UseDodgeEquipment, SelectedDodgeUseMode, SelectedDodgeModeString);
+        (bool Equip, ClassUseMode? Mode, string? Preset) boss = (UseBossEquipment, SelectedBossUseMode, SelectedBossModeString);
 
-        DodgeUseModes = new();
-        SelectedDodgeClass = null;
-        SelectedDodgeUseMode = null;
+        Dictionary<string, string> selections = new();
+        AddClassSelection(selections, "Solo", SelectedSoloClass);
+        AddClassSelection(selections, "Farm", SelectedFarmClass);
+        AddClassSelection(selections, "Dodge", SelectedDodgeClass);
+        AddClassSelection(selections, "Boss", SelectedBossClass);
+        SetValues(selections);
 
-        BossUseModes = new();
-        SelectedBossClass = null;
-        SelectedBossUseMode = null;
+        UseSoloEquipment = solo.Equip;
+        SelectedSoloUseMode = solo.Mode;
+        if (solo.Preset is not null)
+            SelectedSoloModeString = solo.Preset;
+
+        UseFarmEquipment = farm.Equip;
+        SelectedFarmUseMode = farm.Mode;
+        if (farm.Preset is not null)
+            SelectedFarmModeString = farm.Preset;
+
+        UseDodgeEquipment = dodge.Equip;
+        SelectedDodgeUseMode = dodge.Mode;
+        if (dodge.Preset is not null)
+            SelectedDodgeModeString = dodge.Preset;
+
+        UseBossEquipment = boss.Equip;
+        SelectedBossUseMode = boss.Mode;
+        if (boss.Preset is not null)
+            SelectedBossModeString = boss.Preset;
+    }
+
+    private static void AddClassSelection(Dictionary<string, string> selections, string slot, string? className)
+    {
+        if (!string.IsNullOrEmpty(className))
+            selections[$"{slot}ClassSelect"] = className;
     }
 
     public StringBuilder Save(StringBuilder builder)

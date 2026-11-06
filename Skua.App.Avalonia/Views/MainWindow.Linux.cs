@@ -288,6 +288,8 @@ public partial class MainWindow : Window
 
             Dispatcher.UIThread.Post(() =>
             {
+                // Hiding alone leaves the indeterminate animation running at the monitor's refresh rate.
+                LoadingBar.IsIndeterminate = false;
                 LoadingBar.IsVisible = false;
                 bool isHeadless = _options.IsHeadlessNow();
                 FlashHost.IsVisible = !isHeadless;

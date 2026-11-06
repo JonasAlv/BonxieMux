@@ -2306,7 +2306,12 @@ public partial class TabbedHostWindow : Window
                     isLoading = true;
                 }
             }
-            if (LoadingIndicator != null) LoadingIndicator.IsVisible = isLoading;
+            if (LoadingIndicator != null)
+            {
+                LoadingIndicator.IsVisible = isLoading;
+                if (TabLoadingBar != null)
+                    TabLoadingBar.IsIndeterminate = isLoading;
+            }
 
             if (activeWindows.Count == 0) return;
 

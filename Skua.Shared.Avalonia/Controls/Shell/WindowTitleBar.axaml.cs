@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.Styling;
 using Material.Icons;
 using Material.Icons.Avalonia;
 using System;
@@ -17,7 +18,10 @@ public partial class WindowTitleBar : UserControl
     public static readonly StyledProperty<string> TitleTextProperty =
         AvaloniaProperty.Register<WindowTitleBar, string>(nameof(TitleText), "BonxieMux");
 
-    private static readonly IImage DefaultIconSource = LoadDefaultIconSource();
+    private static readonly Uri BuiltInIconUri = new("avares://Skua.Shared.Avalonia/Assets/SkuaShellImage.png");
+    private static readonly Uri LightThemeIconUri = new("avares://Skua.Shared.Avalonia/Assets/SkuaShellImageLightTheme.png");
+    private static IImage? _defaultIconSource;
+    private static IImage? _lightThemeIconSource;
     private static string? _artworkPath;
     private Bitmap? _artworkBitmap;
     private bool _usesInstanceArtwork;
@@ -30,6 +34,24 @@ public partial class WindowTitleBar : UserControl
         ArtworkPathChanged?.Invoke(_artworkPath);
     }
 
+    /// <summary>
+    /// Sets the icon title bars show when none is given, so each app can use its own. Title bars created
+    /// before the call keep the old one. The image is loaded here: if the URI is malformed or does not
+    /// resolve to a loadable image, the current default is kept and this returns false.
+    /// </summary>
+    public static bool SetDefaultIcon(string avaresUri)
+    {
+        try
+        {
+            _defaultIconSource = LoadIcon(new Uri(avaresUri));
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     public void SetInstanceArtworkPath(string? path)
     {
         _usesInstanceArtwork = true;
@@ -37,7 +59,7 @@ public partial class WindowTitleBar : UserControl
     }
 
     public static readonly StyledProperty<IImage?> IconSourceProperty =
-        AvaloniaProperty.Register<WindowTitleBar, IImage?>(nameof(IconSource), DefaultIconSource);
+        AvaloniaProperty.Register<WindowTitleBar, IImage?>(nameof(IconSource));
 
     public static readonly StyledProperty<bool> UseAccentBackgroundProperty =
         AvaloniaProperty.Register<WindowTitleBar, bool>(nameof(UseAccentBackground), false);
@@ -63,7 +85,12 @@ public partial class WindowTitleBar : UserControl
     public WindowTitleBar()
     {
         InitializeComponent();
-        ActualThemeVariantChanged += (_, _) => ApplyAccentForeground();
+        ApplyThemeIcon();
+        ActualThemeVariantChanged += (_, _) =>
+        {
+            ApplyThemeIcon();
+            ApplyAccentForeground();
+        };
         PropertyChanged += (_, e) =>
         {
             if (e.Property == UseAccentBackgroundProperty)
@@ -91,15 +118,12 @@ public partial class WindowTitleBar : UserControl
 
             UpdateMaximizeGlyph(window.WindowState);
             window.PropertyChanged += OnWindowPropertyChanged;
-            if (window.CanResize)
-                MaximizedResizeGuard.Attach(window);
         };
         Unloaded += (_, _) =>
         {
             if (TopLevel.GetTopLevel(this) is Window window)
             {
                 window.PropertyChanged -= OnWindowPropertyChanged;
-                MaximizedResizeGuard.Detach(window);
             }
         };
     }
@@ -120,6 +144,16 @@ public partial class WindowTitleBar : UserControl
             Height = 12
         };
         ToolTip.SetTip(MaximizeButton, maximized ? "Restore" : "Maximize");
+    }
+
+    /// <summary>White bird on dark themes, dark bird on light ones (the badge behind it is near-white there).</summary>
+    private void ApplyThemeIcon()
+    {
+        IImage dark = _defaultIconSource ??= LoadIcon(BuiltInIconUri);
+        IImage light = _lightThemeIconSource ??= LoadIcon(LightThemeIconUri);
+        if (IconSource is not null && IconSource != dark && IconSource != light)
+            return; // a caller set its own icon
+        SetCurrentValue(IconSourceProperty, ActualThemeVariant == ThemeVariant.Light ? light : dark);
     }
 
     private void ApplyAccentForeground()
@@ -214,10 +248,10 @@ public partial class WindowTitleBar : UserControl
             window.Close();
     }
 
-    private static IImage LoadDefaultIconSource()
+    private static IImage LoadIcon(Uri uri)
     {
         // Keep shell icon parity with WPF title bar artwork so badge tint behavior matches.
-        using var stream = AssetLoader.Open(new Uri("avares://Skua.Shared.Avalonia/Assets/SkuaShellImage.png"));
+        using var stream = AssetLoader.Open(uri);
         // The source is 2000x2000 but drawn at 30 DIP; decoding at full size and letting the renderer
         // shrink it 60x+ aliases badly, so pre-scale (128 px covers up to 400% DPI).
         return Bitmap.DecodeToWidth(stream, 128, BitmapInterpolationMode.HighQuality);

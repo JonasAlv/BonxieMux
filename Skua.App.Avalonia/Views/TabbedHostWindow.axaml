@@ -362,7 +362,8 @@
             <!-- Keep the native X11 player off the outer edges so Linux can receive horizontal resize gestures. -->
             <Border x:Name="HostContainer" Background="Transparent" Margin="7,0,7,0" />
             <StackPanel x:Name="LoadingIndicator" ZIndex="10" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <ProgressBar Width="180"
+                <ProgressBar x:Name="TabLoadingBar"
+                             Width="180"
                              Height="8"
                              CornerRadius="4"
                              IsIndeterminate="True"

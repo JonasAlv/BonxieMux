@@ -37,12 +37,6 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
     private bool _isLoadingInitial;
     private readonly SemaphoreSlim _refreshSemaphore = new(1, 1);
 
-    // Temporary scripts the client writes into the Scripts folder; never list them as local scripts.
-    private static readonly HashSet<string> _generatedScriptNames = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "LoadoutEnhancerTemp.cs"
-    };
-
     protected override void OnActivated()
     {
         _getScriptsService.PropertyChanged += GetScriptsService_PropertyChanged;
@@ -125,7 +119,7 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
     private bool _isLoadingScripts;
 
     [ObservableProperty]
-    private string _sortBy = "Name";
+    private string _sortBy = SortByName;
 
     [ObservableProperty]
     private bool _sortDescending = false;
@@ -154,9 +148,42 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
     public bool ShowStartButton => !IsManagerMode;
     public IRelayCommand OpenScriptFolderCommand { get; }
 
-    // The window sorts by name only; the toggle flips the direction
-    public string SortDirectionText => SortDescending ? "Name Z to A" : "Name A to Z";
-    public string SortDirectionIcon => SortDescending ? "SortDescending" : "SortAscending";
+    private const string SortByName = "Name";
+    private const string SortByDate = "Date Created";
+
+    private bool IsSortedByDate => SortBy == SortByDate;
+
+    public string SortDirectionText => IsSortedByDate
+        ? (SortDescending ? "Newest first" : "Oldest first")
+        : (SortDescending ? "Name Z to A" : "Name A to Z");
+    public string SortDirectionIcon => IsSortedByDate
+        ? "ClockOutline"
+        : (SortDescending ? "SortDescending" : "SortAscending");
+
+    // The button's lit state: off for A to Z and Newest, on for their reverses. It alternates on every click, as a
+    // ToggleButton does by itself, so the two stay in step through the four orders.
+    public bool IsSortReversed => IsSortedByDate ? !SortDescending : SortDescending;
+
+    // A to Z, Z to A, Newest, Oldest, and round again. Each step changes one property, so each sorts once.
+    [RelayCommand]
+    private void CycleSort()
+    {
+        if (IsSortedByDate)
+        {
+            if (SortDescending)
+                SortDescending = false;
+            else
+                SortBy = SortByName;
+        }
+        else if (SortDescending)
+        {
+            SortBy = SortByDate;
+        }
+        else
+        {
+            SortDescending = true;
+        }
+    }
 
     [RelayCommand]
     private void ClearSearch()
@@ -197,13 +224,19 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
 
     partial void OnSortByChanged(string value)
     {
-        ApplySort();
+        OnSortOrderChanged();
     }
 
     partial void OnSortDescendingChanged(bool value)
     {
+        OnSortOrderChanged();
+    }
+
+    private void OnSortOrderChanged()
+    {
         OnPropertyChanged(nameof(SortDirectionText));
         OnPropertyChanged(nameof(SortDirectionIcon));
+        OnPropertyChanged(nameof(IsSortReversed));
         ApplySort();
     }
 
@@ -217,25 +250,44 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
         if (_scripts.Count == 0) return;
 
         List<ScriptInfoViewModel> sorted = _scripts.ToList();
-        sorted.Sort((a, b) =>
-        {
-            if (a.IsPinned != b.IsPinned)
-                return a.IsPinned ? -1 : 1;
-
-            if (SortBy == "Date Created")
-            {
-                int cmp = (a.Info.CreationDate ?? DateTime.MinValue).CompareTo(b.Info.CreationDate ?? DateTime.MinValue);
-                return SortDescending ? -cmp : cmp;
-            }
-            else
-            {
-                int cmp = string.Compare(a.FileName, b.FileName, StringComparison.OrdinalIgnoreCase);
-                return SortDescending ? -cmp : cmp;
-            }
-        });
+        sorted.Sort(CurrentSortOrder());
 
         _scripts.ReplaceRange(sorted);
         ApplySearchFilter();
+    }
+
+    // The order is read once: a sort can run on a worker while the button is clicked, and a comparer that changes
+    // partway through can throw
+    private Comparison<ScriptInfoViewModel> CurrentSortOrder()
+    {
+        bool byDate = IsSortedByDate;
+        bool descending = SortDescending;
+        return (a, b) => CompareScripts(a, b, byDate, descending);
+    }
+
+    private static int CompareScripts(ScriptInfoViewModel a, ScriptInfoViewModel b, bool byDate, bool descending)
+    {
+        if (a.IsPinned != b.IsPinned)
+            return a.IsPinned ? -1 : 1;
+
+        if (byDate)
+        {
+            // Scripts without a date go last either way; scripts from the same commit fall back to the name
+            if (a.HasCreationDate != b.HasCreationDate)
+                return a.HasCreationDate ? -1 : 1;
+
+            // ScriptDates.json mixes UTC and offset dates, which load as different kinds
+            int dateCmp = a.HasCreationDate
+                ? a.Info.CreationDate!.Value.ToUniversalTime().CompareTo(b.Info.CreationDate!.Value.ToUniversalTime())
+                : 0;
+            if (dateCmp != 0)
+                return descending ? -dateCmp : dateCmp;
+
+            return string.Compare(a.FileName, b.FileName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        int cmp = string.Compare(a.FileName, b.FileName, StringComparison.OrdinalIgnoreCase);
+        return descending ? -cmp : cmp;
     }
 
     [RelayCommand]
@@ -431,6 +483,10 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
         IsLoadingScripts = true;
         try
         {
+            string sortBy = SortBy;
+            bool sortDescending = SortDescending;
+            Comparison<ScriptInfoViewModel> sortOrder = CurrentSortOrder();
+
             List<ScriptInfoViewModel> scriptViewModels = await Task.Run(() =>
             {
                 ISettingsService? settingsService = Ioc.Default.GetService<ISettingsService>();
@@ -521,44 +577,6 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
                 // 2. Custom Folders and Custom Scripts (shown when FilterBy is "All", "Local", or "Pinned")
                 if (isAllFilter || isLocalFilter || isPinnedFilter)
                 {
-                    // Scripts installed by hand into the Scripts folder (e.g. a third-party pack) that the repository doesn't know about
-                    try
-                    {
-                        HashSet<string> repoFiles = new(
-                            _getScriptsService?.Scripts?.Select(s => Path.GetFullPath(s.LocalFile)) ?? Enumerable.Empty<string>(),
-                            StringComparer.OrdinalIgnoreCase);
-                        string cachedScriptsDir = Path.GetFullPath(Path.Combine(ClientFileSources.SkuaScriptsDIR, "Cached-Scripts")) + Path.DirectorySeparatorChar;
-
-                        foreach (string filePath in existingLocalFiles.Keys)
-                        {
-                            if (repoFiles.Contains(filePath) || filePath.StartsWith(cachedScriptsDir, StringComparison.OrdinalIgnoreCase))
-                                continue;
-                            if (_generatedScriptNames.Contains(Path.GetFileName(filePath)))
-                                continue;
-
-                            string localKey = filePath.Replace('\\', '/').Trim();
-                            bool isPinned = pinnedSet.Contains(localKey);
-                            if (isPinnedFilter && !isPinned) continue;
-
-                            FileInfo file = new(filePath);
-                            ScriptInfo info = new()
-                            {
-                                Name = Path.GetFileNameWithoutExtension(file.Name),
-                                FileName = file.Name,
-                                FilePath = file.FullName,
-                                Description = $"Local Script ({Path.GetRelativePath(ClientFileSources.SkuaScriptsDIR, file.DirectoryName ?? string.Empty).Replace('\\', '/')}), not in the repository",
-                                Tags = new[] { "Local" },
-                                CreationDate = file.CreationTime,
-                                Size = (int)file.Length,
-                                Sha256 = null,
-                                CachedDownloaded = true,
-                                CachedLocalSize = (int)file.Length
-                            };
-                            viewModels.Add(new ScriptInfoViewModel(info, file.FullName, isCustom: true, isDownloaded: true, localSize: (int)file.Length, isPinned: isPinned));
-                        }
-                    }
-                    catch { }
-
                     try
                     {
                         string? localFolder = settingsService?.Get<string>("UserCustomScriptsFolder");
@@ -644,25 +662,14 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
                 }
 
                 // 3. Fast in-place sorting
-                viewModels.Sort((a, b) =>
-                {
-                    if (a.IsPinned != b.IsPinned)
-                        return a.IsPinned ? -1 : 1;
-
-                    if (SortBy == "Date Created")
-                    {
-                        int cmp = (a.Info.CreationDate ?? DateTime.MinValue).CompareTo(b.Info.CreationDate ?? DateTime.MinValue);
-                        return SortDescending ? -cmp : cmp;
-                    }
-                    else
-                    {
-                        int cmp = string.Compare(a.FileName, b.FileName, StringComparison.OrdinalIgnoreCase);
-                        return SortDescending ? -cmp : cmp;
-                    }
-                });
+                viewModels.Sort(sortOrder);
 
                 return viewModels;
             });
+
+            // Clicked during the rebuild: that click's own sort ran on the old list, so this one has to catch up
+            if (sortBy != SortBy || sortDescending != SortDescending)
+                scriptViewModels.Sort(CurrentSortOrder());
 
             _scripts.ReplaceRange(scriptViewModels);
 

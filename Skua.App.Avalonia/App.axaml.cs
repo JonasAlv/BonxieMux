@@ -109,6 +109,7 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        Skua.Shared.Avalonia.Controls.Shell.ShellIconTheme.Track(this, "avares://Skua.Shared.Avalonia/Assets/SkuaClientIcon.ico");
         RegisterGlobalExceptionHandlers();
 
         JsonConvert.DefaultSettings = () => new JsonSerializerSettings
@@ -879,8 +880,7 @@ public partial class App : Application
     {
         try
         {
-            using var stream = AssetLoader.Open(new Uri("avares://Skua.Shared.Avalonia/Assets/SkuaIcon.png"));
-            var icon = new WindowIcon(stream);
+            var icon = Skua.Shared.Avalonia.Controls.Shell.ShellIconTheme.Current;
 
             _trayIcon = new TrayIcon
             {

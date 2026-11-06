@@ -24,6 +24,7 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
 {
     private readonly ICaptureProxy _gameProxy;
     private readonly IScriptServers _server;
+    private readonly IFileDialogService _fileDialog;
     private readonly InterceptorLogger _logger;
     private readonly List<PacketLogFilterViewModel> _allPacketFilters;
 
@@ -37,13 +38,7 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
     private ObservableCollection<InterceptedPacketViewModel> _filteredPackets = new();
 
     [ObservableProperty]
-    private ObservableCollection<PacketLogFilterViewModel> _visiblePacketFilters = new();
-
-    [ObservableProperty]
     private string _packetSearchText = string.Empty;
-
-    [ObservableProperty]
-    private string _filterSearchText = string.Empty;
 
     private bool _isLogging;
 
@@ -54,10 +49,13 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
         {
             if (SetProperty(ref _isLogging, value))
             {
-                if (value)
-                    _gameProxy.Interceptors.Add(_logger);
-                else
-                    _gameProxy.Interceptors.Remove(_logger);
+                lock (_gameProxy.Interceptors)
+                {
+                    if (value)
+                        _gameProxy.Interceptors.Add(_logger);
+                    else
+                        _gameProxy.Interceptors.Remove(_logger);
+                }
             }
         }
     }
@@ -68,19 +66,21 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
     public bool Running => _gameProxy.Running;
     public IReadOnlyList<PacketLogFilterViewModel> PacketFilters => _allPacketFilters;
 
-    public PacketInterceptorViewModel(IEnumerable<PacketLogFilterViewModel> filters, ICaptureProxy gameProxy, IScriptServers server)
+    // "shown / total" for the filter button
+    public string ShownFiltersText => $"{_allPacketFilters.Count(f => f.IsChecked)} / {_allPacketFilters.Count}";
+
+    public PacketInterceptorViewModel(IEnumerable<PacketLogFilterViewModel> filters, ICaptureProxy gameProxy, IScriptServers server, IFileDialogService fileDialog)
         : base("Packet Interceptor")
     {
         _gameProxy = gameProxy;
         _server = server;
+        _fileDialog = fileDialog;
         _allPacketFilters = filters.ToList();
 
         foreach (var filter in _allPacketFilters)
         {
             filter.PropertyChanged += OnFilterPropertyChanged;
         }
-
-        UpdateVisibleFilters();
 
         _logger = new InterceptorLogger(OnPacketIntercepted);
         IsLogging = true;
@@ -141,14 +141,16 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
         {
             Packets.Add(packet);
             if (Packets.Count > 1000)
-                Packets.RemoveAt(0);
-
-            if (MatchesPacket(packet))
             {
-                FilteredPackets.Add(packet);
-                if (FilteredPackets.Count > 1000)
+                // FilteredPackets keeps Packets' order, so the oldest packet can only be its first item
+                InterceptedPacketViewModel evicted = Packets[0];
+                Packets.RemoveAt(0);
+                if (FilteredPackets.Count > 0 && ReferenceEquals(FilteredPackets[0], evicted))
                     FilteredPackets.RemoveAt(0);
             }
+
+            if (MatchesPacket(packet))
+                FilteredPackets.Add(packet);
         });
     }
 
@@ -157,29 +159,12 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
         RefreshFilteredPackets();
     }
 
-    partial void OnFilterSearchTextChanged(string value)
-    {
-        UpdateVisibleFilters();
-    }
-
     private void OnFilterPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(PacketLogFilterViewModel.IsChecked))
         {
+            OnPropertyChanged(nameof(ShownFiltersText));
             RefreshFilteredPackets();
-        }
-    }
-
-    private void UpdateVisibleFilters()
-    {
-        VisiblePacketFilters.Clear();
-        string query = FilterSearchText?.Trim() ?? string.Empty;
-        foreach (var filter in _allPacketFilters)
-        {
-            if (string.IsNullOrEmpty(query) || filter.Content.Contains(query, StringComparison.OrdinalIgnoreCase))
-            {
-                VisiblePacketFilters.Add(filter);
-            }
         }
     }
 
@@ -191,17 +176,15 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
             return false;
         }
 
-        string[] parts = new[] { pkt.Packet };
+        // A packet can be in several categories (a ct with auras is Combat and Auras); any ticked one shows it
+        string[] commands = pkt.Commands;
         foreach (PacketLogFilterViewModel filter in _allPacketFilters)
         {
-            if (filter.IsChecked)
-                continue;
-
-            if (filter.Filter.Invoke(parts))
-                return false;
+            if (filter.IsChecked && filter.Filter.Invoke(commands))
+                return true;
         }
 
-        return true;
+        return false;
     }
 
     public void RefreshFilteredPackets()
@@ -221,6 +204,14 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
     {
         Packets.Clear();
         FilteredPackets.Clear();
+    }
+
+    // Every captured packet, filters and search ignored, one "[OUT] packet" line each; line breaks inside a
+    // packet are written as \r and \n so each line stays one packet
+    [RelayCommand]
+    private void ExportPackets()
+    {
+        _fileDialog.SaveText(Packets.Select(p => $"[{p.Direction}] {p.Packet.Replace("\r", "\\r").Replace("\n", "\\n")}").ToList());
     }
 
     [RelayCommand]
@@ -263,21 +254,44 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
             return;
         }
 
-        if (SelectedServer is null)
+        Server? selectedServer = SelectedServer;
+        if (selectedServer is null)
             return;
 
         IScriptOption options = Ioc.Default.GetRequiredService<IScriptOption>();
         bool relogin = options.AutoRelogin;
         options.AutoRelogin = false;
-        IPAddress ip = IPAddress.TryParse((string?)SelectedServer.IP, out IPAddress? addr) ? addr : Dns.GetHostEntry((string)SelectedServer.IP).AddressList[0];
-        int port = SelectedServer.Port != 0 ? SelectedServer.Port : 5588;
-        _gameProxy.Destination = new IPEndPoint(ip, port);
-        _gameProxy.Start();
-        _server.Logout();
-        _server.Login();
-        _server.ConnectIP("127.0.0.1", port);
-        OnPropertyChanged(nameof(Running));
-        options.AutoRelogin = relogin;
+
+        try
+        {
+            IPAddress ip = IPAddress.TryParse(selectedServer.IP, out IPAddress? address)
+                ? address
+                : Dns.GetHostAddresses(selectedServer.IP).FirstOrDefault()
+                    ?? throw new InvalidOperationException($"Could not resolve server address: {selectedServer.IP}");
+
+            int port = selectedServer.Port != 0 ? selectedServer.Port : 5588;
+            _gameProxy.Destination = new IPEndPoint(ip, port);
+            _gameProxy.Start();
+
+            // Do not disconnect the active game session if the local proxy failed to bind.
+            if (!_gameProxy.Running)
+                return;
+
+            _server.Logout();
+            _server.Login();
+            _server.ConnectIP("127.0.0.1", port);
+            OnPropertyChanged(nameof(Running));
+        }
+        catch
+        {
+            _gameProxy.Stop();
+            OnPropertyChanged(nameof(Running));
+            throw;
+        }
+        finally
+        {
+            options.AutoRelogin = relogin;
+        }
     }
 
     protected override void OnActivated()

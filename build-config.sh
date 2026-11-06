@@ -42,12 +42,10 @@ fi
 
 # Remote URLs & Cache Paths based strictly on property values
 SKUA_PLAYER_CACHE="$SCRIPT_DIR/player/${SKUA_PLAYER_VERSION}-${SKUA_PLAYER_OS}"
-SKUA_PLAYER_ARCHIVE="Mugetsu-${SKUA_PLAYER_VERSION}-${SKUA_PLAYER_OS}.tar.gz"
-SKUA_PLAYER_URL="https://github.com/retr0gr4d3/skua-mugetsu/releases/download/v${SKUA_PLAYER_VERSION}/${SKUA_PLAYER_ARCHIVE}"
+SKUA_PLAYER_URL="https://github.com/retr0gr4d3/skua-mugetsu/releases/download/v${SKUA_PLAYER_VERSION}/linux.tar.gz"
 
 SKUA_PLAYER_V2_CACHE="$SCRIPT_DIR/player/${SKUA_PLAYER_VERSION}-${SKUA_PLAYER_OS}-x86-64-v2"
-SKUA_PLAYER_V2_ARCHIVE="Mugetsu-${SKUA_PLAYER_VERSION}-${SKUA_PLAYER_OS}-x86-64-v2.tar.gz"
-SKUA_PLAYER_V2_URL="https://github.com/retr0gr4d3/skua-mugetsu/releases/download/v${SKUA_PLAYER_VERSION}/${SKUA_PLAYER_V2_ARCHIVE}"
+SKUA_PLAYER_V2_URL="https://github.com/retr0gr4d3/skua-mugetsu/releases/download/v${SKUA_PLAYER_VERSION}/linux-x86-64-v2.tar.gz"
 
 WATCHDOG_CACHE="$BUILD_DIR/.cache/watchdog/v${WATCHDOG_VERSION}/WatchDog.dll"
 WATCHDOG_URL="https://github.com/JonasAlv/Watch-Dog-linux/releases/download/v${WATCHDOG_VERSION}/WatchDog.dll"
@@ -78,19 +76,28 @@ assemble_payload() {
     rm -rf "$APP_BIN/player" "$APP_BIN/player-x86-64-v2"
     local dotnet_args=("$SCRIPT_DIR/Skua.sln" -c Release)
     if [[ -n "$local_player" ]]; then
+        if [[ -f "$local_player" ]]; then
+            local_player="$(cd -- "$(dirname "$local_player")" && pwd -P)"
+        fi
         if [[ ! -d "$local_player" || ! -x "$local_player/Mugetsu" ]]; then
-            echo "Error: SKUA_PLAYER_LOCAL must point to a folder containing an executable Mugetsu binary." >&2
+            echo "Error: SKUA_PLAYER_LOCAL must point to an executable Mugetsu binary or directory containing it." >&2
             exit 1
         fi
+        local_player="$(cd -- "$local_player" && pwd -P)"
         dotnet_args+=("-p:SkuaPlayerLocal=$local_player")
         echo "Using local Mugetsu from $local_player"
     fi
     if [[ -n "$local_player_v2" ]]; then
-        if [[ ! -x "$local_player_v2/Mugetsu" ]]; then
-            echo "Error: SKUA_PLAYER_V2_LOCAL must point to a folder containing an executable Mugetsu binary." >&2
+        if [[ -f "$local_player_v2" ]]; then
+            local_player_v2="$(cd -- "$(dirname "$local_player_v2")" && pwd -P)"
+        fi
+        if [[ ! -d "$local_player_v2" || ! -x "$local_player_v2/Mugetsu" ]]; then
+            echo "Error: SKUA_PLAYER_V2_LOCAL must point to an executable Mugetsu binary or directory containing it." >&2
             exit 1
         fi
+        local_player_v2="$(cd -- "$local_player_v2" && pwd -P)"
         dotnet_args+=("-p:SkuaPlayerV2Local=$local_player_v2")
+        dotnet_args+=("-p:SkuaPlayerAvxDir=$local_player_v2")
         echo "Using local x86-64-v2 Mugetsu from $local_player_v2"
     fi
     dotnet build "${dotnet_args[@]}"
@@ -194,25 +201,25 @@ assemble_payload() {
 
     # Copy or download official Skua Mugetsu Flash runner
     mkdir -p "$CURRENT_DIR/player" "$CURRENT_DIR/player-x86-64-v2"
-    if [[ -s "$APP_BIN/player/Mugetsu" ]]; then
+    if [[ -n "$local_player" && -x "$local_player/Mugetsu" ]]; then
+        echo "Using local Mugetsu from $local_player..."
+        cp -a "$local_player/." "$CURRENT_DIR/player/"
+    elif [[ -s "$APP_BIN/player/Mugetsu" ]]; then
         echo "Using bundled skua-mugetsu from $APP_BIN/player..."
         cp -a "$APP_BIN/player/." "$CURRENT_DIR/player/"
     elif [[ -s "$SKUA_PLAYER_CACHE/Mugetsu/Mugetsu" ]]; then
         echo "Using cached skua-mugetsu from player/..."
         cp -a "$SKUA_PLAYER_CACHE/Mugetsu/." "$CURRENT_DIR/player/"
-    elif [[ -s "$BUILD_DIR/player/Mugetsu" ]]; then
-        cp -a "$BUILD_DIR/player/." "$CURRENT_DIR/player/"
     else
         echo "Mugetsu binary not found locally. Fetching official skua-mugetsu v${SKUA_PLAYER_VERSION} from GitHub Releases..."
         local tmp_archive="$CURRENT_DIR/skua-mugetsu.tar.gz"
-        if curl -sSL --fail "$SKUA_PLAYER_URL" -o "$tmp_archive" && [ -s "$tmp_archive" ]; then
-            tar -xzf "$tmp_archive" -C "$CURRENT_DIR/player/" --strip-components=1
-            rm -f "$tmp_archive"
-        else
-            rm -f "$tmp_archive"
-            echo "Error: Failed to download official skua-mugetsu from GitHub Releases!" >&2
-            exit 1
+        curl -sSL --fail "$SKUA_PLAYER_URL" -o "$tmp_archive"
+        tar -xzf "$tmp_archive" -C "$CURRENT_DIR/player/"
+        if [[ -d "$CURRENT_DIR/player/Mugetsu" ]]; then
+            cp -a "$CURRENT_DIR/player/Mugetsu/." "$CURRENT_DIR/player/"
+            rm -rf "$CURRENT_DIR/player/Mugetsu"
         fi
+        rm -f "$tmp_archive"
     fi
 
     if [[ ! -s "$CURRENT_DIR/player/Mugetsu" ]]; then
@@ -223,12 +230,20 @@ assemble_payload() {
     chmod +x "$CURRENT_DIR/player/Mugetsu" "$CURRENT_DIR/Mugetsu"
 
     # Bundle x86-64-v2 player when available
-    if [[ -s "$APP_BIN/player-x86-64-v2/Mugetsu" ]]; then
+    if [[ -n "$local_player_v2" && -x "$local_player_v2/Mugetsu" ]]; then
+        echo "Using local x86-64-v2 Mugetsu from $local_player_v2..."
+        cp -a "$local_player_v2/." "$CURRENT_DIR/player-x86-64-v2/"
+    elif [[ -s "$APP_BIN/player-x86-64-v2/Mugetsu" ]]; then
         cp -a "$APP_BIN/player-x86-64-v2/." "$CURRENT_DIR/player-x86-64-v2/"
     elif [[ -s "$SKUA_PLAYER_V2_CACHE/Mugetsu/Mugetsu" ]]; then
         cp -a "$SKUA_PLAYER_V2_CACHE/Mugetsu/." "$CURRENT_DIR/player-x86-64-v2/"
-    elif [[ -s "$BUILD_DIR/player-x86-64-v2/Mugetsu" ]]; then
-        cp -a "$BUILD_DIR/player-x86-64-v2/." "$CURRENT_DIR/player-x86-64-v2/"
+    elif curl -sSL --fail "$SKUA_PLAYER_V2_URL" -o "$CURRENT_DIR/skua-mugetsu-v2.tar.gz" 2>/dev/null; then
+        tar -xzf "$CURRENT_DIR/skua-mugetsu-v2.tar.gz" -C "$CURRENT_DIR/player-x86-64-v2/"
+        if [[ -d "$CURRENT_DIR/player-x86-64-v2/Mugetsu" ]]; then
+            cp -a "$CURRENT_DIR/player-x86-64-v2/Mugetsu/." "$CURRENT_DIR/player-x86-64-v2/"
+            rm -rf "$CURRENT_DIR/player-x86-64-v2/Mugetsu"
+        fi
+        rm -f "$CURRENT_DIR/skua-mugetsu-v2.tar.gz"
     fi
 
     if [[ -s "$CURRENT_DIR/player-x86-64-v2/Mugetsu" ]]; then
