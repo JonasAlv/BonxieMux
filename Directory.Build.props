@@ -7,7 +7,7 @@
         <FileVersion>$(Version)</FileVersion>
 
         <!-- Skua-Mugetsu & WatchDog Versions -->
-        <SkuaPlayerVersion Condition="'$(SkuaPlayerVersion)' == ''">1.6.0-skua.4</SkuaPlayerVersion>
+        <SkuaPlayerVersion Condition="'$(SkuaPlayerVersion)' == ''">1.6.0-skua.5</SkuaPlayerVersion>
         <SkuaPlayerOs Condition="'$(SkuaPlayerOs)' == ''">linux</SkuaPlayerOs>
         <WatchDogVersion Condition="'$(WatchDogVersion)' == ''">1.0.2</WatchDogVersion>
 
