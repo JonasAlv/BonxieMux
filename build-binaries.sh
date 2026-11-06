@@ -107,6 +107,7 @@ int main(int argc, char *argv[]) {
         snprintf(new_path, sizeof(new_path), "%s", current_dir);
     }
     setenv("PATH", new_path, 1);
+    setenv("DOTNET_ROOT", current_dir, 1);
 
     argv[0] = target;
     execv(target, argv);
@@ -128,6 +129,7 @@ CURRENT_DIR="$SCRIPT_DIR/current"
 cd "$CURRENT_DIR"
 export LD_LIBRARY_PATH="$CURRENT_DIR:$CURRENT_DIR/runtimes/linux-x64/native:${LD_LIBRARY_PATH:-}"
 export PATH="$CURRENT_DIR:$PATH"
+export DOTNET_ROOT="$CURRENT_DIR"
 exec "$CURRENT_DIR/BonxieMux" "$@"
 EOF
 chmod +x "$BINARY_DIR/BonxieMux.sh"
@@ -139,6 +141,7 @@ CURRENT_DIR="$SCRIPT_DIR/current"
 cd "$CURRENT_DIR"
 export LD_LIBRARY_PATH="$CURRENT_DIR:$CURRENT_DIR/runtimes/linux-x64/native:${LD_LIBRARY_PATH:-}"
 export PATH="$CURRENT_DIR:$PATH"
+export DOTNET_ROOT="$CURRENT_DIR"
 exec "$CURRENT_DIR/BonxieMux.Manager" "$@"
 EOF
 chmod +x "$BINARY_DIR/BonxieMux.Manager.sh"
