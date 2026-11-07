@@ -70,8 +70,31 @@ public partial class MainWindow : Window
         DataContext = _mainViewModel;
         Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar.SetArtworkPath(Ioc.Default.GetRequiredService<ISettingsService>().GetShared().TitleBarArtworkPath);
         MainMenuBar.DataContext = _mainMenuVm;
+        var titleBar = this.FindControl<global::Avalonia.Controls.Control>("TitleBar");
+        if (titleBar is Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar wtb)
+        {
+            wtb.DockClicked += (s, e) => RequestDockToHost();
+        }
         ConfigureMainMenu();
         RegisterLifecycleHandlers();
+    }
+
+    public static void RequestDockToHost()
+    {
+        Task.Run(async () =>
+        {
+            try
+            {
+                using var client = new System.IO.Pipes.NamedPipeClientStream(".", App.HostPipeName, System.IO.Pipes.PipeDirection.Out);
+                await client.ConnectAsync(500);
+                using var writer = new System.IO.StreamWriter(client) { AutoFlush = true };
+                await writer.WriteLineAsync($"DOCK|{Environment.ProcessId}");
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Failed to send dock request: {ex.Message}");
+            }
+        });
     }
 
     private void ConfigureMainMenu()

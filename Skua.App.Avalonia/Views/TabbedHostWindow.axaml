@@ -110,6 +110,19 @@
                                 <Style Selector="TabItem.follow-group:pointerover /template/ Border#PART_LayoutRoot">
                                     <Setter Property="Background" Value="{DynamicResource FollowGroupHoverBrush}" />
                                 </Style>
+                                <Style Selector="TabItem.tab-dragging /template/ Border#PART_LayoutRoot">
+                                    <Setter Property="Background" Value="#3338BDF8" />
+                                    <Setter Property="BorderBrush" Value="#38BDF8" />
+                                    <Setter Property="BorderThickness" Value="2,2,2,0" />
+                                </Style>
+                                <Style Selector="TabItem.tab-dragging /template/ ContentPresenter#PART_ContentPresenter">
+                                    <Setter Property="TextElement.Foreground" Value="#38BDF8" />
+                                    <Setter Property="TextElement.FontWeight" Value="Bold" />
+                                </Style>
+                                <Style Selector="TabItem.tab-detached /template/ Border#PART_LayoutRoot">
+                                    <Setter Property="BorderBrush" Value="#475569" />
+                                    <Setter Property="BorderThickness" Value="1,1,1,1" />
+                                </Style>
                                 <Style Selector="TabItem.follow-group:selected /template/ Border#PART_LayoutRoot">
                                     <Setter Property="Background" Value="{DynamicResource FollowGroupSelectedBrush}" />
                                 </Style>
@@ -297,6 +310,12 @@
                                         </MenuItem.Icon>
                                     </MenuItem>
                                 </MenuItem>
+                                <Separator />
+                                <MenuItem Header="Dock All Windows to Tabs" Click="MenuItem_DockAllWindows_Click">
+                                    <MenuItem.Icon>
+                                        <materialIcons:MaterialIcon Kind="DockWindow" Width="14" Height="14" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
                             </MenuFlyout>
                         </FlyoutBase.AttachedFlyout>
                     </Border>
@@ -361,6 +380,26 @@
         <Grid Grid.Row="2" Background="{DynamicResource SkuaPageBrush}">
             <!-- Keep the native X11 player off the outer edges so Linux can receive horizontal resize gestures. -->
             <Border x:Name="HostContainer" Background="Transparent" Margin="7,0,7,0" />
+            <Border x:Name="DetachedPlaceholder"
+                    IsVisible="False"
+                    ZIndex="5"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource SkuaSurfaceBrush}"
+                    BorderBrush="{DynamicResource SkuaBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="36,28">
+                <StackPanel Spacing="14" HorizontalAlignment="Center">
+                    <materialIcons:MaterialIcon Kind="DockWindow" Width="52" Height="52" Foreground="{DynamicResource SkuaAccentBrush}" HorizontalAlignment="Center" />
+                    <TextBlock x:Name="DetachedTabNameText" Text="Account is in Window Mode" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource SkuaTextBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="This client is running as an independent floating window." FontSize="12" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center" Margin="0,8,0,0">
+                        <Button x:Name="FocusDetachedButton" Content="Focus Window" Click="FocusDetachedButton_Click" MinWidth="110" />
+                        <Button x:Name="DockDetachedButton" Content="Dock into Tabs" Click="DockDetachedButton_Click" MinWidth="110" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
             <StackPanel x:Name="LoadingIndicator" ZIndex="10" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ProgressBar x:Name="TabLoadingBar"
                              Width="180"

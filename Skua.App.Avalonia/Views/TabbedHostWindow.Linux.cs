@@ -83,6 +83,18 @@ public partial class TabbedHostWindow : Window
     [DllImport("libX11.so.6")]
     private static extern int XFlush(IntPtr display);
 
+    [DllImport("libX11.so.6")]
+    private static extern bool XQueryPointer(
+        IntPtr display,
+        IntPtr w,
+        out IntPtr root_return,
+        out IntPtr child_return,
+        out int root_x_return,
+        out int root_y_return,
+        out int win_x_return,
+        out int win_y_return,
+        out uint mask_return);
+
     private static IntPtr _xDisplay;
     private static readonly object _xLock = new();
     private DispatcherTimer? _gridFocusTimer;
@@ -164,6 +176,61 @@ public partial class TabbedHostWindow : Window
                 XSync(display, 0);
             }
         }
+    }
+
+    private void PlatformDetachChild(IntPtr childHwnd, int screenX, int screenY, int width, int height)
+    {
+        IntPtr display = GetDisplay();
+        if (display != IntPtr.Zero && childHwnd != IntPtr.Zero)
+        {
+            lock (_xLock)
+            {
+                IntPtr root = XDefaultRootWindow(display);
+                XUnmapWindow(display, childHwnd);
+                XSync(display, 0);
+                XReparentWindow(display, childHwnd, root, screenX, screenY);
+                XMoveResizeWindow(display, childHwnd, screenX, screenY, (uint)Math.Max(100, width), (uint)Math.Max(100, height));
+                XMapWindow(display, childHwnd);
+                XRaiseWindow(display, childHwnd);
+                XSync(display, 0);
+            }
+        }
+    }
+
+    private void PlatformReattachChild(IntPtr childHwnd)
+    {
+        PlatformReparentChild(childHwnd);
+    }
+
+    private void PlatformRaiseChild(IntPtr childHwnd)
+    {
+        IntPtr display = GetDisplay();
+        if (display != IntPtr.Zero && childHwnd != IntPtr.Zero)
+        {
+            lock (_xLock)
+            {
+                XRaiseWindow(display, childHwnd);
+                XSetInputFocus(display, childHwnd, 1, IntPtr.Zero);
+                XFlush(display);
+            }
+        }
+    }
+
+    public static (int rootX, int rootY) GetGlobalPointerPosition()
+    {
+        IntPtr display = GetDisplay();
+        if (display != IntPtr.Zero)
+        {
+            lock (_xLock)
+            {
+                IntPtr root = XDefaultRootWindow(display);
+                if (XQueryPointer(display, root, out _, out _, out int rx, out int ry, out _, out _, out _))
+                {
+                    return (rx, ry);
+                }
+            }
+        }
+        return (-1, -1);
     }
 
     private void PlatformMoveResizeChild(IntPtr childHwnd, int x, int y, int width, int height, bool focus = false)

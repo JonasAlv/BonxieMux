@@ -82,9 +82,18 @@ public partial class WindowTitleBar : UserControl
         set => SetValue(IconSourceProperty, value);
     }
 
+    public event EventHandler<RoutedEventArgs>? DockClicked;
+
+    public bool CanDock
+    {
+        get => DockButton.IsVisible;
+        set => DockButton.IsVisible = value;
+    }
+
     public WindowTitleBar()
     {
         InitializeComponent();
+        DockButton.Click += (s, e) => DockClicked?.Invoke(this, e);
         ApplyThemeIcon();
         ActualThemeVariantChanged += (_, _) =>
         {

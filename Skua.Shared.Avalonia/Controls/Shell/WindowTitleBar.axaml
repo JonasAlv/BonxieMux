@@ -47,6 +47,11 @@
                 Height="28"
                 VerticalAlignment="Top"
                 Orientation="Horizontal">
+      <Button x:Name="DockButton"
+              Classes="titlebar"
+              IsVisible="False"
+              ToolTip.Tip="Dock into BonxieMux"
+              Content="{materialIcons:MaterialIconExt Kind=DockWindow, IconSize=12}" />
       <Button x:Name="MinimizeButton"
               Classes="titlebar"
               Content="{materialIcons:MaterialIconExt Kind=WindowMinimize, IconSize=12}" />

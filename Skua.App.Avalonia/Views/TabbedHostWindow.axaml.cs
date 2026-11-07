@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Messaging;
 using Material.Icons;
@@ -57,6 +58,12 @@ public partial class TabbedHostWindow : Window
         public bool IsThrottled { get; set; } = false;
         public bool IsCustomNamed { get; set; } = false;
         public bool IsLoaded { get; set; } = false;
+        public bool IsDetached { get; set; } = false;
+        public bool WasDetachedBeforeGrid { get; set; } = false;
+        public int DetachedScreenX { get; set; } = 0;
+        public int DetachedScreenY { get; set; } = 0;
+        public MaterialIcon? DetachedIcon { get; set; }
+        public TabItem? TabItem { get; set; }
         public string AccountOrderKey { get; set; } = "";
         // The tab header, for the tooltip of a follow group (see FollowGroups.cs).
         public StackPanel? HeaderPanel { get; set; }
@@ -284,7 +291,347 @@ public partial class TabbedHostWindow : Window
         GridViewBorder.PointerExited += GridViewBorder_PointerExited;
         GlobeBorder.PointerEntered += GlobeBorder_PointerEntered;
         GlobeBorder.PointerExited += GlobeBorder_PointerExited;
+        SetupTabDragHandlers();
     }
+
+    #region Tab Drag & Reordering System
+    private TabItem? _draggedTab;
+    private Point _dragStartPos;
+    private bool _isDraggingTab;
+    private TearOffGhostWindow? _ghostWindow;
+
+    private class TearOffGhostWindow : Window
+    {
+        private readonly TextBlock _titleText;
+        private readonly Border _bodyArea;
+        private readonly Border _rootBorder;
+        private bool _isWindowMode = true;
+
+        public TearOffGhostWindow()
+        {
+            WindowStartupLocation = WindowStartupLocation.Manual;
+            SystemDecorations = SystemDecorations.None;
+            ShowInTaskbar = false;
+            CanResize = false;
+            ShowActivated = false;
+            Focusable = false;
+            Width = 948;
+            Height = 600;
+            Opacity = 0.85;
+            Background = Brushes.Transparent;
+            Topmost = true;
+            IsHitTestVisible = false;
+
+            _titleText = new TextBlock
+            {
+                Foreground = Brushes.White,
+                FontSize = 12,
+                FontWeight = FontWeight.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(8, 0, 8, 0),
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+
+            var tabIcon = new MaterialIcon
+            {
+                Kind = MaterialIconKind.ShieldAccountOutline,
+                Width = 13,
+                Height = 13,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = new SolidColorBrush(Color.Parse("#38BDF8"))
+            };
+
+            var titleRow = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(10, 0, 10, 0),
+                Children = { tabIcon, _titleText }
+            };
+
+            _bodyArea = new Border
+            {
+                [Grid.RowProperty] = 1,
+                Child = new Viewbox
+                {
+                    Stretch = Stretch.Uniform,
+                    Opacity = 0.3,
+                    Child = new MaterialIcon
+                    {
+                        Kind = MaterialIconKind.DockWindow,
+                        Width = 96,
+                        Height = 96,
+                        Foreground = new SolidColorBrush(Color.Parse("#38BDF8"))
+                    }
+                }
+            };
+
+            _rootBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(160, 20, 24, 33)),
+                BorderBrush = new SolidColorBrush(Color.Parse("#38BDF8")),
+                BorderThickness = new Thickness(2),
+                CornerRadius = new CornerRadius(8),
+                Child = new Grid
+                {
+                    RowDefinitions = new RowDefinitions("32,*"),
+                    Children =
+                    {
+                        new Border
+                        {
+                            Background = new SolidColorBrush(Color.FromArgb(200, 15, 23, 42)),
+                            CornerRadius = new CornerRadius(6, 6, 0, 0),
+                            Child = titleRow
+                        },
+                        _bodyArea
+                    }
+                }
+            };
+
+            Content = _rootBorder;
+
+            Opened += (s, e) =>
+            {
+                try
+                {
+                    IntPtr hwnd = this.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
+                    if (hwnd != IntPtr.Zero)
+                    {
+                        IntPtr disp = GetDisplay();
+                        if (disp != IntPtr.Zero)
+                        {
+                            lock (_xLock)
+                            {
+                                XSetWindowAttributes attrs = new XSetWindowAttributes { override_redirect = 1 };
+                                XChangeWindowAttributes(disp, hwnd, (UIntPtr)0x0200, ref attrs);
+                            }
+                        }
+                    }
+                }
+                catch { }
+            };
+        }
+
+        public void SetMode(bool asWindow)
+        {
+            if (_isWindowMode == asWindow) return;
+            _isWindowMode = asWindow;
+            if (asWindow)
+            {
+                Width = 948;
+                Height = 600;
+                _bodyArea.IsVisible = true;
+                _rootBorder.CornerRadius = new CornerRadius(8);
+            }
+            else
+            {
+                Width = 140;
+                Height = 32;
+                _bodyArea.IsVisible = false;
+                _rootBorder.CornerRadius = new CornerRadius(6);
+            }
+        }
+
+        public void UpdateTitle(string title)
+        {
+            _titleText.Text = string.IsNullOrWhiteSpace(title) ? "Skua Client" : title;
+        }
+    }
+
+    private void ShowGhostPreview(string title, int screenX, int screenY, bool asWindow)
+    {
+        if (_ghostWindow == null)
+        {
+            _ghostWindow = new TearOffGhostWindow();
+        }
+        _ghostWindow.SetMode(asWindow);
+        _ghostWindow.UpdateTitle(title);
+        _ghostWindow.Position = new PixelPoint(screenX, screenY);
+        if (!_ghostWindow.IsVisible)
+        {
+            _ghostWindow.Show();
+        }
+    }
+
+    private void HideGhostPreview()
+    {
+        if (_ghostWindow != null && _ghostWindow.IsVisible)
+        {
+            _ghostWindow.Hide();
+        }
+    }
+
+    private void ApplyTabDragVisuals(TabItem tab)
+    {
+        if (!tab.Classes.Contains("tab-dragging"))
+        {
+            tab.Classes.Add("tab-dragging");
+        }
+        if (tab.Header is StackPanel sp)
+        {
+            sp.Background = new SolidColorBrush(Color.FromArgb(60, 56, 189, 248));
+        }
+        Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.SizeWestEast);
+    }
+
+    private void ClearTabDragVisuals(TabItem tab)
+    {
+        tab.Classes.Remove("tab-dragging");
+        if (tab.Header is StackPanel sp)
+        {
+            sp.Background = Brushes.Transparent;
+        }
+        Cursor = global::Avalonia.Input.Cursor.Default;
+    }
+
+    private void SetupTabDragHandlers()
+    {
+        this.AddHandler(InputElement.PointerMovedEvent, OnWindowPointerMoved, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+        this.AddHandler(InputElement.PointerReleasedEvent, OnWindowPointerReleased, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+        this.AddHandler(InputElement.PointerCaptureLostEvent, (s, e) =>
+        {
+            if (!_isDraggingTab)
+            {
+                HideGhostPreview();
+                if (_draggedTab != null)
+                {
+                    ClearTabDragVisuals(_draggedTab);
+                    _draggedTab = null;
+                }
+            }
+        }, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+    }
+
+    private void OnWindowPointerMoved(object? sender, PointerEventArgs ev)
+    {
+        if (_draggedTab == null) return;
+
+        var prop = ev.GetCurrentPoint(this).Properties;
+        if (!prop.IsLeftButtonPressed)
+        {
+            if (_isDraggingTab)
+            {
+                ev.Pointer.Capture(null);
+                HideGhostPreview();
+                ClearTabDragVisuals(_draggedTab);
+                _draggedTab = null;
+                _isDraggingTab = false;
+            }
+            return;
+        }
+
+        Point currentPoint = ev.GetPosition(this);
+        Vector diff = currentPoint - _dragStartPos;
+        if (!_isDraggingTab && (Math.Abs(diff.X) > 6 || Math.Abs(diff.Y) > 6))
+        {
+            _isDraggingTab = true;
+            ApplyTabDragVisuals(_draggedTab);
+        }
+
+        if (_isDraggingTab)
+        {
+            if (ev.Pointer.Captured != this)
+            {
+                ev.Pointer.Capture(this);
+            }
+
+            var tabCtrlPos = InstancesTabControl.TranslatePoint(new Point(0, 0), this);
+            double tabTop = tabCtrlPos?.Y ?? 0;
+            double tabBottom = tabTop + Math.Max(InstancesTabControl.Bounds.Height, 34);
+
+            bool isOutsideTabStrip = currentPoint.Y < tabTop - 15 || 
+                                     currentPoint.Y > tabBottom + 30 ||
+                                     currentPoint.X < -15 ||
+                                     currentPoint.X > this.Bounds.Width + 15;
+
+            if (isOutsideTabStrip)
+            {
+                var (gx, gy) = GetGlobalPointerPosition();
+                int targetX = gx > 0 ? gx - 200 : (int)(this.Position.X + currentPoint.X - 200);
+                int targetY = gy > 0 ? gy - 16 : (int)(this.Position.Y + currentPoint.Y - 16);
+
+                ShowGhostPreview(GetTabTitle(_draggedTab), targetX, targetY, asWindow: true);
+            }
+            else
+            {
+                var (gx, gy) = GetGlobalPointerPosition();
+                int tabGhostX = gx > 0 ? gx - 40 : (int)(this.Position.X + currentPoint.X - 40);
+                int tabGhostY = gy > 0 ? gy - 16 : (int)(this.Position.Y + currentPoint.Y - 16);
+
+                ShowGhostPreview(GetTabTitle(_draggedTab), tabGhostX, tabGhostY, asWindow: false);
+
+                int currentIndex = InstancesTabControl.Items.IndexOf(_draggedTab);
+                if (currentIndex >= 0)
+                {
+                    var tabItems = InstancesTabControl.Items.OfType<TabItem>().ToList();
+                    foreach (var otherTab in tabItems)
+                    {
+                        if (otherTab == _draggedTab) continue;
+                        var otherBounds = otherTab.TranslatePoint(new Point(0, 0), this);
+                        if (otherBounds.HasValue)
+                        {
+                            double otherCenterX = otherBounds.Value.X + (otherTab.Bounds.Width / 2.0);
+                            int otherIndex = InstancesTabControl.Items.IndexOf(otherTab);
+                            if (currentIndex < otherIndex && currentPoint.X > otherCenterX)
+                            {
+                                InstancesTabControl.Items.Remove(_draggedTab);
+                                InstancesTabControl.Items.Insert(otherIndex, _draggedTab);
+                                InstancesTabControl.SelectedItem = _draggedTab;
+                                ApplyTabDragVisuals(_draggedTab);
+                                break;
+                            }
+                            else if (currentIndex > otherIndex && currentPoint.X < otherCenterX)
+                            {
+                                InstancesTabControl.Items.Remove(_draggedTab);
+                                InstancesTabControl.Items.Insert(otherIndex, _draggedTab);
+                                InstancesTabControl.SelectedItem = _draggedTab;
+                                ApplyTabDragVisuals(_draggedTab);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            ev.Handled = true;
+        }
+    }
+
+    private void OnWindowPointerReleased(object? sender, PointerReleasedEventArgs ev)
+    {
+        if (_draggedTab == null) return;
+
+        TabItem tabToProcess = _draggedTab;
+        bool wasDragging = _isDraggingTab;
+
+        ev.Pointer.Capture(null);
+        HideGhostPreview();
+        ClearTabDragVisuals(tabToProcess);
+        _draggedTab = null;
+        _isDraggingTab = false;
+
+        if (wasDragging)
+        {
+            Point releasePoint = ev.GetPosition(this);
+            var tabCtrlPos = InstancesTabControl.TranslatePoint(new Point(0, 0), this);
+            double tabTop = tabCtrlPos?.Y ?? 0;
+            double tabBottom = tabTop + Math.Max(InstancesTabControl.Bounds.Height, 34);
+
+            bool isOutsideTabStrip = releasePoint.Y < tabTop - 15 || 
+                                     releasePoint.Y > tabBottom + 30 ||
+                                     releasePoint.X < -15 ||
+                                     releasePoint.X > this.Bounds.Width + 15;
+
+            if (isOutsideTabStrip)
+            {
+                var (gx, gy) = GetGlobalPointerPosition();
+                int targetX = gx > 0 ? gx - 200 : (int)(this.Position.X + releasePoint.X - 200);
+                int targetY = gy > 0 ? gy - 16 : (int)(this.Position.Y + releasePoint.Y - 16);
+                DetachTab(tabToProcess, new PixelPoint(targetX, targetY));
+            }
+            ev.Handled = true;
+        }
+    }
+    #endregion
 
     private void SyncTabTitles()
     {
@@ -555,6 +902,7 @@ public partial class TabbedHostWindow : Window
         _isClosing = true;
         App.DisposeTrayIcon();
         try { _pipeCts.Cancel(); } catch { }
+        try { _ghostWindow?.Close(); _ghostWindow = null; } catch { }
 
         var tabsToClose = _tabs.Values.ToList();
         _tabs.Clear();
@@ -694,6 +1042,14 @@ public partial class TabbedHostWindow : Window
                                     }
                                 });
                             }
+                            else if (line.StartsWith("DOCK|", StringComparison.Ordinal))
+                            {
+                                string pidStr = line.Substring("DOCK|".Length);
+                                if (int.TryParse(pidStr, out int childPid))
+                                {
+                                    Dispatcher.UIThread.Post(() => DockChildInstance(childPid));
+                                }
+                            }
                             else
                             {
                                 string[]? parsedArgs = null;
@@ -789,6 +1145,8 @@ public partial class TabbedHostWindow : Window
     private const int WM_SKUA_CHECK_LOGIN = 0x0400 + 456;
     private const int WM_SKUA_JUMP_PLAYER = 0x0400 + 457;
     private const int WM_SKUA_AUTO_ATTACK = 0x0400 + 459;
+    private const int WM_SKUA_DETACH = 0x0400 + 470;
+    private const int WM_SKUA_DOCK = 0x0400 + 471;
 
     private void OnArmySchedulerStart(ScriptSchedulerViewModel.ArmySchedulerMessage m)
     {
@@ -861,7 +1219,8 @@ public partial class TabbedHostWindow : Window
 
     public void EnterGridView()
     {
-        if (_tabs.Count <= 1 || _isTogglingGridView) return;
+        int attachedCount = _tabs.Values.Count(t => !t.IsDetached);
+        if (attachedCount <= 1 || _isTogglingGridView) return;
 
         _isTogglingGridView = true;
         try
@@ -873,7 +1232,7 @@ public partial class TabbedHostWindow : Window
 
             foreach (var info in _tabs.Values)
             {
-                if (info.ChildHwnd != IntPtr.Zero)
+                if (info.ChildHwnd != IntPtr.Zero && !info.IsDetached)
                 {
                     info.IsThrottled = false;
                     PostChildMessage(info.ChildHwnd, WM_SKUA_GRIDVIEW, new IntPtr(1), IntPtr.Zero);
@@ -882,13 +1241,19 @@ public partial class TabbedHostWindow : Window
             }
 
             if (InstancesTabControl.SelectedItem is TabItem currentTab)
-                _lastSelectedTab = currentTab;
-            _lastSelectedTab ??= InstancesTabControl.Items.OfType<TabItem>().FirstOrDefault();
+            {
+                if (_tabs.TryGetValue(currentTab, out var cInfo) && !cInfo.IsDetached)
+                    _lastSelectedTab = currentTab;
+            }
+            _lastSelectedTab ??= InstancesTabControl.Items.OfType<TabItem>().FirstOrDefault(t => _tabs.TryGetValue(t, out var i) && !i.IsDetached);
 
             _ignoreSelectionChange = true;
             InstancesTabControl.SelectedItem = null;
             foreach (var item in InstancesTabControl.Items.OfType<TabItem>())
-                item.IsSelected = false;
+            {
+                if (_tabs.TryGetValue(item, out var tInfo) && !tInfo.IsDetached)
+                    item.IsSelected = false;
+            }
             _ignoreSelectionChange = false;
 
             DoReposition();
@@ -913,7 +1278,7 @@ public partial class TabbedHostWindow : Window
 
             foreach (var info in _tabs.Values)
             {
-                if (info.ChildHwnd != IntPtr.Zero)
+                if (info.ChildHwnd != IntPtr.Zero && !info.IsDetached)
                 {
                     PostChildMessage(info.ChildHwnd, WM_SKUA_GRIDVIEW, IntPtr.Zero, IntPtr.Zero);
                 }
@@ -926,7 +1291,7 @@ public partial class TabbedHostWindow : Window
             }
             else
             {
-                var firstTab = InstancesTabControl.Items.OfType<TabItem>().FirstOrDefault();
+                var firstTab = InstancesTabControl.Items.OfType<TabItem>().FirstOrDefault(t => _tabs.TryGetValue(t, out var i) && !i.IsDetached);
                 if (firstTab != null)
                     InstancesTabControl.SelectedItem = firstTab;
             }
@@ -1034,10 +1399,10 @@ public partial class TabbedHostWindow : Window
         }
         else
         {
-            if (_tabs.Count <= 1)
+            int attachedCount = _tabs.Values.Count(t => !t.IsDetached);
+            if (attachedCount <= 1)
             {
-                // If only 1 account, Grid View has nothing to tile; guarantee normal tab view
-                ExitGridView();
+                // If 1 or 0 attached accounts in host, Grid View has nothing to tile
                 return;
             }
             EnterGridView();
@@ -1135,18 +1500,41 @@ public partial class TabbedHostWindow : Window
 
         if (_isGridViewEnabled && InstancesTabControl.SelectedItem != null)
         {
+            if (InstancesTabControl.SelectedItem is TabItem clickedTab && _tabs.TryGetValue(clickedTab, out var cInfo))
+            {
+                if (cInfo.IsDetached)
+                {
+                    if (cInfo.ChildHwnd != IntPtr.Zero)
+                    {
+                        PlatformRaiseChild(cInfo.ChildHwnd);
+                    }
+                    _ignoreSelectionChange = true;
+                    InstancesTabControl.SelectedItem = null;
+                    _ignoreSelectionChange = false;
+                    return;
+                }
+            }
+
             // ExitGridView restores _lastSelectedTab, so point it at the tab that was just clicked.
-            if (InstancesTabControl.SelectedItem is TabItem clickedTab)
-                _lastSelectedTab = clickedTab;
+            if (InstancesTabControl.SelectedItem is TabItem attachedTab)
+                _lastSelectedTab = attachedTab;
             ExitGridView();
             return;
         }
 
+        if (InstancesTabControl.SelectedItem is TabItem selTab && _tabs.TryGetValue(selTab, out var tabInfo))
+        {
+            if (tabInfo.IsDetached && tabInfo.ChildHwnd != IntPtr.Zero)
+            {
+                PlatformRaiseChild(tabInfo.ChildHwnd);
+            }
+        }
+
         DoReposition();
         UpdateTabScrollButtons();
-        if (InstancesTabControl.SelectedItem is TabItem selTab)
+        if (InstancesTabControl.SelectedItem is TabItem scrollTab)
         {
-            ScrollTabIntoView(selTab);
+            ScrollTabIntoView(scrollTab);
         }
     }
 
@@ -1970,8 +2358,12 @@ public partial class TabbedHostWindow : Window
     private string GetTabTitle(TabItem tab)
     {
         if (tab.Header is StackPanel headerPanel)
-            return headerPanel.Children.OfType<TextBlock>().FirstOrDefault(block => block.Text != "✕")?.Text ?? "";
-        return tab.Header?.ToString() ?? "";
+        {
+            var text = headerPanel.Children.OfType<TextBlock>().FirstOrDefault(block => block.Text != "✕")?.Text;
+            if (!string.IsNullOrWhiteSpace(text)) return text;
+        }
+        string? headerStr = tab.Header?.ToString();
+        return !string.IsNullOrWhiteSpace(headerStr) ? headerStr : "Skua Client";
     }
 
     // Each client joins its own house (no input needed).
@@ -2247,7 +2639,7 @@ public partial class TabbedHostWindow : Window
             {
                 foreach (var info in _tabs.Values)
                 {
-                    if (info.ChildHwnd != IntPtr.Zero)
+                    if (info.ChildHwnd != IntPtr.Zero && !info.IsDetached)
                     {
                         PlatformHideChild(info.ChildHwnd);
                         PostChildMessage(info.ChildHwnd, HotKeys.WM_SKUA_VISIBILITY, new IntPtr(4), IntPtr.Zero);
@@ -2278,7 +2670,7 @@ public partial class TabbedHostWindow : Window
             var activeWindows = InstancesTabControl.Items.OfType<TabItem>()
                 .Where(t => _tabs.ContainsKey(t))
                 .Select(t => _tabs[t])
-                .Where(v => v.ChildHwnd != IntPtr.Zero)
+                .Where(v => v.ChildHwnd != IntPtr.Zero && !v.IsDetached)
                 .ToList();
 
             PublishChildVisibility(selectedTab, activeWindows);
@@ -2286,23 +2678,37 @@ public partial class TabbedHostWindow : Window
             bool isLoading = false;
             if (_isGridViewEnabled)
             {
-                isLoading = _tabs.Values.Any(v => v.ChildHwnd == IntPtr.Zero || !v.IsLoaded);
+                if (DetachedPlaceholder != null) DetachedPlaceholder.IsVisible = false;
+                isLoading = _tabs.Values.Where(v => !v.IsDetached).Any(v => v.ChildHwnd == IntPtr.Zero || !v.IsLoaded);
             }
             else
             {
                 if (selectedTab != null && _tabs.TryGetValue(selectedTab, out TabInfo? activeInfo))
                 {
-                    if (!activeInfo.IsLoaded && activeInfo.Process != null)
+                    if (DetachedPlaceholder != null)
                     {
-                        string lFile = Path.Combine(ClientFileSources.TabsDIR, $"loaded_{activeInfo.Process.Id}.txt");
-                        if (File.Exists(lFile))
-                            activeInfo.IsLoaded = true;
+                        DetachedPlaceholder.IsVisible = activeInfo.IsDetached;
+                        if (activeInfo.IsDetached && DetachedTabNameText != null)
+                        {
+                            DetachedTabNameText.Text = $"{GetTabTitle(selectedTab)} is running in Window Mode";
+                        }
                     }
-                    if (activeInfo.ChildHwnd == IntPtr.Zero || !activeInfo.IsLoaded)
-                        isLoading = true;
+
+                    if (!activeInfo.IsDetached)
+                    {
+                        if (!activeInfo.IsLoaded && activeInfo.Process != null)
+                        {
+                            string lFile = Path.Combine(ClientFileSources.TabsDIR, $"loaded_{activeInfo.Process.Id}.txt");
+                            if (File.Exists(lFile))
+                                activeInfo.IsLoaded = true;
+                        }
+                        if (activeInfo.ChildHwnd == IntPtr.Zero || !activeInfo.IsLoaded)
+                            isLoading = true;
+                    }
                 }
                 else
                 {
+                    if (DetachedPlaceholder != null) DetachedPlaceholder.IsVisible = false;
                     isLoading = true;
                 }
             }
@@ -2313,7 +2719,7 @@ public partial class TabbedHostWindow : Window
                     TabLoadingBar.IsIndeterminate = isLoading;
             }
 
-            if (activeWindows.Count == 0) return;
+            if (activeWindows.Count == 0 && (_isGridViewEnabled || (selectedTab != null && _tabs.TryGetValue(selectedTab, out var sInfo) && !sInfo.IsDetached))) return;
 
             if (_isGridViewEnabled)
             {
@@ -2359,9 +2765,12 @@ public partial class TabbedHostWindow : Window
                 IntPtr activeChildHwnd = IntPtr.Zero;
                 if (selectedTab != null && _tabs.TryGetValue(selectedTab, out activeInfo) && activeInfo.ChildHwnd != IntPtr.Zero)
                 {
-                    activeChildHwnd = activeInfo.ChildHwnd;
+                    if (!activeInfo.IsDetached)
+                    {
+                        activeChildHwnd = activeInfo.ChildHwnd;
+                    }
                 }
-                HotKeys.ActiveChildHwnd = activeChildHwnd;
+                HotKeys.ActiveChildHwnd = activeInfo?.ChildHwnd ?? IntPtr.Zero;
 
                 (int gameX, int gameY, int gameW, int gameH) = FitGameSize(x, y, w, h, _gameSize);
                 int currentTabCount = _tabs.Count;
@@ -2404,7 +2813,7 @@ public partial class TabbedHostWindow : Window
                     if (kvp.Key == selectedTab) continue;
 
                     TabInfo info = kvp.Value;
-                    if (info.ChildHwnd == IntPtr.Zero) continue;
+                    if (info.ChildHwnd == IntPtr.Zero || info.IsDetached) continue;
 
                     if (!info.IsThrottled)
                     {
@@ -2480,6 +2889,114 @@ public partial class TabbedHostWindow : Window
     #endregion
 
     #region Tab Management
+    public void DetachTab(TabItem tab, PixelPoint? targetScreenPos = null)
+    {
+        if (!_tabs.TryGetValue(tab, out TabInfo? info) || info.IsDetached)
+            return;
+
+        info.IsDetached = true;
+        info.TabItem = tab;
+
+        int screenX = targetScreenPos?.X ?? (this.Position.X + 50);
+        int screenY = targetScreenPos?.Y ?? (this.Position.Y + 50);
+        int clientWidth = 948;
+        int clientHeight = 600;
+
+        info.DetachedScreenX = screenX;
+        info.DetachedScreenY = screenY;
+
+        if (info.DetachedIcon != null)
+        {
+            info.DetachedIcon.IsVisible = true;
+        }
+        if (!tab.Classes.Contains("tab-detached"))
+        {
+            tab.Classes.Add("tab-detached");
+        }
+
+        // Keep the tab in InstancesTabControl!
+        InstancesTabControl.SelectedItem = tab;
+        UpdateTabScrollButtons();
+
+        // Reparent X11 window to desktop root window
+        if (info.ChildHwnd != IntPtr.Zero)
+        {
+            PlatformDetachChild(info.ChildHwnd, screenX, screenY, clientWidth, clientHeight);
+            PostChildMessage(info.ChildHwnd, WM_SKUA_DETACH, new IntPtr(screenX), new IntPtr(screenY));
+        }
+
+        DoReposition();
+    }
+
+    public void DockChildInstance(int childPid)
+    {
+        var entry = _tabs.FirstOrDefault(kvp => kvp.Value.Process != null && kvp.Value.Process.Id == childPid);
+        if (entry.Key == null || entry.Value == null)
+            return;
+
+        TabItem tab = entry.Key;
+        TabInfo info = entry.Value;
+
+        if (!info.IsDetached)
+            return;
+
+        info.IsDetached = false;
+        info.WasDetachedBeforeGrid = false;
+
+        if (info.DetachedIcon != null)
+        {
+            info.DetachedIcon.IsVisible = false;
+        }
+        tab.Classes.Remove("tab-detached");
+
+        // Reparent X11 window back to host
+        if (info.ChildHwnd != IntPtr.Zero)
+        {
+            PlatformReattachChild(info.ChildHwnd);
+            PostChildMessage(info.ChildHwnd, WM_SKUA_DOCK, IntPtr.Zero, IntPtr.Zero);
+        }
+
+        InstancesTabControl.SelectedItem = tab;
+        UpdateTabScrollButtons();
+        DoReposition();
+    }
+
+    private void FocusDetachedButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (InstancesTabControl.SelectedItem is TabItem selTab && _tabs.TryGetValue(selTab, out var info))
+        {
+            if (info.IsDetached && info.ChildHwnd != IntPtr.Zero)
+            {
+                PlatformRaiseChild(info.ChildHwnd);
+            }
+        }
+    }
+
+    private void DockDetachedButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (InstancesTabControl.SelectedItem is TabItem selTab && _tabs.TryGetValue(selTab, out var info))
+        {
+            if (info.IsDetached && info.Process != null)
+            {
+                DockChildInstance(info.Process.Id);
+            }
+        }
+    }
+
+    public void DockAllInstances()
+    {
+        var detached = _tabs.Where(kvp => kvp.Value.IsDetached).ToList();
+        foreach (var kvp in detached)
+        {
+            DockChildInstance(kvp.Value.Process.Id);
+        }
+    }
+
+    private void MenuItem_DockAllWindows_Click(object? sender, RoutedEventArgs e)
+    {
+        DockAllInstances();
+    }
+
     private void CloseTab(TabItem tab)
     {
         if (!_tabs.ContainsKey(tab) && !InstancesTabControl.Items.Contains(tab))
@@ -2669,7 +3186,7 @@ public partial class TabbedHostWindow : Window
         }
 
         #region Tab Header UI
-        StackPanel headerPanel = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        StackPanel headerPanel = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Background = Brushes.Transparent };
         
         MaterialIcon tabIcon = new MaterialIcon
         {
@@ -2742,10 +3259,24 @@ public partial class TabbedHostWindow : Window
             Margin = new Thickness(0, -8, 6, 0),
             Foreground = new SolidColorBrush(Color.Parse("#FBBF24")),
         };
+
+        MaterialIcon detachedIcon = new MaterialIcon
+        {
+            Kind = MaterialIconKind.DockWindow,
+            Width = 12,
+            Height = 12,
+            IsVisible = false,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 5, 0)
+        };
+        detachedIcon[!MaterialIcon.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaAccentBrush");
+        ToolTip.SetTip(detachedIcon, "Window Mode: click to focus, double-click to dock into tabs");
+
         Grid iconHost = new Grid { VerticalAlignment = VerticalAlignment.Center };
         iconHost.Children.Add(tabIcon);
         iconHost.Children.Add(crown);
         headerPanel.Children.Add(iconHost);
+        headerPanel.Children.Add(detachedIcon);
         headerPanel.Children.Add(editTitle);
         headerPanel.Children.Add(title);
         headerPanel.Children.Add(closeBtn);
@@ -2753,7 +3284,13 @@ public partial class TabbedHostWindow : Window
         closeBtn.PointerEntered += (s, ev) => { closeTxt.Foreground = Brushes.White; closeBtn.Background = new SolidColorBrush(Color.Parse("#EF4444")); };
         closeBtn.PointerExited += (s, ev) => { closeTxt[!TextBlock.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaMutedTextBrush"); closeBtn.Background = Brushes.Transparent; };
         
-        TabInfo info = new TabInfo { AccountOrderKey = AccountKey(clientArgs ?? Array.Empty<string>()), HeaderPanel = headerPanel, Crown = crown };
+        TabInfo info = new TabInfo
+        {
+            AccountOrderKey = AccountKey(clientArgs ?? Array.Empty<string>()),
+            HeaderPanel = headerPanel,
+            Crown = crown,
+            DetachedIcon = detachedIcon
+        };
         
         Action closeEditMode = () =>
         {
@@ -2801,6 +3338,16 @@ public partial class TabbedHostWindow : Window
         #endregion
 
         TabItem newTab = new TabItem { Header = headerPanel };
+        info.TabItem = newTab;
+
+        headerPanel.DoubleTapped += (s, ev) =>
+        {
+            if (_tabs.TryGetValue(newTab, out var tInfo) && tInfo.IsDetached && tInfo.Process != null)
+            {
+                DockChildInstance(tInfo.Process.Id);
+                ev.Handled = true;
+            }
+        };
         DragDrop.SetAllowDrop(newTab, true);
 
         InstancesTabControl.Items.Add(newTab);
@@ -2998,6 +3545,29 @@ public partial class TabbedHostWindow : Window
         ctx.Items.Add(closeRightItem);
         ctx.Items.Add(new Separator());
 
+        MenuItem toggleWindowItem = new MenuItem
+        {
+            Header = "Detach to Window",
+            Icon = new MaterialIcon { Kind = MaterialIconKind.DockWindow, Width = 14, Height = 14 }
+        };
+        toggleWindowItem.Click += (s, ev) =>
+        {
+            if (_tabs.TryGetValue(newTab, out var tInfo))
+            {
+                if (tInfo.IsDetached && tInfo.Process != null)
+                    DockChildInstance(tInfo.Process.Id);
+                else
+                    DetachTab(newTab);
+            }
+        };
+        ctx.Opened += (s, ev) =>
+        {
+            bool isDet = _tabs.TryGetValue(newTab, out var tInfo) && tInfo.IsDetached;
+            toggleWindowItem.Header = isDet ? "Dock to Tabs" : "Detach to Window";
+        };
+        ctx.Items.Add(toggleWindowItem);
+        ctx.Items.Add(new Separator());
+
         MenuItem addToGroupItem = new MenuItem
         {
             Header = "Add to Group",
@@ -3017,10 +3587,9 @@ public partial class TabbedHostWindow : Window
         headerPanel.ContextMenu = ctx;
         newTab.ContextMenu = ctx;
 
-        Point startPoint = new Point();
-        headerPanel.PointerPressed += (s, ev) => 
+        newTab.AddHandler(InputElement.PointerPressedEvent, (s, ev) =>
         {
-            var prop = ev.GetCurrentPoint(headerPanel).Properties;
+            var prop = ev.GetCurrentPoint(newTab).Properties;
             if (prop.IsRightButtonPressed)
             {
                 InstancesTabControl.SelectedItem = newTab;
@@ -3030,64 +3599,46 @@ public partial class TabbedHostWindow : Window
             if (!prop.IsLeftButtonPressed)
                 return;
 
-            startPoint = ev.GetPosition(null);
+            if (ev.Source is Visual hit)
+            {
+                Visual? cur = hit;
+                while (cur != null && cur != newTab)
+                {
+                    if (cur == closeBtn || cur == editTitle)
+                        return;
+                    cur = cur.GetVisualParent();
+                }
+            }
+
+            _draggedTab = newTab;
+            _dragStartPos = ev.GetPosition(this);
+            _isDraggingTab = false;
+            ev.Pointer.Capture(this);
             InstancesTabControl.SelectedItem = newTab;
-            
+
             if (_isGridViewEnabled)
             {
+                if (info.IsDetached)
+                {
+                    if (info.ChildHwnd != IntPtr.Zero)
+                    {
+                        PlatformRaiseChild(info.ChildHwnd);
+                    }
+                    return;
+                }
+
                 _isGridViewEnabled = false;
                 UpdateGridViewBorderColor();
                 foreach (var tInfo in _tabs.Values)
                 {
-                    if (tInfo.ChildHwnd != IntPtr.Zero)
+                    if (tInfo.ChildHwnd != IntPtr.Zero && !tInfo.IsDetached)
                     {
                         PostChildMessage(tInfo.ChildHwnd, WM_SKUA_GRIDVIEW, IntPtr.Zero, IntPtr.Zero);
                     }
                 }
                 DoReposition();
             }
-            ev.Handled = true;
-        };
-
-        newTab.PointerPressed += (s, ev) =>
-        {
-            if (ev.GetCurrentPoint(newTab).Properties.IsRightButtonPressed)
-            {
-                InstancesTabControl.SelectedItem = newTab;
-            }
-        };
-        
-        headerPanel.PointerMoved += async (s, ev) =>
-        {
-            if (editTitle.IsVisible) return;
-            
-            if (ev.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
-            {
-                Point mousePos = ev.GetPosition(null);
-                Vector diff = startPoint - mousePos;
-                if (Math.Abs(diff.X) > 4 || Math.Abs(diff.Y) > 4)
-                {
-                    var dragData = new global::Avalonia.Input.DataObject();
-                    dragData.Set("TabItem", newTab);
-                    await DragDrop.DoDragDrop(ev, dragData, DragDropEffects.Move);
-                }
-            }
-        };
-        
-        newTab.AddHandler(DragDrop.DropEvent, (s, ev) =>
-        {
-            if (ev.Data.Contains("TabItem"))
-            {
-                TabItem? droppedTab = ev.Data.Get("TabItem") as TabItem;
-                if (droppedTab != null && droppedTab != newTab)
-                {
-                    int targetIndex = InstancesTabControl.Items.IndexOf(newTab);
-                    InstancesTabControl.Items.Remove(droppedTab);
-                    InstancesTabControl.Items.Insert(targetIndex, droppedTab);
-                    InstancesTabControl.SelectedItem = droppedTab;
-                }
-            }
-        });
+        }, RoutingStrategies.Tunnel, handledEventsToo: true);
         #endregion
     }
 

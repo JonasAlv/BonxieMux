@@ -44,6 +44,8 @@ public partial class MainWindow : Window
     private const int WM_SKUA_AUTO_ATTACK = 0x0400 + 459;
     private const int WM_SKUA_OPEN_BANK = 0x0400 + 460;
     private const int WM_SKUA_CHANGE_SERVER = 0x0400 + 467;
+    private const int WM_SKUA_DETACH = 0x0400 + 470;
+    private const int WM_SKUA_DOCK = 0x0400 + 471;
 
     private int _preThrottleFPS = -1;
     private string? _preThrottleQuality = null;
@@ -717,6 +719,58 @@ public partial class MainWindow : Window
                     Ioc.Default.GetRequiredService<IHotKeyService>().Reload();
                 }
                 catch { }
+            });
+            return IntPtr.Zero;
+        }
+        else if (uMsg == WM_SKUA_DETACH)
+        {
+            int posX = wParam.ToInt32();
+            int posY = lParam.ToInt32();
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (posX > 0 && posY > 0)
+                {
+                    this.Position = new global::Avalonia.PixelPoint(posX, posY);
+                }
+                _isTitleBarPermanentlyHidden = false;
+                var titleBar = this.FindControl<global::Avalonia.Controls.Control>("TitleBar");
+                if (titleBar is Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar wtb)
+                {
+                    wtb.IsVisible = true;
+                    wtb.CanDock = true;
+                }
+                else if (titleBar != null)
+                {
+                    titleBar.IsVisible = true;
+                }
+
+                var topNav = this.FindControl<global::Avalonia.Controls.Control>("TopNavBorder");
+                if (topNav != null)
+                    topNav.IsVisible = true;
+
+                this.SystemDecorations = global::Avalonia.Controls.SystemDecorations.BorderOnly;
+                this.ExtendClientAreaToDecorationsHint = true;
+                this.ExtendClientAreaChromeHints = global::Avalonia.Platform.ExtendClientAreaChromeHints.NoChrome;
+                this.ExtendClientAreaTitleBarHeightHint = 32;
+                this.ShowInTaskbar = true;
+                this.Width = 948;
+                this.Height = 600;
+                this.Activate();
+            });
+            return IntPtr.Zero;
+        }
+        else if (uMsg == WM_SKUA_DOCK)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                HideTitleBar();
+                var titleBar = this.FindControl<global::Avalonia.Controls.Control>("TitleBar");
+                if (titleBar is Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar wtb)
+                {
+                    wtb.CanDock = false;
+                }
+                this.ShowInTaskbar = false;
+                this.SystemDecorations = global::Avalonia.Controls.SystemDecorations.None;
             });
             return IntPtr.Zero;
         }
