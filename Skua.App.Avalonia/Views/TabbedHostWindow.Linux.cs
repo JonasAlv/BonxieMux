@@ -171,9 +171,18 @@ public partial class TabbedHostWindow : Window
         IntPtr display = GetDisplay();
         if (display != IntPtr.Zero && childHwnd != IntPtr.Zero)
         {
+            // Callers pass Avalonia logical (DIP) units, but X11 works in physical pixels.
+            // With fractional scaling (Xft.dpi != 96, e.g. KDE Plasma at 125%) the child would
+            // otherwise be placed too far up-left and sized too small inside the host.
+            double scale = RenderScaling > 0 ? RenderScaling : 1.0;
+            int px = (int)Math.Round(x * scale);
+            int py = (int)Math.Round(y * scale);
+            uint pw = (uint)Math.Max(1, Math.Round(width * scale));
+            uint ph = (uint)Math.Max(1, Math.Round(height * scale));
+
             lock (_xLock)
             {
-                XMoveResizeWindow(display, childHwnd, x, y, (uint)width, (uint)height);
+                XMoveResizeWindow(display, childHwnd, px, py, pw, ph);
                 XMapWindow(display, childHwnd);
                 XRaiseWindow(display, childHwnd);
                 if (focus)
