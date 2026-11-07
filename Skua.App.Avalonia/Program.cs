@@ -148,6 +148,10 @@ internal static class Program
     {
         AppBuilder builder = AppBuilder.Configure<App>()
             .UseX11()
+            .With(new X11PlatformOptions
+            {
+                EnableIme = false
+            })
             .UseSkia();
 
 #if DEBUG
