@@ -21,6 +21,16 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        if (OperatingSystem.IsLinux())
+        {
+            try
+            {
+                PosixSignalRegistration.Create(PosixSignal.SIGHUP, ctx => ctx.Cancel = true);
+            }
+            catch
+            {
+            }
+        }
         XInitThreads();
         InitializeAssemblyResolvers();
         RunApp(args);
