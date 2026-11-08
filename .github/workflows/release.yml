@@ -91,6 +91,6 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "${ASSETS[@]}" --clobber
           else
-            gh release create "$TAG" "${ASSETS[@]}" --title "BonxieMux $TAG" --notes "Automated release $TAG bundled with official retr0gr4d3/skua-mugetsu."
+            gh release create "$TAG" "${ASSETS[@]}" --title "BonxieMux $TAG"
           fi
           echo "Release $TAG published successfully!"
