@@ -30,13 +30,12 @@ read_prop() {
 APP_VERSION="${Version:-$(read_prop Version)}"
 SKUA_PLAYER_VERSION="$(read_prop SkuaPlayerVersion)"
 SKUA_PLAYER_OS="$(read_prop SkuaPlayerOs)"
-WATCHDOG_VERSION="$(read_prop WatchDogVersion)"
 
 BINARY_DIR="$BUILD_DIR/BonxieMux-${APP_VERSION}-x86_64"
 APPIMAGE_BUNDLE_DIR="$BUILD_DIR/BonxieMux-${APP_VERSION}-x86_64"
 
-if [[ -z "$APP_VERSION" || -z "$SKUA_PLAYER_VERSION" || -z "$SKUA_PLAYER_OS" || -z "$WATCHDOG_VERSION" ]]; then
-    echo "Error: Directory.Build.props is missing required version properties (Version, SkuaPlayerVersion, SkuaPlayerOs, or WatchDogVersion)." >&2
+if [[ -z "$APP_VERSION" || -z "$SKUA_PLAYER_VERSION" || -z "$SKUA_PLAYER_OS" ]]; then
+    echo "Error: Directory.Build.props is missing required version properties (Version, SkuaPlayerVersion, or SkuaPlayerOs)." >&2
     exit 1
 fi
 
@@ -47,14 +46,10 @@ SKUA_PLAYER_URL="https://github.com/retr0gr4d3/skua-mugetsu/releases/download/v$
 SKUA_PLAYER_V2_CACHE="$SCRIPT_DIR/player/${SKUA_PLAYER_VERSION}-${SKUA_PLAYER_OS}-x86-64-v2"
 SKUA_PLAYER_V2_URL="https://github.com/retr0gr4d3/skua-mugetsu/releases/download/v${SKUA_PLAYER_VERSION}/linux-x86-64-v2.tar.gz"
 
-WATCHDOG_CACHE="$BUILD_DIR/.cache/watchdog/v${WATCHDOG_VERSION}/WatchDog.dll"
-WATCHDOG_URL="https://github.com/JonasAlv/Watch-Dog-linux/releases/download/v${WATCHDOG_VERSION}/WatchDog.dll"
-
 # Shared function to assemble application payload into $CURRENT_DIR
 assemble_payload() {
     local local_player="${SKUA_PLAYER_LOCAL:-}"
     local local_player_v2="${SKUA_PLAYER_V2_LOCAL:-}"
-    local local_watchdog="${WATCHDOG_LOCAL:-}"
 
     # Compile AS3 game client if Apache Flex SDK is available and sources changed
     if command -v mxmlc &>/dev/null || [[ -n "${FLEX_HOME:-}" ]] || [[ -d "/opt/apache-flex-sdk" ]]; then
@@ -161,32 +156,6 @@ assemble_payload() {
     cp -f "$SCRIPT_DIR/Skua.Plugin.DailyTracker/bin/Release/net10.0"/Skua.Plugin.*.dll "$CURRENT_DIR/plugins/"
     cp -f "$SCRIPT_DIR/Skua.Plugin.ButlerV5/bin/Release/net10.0"/ButlerV5.dll "$CURRENT_DIR/plugins/"
     cp -f "$SCRIPT_DIR/Skua.Plugin.Cosmetics/bin/Release/net10.0"/Skua.Plugin.Cosmetics.dll "$CURRENT_DIR/plugins/"
-
-    if [[ -n "$local_watchdog" ]]; then
-        if [[ -d "$local_watchdog" ]]; then
-            local_watchdog="$local_watchdog/WatchDog.dll"
-        fi
-        if [[ ! -s "$local_watchdog" ]]; then
-            echo "Error: WATCHDOG_LOCAL must point to a built WatchDog.dll or its containing folder." >&2
-            exit 1
-        fi
-        echo "Using local Watch Dog: $local_watchdog"
-        cp -f "$local_watchdog" "$CURRENT_DIR/plugins/WatchDog.dll"
-    elif [[ -s "$WATCHDOG_CACHE" ]]; then
-        cp -f "$WATCHDOG_CACHE" "$CURRENT_DIR/plugins/WatchDog.dll"
-    else
-        mkdir -p "$(dirname "$WATCHDOG_CACHE")"
-        local tmp_watchdog="$WATCHDOG_CACHE.tmp"
-        echo "Fetching Watch Dog v${WATCHDOG_VERSION} from GitHub Releases..."
-        if curl -fsSL "$WATCHDOG_URL" -o "$tmp_watchdog" && [ -s "$tmp_watchdog" ]; then
-            mv -f "$tmp_watchdog" "$WATCHDOG_CACHE"
-            cp -f "$WATCHDOG_CACHE" "$CURRENT_DIR/plugins/WatchDog.dll"
-        else
-            rm -f "$tmp_watchdog"
-            echo "Error: Failed to download Watch Dog v${WATCHDOG_VERSION}." >&2
-            exit 1
-        fi
-    fi
 
     # Copy skua.swf
     cp -f "$SWF_SOURCE" "$CURRENT_DIR/skua.swf"

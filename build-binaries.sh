@@ -2,7 +2,7 @@
 # ==============================================================================
 # build-binaries.sh
 # Builds BonxieMux Linux Portable Binaries + .zip + .tar.gz
-# Usage: ./build-binaries.sh [--local-mugetsu /path/to/mugetsu] [--local-mugetsu-v2 /path] [--local-watchdog /path]
+# Usage: ./build-binaries.sh [--local-mugetsu /path/to/mugetsu] [--local-mugetsu-v2 /path]
 # ==============================================================================
 set -Eeuo pipefail
 
@@ -11,7 +11,6 @@ source "$SCRIPT_DIR/build-config.sh"
 
 LOCAL_MUGETSU="${SKUA_PLAYER_LOCAL:-}"
 LOCAL_MUGETSU_V2="${SKUA_PLAYER_V2_LOCAL:-}"
-LOCAL_WATCHDOG="${WATCHDOG_LOCAL:-}"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -25,16 +24,10 @@ while [[ $# -gt 0 ]]; do
             LOCAL_MUGETSU_V2="$2"
             shift 2
             ;;
-        --local-watchdog)
-            [[ $# -ge 2 ]] || { echo "Error: --local-watchdog requires a path." >&2; exit 1; }
-            LOCAL_WATCHDOG="$2"
-            shift 2
-            ;;
         --help|-h)
-            echo "Usage: $0 [--local-mugetsu PATH] [--local-mugetsu-v2 PATH] [--local-watchdog PATH]"
+            echo "Usage: $0 [--local-mugetsu PATH] [--local-mugetsu-v2 PATH]"
             echo "  --local-mugetsu PATH     Use a local standard Mugetsu binary or its folder."
             echo "  --local-mugetsu-v2 PATH  Use a local x86-64-v2 Mugetsu binary or its folder."
-            echo "  --local-watchdog PATH    Use a local WatchDog.dll or its folder."
             exit 0
             ;;
         *)
@@ -47,7 +40,6 @@ done
 
 if [[ -n "$LOCAL_MUGETSU" ]]; then export SKUA_PLAYER_LOCAL="$LOCAL_MUGETSU"; fi
 if [[ -n "$LOCAL_MUGETSU_V2" ]]; then export SKUA_PLAYER_V2_LOCAL="$LOCAL_MUGETSU_V2"; fi
-if [[ -n "$LOCAL_WATCHDOG" ]]; then export WATCHDOG_LOCAL="$LOCAL_WATCHDOG"; fi
 
 echo "=== Building Portable Binary Distribution ==="
 
