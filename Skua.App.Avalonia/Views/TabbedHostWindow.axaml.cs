@@ -295,10 +295,13 @@ public partial class TabbedHostWindow : Window
     }
 
     #region Tab Drag & Reordering System
+    private static readonly global::Avalonia.Input.Cursor _horizontalDragCursor = new(global::Avalonia.Input.StandardCursorType.SizeWestEast);
     private TabItem? _draggedTab;
     private Point _dragStartPos;
     private bool _isDraggingTab;
     private TearOffGhostWindow? _ghostWindow;
+    private int _lastGhostX = int.MinValue;
+    private int _lastGhostY = int.MinValue;
 
     private class TearOffGhostWindow : Window
     {
@@ -446,10 +449,18 @@ public partial class TabbedHostWindow : Window
         }
         _ghostWindow.SetMode(asWindow);
         _ghostWindow.UpdateTitle(title);
-        _ghostWindow.Position = new PixelPoint(screenX, screenY);
         if (!_ghostWindow.IsVisible)
         {
+            _ghostWindow.Position = new PixelPoint(screenX, screenY);
+            _lastGhostX = screenX;
+            _lastGhostY = screenY;
             _ghostWindow.Show();
+        }
+        else if (Math.Abs(screenX - _lastGhostX) >= 2 || Math.Abs(screenY - _lastGhostY) >= 2)
+        {
+            _ghostWindow.Position = new PixelPoint(screenX, screenY);
+            _lastGhostX = screenX;
+            _lastGhostY = screenY;
         }
     }
 
@@ -458,7 +469,29 @@ public partial class TabbedHostWindow : Window
         if (_ghostWindow != null && _ghostWindow.IsVisible)
         {
             _ghostWindow.Hide();
+            _lastGhostX = int.MinValue;
+            _lastGhostY = int.MinValue;
         }
+    }
+
+    private void WarmUpGhostWindow()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            try
+            {
+                if (_ghostWindow == null)
+                {
+                    _ghostWindow = new TearOffGhostWindow();
+                    _ghostWindow.Position = new PixelPoint(-10000, -10000);
+                    _ghostWindow.Opacity = 0;
+                    _ghostWindow.Show();
+                    _ghostWindow.Hide();
+                    _ghostWindow.Opacity = 0.85;
+                }
+            }
+            catch { }
+        }, DispatcherPriority.Background);
     }
 
     private void ApplyTabDragVisuals(TabItem tab)
@@ -471,7 +504,7 @@ public partial class TabbedHostWindow : Window
         {
             sp.Background = new SolidColorBrush(Color.FromArgb(60, 56, 189, 248));
         }
-        Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.SizeWestEast);
+        Cursor = _horizontalDragCursor;
     }
 
     private void ClearTabDragVisuals(TabItem tab)
@@ -490,15 +523,13 @@ public partial class TabbedHostWindow : Window
         this.AddHandler(InputElement.PointerReleasedEvent, OnWindowPointerReleased, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
         this.AddHandler(InputElement.PointerCaptureLostEvent, (s, e) =>
         {
-            if (!_isDraggingTab)
+            HideGhostPreview();
+            if (_draggedTab != null)
             {
-                HideGhostPreview();
-                if (_draggedTab != null)
-                {
-                    ClearTabDragVisuals(_draggedTab);
-                    _draggedTab = null;
-                }
+                ClearTabDragVisuals(_draggedTab);
+                _draggedTab = null;
             }
+            _isDraggingTab = false;
         }, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
     }
 
@@ -509,7 +540,7 @@ public partial class TabbedHostWindow : Window
         var prop = ev.GetCurrentPoint(this).Properties;
         if (!prop.IsLeftButtonPressed)
         {
-            if (_isDraggingTab)
+            if (_draggedTab != null)
             {
                 ev.Pointer.Capture(null);
                 HideGhostPreview();
@@ -547,18 +578,14 @@ public partial class TabbedHostWindow : Window
             if (isOutsideTabStrip)
             {
                 var (gx, gy) = GetGlobalPointerPosition();
-                int targetX = gx > 0 ? gx - 200 : (int)(this.Position.X + currentPoint.X - 200);
-                int targetY = gy > 0 ? gy - 16 : (int)(this.Position.Y + currentPoint.Y - 16);
+                int targetX = gx >= 0 ? gx - 200 : (int)(this.Position.X + currentPoint.X - 200);
+                int targetY = gy >= 0 ? gy - 16 : (int)(this.Position.Y + currentPoint.Y - 16);
 
                 ShowGhostPreview(GetTabTitle(_draggedTab), targetX, targetY, asWindow: true);
             }
             else
             {
-                var (gx, gy) = GetGlobalPointerPosition();
-                int tabGhostX = gx > 0 ? gx - 40 : (int)(this.Position.X + currentPoint.X - 40);
-                int tabGhostY = gy > 0 ? gy - 16 : (int)(this.Position.Y + currentPoint.Y - 16);
-
-                ShowGhostPreview(GetTabTitle(_draggedTab), tabGhostX, tabGhostY, asWindow: false);
+                HideGhostPreview();
 
                 int currentIndex = InstancesTabControl.Items.IndexOf(_draggedTab);
                 if (currentIndex >= 0)
@@ -574,17 +601,33 @@ public partial class TabbedHostWindow : Window
                             int otherIndex = InstancesTabControl.Items.IndexOf(otherTab);
                             if (currentIndex < otherIndex && currentPoint.X > otherCenterX)
                             {
-                                InstancesTabControl.Items.Remove(_draggedTab);
-                                InstancesTabControl.Items.Insert(otherIndex, _draggedTab);
-                                InstancesTabControl.SelectedItem = _draggedTab;
+                                _ignoreSelectionChange = true;
+                                try
+                                {
+                                    InstancesTabControl.Items.Remove(_draggedTab);
+                                    InstancesTabControl.Items.Insert(otherIndex, _draggedTab);
+                                    InstancesTabControl.SelectedItem = _draggedTab;
+                                }
+                                finally
+                                {
+                                    _ignoreSelectionChange = false;
+                                }
                                 ApplyTabDragVisuals(_draggedTab);
                                 break;
                             }
                             else if (currentIndex > otherIndex && currentPoint.X < otherCenterX)
                             {
-                                InstancesTabControl.Items.Remove(_draggedTab);
-                                InstancesTabControl.Items.Insert(otherIndex, _draggedTab);
-                                InstancesTabControl.SelectedItem = _draggedTab;
+                                _ignoreSelectionChange = true;
+                                try
+                                {
+                                    InstancesTabControl.Items.Remove(_draggedTab);
+                                    InstancesTabControl.Items.Insert(otherIndex, _draggedTab);
+                                    InstancesTabControl.SelectedItem = _draggedTab;
+                                }
+                                finally
+                                {
+                                    _ignoreSelectionChange = false;
+                                }
                                 ApplyTabDragVisuals(_draggedTab);
                                 break;
                             }
@@ -624,8 +667,8 @@ public partial class TabbedHostWindow : Window
             if (isOutsideTabStrip)
             {
                 var (gx, gy) = GetGlobalPointerPosition();
-                int targetX = gx > 0 ? gx - 200 : (int)(this.Position.X + releasePoint.X - 200);
-                int targetY = gy > 0 ? gy - 16 : (int)(this.Position.Y + releasePoint.Y - 16);
+                int targetX = gx >= 0 ? gx - 200 : (int)(this.Position.X + releasePoint.X - 200);
+                int targetY = gy >= 0 ? gy - 16 : (int)(this.Position.Y + releasePoint.Y - 16);
                 DetachTab(tabToProcess, new PixelPoint(targetX, targetY));
             }
             ev.Handled = true;
@@ -801,6 +844,8 @@ public partial class TabbedHostWindow : Window
             _initialInstanceStarted = true;
             AddNewInstance(_initialArgs);
         }
+
+        WarmUpGhostWindow();
     }
 
 
