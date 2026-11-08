@@ -215,6 +215,21 @@ public partial class App : Application
         if (_parentHostProcessId > 0 && themeService is AvaloniaThemeService initialTheme)
             QueueHostThemeSync(initialTheme);
 
+        Skua.Core.AppStartup.HotKeys.SendHostCommandAction = (cmd) =>
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    using var client = new System.IO.Pipes.NamedPipeClientStream(".", HostPipeName, System.IO.Pipes.PipeDirection.Out);
+                    await client.ConnectAsync(500);
+                    using var writer = new System.IO.StreamWriter(client) { AutoFlush = true };
+                    await writer.WriteLineAsync(cmd);
+                }
+                catch { }
+            });
+        };
+
         if (!hasEmbedFlag)
         {
             Skua.Core.AppStartup.HotKeys.IsHostProcess = true;

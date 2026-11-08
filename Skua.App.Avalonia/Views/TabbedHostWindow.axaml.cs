@@ -292,6 +292,23 @@ public partial class TabbedHostWindow : Window
         GlobeBorder.PointerEntered += GlobeBorder_PointerEntered;
         GlobeBorder.PointerExited += GlobeBorder_PointerExited;
         SetupTabDragHandlers();
+
+        AddHandler(InputElement.KeyDownEvent, (s, e) =>
+        {
+            if (e.Key == Key.Escape)
+            {
+                if (_gameOnly)
+                {
+                    ToggleGameOnly();
+                    e.Handled = true;
+                }
+                else if (WindowState == WindowState.FullScreen)
+                {
+                    ToggleFullScreen();
+                    e.Handled = true;
+                }
+            }
+        }, RoutingStrategies.Tunnel);
     }
 
     #region Tab Drag & Reordering System
@@ -858,10 +875,12 @@ public partial class TabbedHostWindow : Window
         }
         if (WindowState == WindowState.FullScreen)
         {
-            WindowState = _stateBeforeFullScreen;
+            WindowState = (_stateBeforeFullScreen == WindowState.FullScreen || _stateBeforeFullScreen == WindowState.Minimized)
+                ? WindowState.Normal
+                : _stateBeforeFullScreen;
             return;
         }
-        _stateBeforeFullScreen = WindowState;
+        _stateBeforeFullScreen = WindowState == WindowState.Minimized ? WindowState.Normal : WindowState;
         WindowState = WindowState.FullScreen;
     }
 
@@ -890,17 +909,30 @@ public partial class TabbedHostWindow : Window
         {
             _rowsBeforeGameOnly = RootGrid.RowDefinitions;
             RootGrid.RowDefinitions = new RowDefinitions("0,0,*");
+            ExtendClientAreaTitleBarHeightHint = 0;
+            HostContainer.Margin = new Thickness(0);
         }
-        else if (_rowsBeforeGameOnly is not null)
+        else
         {
-            RootGrid.RowDefinitions = _rowsBeforeGameOnly;
-            _rowsBeforeGameOnly = null;
+            if (_rowsBeforeGameOnly is not null)
+            {
+                RootGrid.RowDefinitions = _rowsBeforeGameOnly;
+                _rowsBeforeGameOnly = null;
+            }
+            ExtendClientAreaTitleBarHeightHint = 32;
+            HostContainer.Margin = new Thickness(7, 0, 7, 0);
         }
         MainTitleBar.IsVisible = !on;
         TabBarBorder.IsVisible = !on;
         foreach (var info in _tabs.Values)
             if (info.ChildHwnd != IntPtr.Zero)
                 PostChildMessage(info.ChildHwnd, (uint)HotKeys.WM_SKUA_GAMEONLY, new IntPtr(on ? 1 : 0), IntPtr.Zero);
+
+        _lastX = int.MinValue;
+        _lastY = int.MinValue;
+        _lastW = int.MinValue;
+        _lastH = int.MinValue;
+        _lastActiveHwnd = IntPtr.Zero;
         Dispatcher.UIThread.Post(DoReposition, DispatcherPriority.Background);
     }
 
@@ -1091,7 +1123,15 @@ public partial class TabbedHostWindow : Window
                         string? line = await sr.ReadLineAsync();
                         if (!string.IsNullOrWhiteSpace(line))
                         {
-                            if (line.StartsWith("ARTWORK|", StringComparison.Ordinal))
+                            if (string.Equals(line, "FULLSCREEN", StringComparison.OrdinalIgnoreCase))
+                            {
+                                Dispatcher.UIThread.Post(() => ToggleFullScreen());
+                            }
+                            else if (string.Equals(line, "GAMEONLY", StringComparison.OrdinalIgnoreCase))
+                            {
+                                Dispatcher.UIThread.Post(ToggleGameOnly);
+                            }
+                            else if (line.StartsWith("ARTWORK|", StringComparison.Ordinal))
                             {
                                 string encodedPath = line.Substring("ARTWORK|".Length);
                                 Dispatcher.UIThread.Post(() =>
@@ -2747,10 +2787,10 @@ public partial class TabbedHostWindow : Window
             }
 
             Point? hostPos = HostContainer.TranslatePoint(new Point(0, 0), this);
-            int x = (int)(hostPos?.X ?? 0);
-            int y = Math.Max((int)(hostPos?.Y ?? 68), 68);
-            int w = (int)Math.Max(HostContainer.Bounds.Width > 1 ? HostContainer.Bounds.Width : Bounds.Width, 1);
-            int h = (int)Math.Max(HostContainer.Bounds.Height > 1 ? HostContainer.Bounds.Height : Bounds.Height - y, 1);
+            int x = _gameOnly ? 0 : (int)(hostPos?.X ?? 0);
+            int y = _gameOnly ? 0 : Math.Max((int)(hostPos?.Y ?? 68), 68);
+            int w = (int)Math.Max(_gameOnly ? Bounds.Width : (HostContainer.Bounds.Width > 1 ? HostContainer.Bounds.Width : Bounds.Width), 1);
+            int h = (int)Math.Max(_gameOnly ? Bounds.Height : (HostContainer.Bounds.Height > 1 ? HostContainer.Bounds.Height : Bounds.Height - y), 1);
 
             if (w <= 1 || h <= 1)
             {

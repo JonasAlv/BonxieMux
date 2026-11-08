@@ -20,6 +20,7 @@ public class HotKeys
     public static Action<string>? ForwardHotKeyAction { get; set; }
     public static Action<uint, int, int>? BroadcastArmyMessageAction { get; set; }
     public static Action? BroadcastReloadHotkeysAction { get; set; }
+    public static Action<string>? SendHostCommandAction { get; set; }
 
     private static readonly List<string> _actionList = new()
     {
@@ -308,6 +309,27 @@ public class HotKeys
         }
     }
 
+    public static void SendHostCommand(string command)
+    {
+        SendHostCommandAction?.Invoke(command);
+    }
+
+    private static void ToggleFullScreen()
+    {
+        if (!IsHostProcess)
+            SendHostCommand("FULLSCREEN");
+        else
+            ToggleFullscreenRequested?.Invoke();
+    }
+
+    private static void ToggleGameFullScreen()
+    {
+        if (!IsHostProcess)
+            SendHostCommand("GAMEONLY");
+        else
+            ToggleGameFullScreenRequested?.Invoke();
+    }
+
     private static void ExecuteOrForward(string actionName, Action localExecute)
     {
         if (IsHostProcess && ForwardHotKeyAction != null)
@@ -330,12 +352,10 @@ public class HotKeys
         _hotkeyRegistry["ToggleAutoHunt"] = new RelayCommand(() => ExecuteOrForward("ToggleAutoHunt", ToggleAutoHuntLocal));
         _hotkeyRegistry["ToggleLagKiller"] = new RelayCommand(() => ExecuteOrForward("ToggleLagKiller", ToggleLagKillerLocal));
 
-        // Custom Vast Actions
-        _hotkeyRegistry["ToggleFullscreen"] = new RelayCommand(() => ToggleFullscreenRequested?.Invoke());
-        _hotkeyRegistry["ToggleGameFullScreen"] = new RelayCommand(() => ToggleGameFullScreenRequested?.Invoke());
+        // Fullscreen & Game-Only Actions (handled by Host or forwarded from embedded tabs to Host)
+        _hotkeyRegistry["ToggleFullscreen"] = new RelayCommand(ToggleFullScreen);
+        _hotkeyRegistry["ToggleGameFullScreen"] = new RelayCommand(ToggleGameFullScreen);
         _hotkeyRegistry["OpenCommandPalette"] = new RelayCommand(() => ExecuteOrForward("OpenCommandPalette", () => OpenCommandPaletteRequested?.Invoke()));
-        // Fullscreen belongs to the outer desktop window, so do not forward it to an embedded child.
-        _hotkeyRegistry["ToggleFullscreen"] = new RelayCommand(() => ToggleFullscreenRequested?.Invoke());
         _hotkeyRegistry["ToggleHeadlessMode"] = new RelayCommand(() => ExecuteOrForward("ToggleHeadlessMode", () => Ioc.Default.GetRequiredService<IScriptOption>().HeadlessMode ^= true));
         _hotkeyRegistry["ToggleStreamerMode"] = new RelayCommand(() => ExecuteOrForward("ToggleStreamerMode", () => Ioc.Default.GetRequiredService<IScriptOption>().StreamerMode ^= true));
         _hotkeyRegistry["ToggleHidePlayers"] = new RelayCommand(() => ExecuteOrForward("ToggleHidePlayers", () => Ioc.Default.GetRequiredService<IScriptOption>().HidePlayers ^= true));

@@ -312,32 +312,35 @@ public partial class MainWindow : Window
             }
             catch { }
         });
-        HotKeys.ToggleFullscreenRequested = () => Dispatcher.UIThread.Post(() =>
+        if (HotKeys.IsHostProcess)
         {
-            if (_gameOnly)
+            HotKeys.ToggleFullscreenRequested = () => Dispatcher.UIThread.Post(() =>
             {
-                _gameOnlySetFullScreen = false;
-                ApplyGameOnly(false);
-            }
-            WindowState = WindowState == WindowState.FullScreen ? WindowState.Normal : WindowState.FullScreen;
-        });
-        HotKeys.ToggleGameFullScreenRequested = () => Dispatcher.UIThread.Post(() =>
-        {
-            if (!_gameOnly)
+                if (_gameOnly)
+                {
+                    _gameOnlySetFullScreen = false;
+                    ApplyGameOnly(false);
+                }
+                WindowState = WindowState == WindowState.FullScreen ? WindowState.Normal : WindowState.FullScreen;
+            });
+            HotKeys.ToggleGameFullScreenRequested = () => Dispatcher.UIThread.Post(() =>
             {
-                _gameOnlySetFullScreen = WindowState != WindowState.FullScreen;
-                if (_gameOnlySetFullScreen)
-                    WindowState = WindowState.FullScreen;
-                ApplyGameOnly(true);
-            }
-            else
-            {
-                ApplyGameOnly(false);
-                if (_gameOnlySetFullScreen && WindowState == WindowState.FullScreen)
-                    WindowState = WindowState.Normal;
-                _gameOnlySetFullScreen = false;
-            }
-        });
+                if (!_gameOnly)
+                {
+                    _gameOnlySetFullScreen = WindowState != WindowState.FullScreen;
+                    if (_gameOnlySetFullScreen)
+                        WindowState = WindowState.FullScreen;
+                    ApplyGameOnly(true);
+                }
+                else
+                {
+                    ApplyGameOnly(false);
+                    if (_gameOnlySetFullScreen && WindowState == WindowState.FullScreen)
+                        WindowState = WindowState.Normal;
+                    _gameOnlySetFullScreen = false;
+                }
+            });
+        }
         _flash.FlashCall += OnFlashCall;
 
         try

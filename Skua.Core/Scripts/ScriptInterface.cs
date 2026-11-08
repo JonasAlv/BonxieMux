@@ -415,7 +415,17 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
         if (Options.AggroAllMonsters)
             Send.Packet($"%xt%zm%aggroMon%{Map.RoomID}%{string.Join("%", Monsters.MapMonsters.Select(m => m.MapID))}%");
         if (Options.SkipCutscenes)
+        {
             Flash.Call("skipCutscenes");
+            // A cutscene hides the world while it plays, and removing it early leaves the world hidden, which looks just like
+            // Lag Killer being on. Only Lag Killer may hide it.
+            try
+            {
+                if (!Options.LagKiller && !Flash.GetGameObject<bool>("world.visible", true))
+                    Flash.SetGameObject("world.visible", true);
+            }
+            catch { }
+        }
         if (Options.WalkSpeed != 8)
             Player.WalkSpeed = Options.WalkSpeed;
         if (!Lite.UntargetSelf)

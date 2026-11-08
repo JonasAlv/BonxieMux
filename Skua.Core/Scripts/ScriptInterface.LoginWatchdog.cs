@@ -132,6 +132,7 @@ public partial class ScriptInterface
             _wdOutSince = 0;
             _wdWaitSince = 0;
             CheckStuckScript();
+            CheckEmptyRoom(Environment.TickCount);
             RescueTick();
             RestartAfterSilentRelogin();
             // Back from a recovery with no script to restart: go back to the room it was in (a re-login
@@ -556,6 +557,96 @@ public partial class ScriptInterface
         _stuckSince = 0;
         StartFixRecovery($" the script has done nothing for {minutes} minutes (no kills, drops, quests or moving)");
     }
+
+    // ---- Empty room fix (character loaded in cell but monsters/avatar missing) ---------------------------
+    // With almost any script, an account can end up in the right room with nothing in it: no monsters, no avatar, so a
+    // script farms nothing for hours. Jumping to the current cell by hand fixes it. When the character stays "not loaded"
+    // for SECONDS while a script runs, jump to the current cell, and if that does not help, join the room again (3 tries,
+    // then it only says so). Off with SECONDS = 0.
+
+    private int _emptySince;
+    private int _emptyFixes;
+    private int _emptyLastFix;
+    private int _emptyCheckAt;
+    private bool _emptyGaveUp;
+
+    private void CheckEmptyRoom(int now)
+    {
+        if (now - _emptyCheckAt < 5000)
+            return;
+        _emptyCheckAt = now;
+        int seconds = EmptyRoomSeconds;
+        if (seconds <= 0 || !Manager.ScriptRunning || RescueActive || _wdBusy)
+        {
+            _emptySince = 0;
+            return;
+        }
+        string room, cell, pad;
+        bool loaded, noMonsters;
+        try
+        {
+            loaded = Player.Loaded;
+            room = Map.FullName;
+            cell = Player.Cell;
+            pad = Player.Pad;
+            noMonsters = !(Monsters.MapMonsters?.Count > 0);
+        }
+        catch
+        {
+            return;
+        }
+        if (loaded || string.IsNullOrWhiteSpace(room))
+        {
+            _emptySince = 0;
+            _emptyFixes = 0;
+            _emptyGaveUp = false;
+            return;
+        }
+        if (_emptySince == 0)
+        {
+            _emptySince = now | 1;
+            return;
+        }
+        if (unchecked(now - _emptySince) < seconds * 1000)
+            return;
+        if (_emptyLastFix != 0 && unchecked(now - _emptyLastFix) < seconds * 1000)
+            return;
+        if (_emptyFixes >= 3)
+        {
+            if (!_emptyGaveUp)
+            {
+                _emptyGaveUp = true;
+                WdLog($" still not loaded in {room} after {_emptyFixes} fixes; leaving it to the script.");
+            }
+            return;
+        }
+        _emptyFixes++;
+        _emptyLastFix = now | 1;
+        int attempt = _emptyFixes;
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                if (attempt == 1 || !noMonsters)
+                {
+                    WdLog($" the room {room} has not loaded for {seconds} seconds (no avatar, no monsters); jumping to the current cell ({cell}).");
+                    Map.Jump(cell, pad);
+                }
+                else
+                {
+                    WdLog($" {room} still has not loaded; joining it again.");
+                    Map.Join(room, string.IsNullOrWhiteSpace(cell) ? "Enter" : cell, string.IsNullOrWhiteSpace(pad) ? "Spawn" : pad, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                WdLog($" couldn't fix the empty room: {ex.Message}");
+            }
+        });
+    }
+
+    private static int EmptyRoomSeconds =>
+        int.TryParse(Environment.GetEnvironmentVariable("SKUA_EMPTY_ROOM_SECONDS"), out int s) && s >= 0 ? s : 90;
 
     // ---- "Quest Complete Failed: Missing Quest Progress" ------------------------------------------------
     // AQW sometimes gets stuck refusing every turn-in of a quest that is actually done; logging out and back
