@@ -302,12 +302,14 @@ public partial class TabbedHostWindow : Window
     private TearOffGhostWindow? _ghostWindow;
     private int _lastGhostX = int.MinValue;
     private int _lastGhostY = int.MinValue;
+    private bool _lastGhostAsWindow = true;
 
     private class TearOffGhostWindow : Window
     {
         private readonly TextBlock _titleText;
         private readonly Border _bodyArea;
         private readonly Border _rootBorder;
+        private readonly Border _titleBorder;
         private bool _isWindowMode = true;
 
         public TearOffGhostWindow()
@@ -369,6 +371,13 @@ public partial class TabbedHostWindow : Window
                 }
             };
 
+            _titleBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(200, 15, 23, 42)),
+                CornerRadius = new CornerRadius(6, 6, 0, 0),
+                Child = titleRow
+            };
+
             _rootBorder = new Border
             {
                 Background = new SolidColorBrush(Color.FromArgb(160, 20, 24, 33)),
@@ -380,12 +389,7 @@ public partial class TabbedHostWindow : Window
                     RowDefinitions = new RowDefinitions("32,*"),
                     Children =
                     {
-                        new Border
-                        {
-                            Background = new SolidColorBrush(Color.FromArgb(200, 15, 23, 42)),
-                            CornerRadius = new CornerRadius(6, 6, 0, 0),
-                            Child = titleRow
-                        },
+                        _titleBorder,
                         _bodyArea
                     }
                 }
@@ -425,13 +429,15 @@ public partial class TabbedHostWindow : Window
                 Height = 600;
                 _bodyArea.IsVisible = true;
                 _rootBorder.CornerRadius = new CornerRadius(8);
+                _titleBorder.CornerRadius = new CornerRadius(6, 6, 0, 0);
             }
             else
             {
                 Width = 140;
-                Height = 32;
+                Height = 34;
                 _bodyArea.IsVisible = false;
                 _rootBorder.CornerRadius = new CornerRadius(6);
+                _titleBorder.CornerRadius = new CornerRadius(4);
             }
         }
 
@@ -447,6 +453,8 @@ public partial class TabbedHostWindow : Window
         {
             _ghostWindow = new TearOffGhostWindow();
         }
+        bool modeChanged = _lastGhostAsWindow != asWindow;
+        _lastGhostAsWindow = asWindow;
         _ghostWindow.SetMode(asWindow);
         _ghostWindow.UpdateTitle(title);
         if (!_ghostWindow.IsVisible)
@@ -456,7 +464,7 @@ public partial class TabbedHostWindow : Window
             _lastGhostY = screenY;
             _ghostWindow.Show();
         }
-        else if (Math.Abs(screenX - _lastGhostX) >= 2 || Math.Abs(screenY - _lastGhostY) >= 2)
+        else if (modeChanged || Math.Abs(screenX - _lastGhostX) >= 2 || Math.Abs(screenY - _lastGhostY) >= 2)
         {
             _ghostWindow.Position = new PixelPoint(screenX, screenY);
             _lastGhostX = screenX;
@@ -486,6 +494,9 @@ public partial class TabbedHostWindow : Window
                     _ghostWindow.Position = new PixelPoint(-10000, -10000);
                     _ghostWindow.Opacity = 0;
                     _ghostWindow.Show();
+                    _ghostWindow.SetMode(false);
+                    _ghostWindow.SetMode(true);
+                    _ghostWindow.SetMode(false);
                     _ghostWindow.Hide();
                     _ghostWindow.Opacity = 0.85;
                 }
@@ -585,7 +596,11 @@ public partial class TabbedHostWindow : Window
             }
             else
             {
-                HideGhostPreview();
+                var (gx, gy) = GetGlobalPointerPosition();
+                int tabGhostX = gx >= 0 ? gx - 40 : (int)(this.Position.X + currentPoint.X - 40);
+                int tabGhostY = gy >= 0 ? gy - 17 : (int)(this.Position.Y + currentPoint.Y - 17);
+
+                ShowGhostPreview(GetTabTitle(_draggedTab), tabGhostX, tabGhostY, asWindow: false);
 
                 int currentIndex = InstancesTabControl.Items.IndexOf(_draggedTab);
                 if (currentIndex >= 0)
