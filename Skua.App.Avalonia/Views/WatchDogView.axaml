@@ -1,0 +1,89 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.Options"
+             x:Class="Skua.App.Avalonia.Views.WatchDogView" x:DataType="vms:WatchDogViewModel">
+  <Grid Margin="14" RowDefinitions="Auto,*" RowSpacing="12">
+    <StackPanel Spacing="4">
+      <TextBlock Text="Watch Dog" FontSize="20" FontWeight="Bold" />
+      <TextBlock Text="Rescue preferences apply immediately across updated clients on this PC."
+                 TextWrapping="Wrap" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+    </StackPanel>
+    <TabControl Grid.Row="1">
+      <TabItem Header="Rescue Allies">
+        <StackPanel Margin="14" Spacing="16">
+          <TextBlock x:Name="RescueLiveStatus" Text="Live rescue status unavailable." TextWrapping="Wrap" FontSize="12" />
+          <CheckBox Content="Rescue Allies — all accounts" IsChecked="{Binding Options.RescueAllies, Mode=TwoWay}" />
+          <CheckBox Content="Allow this account to rescue" IsChecked="{Binding Options.AllowThisAccountToRescue, Mode=TwoWay}" />
+          <TextBlock Text="Account exclusions only prevent helping. Excluded accounts can still request help. Idle accounts can rescue without a loaded script."
+                     TextWrapping="Wrap" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Rescue Settings">
+        <StackPanel Margin="14" Spacing="14">
+          <TextBlock Text="Request help when either threshold is reached without a kill. The timer starts at the first death and requires at least two deaths. A kill resets both counters."
+                     TextWrapping="Wrap" />
+          <Grid ColumnDefinitions="*,140" ColumnSpacing="12">
+            <TextBlock Text="Rescue delay (minutes)" VerticalAlignment="Center" />
+            <NumericUpDown Grid.Column="1" Minimum="1" Maximum="120" Increment="1" FormatString="0"
+                           Value="{Binding Options.RescueDelayMinutes, Mode=TwoWay}" />
+          </Grid>
+          <Grid ColumnDefinitions="*,140" ColumnSpacing="12">
+            <TextBlock Text="Deaths before requesting rescue" VerticalAlignment="Center" />
+            <NumericUpDown Grid.Column="1" Minimum="1" Maximum="100" Increment="1" FormatString="0"
+                           Value="{Binding Options.RescueDeathsBeforeCalling, Mode=TwoWay}" />
+          </Grid>
+          <TextBlock Text="Defaults: 15 minutes or 10 deaths. Changes apply to the current streak on the next watchdog check. Existing rescue calls continue until a kill or another normal stop condition."
+                     TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+          <TextBlock Text="Helper rules" FontWeight="SemiBold" Margin="0,8,0,0" />
+          <CheckBox Content="Wait before helping the same account again" IsChecked="{Binding Options.RescueCooldownEnabled, Mode=TwoWay}" />
+          <Grid ColumnDefinitions="*,140" ColumnSpacing="12" IsVisible="{Binding Options.RescueCooldownEnabled}">
+            <TextBlock Text="Cooldown (minutes)" VerticalAlignment="Center" />
+            <NumericUpDown Grid.Column="1" Minimum="1" Maximum="30" Increment="1" FormatString="0"
+                           Value="{Binding Options.RescueCooldownMinutes, Mode=TwoWay}" />
+          </Grid>
+          <Grid ColumnDefinitions="*,140" ColumnSpacing="12">
+            <TextBlock Text="Helper deaths without a kill before it gives up" VerticalAlignment="Center" />
+            <NumericUpDown Grid.Column="1" Minimum="1" Maximum="100" Increment="1" FormatString="0"
+                           Value="{Binding Options.RescueHelperDeathLimit, Mode=TwoWay}" />
+          </Grid>
+          <CheckBox Content="Helpers use their CoreBots Boss class and gear" IsChecked="{Binding Options.RescueUseBossLoadout, Mode=TwoWay}" />
+          <Grid ColumnDefinitions="*,140" ColumnSpacing="12">
+            <TextBlock Text="Release helpers after this many minutes without a kill or death (0 = no limit)" TextWrapping="Wrap" VerticalAlignment="Center" />
+            <NumericUpDown Grid.Column="1" Minimum="0" Maximum="240" Increment="5" FormatString="0"
+                           Value="{Binding Options.RescueHoldLimitMinutes, Mode=TwoWay}" />
+          </Grid>
+          <TextBlock Text="Helpers use the class and skill mode of the Boss selection in their CoreBots options (and its gear, when enabled) and put their own setup back afterwards. A helper that dies too often without a kill stops attacking, leaves combat and restores its setup. Helpers stay in the map until the caller leaves it, or until the hold limit passes with no kill or death. Defaults: cooldown on, 10 minutes, 5 deaths, Boss setup on, hold limit 30 minutes."
+                     TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Accounts">
+        <Grid Margin="14" RowDefinitions="Auto,*,Auto" RowSpacing="10">
+          <TextBlock Text="Accounts running Watch Dog on this PC. Request help asks that account to call for helpers in its current map; helpers stay until it leaves the map." TextWrapping="Wrap" />
+          <Grid Grid.Row="1">
+            <TextBlock Text="No account has reported yet." IsVisible="{Binding HasNoAccounts}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+              <ItemsControl ItemsSource="{Binding Accounts}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vms:RescueAccountRow">
+                    <Border Background="{DynamicResource SkuaSurfaceBrush}" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,0,0,6">
+                      <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="10">
+                        <TextBlock Text="{Binding Account}" FontWeight="SemiBold" />
+                        <TextBlock Grid.Row="1" Text="{Binding Where}" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="1" Grid.RowSpan="2" Text="{Binding Status}" VerticalAlignment="Center" FontSize="12" />
+                        <StackPanel Grid.Column="2" Grid.RowSpan="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                          <CheckBox Content="Can help" IsChecked="{Binding CanHelp, Mode=TwoWay}" />
+                          <Button Classes="skua-button small" Content="Request help" Command="{Binding RequestHelpCommand}" IsEnabled="{Binding CanRequest}" />
+                        </StackPanel>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </Grid>
+          <TextBlock Grid.Row="2" Text="{Binding AccountsNote}" TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        </Grid>
+      </TabItem>
+    </TabControl>
+  </Grid>
+</UserControl>

@@ -712,12 +712,8 @@ public partial class TabbedHostWindow : Window
 
         // F11 is grabbed by the host while an embedded Mugetsu child owns focus.
         // Toggle the host window here; the child process must not be fullscreened.
-        HotKeys.ToggleFullscreenRequested = () => Dispatcher.UIThread.Post(() =>
-        {
-            WindowState = WindowState == WindowState.FullScreen
-                ? WindowState.Normal
-                : WindowState.FullScreen;
-        });
+        HotKeys.ToggleFullscreenRequested = () => Dispatcher.UIThread.Post(() => ToggleFullScreen());
+        HotKeys.ToggleGameFullScreenRequested = () => Dispatcher.UIThread.Post(ToggleGameOnly);
 
         HotKeys.RegisterSkuaPid((uint)Environment.ProcessId);
         HotKeys.GetChildHwndForPid = (pid) =>
@@ -809,6 +805,67 @@ public partial class TabbedHostWindow : Window
 
 
 
+    private WindowState _stateBeforeFullScreen = WindowState.Normal;
+    private bool _gameOnly;
+    private bool _gameOnlySetFullScreen;
+    private RowDefinitions? _rowsBeforeGameOnly;
+
+    /// <summary>F11: the tab window goes borderless full screen, and back to what it was (it also ends game-only full screen).</summary>
+    private void ToggleFullScreen(bool keepGameOnly = false)
+    {
+        if (_gameOnly && !keepGameOnly)
+        {
+            _gameOnlySetFullScreen = false;
+            ApplyGameOnly(false);
+        }
+        if (WindowState == WindowState.FullScreen)
+        {
+            WindowState = _stateBeforeFullScreen;
+            return;
+        }
+        _stateBeforeFullScreen = WindowState;
+        WindowState = WindowState.FullScreen;
+    }
+
+    /// <summary>Shift+F11: full screen with only the game. The title bar, the tab bar, the notices and every client's menu are hidden;
+    /// leaving it puts the window back as it was.</summary>
+    private void ToggleGameOnly()
+    {
+        if (_gameOnly)
+        {
+            ApplyGameOnly(false);
+            if (_gameOnlySetFullScreen && WindowState == WindowState.FullScreen)
+                ToggleFullScreen(keepGameOnly: true);
+            _gameOnlySetFullScreen = false;
+            return;
+        }
+        _gameOnlySetFullScreen = WindowState != WindowState.FullScreen;
+        if (_gameOnlySetFullScreen)
+            ToggleFullScreen(keepGameOnly: true);
+        ApplyGameOnly(true);
+    }
+
+    private void ApplyGameOnly(bool on)
+    {
+        _gameOnly = on;
+        if (on)
+        {
+            _rowsBeforeGameOnly = RootGrid.RowDefinitions;
+            RootGrid.RowDefinitions = new RowDefinitions("0,0,*");
+        }
+        else if (_rowsBeforeGameOnly is not null)
+        {
+            RootGrid.RowDefinitions = _rowsBeforeGameOnly;
+            _rowsBeforeGameOnly = null;
+        }
+        MainTitleBar.IsVisible = !on;
+        TabBarBorder.IsVisible = !on;
+        foreach (var info in _tabs.Values)
+            if (info.ChildHwnd != IntPtr.Zero)
+                PostChildMessage(info.ChildHwnd, (uint)HotKeys.WM_SKUA_GAMEONLY, new IntPtr(on ? 1 : 0), IntPtr.Zero);
+        Dispatcher.UIThread.Post(DoReposition, DispatcherPriority.Background);
+    }
+
     private void AttachChildWindow(TabInfo info, IntPtr childHwnd)
     {
         if (info.ChildHwnd != IntPtr.Zero) return;
@@ -818,6 +875,9 @@ public partial class TabbedHostWindow : Window
             HotKeys.RegisterSkuaPid((uint)info.Process.Id);
 
         PlatformReparentChild(childHwnd);
+
+        if (_gameOnly)
+            PostChildMessage(childHwnd, (uint)HotKeys.WM_SKUA_GAMEONLY, new IntPtr(1), IntPtr.Zero);
 
         TabItem? selectedTab = InstancesTabControl.SelectedItem as TabItem;
         bool isSelected = (selectedTab != null && _tabs.TryGetValue(selectedTab, out var selInfo) && selInfo == info);

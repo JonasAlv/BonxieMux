@@ -97,6 +97,21 @@ public partial class MainWindow : Window
         });
     }
 
+    private bool _gameOnly;
+    private bool _gameOnlySetFullScreen;
+
+    /// <summary>Game-only full screen: this client's menu bar and title bar are hidden (inside a tab window the tab window hides its own).</summary>
+    public void ApplyGameOnly(bool on)
+    {
+        _gameOnly = on;
+        var topNav = this.FindControl<global::Avalonia.Controls.Control>("TopNavBorder");
+        if (topNav != null)
+            topNav.IsVisible = !on;
+        var titleBar = this.FindControl<global::Avalonia.Controls.Control>("TitleBar");
+        if (titleBar != null && !_isTitleBarPermanentlyHidden)
+            titleBar.IsVisible = !on;
+    }
+
     private void ConfigureMainMenu()
     {
         BuildMainMenu();
@@ -299,9 +314,29 @@ public partial class MainWindow : Window
         });
         HotKeys.ToggleFullscreenRequested = () => Dispatcher.UIThread.Post(() =>
         {
-            WindowState = WindowState == WindowState.FullScreen
-                ? WindowState.Normal
-                : WindowState.FullScreen;
+            if (_gameOnly)
+            {
+                _gameOnlySetFullScreen = false;
+                ApplyGameOnly(false);
+            }
+            WindowState = WindowState == WindowState.FullScreen ? WindowState.Normal : WindowState.FullScreen;
+        });
+        HotKeys.ToggleGameFullScreenRequested = () => Dispatcher.UIThread.Post(() =>
+        {
+            if (!_gameOnly)
+            {
+                _gameOnlySetFullScreen = WindowState != WindowState.FullScreen;
+                if (_gameOnlySetFullScreen)
+                    WindowState = WindowState.FullScreen;
+                ApplyGameOnly(true);
+            }
+            else
+            {
+                ApplyGameOnly(false);
+                if (_gameOnlySetFullScreen && WindowState == WindowState.FullScreen)
+                    WindowState = WindowState.Normal;
+                _gameOnlySetFullScreen = false;
+            }
         });
         _flash.FlashCall += OnFlashCall;
 

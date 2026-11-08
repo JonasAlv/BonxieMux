@@ -35,6 +35,8 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         StrongReferenceMessenger.Default.Register<ScriptOption, ScriptStoppedMessage, int>(this, (int)MessageChannels.ScriptStatus, ScriptStopped);
         StrongReferenceMessenger.Default.Register<ScriptOption, MapChangedMessage, int>(this, (int)MessageChannels.GameEvents, MapChanged);
         _isInitializing = false;
+        _rescueSettings = WatchDog.Shared.SharedRescueSettings.Instance;
+        _rescueSettings.Changed += NotifyRescueSettingsChanged;
     }
 
     private void ScriptStarted(ScriptOption recipient, ScriptStartedMessage message)
@@ -158,6 +160,105 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
     [ObservableProperty]
     private bool _ignoreScriptRejectElse;
+
+    // When another account on the same server keeps dying (10 deaths without a kill, or 15
+    // minutes of only deaths), stop this account's script, go help, then come back and start it again.
+    private WatchDog.Shared.SharedRescueSettings? _rescueSettings;
+    private string _rescueAccount = "";
+    public bool RescueAllies
+    {
+        get => _rescueSettings?.Enabled ?? false;
+        set { if (!_isInitializing) _rescueSettings?.SetEnabled(value); }
+    }
+    public bool AllowThisAccountToRescue
+    {
+        get => _rescueSettings?.IsAllowed(_rescueAccount) ?? true;
+        set { if (!_isInitializing && _rescueAccount.Length > 0) _rescueSettings?.SetAllowed(_rescueAccount, value); }
+    }
+    public int RescueDelayMinutes
+    {
+        get => _rescueSettings?.DelayMinutes ?? 15;
+        set { if (!_isInitializing) _rescueSettings?.SetDelayMinutes(value); }
+    }
+    public int RescueDeathsBeforeCalling
+    {
+        get => _rescueSettings?.DeathsBeforeRescue ?? 10;
+        set { if (!_isInitializing) _rescueSettings?.SetDeathsBeforeRescue(value); }
+    }
+    /// <summary>Wait before helping the same account again (shared with every client on this PC).</summary>
+    public bool RescueCooldownEnabled
+    {
+        get => _rescueSettings?.CooldownEnabled ?? true;
+        set { if (!_isInitializing) _rescueSettings?.SetCooldownEnabled(value); }
+    }
+    public int RescueCooldownMinutes
+    {
+        get => _rescueSettings?.CooldownMinutes ?? 10;
+        set { if (!_isInitializing) _rescueSettings?.SetCooldownMinutes(value); }
+    }
+    /// <summary>A helper that dies this many times without a kill gives up and restores its own setup.</summary>
+    public int RescueHelperDeathLimit
+    {
+        get => _rescueSettings?.HelperDeathsWithoutKill ?? 5;
+        set { if (!_isInitializing) _rescueSettings?.SetHelperDeathsWithoutKill(value); }
+    }
+    /// <summary>Helpers are released after this many minutes without a kill or death of the caller (0 = no limit).</summary>
+    public int RescueHoldLimitMinutes
+    {
+        get => _rescueSettings?.HoldLimitMinutes ?? 30;
+        set { if (!_isInitializing) _rescueSettings?.SetHoldLimitMinutes(value); }
+    }
+    /// <summary>Helpers switch to the CoreBots Boss class and gear while helping (default on).</summary>
+    public bool RescueUseBossLoadout
+    {
+        get => _rescueSettings?.UseBossLoadout ?? true;
+        set { if (!_isInitializing) _rescueSettings?.SetUseBossLoadout(value); }
+    }
+
+    /// <summary>One account of the Watch Dog's Accounts tab.</summary>
+    public sealed record RescueAccountInfo(string Account, string Server, string Map, string Status, bool CanHelp, bool CanRequest);
+
+    /// <summary>The accounts on this PC that run the Watch Dog (VibeSkuffle or the plugin) and reported in the last seconds.</summary>
+    public IReadOnlyList<RescueAccountInfo> RescueAccounts()
+    {
+        DateTime now = DateTime.UtcNow;
+        List<RescueAccountInfo> list = new();
+        foreach (var a in WatchDog.Shared.RescueAccountHub.ReadAccounts())
+        {
+            var s = a.Status;
+            string status = !s.Enabled ? "Rescue Allies is off" : s.Calling ? "Help requested" : s.Phase.Length > 0 ? s.Phase : s.Helper;
+            bool canHelp = _rescueSettings?.IsAllowed(a.Account) ?? true;
+            list.Add(new RescueAccountInfo(a.Account, a.Server, a.Map, status, canHelp, s.Enabled && !s.Calling));
+        }
+        return list;
+    }
+
+    /// <summary>Asks the named account to request help in its current map (it needs Rescue Allies on). Returns what to tell the person.</summary>
+    public string RequestRescueHelpFor(string account) => WatchDog.Shared.RescueAccountHub.RequestManualHelp(account);
+
+    /// <summary>Lets or stops the named account from helping others.</summary>
+    public void SetAccountCanHelp(string account, bool allowed) => _rescueSettings?.SetAllowed(account, allowed);
+
+    internal void BindRescueAccount(string? account)
+    {
+        account = account?.Trim() ?? "";
+        if (_rescueAccount.Equals(account, StringComparison.OrdinalIgnoreCase)) return;
+        _rescueAccount = account;
+        OnPropertyChanged(nameof(AllowThisAccountToRescue));
+    }
+
+    private void NotifyRescueSettingsChanged()
+    {
+        OnPropertyChanged(nameof(RescueAllies));
+        OnPropertyChanged(nameof(AllowThisAccountToRescue));
+        OnPropertyChanged(nameof(RescueDelayMinutes));
+        OnPropertyChanged(nameof(RescueDeathsBeforeCalling));
+        OnPropertyChanged(nameof(RescueCooldownEnabled));
+        OnPropertyChanged(nameof(RescueCooldownMinutes));
+        OnPropertyChanged(nameof(RescueHelperDeathLimit));
+        OnPropertyChanged(nameof(RescueHoldLimitMinutes));
+        OnPropertyChanged(nameof(RescueUseBossLoadout));
+    }
 
     private bool _acceptAllDrops;
 
@@ -514,7 +615,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         StringCollection saveOptions = new();
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (pi.Name is nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor))
+            if (pi.Name is nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
             string key = pi.Name;
             object? value = pi.GetValue(this);
@@ -533,7 +634,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (pi.Name is nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor))
+            if (pi.Name is nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
             if (_userOptions.ContainsKey(pi.Name))
             {
@@ -552,7 +653,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         ScriptOption defaults = new(_lazyFlash);
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (pi.Name is nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor))
+            if (pi.Name is nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
 
             pi.SetValue(this, pi.GetValue(defaults), null);

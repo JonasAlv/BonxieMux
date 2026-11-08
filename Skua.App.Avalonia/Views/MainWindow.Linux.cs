@@ -315,6 +315,13 @@ public partial class MainWindow : Window
 
     public IntPtr HandleIpcMessage(uint uMsg, IntPtr wParam, IntPtr lParam)
     {
+        if (uMsg == HotKeys.WM_SKUA_GAMEONLY)
+        {
+            bool on = wParam.ToInt32() == 1;
+            Dispatcher.UIThread.Post(() => ApplyGameOnly(on));
+            return IntPtr.Zero;
+        }
+
         if (uMsg == WM_SKUA_GRIDVIEW)
         {
             bool isGrid = wParam.ToInt32() == 1;

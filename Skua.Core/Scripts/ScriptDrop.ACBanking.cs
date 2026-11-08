@@ -105,10 +105,12 @@ public partial class ScriptDrop
             if (drops.Length > 0)
             {
                 if (!_bank.Value.Loaded) _bank.Value.Load(true);
-                ItemBase[] already = drops.Where(d => !d.Temp && d.MaxStack <= 1 && _bank.Value.Contains(d.ID)).ToArray();
+                ItemBase[] already = drops.Where(d => CannotTake(d) is not null).ToArray();
                 if (already.Length > 0 && RejectDrops(already))
                 {
                     rejected.AddRange(already.Select(d => d.Name));
+                    foreach (ItemBase d in already)
+                        _pickupAttempts.Remove(d.ID);
                     drops = drops.Where(d => already.All(a => a.ID != d.ID)).ToArray();
                 }
             }
@@ -140,6 +142,7 @@ public partial class ScriptDrop
                     InventoryItem? item = Inventory.Items.FirstOrDefault(i => i.ID == s.Drop.ID);
                     if (item == null || item.Quantity <= s.Before) return false;
                     _pendingBank[s.Drop.ID] = (s.Drop.Name, 0);
+                    _pickupAttempts.Remove(s.Drop.ID);
                     return true;
                 });
                 if (sent.Count > 0) await Task.Delay(40, token);
@@ -176,7 +179,7 @@ public partial class ScriptDrop
             }
             OnPropertyChanged(nameof(CurrentDropInfos));
             OnPropertyChanged(nameof(CurrentDrops));
-            return (rejected.Count > 0 ? $"Rejected (already in the bank): {string.Join(", ", rejected)}. " : "") +
+            return (rejected.Count > 0 ? $"Rejected (full stack or already owned): {string.Join(", ", rejected)}. " : "") +
                 (banked.Count > 0 ? $"Banked: {string.Join(", ", banked)}. " : "") +
                 (failed.Count > 0 ? $"Not banked: {string.Join(", ", failed.Distinct())}. Check inventory/bank space and item restrictions." :
                 _pendingBank.Count > 0 ? "Remaining items queued until out of combat." : banked.Count == 0 && rejected.Count == 0 ? "No eligible AC drops." : "");
@@ -189,6 +192,36 @@ public partial class ScriptDrop
             _bankGate.Release();
         }
     }
+
+    /// <summary>
+    /// Why an AC drop would be refused by the server, or null when it can be taken: a stack that is already full, or an item that can only
+    /// be owned once (stack size 1) and is already in the inventory or in the bank. Trying anyway only makes the game print red
+    /// "You already have a full stack of that item" messages, so such drops are rejected instead of picked up.
+    /// </summary>
+    private string? CannotTake(ItemBase drop)
+    {
+        if (drop.Temp)
+            return null;
+        InventoryItem? owned = Inventory.Items.FirstOrDefault(i => i.ID == drop.ID);
+        int max = owned is { MaxStack: > 0 } ? owned.MaxStack : drop.MaxStack;
+        if (owned != null && max > 1 && owned.Quantity >= max)
+            return "full stack";
+        if (max != 1)
+            return null;
+        if (owned != null)
+            return "already owned";
+        if (!_bank.Value.Loaded)
+        {
+            // Reading the bank is slow and can fail: not more than once a minute.
+            if (DateTime.UtcNow - _bankLoadTried < TimeSpan.FromMinutes(1))
+                return null;
+            _bankLoadTried = DateTime.UtcNow;
+            _bank.Value.Load(true);
+        }
+        return _bank.Value.Contains(drop.ID) ? "already in the bank" : null;
+    }
+
+    private DateTime _bankLoadTried = DateTime.MinValue;
 
     /// <summary>Rejects just these drops and leaves every other drop where it is (the game only offers "reject all except these names").</summary>
     private bool RejectDrops(ItemBase[] items)

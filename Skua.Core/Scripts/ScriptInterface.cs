@@ -6,6 +6,7 @@ using Skua.Core.Interfaces.Services;
 using Skua.Core.Messaging;
 using Skua.Core.Models;
 using Skua.Core.Models.Items;
+using Skua.Core.Services;
 using Skua.Core.Threading;
 using Skua.Core.Utils;
 using System.Diagnostics;
@@ -938,8 +939,10 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
     private void Relogin(int delay, bool startScript, CancellationTokenSource reloginCts)
     {
         reloginCts.Token.ThrowIfCancellationRequested();
+        _reloginStartsScript = startScript;
         Servers.DisconnectForRelogin();
         Log($"Waiting {delay}ms for re-login.");
+        DogNotice.Working(Player.Kicked ? "Kicked from the game: logging back in" : "Logged out: logging back in", (int)Math.Ceiling(delay / 1000.0));
         _reloginTask = Schedule(delay, async _ =>
         {
             try
@@ -953,6 +956,8 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 else if (startScript && !relogged)
                     Log("Skipping script restart because re-login did not succeed.");
                 Log($"Re-login was {(relogged ? "successful" : "cancelled or unsuccessful")}.");
+                if (relogged)
+                    DogNotice.Done("Back in game");
             }
             catch (OperationCanceledException) when (reloginCts.IsCancellationRequested)
             {

@@ -195,6 +195,7 @@ public class HotKeyService : IHotKeyService, IDisposable
             hotkeys.Add("SearchScripts|Ctrl+Shift+F");
             hotkeys.Add("OpenCommandPalette|Ctrl+K");
             hotkeys.Add("ToggleFullscreen|F11");
+            hotkeys.Add("ToggleGameFullScreen|Shift+F11");
             return;
         }
 
@@ -204,6 +205,8 @@ public class HotKeyService : IHotKeyService, IDisposable
             hotkeys.Add("OpenCommandPalette|Ctrl+K");
         if (!HasBinding("ToggleFullscreen"))
             hotkeys.Add("ToggleFullscreen|F11");
+        if (!HasBinding("ToggleGameFullScreen"))
+            hotkeys.Add("ToggleGameFullScreen|Shift+F11");
     }
 
     private void AttachMainWindow()

@@ -157,7 +157,24 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
 
     public void PickupACItems()
     {
-        PickupEach(CurrentDropInfos.Where(d => d.Coins));
+        ItemBase[] ac = CurrentDropInfos.Where(d => d.Coins).ToArray();
+        if (ac.Length == 0)
+            return;
+        // The same rule as "Pickup AC Drops And Send To Bank": a drop the server would refuse (a full stack, or an item that can only be
+        // owned once and is already in the inventory or bank) is rejected, not asked for again and again. A drop that was refused for
+        // lack of space waits until a slot has freed up, even when a script calls this over and over.
+        ItemBase[] refused = ac.Where(d => CannotTake(d) is not null).ToArray();
+        if (refused.Length > 0)
+            RejectDrops(refused);
+        PickupEach(ac.Where(d => refused.All(r => r.ID != d.ID) && !WaitingForSlot(d)));
+    }
+
+    private bool WaitingForSlot(ItemBase drop)
+    {
+        if (!_refusedIDs.TryGetValue(drop.ID, out (int Bag, int Misc) refused))
+            return false;
+        (int bag, int misc) = FreeSlots();
+        return bag <= refused.Bag && misc <= refused.Misc;
     }
 
     public void PickupAll(bool skipWait = false)
@@ -173,6 +190,8 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
     {
         if (Options.AcceptACDrops)
             PickupACItems();
+        if (Options.PickupACDropsAndSendToBank)
+            PickupACToBankAsync();
         if (Options.IgnoreScriptRejectElse)
             return;
         RejectExceptCore(names);
@@ -182,6 +201,8 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
     {
         if (Options.AcceptACDrops)
             PickupACItems();
+        if (Options.PickupACDropsAndSendToBank)
+            PickupACToBankAsync();
         if (Options.IgnoreScriptRejectElse)
             return;
         IEnumerable<string> items = CurrentDropInfos.Where(d => ids.Contains(d.ID)).Select(d => d.Name);
@@ -192,6 +213,8 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
     {
         if (Options.AcceptACDrops)
             PickupACItems();
+        if (Options.PickupACDropsAndSendToBank)
+            PickupACToBankAsync();
         RejectExceptCore(Array.Empty<string>());
     }
 
@@ -387,6 +410,7 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
 
     private void ClearDrops(ScriptDrop recipient, LogoutMessage message)
     {
+        recipient._bankLoadTried = DateTime.MinValue;
         Interlocked.Increment(ref recipient._lootSession);
         recipient._refusedIDs.Clear();
         recipient._currentDropInfos.Clear();

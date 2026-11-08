@@ -59,6 +59,13 @@ public interface IScriptOption : INotifyPropertyChanged
     bool IgnoreScriptRejectElse { get; set; }
 
     /// <summary>
+    /// When enabled and a script is running, this account goes to help another account on the same server that
+    /// keeps dying (10 deaths without a kill, or 15 minutes of only deaths), then comes back and starts its script again.
+    /// </summary>
+    bool RescueAllies { get; set; }
+    bool AllowThisAccountToRescue { get; set; }
+
+    /// <summary>
     /// Determines whether all monsters in the MAP should be provoked. They will all attack you at the same time.
     /// </summary>
     /// <remarks>Having this option enabled keeps you in combat at all times, sometimes making it impossible to turn in quests.</remarks>

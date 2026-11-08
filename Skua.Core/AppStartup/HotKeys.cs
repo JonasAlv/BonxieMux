@@ -146,6 +146,8 @@ public class HotKeys
             "ToggleShowFPS" => "Toggles the visibility of the in-game FPS counter.",
             "ToggleSkipCutscenes" => "Determines whether cutscenes should be automatically skipped.",
             "ToggleStreamerMode" => "Anonymizes the player's name, guild, and hides the room number to protect the user's identity.",
+            "ToggleFullscreen" => "Switches the client window to borderless full screen and back.",
+            "ToggleGameFullScreen" => "Full screen with only the game: the title bar, tabs and menu are hidden. Press it again (or the Full Screen key) to leave.",
             
             // IScriptLite
             "ToggleCustomDropsUI" => "Toggles the custom drops user interface.",
@@ -222,10 +224,13 @@ public class HotKeys
     public const int WM_SKUA_FOCUS = 0x0400 + 464;
     public const int WM_SKUA_JUMP_HOUSE = 0x0400 + 465;
     public const int WM_SKUA_VISIBILITY = 0x0400 + 466;
+    public const int WM_SKUA_FULLSCREEN = 0x0400 + 467;
+    public const int WM_SKUA_GAMEONLY = 0x0400 + 468;
 
     /// <summary>Set by the client window to show the searchable main-menu palette.</summary>
     public static Action? OpenCommandPaletteRequested { get; set; }
     public static Action? ToggleFullscreenRequested { get; set; }
+    public static Action? ToggleGameFullScreenRequested { get; set; }
 
     private static readonly HashSet<uint> _skuaPids = new() { (uint)Environment.ProcessId };
 
@@ -326,6 +331,8 @@ public class HotKeys
         _hotkeyRegistry["ToggleLagKiller"] = new RelayCommand(() => ExecuteOrForward("ToggleLagKiller", ToggleLagKillerLocal));
 
         // Custom Vast Actions
+        _hotkeyRegistry["ToggleFullscreen"] = new RelayCommand(() => ToggleFullscreenRequested?.Invoke());
+        _hotkeyRegistry["ToggleGameFullScreen"] = new RelayCommand(() => ToggleGameFullScreenRequested?.Invoke());
         _hotkeyRegistry["OpenCommandPalette"] = new RelayCommand(() => ExecuteOrForward("OpenCommandPalette", () => OpenCommandPaletteRequested?.Invoke()));
         // Fullscreen belongs to the outer desktop window, so do not forward it to an embedded child.
         _hotkeyRegistry["ToggleFullscreen"] = new RelayCommand(() => ToggleFullscreenRequested?.Invoke());
