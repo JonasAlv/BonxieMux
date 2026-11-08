@@ -46,7 +46,7 @@ public class OptionGroupViewModel
 
 public partial class ApplicationOptionsViewModel : BotControlViewModelBase
 {
-    private static readonly string[] GeneralKeys = { "ShowUsernameInTitle", "SaveLogsToFile", "ClientAnim", "ReloginTryDelay", "ReloginWatchdog", "ClearFlashCache" };
+    private static readonly string[] GeneralKeys = { "ShowUsernameInTitle", "SaveLogsToFile", "ClientAnim", "ReloginTryDelay", "ReloginWatchdog", "ClearFlashCache", "GraphicsApi" };
     private static readonly string[] UpdateKeys =
     {
         "CheckBotScriptsUpdates", "AutoUpdateBotScripts", "CheckAdvanceSkillSetsUpdates", "AutoUpdateAdvanceSkillSetsUpdates",

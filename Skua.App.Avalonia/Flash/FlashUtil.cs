@@ -166,6 +166,19 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             start.Environment.Remove("WAYLAND_DISPLAY");
             start.Environment.Remove("WAYLAND_SOCKET");
         }
+        string? envGraphics = Environment.GetEnvironmentVariable("MUGETSU_GRAPHICS") ??
+                              Environment.GetEnvironmentVariable("SKUA_GRAPHICS");
+        if (!string.IsNullOrWhiteSpace(envGraphics))
+        {
+            start.ArgumentList.Add("-g");
+            start.ArgumentList.Add(envGraphics.Trim().ToLowerInvariant());
+        }
+        string? extraArgs = Environment.GetEnvironmentVariable("MUGETSU_ARGS");
+        if (!string.IsNullOrWhiteSpace(extraArgs))
+        {
+            foreach (string arg in extraArgs.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                start.ArgumentList.Add(arg);
+        }
         start.ArgumentList.Add(SwfPath);
         Process proc = new() { StartInfo = start };
         lock (_playerLock)

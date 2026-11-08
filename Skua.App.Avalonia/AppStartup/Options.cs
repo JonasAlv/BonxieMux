@@ -117,6 +117,52 @@ internal class Options
             }))
         };
 
+        if (OperatingSystem.IsLinux())
+        {
+            string ruffleDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ruffle");
+            string mugetsuGraphicsFile = Path.Combine(ruffleDir, "mugetsu-graphics.txt");
+            string currentVal = "gl";
+            if (File.Exists(mugetsuGraphicsFile))
+            {
+                try { currentVal = File.ReadAllText(mugetsuGraphicsFile).Trim().ToLowerInvariant(); } catch { }
+            }
+            int initialIndex = currentVal switch
+            {
+                "vulkan" => 1,
+                "auto" => 2,
+                _ => 0
+            };
+
+            var graphicsChoice = new CBOChoiceOptionItemViewModel(
+                "* Graphics API",
+                "Graphics backend for Mugetsu. OpenGL uses ~15x less RAM on Linux (50–100 MB per tab vs 1.5 GB on Vulkan), recommended for APUs and multi-account armies. Takes effect on next launch or player restart",
+                "GraphicsApi",
+                new List<string> { "OpenGL (Low RAM / APUs)", "Vulkan (Dedicated GPUs)", "Auto" },
+                initialIndex);
+
+            graphicsChoice.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(DisplayOptionItemViewModelBase.Value))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(ruffleDir);
+                        Skua.Core.Models.ClientFileSources.RestrictDirectoryPermissions(ruffleDir);
+                        string toWrite = graphicsChoice.Value switch
+                        {
+                            1 => "vulkan",
+                            2 => "auto",
+                            _ => "gl"
+                        };
+                        File.WriteAllText(mugetsuGraphicsFile, toWrite);
+                        Skua.Core.Models.ClientFileSources.RestrictFilePermissions(mugetsuGraphicsFile);
+                    }
+                    catch { }
+                }
+            };
+            appOptions.Add(graphicsChoice);
+        }
+
         return new ApplicationOptionsViewModel(appOptions);
 
         static RelayCommand<T> CreateSettingCommand<T>(string key) => new(b => Ioc.Default.GetRequiredService<ISettingsService>().Set(key, b));

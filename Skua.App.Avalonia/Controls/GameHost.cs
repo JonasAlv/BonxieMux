@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -74,11 +75,56 @@ public class GameHost : NativeControlHost
         _fitTimer?.Stop();
     }
 
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == IsVisibleProperty)
+        {
+            UpdatePlayerVisibility(IsVisible);
+        }
+    }
+
+    private void UpdatePlayerVisibility(bool visible)
+    {
+        if (_display == 0)
+            return;
+
+        if (visible)
+        {
+            if (_player != 0)
+            {
+                XMapWindow(_display, _player);
+                XFlush(_display);
+            }
+            _fitTimer?.Start();
+            FitPlayer();
+        }
+        else
+        {
+            _fitTimer?.Stop();
+            if (_player != 0)
+            {
+                XUnmapWindow(_display, _player);
+                XFlush(_display);
+            }
+        }
+    }
+
     // Polls the sizes every 200 ms to keep the child window fitted to the holder.
     private void FitPlayer()
     {
         if (_display == 0 || _holder == 0)
             return;
+
+        if (!IsVisible)
+        {
+            if (_player != 0)
+            {
+                XUnmapWindow(_display, _player);
+                XFlush(_display);
+            }
+            return;
+        }
         if (XGetGeometry(_display, _holder, out _, out _, out _, out uint width, out uint height, out _, out _) == 0)
             return;
         if (XQueryTree(_display, _holder, out _, out _, out nint children, out uint count) == 0)
@@ -145,6 +191,9 @@ public class GameHost : NativeControlHost
 
     [DllImport(LibX11)]
     private static extern int XMapWindow(nint display, nint window);
+
+    [DllImport(LibX11)]
+    private static extern int XUnmapWindow(nint display, nint window);
 
     [DllImport(LibX11)]
     private static extern int XFree(nint data);

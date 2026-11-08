@@ -71,5 +71,22 @@ public class ClientFilesService : IClientFilesService
                 // ignored
             }
         }
+
+        if (OperatingSystem.IsLinux())
+        {
+            try
+            {
+                string ruffleDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ruffle");
+                string mugetsuGraphicsFile = Path.Combine(ruffleDir, "mugetsu-graphics.txt");
+                if (!File.Exists(mugetsuGraphicsFile))
+                {
+                    Directory.CreateDirectory(ruffleDir);
+                    ClientFileSources.RestrictDirectoryPermissions(ruffleDir);
+                    File.WriteAllText(mugetsuGraphicsFile, "gl");
+                    ClientFileSources.RestrictFilePermissions(mugetsuGraphicsFile);
+                }
+            }
+            catch { }
+        }
     }
 }
