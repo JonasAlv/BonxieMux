@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Skua.Core.Models;
 
 namespace WatchDog.Shared;
 
@@ -12,7 +13,7 @@ internal static class RescueAccountHub
 
     private sealed record ManualRequest(string Id, DateTime CreatedUtc);
     private static string Root => Environment.GetEnvironmentVariable("WATCHDOG_ACCOUNT_HUB_ROOT") ??
-        Path.Combine(Path.GetTempPath(), "VibeSkuaTabs", "watchdog-accounts");
+        Path.Combine(ClientFileSources.TabsDIR, "watchdog-accounts");
 
     private static string Key(string account) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(account.Trim().ToUpperInvariant())))[..24];
     private static string AccountPath(string account) => Path.Combine(Root, Key(account) + ".json");
@@ -24,11 +25,14 @@ internal static class RescueAccountHub
         try
         {
             Directory.CreateDirectory(Root);
+            ClientFileSources.RestrictDirectoryPermissions(Root);
             string path = AccountPath(account), temp = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
             try
             {
                 File.WriteAllText(temp, JsonSerializer.Serialize(new AccountSnapshot(account, server, map, cell, DateTime.UtcNow, status)), new UTF8Encoding(false));
+                ClientFileSources.RestrictFilePermissions(temp);
                 File.Move(temp, path, true);
+                ClientFileSources.RestrictFilePermissions(path);
             }
             finally { if (File.Exists(temp)) File.Delete(temp); }
         }
@@ -67,7 +71,10 @@ internal static class RescueAccountHub
         try
         {
             Directory.CreateDirectory(Root);
-            File.WriteAllText(RequestPath(account), JsonSerializer.Serialize(new ManualRequest(Guid.NewGuid().ToString("N"), DateTime.UtcNow)), new UTF8Encoding(false));
+            ClientFileSources.RestrictDirectoryPermissions(Root);
+            string reqPath = RequestPath(account);
+            File.WriteAllText(reqPath, JsonSerializer.Serialize(new ManualRequest(Guid.NewGuid().ToString("N"), DateTime.UtcNow)), new UTF8Encoding(false));
+            ClientFileSources.RestrictFilePermissions(reqPath);
             return $"Manual help request sent to {account}.";
         }
         catch (Exception ex) { return $"Couldn't send the request to {account}: {ex.Message}"; }

@@ -1,4 +1,5 @@
 using Skua.Core.Interfaces;
+using Skua.Core.Models;
 using Skua.Core.Services;
 
 namespace Skua.Core.Scripts;
@@ -795,13 +796,15 @@ public partial class ScriptInterface
         try
         {
             string who = new((Servers.CachedUsername ?? "unknown").Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray());
-            string dir = Path.Combine(Path.GetTempPath(), "VibeSkuaTabs");
+            string dir = ClientFileSources.TabsDIR;
             Directory.CreateDirectory(dir);
+            ClientFileSources.RestrictDirectoryPermissions(dir);
             string file = Path.Combine(dir, $"client-restart-{who}.txt");
             if (File.Exists(file) && long.TryParse(File.ReadAllText(file).Trim(), out long ticks)
                 && DateTime.UtcNow - new DateTime(ticks, DateTimeKind.Utc) < TimeSpan.FromHours(2))
                 return false;
             File.WriteAllText(file, DateTime.UtcNow.Ticks.ToString());
+            ClientFileSources.RestrictFilePermissions(file);
             return true;
         }
         catch

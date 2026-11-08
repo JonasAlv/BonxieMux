@@ -223,6 +223,8 @@ public partial class App : Application
                 IClientFilesService clientFiles = Ioc.Default.GetRequiredService<IClientFilesService>();
                 clientFiles.CreateDirectories();
                 clientFiles.CreateFiles();
+                Skua.Shared.Avalonia.Services.AppImageDesktopIntegration.EnsureIntegrated(
+                    Skua.Shared.Avalonia.Services.AppIdentity.BonxieMux);
             });
         }
         else

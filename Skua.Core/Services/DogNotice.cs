@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Skua.Core.Models;
 
 namespace Skua.Core.Services;
 
@@ -17,7 +18,7 @@ public enum DogPhase
 public sealed record DogNoticeData(DateTime UpdatedUtc, DateTime SinceUtc, DogPhase Phase, string Text, DateTime? RetryAtUtc);
 
 /// <summary>
-/// The Watch Dog's status for the tab window: a small file per client in %TEMP%\VibeSkuaTabs ({pid}.dog-notice.json). The client
+/// The Watch Dog's status for the tab window: a small file per client in tabs directory ({pid}.dog-notice.json). The client
 /// writes it when the Watch Dog or the re-login starts, retries, finishes or gives up; the tab window shows a line under the tabs
 /// ("Communication with the server was lost, logging back in", "Login didn't go through. Retrying in 4 s (attempt 2 of 5)").
 /// </summary>
@@ -25,7 +26,7 @@ public static class DogNotice
 {
     private static readonly object Gate = new();
     private static DogNoticeData? _current;
-    private static string StatePath(int processId) => Path.Combine(Path.GetTempPath(), "VibeSkuaTabs", $"{processId}.dog-notice.json");
+    private static string StatePath(int processId) => Path.Combine(ClientFileSources.TabsDIR, $"{processId}.dog-notice.json");
 
     /// <summary>True while a Working notice is up in this process (cheap to ask, e.g. once per tick).</summary>
     public static bool IsWorking { get { lock (Gate) return _current?.Phase == DogPhase.Working; } }
@@ -67,9 +68,13 @@ public static class DogNotice
     private static void Write(DogNoticeData data)
     {
         string file = StatePath(Environment.ProcessId), temporary = file + ".tmp";
-        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        string dir = Path.GetDirectoryName(file)!;
+        Directory.CreateDirectory(dir);
+        ClientFileSources.RestrictDirectoryPermissions(dir);
         File.WriteAllText(temporary, JsonSerializer.Serialize(data));
+        ClientFileSources.RestrictFilePermissions(temporary);
         File.Move(temporary, file, true);
+        ClientFileSources.RestrictFilePermissions(file);
     }
 
     public static DogNoticeData? Read(int processId)

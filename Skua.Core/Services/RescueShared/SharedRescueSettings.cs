@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Skua.Core.Models;
 
 namespace WatchDog.Shared;
 
@@ -14,7 +15,7 @@ internal sealed class SharedRescueSettings : IDisposable
     internal static SharedRescueSettings Instance => Default.Value;
     internal static string DefaultPath => Path.Combine(
         Environment.GetEnvironmentVariable("WATCHDOG_SHARED_RESCUE_ROOT") ??
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Skua", "WatchDog"),
+        Path.Combine(ClientFileSources.SkuaPluginsDIR, "WatchDog"),
         "rescue-settings.json");
     private readonly string _path;
     private readonly Mutex _writer;
@@ -27,7 +28,9 @@ internal sealed class SharedRescueSettings : IDisposable
     internal SharedRescueSettings(string path)
     {
         _path = Path.GetFullPath(path);
-        Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
+        string dir = Path.GetDirectoryName(_path)!;
+        Directory.CreateDirectory(dir);
+        ClientFileSources.RestrictDirectoryPermissions(dir);
         string hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(_path.ToUpperInvariant())));
         _writer = new Mutex(false, "WatchDog.RescueSettings." + hash);
         Reload();
@@ -123,7 +126,9 @@ internal sealed class SharedRescueSettings : IDisposable
             try
             {
                 File.WriteAllText(temporary, JsonSerializer.Serialize(after), new UTF8Encoding(false));
+                ClientFileSources.RestrictFilePermissions(temporary);
                 File.Move(temporary, _path, true);
+                ClientFileSources.RestrictFilePermissions(_path);
             }
             finally { if (File.Exists(temporary)) File.Delete(temporary); }
         }

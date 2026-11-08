@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Skua.Core.Models;
 
 namespace Skua.Core.Services;
 
@@ -284,13 +285,15 @@ public static class VibeAlerts
             int hour = SummaryHour;
             if (!Enabled || hour is < 0 or > 23 || DateTime.Now.Hour != hour)
                 return;
-            string dir = Path.Combine(Path.GetTempPath(), "VibeSkuaTabs");
+            string dir = ClientFileSources.TabsDIR;
             Directory.CreateDirectory(dir);
+            ClientFileSources.RestrictDirectoryPermissions(dir);
             string marker = Path.Combine(dir, "summary-sent.txt");
             string today = DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             if (File.Exists(marker) && File.ReadAllText(marker).Trim() == today)
                 return;
             File.WriteAllText(marker, today);
+            ClientFileSources.RestrictFilePermissions(marker);
             string text = BuildSummary(DateTime.Now.AddHours(-24), out bool problems);
             _ = PostAsync("Watchdog summary (last 24 hours)", text, problems ? Level.Warning : Level.Info);
         }

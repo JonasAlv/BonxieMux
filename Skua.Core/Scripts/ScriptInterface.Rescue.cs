@@ -1,4 +1,5 @@
 using Skua.Core.Interfaces;
+using Skua.Core.Models;
 using WatchDog.Shared;
 
 namespace Skua.Core.Scripts;
@@ -17,7 +18,7 @@ public partial class ScriptInterface
 {
     private const int RescueStaleMs = 60000;
 
-    private static string RescueDir => Environment.GetEnvironmentVariable("WATCHDOG_RESCUE_CALL_ROOT") ?? Path.Combine(Path.GetTempPath(), "VibeSkuaTabs", "rescue");
+    private static string RescueDir => Environment.GetEnvironmentVariable("WATCHDOG_RESCUE_CALL_ROOT") ?? Path.Combine(ClientFileSources.TabsDIR, "rescue");
 
     // The account that needs help.
     private int _rsLastDeaths = -1, _rsLastKills = -1, _rsDeathStreak, _rsStreakSince;
@@ -397,9 +398,13 @@ public partial class ScriptInterface
             if (user.Length == 0 || server.Length == 0)
                 return;
             Directory.CreateDirectory(RescueDir);
+            ClientFileSources.RestrictDirectoryPermissions(RescueDir);
             string file = RescueFile(user);
-            File.WriteAllLines(file + ".tmp", RescueLines(new[] { user, server, Map.FullName, Player.Cell, Player.Pad, DateTime.UtcNow.Ticks.ToString() }));
-            File.Move(file + ".tmp", file, true);
+            string tmp = file + ".tmp";
+            File.WriteAllLines(tmp, RescueLines(new[] { user, server, Map.FullName, Player.Cell, Player.Pad, DateTime.UtcNow.Ticks.ToString() }));
+            ClientFileSources.RestrictFilePermissions(tmp);
+            File.Move(tmp, file, true);
+            ClientFileSources.RestrictFilePermissions(file);
         }
         catch { }
     }

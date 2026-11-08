@@ -68,6 +68,12 @@ public partial class App : Application
         clientFiles.CreateDirectories();
         clientFiles.CreateFiles();
 
+        System.Threading.Tasks.Task.Run(() =>
+        {
+            Skua.Shared.Avalonia.Services.AppImageDesktopIntegration.EnsureIntegrated(
+                Skua.Shared.Avalonia.Services.AppIdentity.Manager);
+        });
+
         System.Threading.Tasks.Task.Run(async () =>
         {
             try
