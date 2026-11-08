@@ -4,11 +4,77 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform;
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Skua.Shared.Avalonia.Services;
 
 public static class WindowPlacementHelper
 {
+    [DllImport("libX11.so.6")]
+    private static extern IntPtr XOpenDisplay(IntPtr display);
+
+    [DllImport("libX11.so.6")]
+    private static extern int XCloseDisplay(IntPtr display);
+
+    [DllImport("libX11.so.6")]
+    private static extern IntPtr XDefaultRootWindow(IntPtr display);
+
+    [DllImport("libX11.so.6")]
+    private static extern bool XQueryPointer(
+        IntPtr display,
+        IntPtr w,
+        out IntPtr root_return,
+        out IntPtr child_return,
+        out int root_x_return,
+        out int root_y_return,
+        out int win_x_return,
+        out int win_y_return,
+        out uint mask_return);
+
+    [DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out POINT lpPoint);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT { public int X; public int Y; }
+
+    public static PixelPoint? GetPointerPosition()
+    {
+        if (OperatingSystem.IsLinux())
+        {
+            try
+            {
+                IntPtr disp = XOpenDisplay(IntPtr.Zero);
+                if (disp != IntPtr.Zero)
+                {
+                    try
+                    {
+                        IntPtr root = XDefaultRootWindow(disp);
+                        if (XQueryPointer(disp, root, out _, out _, out int rx, out int ry, out _, out _, out _))
+                        {
+                            return new PixelPoint(rx, ry);
+                        }
+                    }
+                    finally
+                    {
+                        XCloseDisplay(disp);
+                    }
+                }
+            }
+            catch { }
+        }
+        else if (OperatingSystem.IsWindows())
+        {
+            try
+            {
+                if (GetCursorPos(out POINT pt))
+                    return new PixelPoint(pt.X, pt.Y);
+            }
+            catch { }
+        }
+
+        return null;
+    }
+
     public static Screen? GetTargetScreen(Window window)
     {
         return GetTargetScreen(window, out _);
@@ -18,11 +84,27 @@ public static class WindowPlacementHelper
     {
         hostBounds = null;
 
-        // Try desktop MainWindow if visible and on a real screen (host process or standalone mode)
+        // 1. Try owner window or active desktop MainWindow (for child dialogs/tool windows)
         try
         {
+            if (window.Owner is Window owner && owner.IsVisible && owner.Bounds.Width > 100)
+            {
+                int ox = owner.Position.X;
+                int oy = owner.Position.Y;
+                int ow = (int)owner.Bounds.Width;
+                int oh = (int)owner.Bounds.Height;
+                PixelPoint center = new(ox + ow / 2, oy + oh / 2);
+                var screen = window.Screens?.ScreenFromPoint(center);
+                if (screen != null)
+                {
+                    hostBounds = new PixelRect(ox, oy, ow, oh);
+                    return screen;
+                }
+            }
+
             if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
                 desktop.MainWindow != null &&
+                desktop.MainWindow != window &&
                 desktop.MainWindow.IsVisible &&
                 desktop.MainWindow.Position.X > -10000 &&
                 desktop.MainWindow.Bounds.Width > 100)
@@ -42,8 +124,29 @@ public static class WindowPlacementHelper
         }
         catch { }
 
-        // Fallback to Primary screen or first screen
-        return window.Screens?.Primary ?? window.Screens?.All?.FirstOrDefault();
+        // 2. Try global pointer position (the monitor where the user clicked the AppImage or has cursor focus)
+        try
+        {
+            PixelPoint? ptr = GetPointerPosition();
+            if (ptr.HasValue && window.Screens != null)
+            {
+                var screen = window.Screens.ScreenFromPoint(ptr.Value);
+                if (screen != null)
+                    return screen;
+            }
+        }
+        catch { }
+
+        // 3. Fallback to Primary screen or first screen
+        if (window.Screens != null)
+        {
+            var primary = window.Screens.All.FirstOrDefault(s => s.IsPrimary) ?? window.Screens.Primary;
+            if (primary != null)
+                return primary;
+            return window.Screens.All.FirstOrDefault();
+        }
+
+        return null;
     }
 
     public static PixelPoint CalculatePosition(Screen screen, PixelRect? hostBounds, int width, int height)
@@ -93,18 +196,23 @@ public static class WindowPlacementHelper
             window.Position = CalculatePosition(screen, hostBounds, (int)targetW, (int)targetH);
         }
 
-        // Refine positioning once measured on Opened
+        // Refine positioning once measured on Opened to guarantee proper centering on the chosen screen
         window.Opened += (s, e) =>
         {
+            if (window.WindowState == WindowState.Maximized)
+                return;
+
             int actualW = (int)window.Bounds.Width;
             int actualH = (int)window.Bounds.Height;
-            if (actualW > 0 && actualH > 0 && (Math.Abs(actualW - (int)targetW) > 10 || Math.Abs(actualH - (int)targetH) > 10))
+            if (actualW <= 0 || double.IsNaN(window.Bounds.Width))
+                actualW = (int)targetW;
+            if (actualH <= 0 || double.IsNaN(window.Bounds.Height))
+                actualH = (int)targetH;
+
+            var sc = screen ?? GetTargetScreen(window, out _);
+            if (sc != null)
             {
-                var sc = GetTargetScreen(window, out var hb);
-                if (sc != null)
-                {
-                    window.Position = CalculatePosition(sc, hb, actualW, actualH);
-                }
+                window.Position = CalculatePosition(sc, hostBounds, actualW, actualH);
             }
         };
     }

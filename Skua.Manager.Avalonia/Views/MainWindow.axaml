@@ -12,7 +12,7 @@
         Width="850"
         Height="500"
         CanResize="True"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="Manual"
         Icon="avares://Skua.Shared.Avalonia/Assets/SkuaIcon.png"
         SystemDecorations="BorderOnly"
         ExtendClientAreaToDecorationsHint="True"

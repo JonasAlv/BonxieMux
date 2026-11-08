@@ -171,6 +171,7 @@ public partial class TabbedHostWindow : Window
     {
         _initialArgs = initialArgs ?? Array.Empty<string>();
         InitializeComponent();
+        Skua.Shared.Avalonia.Services.WindowPlacementHelper.CenterOnActiveScreen(this);
         Skua.Shared.Avalonia.Services.WindowResizeHelper.Attach(this);
         Title = $"BonxieMux V{Skua.Core.Models.ClientFileSources.DisplayVersion}";
         LoadArmyJumpSettings();

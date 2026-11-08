@@ -9,7 +9,7 @@
         Classes="skua"
         Title="BonxieMux" Icon="avares://Skua.Shared.Avalonia/Assets/SkuaIcon.png" Height="700" Width="1100"
         CanResize="True"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="Manual"
         Background="{DynamicResource SkuaPageBrush}"
         SystemDecorations="BorderOnly"
         ExtendClientAreaToDecorationsHint="True"

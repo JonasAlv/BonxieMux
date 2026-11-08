@@ -434,7 +434,7 @@ public partial class App : Application
                 // Master instance. The tray icon is created only here: an instance that forwards to an
                 // existing host exits through Environment.Exit, which never removes it (ghost icon).
                 SetupTrayIcon();
-                Views.TabbedHostWindow masterWindow = new(clientArgs) { WindowStartupLocation = global::Avalonia.Controls.WindowStartupLocation.CenterScreen };
+                Views.TabbedHostWindow masterWindow = new(clientArgs);
                 desktop.MainWindow = masterWindow;
                 if (themeService is AvaloniaThemeService activeTheme)
                     ThemeResourceApplicator.ApplyTitleBarTheme(masterWindow, activeTheme.IsDarkTheme,
