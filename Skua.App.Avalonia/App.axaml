@@ -117,6 +117,9 @@
     <DataTemplate DataType="options:GameOptionsViewModel">
       <views:GameOptionsView />
     </DataTemplate>
+    <DataTemplate DataType="options:WatchDogViewModel">
+      <views:WatchDogView />
+    </DataTemplate>
     <DataTemplate DataType="options:ApplicationOptionsViewModel">
       <views:ApplicationOptionsView />
     </DataTemplate>
