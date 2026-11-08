@@ -31,6 +31,21 @@ public partial class MainWindow : Window
     [DllImport("libX11.so.6")]
     private static extern int XFlush(IntPtr display);
 
+    private static IntPtr _xDisplay;
+    private static readonly object _xLock = new();
+
+    private static IntPtr GetDisplay()
+    {
+        lock (_xLock)
+        {
+            if (_xDisplay == IntPtr.Zero)
+            {
+                try { _xDisplay = XOpenDisplay(IntPtr.Zero); } catch { }
+            }
+            return _xDisplay;
+        }
+    }
+
     private const int WM_SKUA_JUMP_MAP = 0x0400 + 449;
     private const int WM_SKUA_SET_OPTION = 0x0400 + 450;
     private const int WM_SKUA_LOAD_SCRIPT = 0x0400 + 453;
@@ -86,20 +101,22 @@ public partial class MainWindow : Window
         AddHandler(PointerPressedEvent, (s, e) =>
         {
             RestoreFps();
-            IntPtr handle = this.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
-            if (handle != IntPtr.Zero)
+            if (IsVisible)
             {
-                try
+                IntPtr handle = this.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
+                if (handle != IntPtr.Zero)
                 {
-                    IntPtr disp = XOpenDisplay(IntPtr.Zero);
-                    if (disp != IntPtr.Zero)
+                    try
                     {
-                        XSetInputFocus(disp, handle, 1 /* RevertToParent */, IntPtr.Zero);
-                        XFlush(disp);
-                        XCloseDisplay(disp);
+                        IntPtr disp = GetDisplay();
+                        if (disp != IntPtr.Zero)
+                        {
+                            XSetInputFocus(disp, handle, 1 /* RevertToParent */, IntPtr.Zero);
+                            XFlush(disp);
+                        }
                     }
+                    catch { }
                 }
-                catch { }
             }
         }, RoutingStrategies.Tunnel);
     }

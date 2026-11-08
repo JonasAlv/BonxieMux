@@ -262,7 +262,8 @@ public partial class App : Application
                     Opacity = 0,
                     Position = new global::Avalonia.PixelPoint(-32000, -32000),
                     SystemDecorations = global::Avalonia.Controls.SystemDecorations.None,
-                    ShowInTaskbar = false
+                    ShowInTaskbar = false,
+                    ShowActivated = false
                 };
                 desktop.MainWindow = mainChild;
                 mainChild.HideTitleBar();

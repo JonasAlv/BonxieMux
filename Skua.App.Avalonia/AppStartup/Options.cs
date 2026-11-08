@@ -135,9 +135,9 @@ internal class Options
 
             var graphicsChoice = new CBOChoiceOptionItemViewModel(
                 "* Graphics API",
-                "Graphics backend for Mugetsu. OpenGL uses ~15x less RAM on Linux (50–100 MB per tab vs 1.5 GB on Vulkan), recommended for APUs and multi-account armies. Takes effect on next launch or player restart",
+                "Graphics backend for Mugetsu. Takes effect on next launch or tab restart",
                 "GraphicsApi",
-                new List<string> { "OpenGL (Low RAM / APUs)", "Vulkan (Dedicated GPUs)", "Auto" },
+                new List<string> { "OpenGL", "Vulkan", "Auto" },
                 initialIndex);
 
             graphicsChoice.PropertyChanged += (_, e) =>

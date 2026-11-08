@@ -482,29 +482,6 @@ public partial class TabbedHostWindow : Window
         }
     }
 
-    private void WarmUpGhostWindow()
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            try
-            {
-                if (_ghostWindow == null)
-                {
-                    _ghostWindow = new TearOffGhostWindow();
-                    _ghostWindow.Position = new PixelPoint(-10000, -10000);
-                    _ghostWindow.Opacity = 0;
-                    _ghostWindow.Show();
-                    _ghostWindow.SetMode(false);
-                    _ghostWindow.SetMode(true);
-                    _ghostWindow.SetMode(false);
-                    _ghostWindow.Hide();
-                    _ghostWindow.Opacity = 0.85;
-                }
-            }
-            catch { }
-        }, DispatcherPriority.Background);
-    }
-
     private void ApplyTabDragVisuals(TabItem tab)
     {
         if (!tab.Classes.Contains("tab-dragging"))
@@ -534,12 +511,15 @@ public partial class TabbedHostWindow : Window
         this.AddHandler(InputElement.PointerReleasedEvent, OnWindowPointerReleased, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
         this.AddHandler(InputElement.PointerCaptureLostEvent, (s, e) =>
         {
-            HideGhostPreview();
+            // Do not abort drag while mouse button is still pressed;
+            // mapping ghost windows on X11 fires a transient capture-lost notification.
             if (_draggedTab != null)
             {
-                ClearTabDragVisuals(_draggedTab);
-                _draggedTab = null;
+                try { e.Pointer.Capture(this); } catch { }
+                return;
             }
+
+            HideGhostPreview();
             _isDraggingTab = false;
         }, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
     }
@@ -859,8 +839,6 @@ public partial class TabbedHostWindow : Window
             _initialInstanceStarted = true;
             AddNewInstance(_initialArgs);
         }
-
-        WarmUpGhostWindow();
     }
 
 
