@@ -314,8 +314,14 @@ public class HotKeys
         SendHostCommandAction?.Invoke(command);
     }
 
+    public static bool IsDetachedMode { get; set; }
+    public static Action? ToggleDetachedGameFullScreenRequested { get; set; }
+
     private static void ToggleFullScreen()
     {
+        if (IsDetachedMode)
+            return;
+
         if (!IsHostProcess)
             SendHostCommand("FULLSCREEN");
         else
@@ -324,6 +330,12 @@ public class HotKeys
 
     private static void ToggleGameFullScreen()
     {
+        if (IsDetachedMode)
+        {
+            ToggleDetachedGameFullScreenRequested?.Invoke();
+            return;
+        }
+
         if (!IsHostProcess)
             SendHostCommand("GAMEONLY");
         else

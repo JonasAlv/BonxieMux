@@ -100,6 +100,23 @@ public partial class MainWindow : Window
     private bool _gameOnly;
     private bool _gameOnlySetFullScreen;
 
+    public void ToggleDetachedGameOnly()
+    {
+        if (_gameOnly)
+        {
+            ApplyGameOnly(false);
+            if (_gameOnlySetFullScreen && WindowState == WindowState.FullScreen)
+                WindowState = WindowState.Normal;
+            _gameOnlySetFullScreen = false;
+            return;
+        }
+
+        _gameOnlySetFullScreen = WindowState != WindowState.FullScreen;
+        if (_gameOnlySetFullScreen)
+            WindowState = WindowState.FullScreen;
+        ApplyGameOnly(true);
+    }
+
     /// <summary>Game-only full screen: this client's menu bar and title bar are hidden (inside a tab window the tab window hides its own).</summary>
     public void ApplyGameOnly(bool on)
     {
@@ -312,6 +329,7 @@ public partial class MainWindow : Window
             }
             catch { }
         });
+        HotKeys.ToggleDetachedGameFullScreenRequested = () => Dispatcher.UIThread.Post(ToggleDetachedGameOnly);
         if (HotKeys.IsHostProcess)
         {
             HotKeys.ToggleFullscreenRequested = () => Dispatcher.UIThread.Post(() =>

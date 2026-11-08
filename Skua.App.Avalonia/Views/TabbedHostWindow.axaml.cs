@@ -864,25 +864,27 @@ public partial class TabbedHostWindow : Window
     private WindowState _stateBeforeFullScreen = WindowState.Normal;
     private bool _gameOnly;
     private bool _gameOnlySetFullScreen;
-    private RowDefinitions? _rowsBeforeGameOnly;
 
     /// <summary>F11: the tab window goes borderless full screen, and back to what it was (it also ends game-only full screen).</summary>
     private void ToggleFullScreen(bool keepGameOnly = false)
     {
-        if (_gameOnly && !keepGameOnly)
-        {
+        bool wasGameOnly = _gameOnly && !keepGameOnly;
+        if (wasGameOnly)
             _gameOnlySetFullScreen = false;
-            ApplyGameOnly(false);
-        }
+
         if (WindowState == WindowState.FullScreen)
         {
             WindowState = (_stateBeforeFullScreen == WindowState.FullScreen || _stateBeforeFullScreen == WindowState.Minimized)
                 ? WindowState.Normal
                 : _stateBeforeFullScreen;
+            if (wasGameOnly)
+                ApplyGameOnly(false);
             return;
         }
         _stateBeforeFullScreen = WindowState == WindowState.Minimized ? WindowState.Normal : WindowState;
         WindowState = WindowState.FullScreen;
+        if (wasGameOnly)
+            ApplyGameOnly(false);
     }
 
     /// <summary>Shift+F11: full screen with only the game. The title bar, the tab bar, the notices and every client's menu are hidden;
@@ -891,10 +893,10 @@ public partial class TabbedHostWindow : Window
     {
         if (_gameOnly)
         {
-            ApplyGameOnly(false);
             if (_gameOnlySetFullScreen && WindowState == WindowState.FullScreen)
                 ToggleFullScreen(keepGameOnly: true);
             _gameOnlySetFullScreen = false;
+            ApplyGameOnly(false);
             return;
         }
         _gameOnlySetFullScreen = WindowState != WindowState.FullScreen;
@@ -908,25 +910,26 @@ public partial class TabbedHostWindow : Window
         _gameOnly = on;
         if (on)
         {
-            _rowsBeforeGameOnly = RootGrid.RowDefinitions;
             RootGrid.RowDefinitions = new RowDefinitions("0,0,*");
-            ExtendClientAreaTitleBarHeightHint = 0;
             HostContainer.Margin = new Thickness(0);
         }
         else
         {
-            if (_rowsBeforeGameOnly is not null)
-            {
-                RootGrid.RowDefinitions = _rowsBeforeGameOnly;
-                _rowsBeforeGameOnly = null;
-            }
-            ExtendClientAreaTitleBarHeightHint = 32;
+            RootGrid.RowDefinitions = new RowDefinitions("32,Auto,*");
             HostContainer.Margin = new Thickness(7, 0, 7, 0);
         }
         MainTitleBar.IsVisible = !on;
         TabBarBorder.IsVisible = !on;
+        if (!on)
+        {
+            MainTitleBar.InvalidateMeasure();
+            MainTitleBar.InvalidateVisual();
+            RootGrid.InvalidateMeasure();
+            RootGrid.InvalidateArrange();
+        }
+
         foreach (var info in _tabs.Values)
-            if (info.ChildHwnd != IntPtr.Zero)
+            if (info.ChildHwnd != IntPtr.Zero && !info.IsDetached)
                 PostChildMessage(info.ChildHwnd, (uint)HotKeys.WM_SKUA_GAMEONLY, new IntPtr(on ? 1 : 0), IntPtr.Zero);
 
         _lastX = int.MinValue;

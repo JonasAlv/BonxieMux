@@ -184,6 +184,13 @@ public partial class MainWindow : Window
         if (FocusManager?.GetFocusedElement() is Button)
             FlashHost?.Focus();
 
+        if (e.Key == Key.Escape && HotKeys.IsDetachedMode && _gameOnly)
+        {
+            ToggleDetachedGameOnly();
+            e.Handled = true;
+            return;
+        }
+
         _pressedKeys.Add(e.Key);
         ForwardLinuxKeyEvent(true, e);
     }
@@ -334,6 +341,8 @@ public partial class MainWindow : Window
     {
         if (uMsg == HotKeys.WM_SKUA_GAMEONLY)
         {
+            if (HotKeys.IsDetachedMode)
+                return IntPtr.Zero;
             bool on = wParam.ToInt32() == 1;
             Dispatcher.UIThread.Post(() => ApplyGameOnly(on));
             return IntPtr.Zero;
@@ -752,6 +761,7 @@ public partial class MainWindow : Window
             int posY = lParam.ToInt32();
             Dispatcher.UIThread.Post(() =>
             {
+                HotKeys.IsDetachedMode = true;
                 if (posX > 0 && posY > 0)
                 {
                     this.Position = new global::Avalonia.PixelPoint(posX, posY);
@@ -787,6 +797,14 @@ public partial class MainWindow : Window
         {
             Dispatcher.UIThread.Post(() =>
             {
+                HotKeys.IsDetachedMode = false;
+                if (_gameOnly)
+                {
+                    ApplyGameOnly(false);
+                    if (_gameOnlySetFullScreen && WindowState == WindowState.FullScreen)
+                        WindowState = WindowState.Normal;
+                    _gameOnlySetFullScreen = false;
+                }
                 HideTitleBar();
                 var titleBar = this.FindControl<global::Avalonia.Controls.Control>("TitleBar");
                 if (titleBar is Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar wtb)
