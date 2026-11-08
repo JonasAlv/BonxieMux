@@ -11,21 +11,21 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Skua.Core.Interfaces;
 using Skua.Core.Models;
+using Skua.Core.Utils;
 
 namespace Skua.Manager.Avalonia.ViewModels;
 
 public partial class AppUpdaterViewModel : ObservableObject
 {
     private readonly IDispatcherService _dispatcherService;
+    private readonly ISettingsService _settingsService;
     private const string RepoOwner = "JonasAlv";
     private const string RepoName = "BonxieMux";
-    private const string ClientPrefix = "BonxieMux-";
-    private const string ManagerPrefix = "BonxieMux-Manager-";
-    private const string AppImageSuffix = "-x86_64.AppImage";
 
-    public AppUpdaterViewModel(IDispatcherService dispatcherService)
+    public AppUpdaterViewModel(IDispatcherService dispatcherService, ISettingsService settingsService)
     {
         _dispatcherService = dispatcherService;
+        _settingsService = settingsService;
     }
 
     [ObservableProperty]
@@ -38,17 +38,24 @@ public partial class AppUpdaterViewModel : ObservableObject
     private bool _updateAvailable;
 
     [ObservableProperty]
+    private bool _canForceUpdate;
+
+    [ObservableProperty]
     private int _progressValue;
 
     private string? _remoteTagName;
+    private DateTimeOffset _remoteReleaseUpdatedAt;
     private string? _remoteClientFileName;
     private string? _remoteClientUrl;
     private string? _remoteClientDigest;
     private long _remoteClientSize;
+    private DateTimeOffset _remoteClientUpdatedAt;
+
     private string? _remoteManagerFileName;
     private string? _remoteManagerUrl;
     private string? _remoteManagerDigest;
     private long _remoteManagerSize;
+    private DateTimeOffset _remoteManagerUpdatedAt;
 
     public async Task CheckForUpdateAsync()
     {
@@ -57,18 +64,22 @@ public partial class AppUpdaterViewModel : ObservableObject
             IsChecking = true;
             UpdateStatus = "Checking for updates...";
             UpdateAvailable = false;
+            CanForceUpdate = false;
             ProgressValue = 0;
         });
 
         _remoteTagName = null;
+        _remoteReleaseUpdatedAt = default;
         _remoteClientFileName = null;
         _remoteClientUrl = null;
         _remoteClientDigest = null;
         _remoteClientSize = 0;
+        _remoteClientUpdatedAt = default;
         _remoteManagerFileName = null;
         _remoteManagerUrl = null;
         _remoteManagerDigest = null;
         _remoteManagerSize = 0;
+        _remoteManagerUpdatedAt = default;
 
         try
         {
@@ -87,6 +98,7 @@ public partial class AppUpdaterViewModel : ObservableObject
                         ? "No releases found on GitHub."
                         : $"GitHub check failed: {response.ReasonPhrase}";
                     UpdateAvailable = false;
+                    CanForceUpdate = false;
                 });
                 return;
             }
@@ -105,8 +117,15 @@ public partial class AppUpdaterViewModel : ObservableObject
                 {
                     UpdateStatus = "No valid release tag found.";
                     UpdateAvailable = false;
+                    CanForceUpdate = false;
                 });
                 return;
+            }
+
+            if (root.TryGetProperty("updated_at", out JsonElement relUpEl) &&
+                DateTimeOffset.TryParse(relUpEl.GetString(), out DateTimeOffset relUp))
+            {
+                _remoteReleaseUpdatedAt = relUp;
             }
 
             if (root.TryGetProperty("assets", out JsonElement assetsEl) && assetsEl.ValueKind == JsonValueKind.Array)
@@ -117,8 +136,15 @@ public partial class AppUpdaterViewModel : ObservableObject
                         ? nameEl.GetString() ?? string.Empty
                         : string.Empty;
 
-                    if (name.StartsWith(ManagerPrefix, StringComparison.OrdinalIgnoreCase) &&
-                        name.EndsWith(AppImageSuffix, StringComparison.OrdinalIgnoreCase))
+                    DateTimeOffset assetUp = default;
+                    if (asset.TryGetProperty("updated_at", out JsonElement assetUpEl) &&
+                        DateTimeOffset.TryParse(assetUpEl.GetString(), out DateTimeOffset aUp))
+                    {
+                        assetUp = aUp;
+                    }
+
+                    if (name.StartsWith(AppImageUtils.ManagerPrefix, StringComparison.OrdinalIgnoreCase) &&
+                        name.EndsWith(AppImageUtils.AppImageSuffix, StringComparison.OrdinalIgnoreCase))
                     {
                         _remoteManagerFileName = name;
                         _remoteManagerUrl = asset.TryGetProperty("browser_download_url", out JsonElement urlEl)
@@ -130,10 +156,11 @@ public partial class AppUpdaterViewModel : ObservableObject
                         _remoteManagerSize = asset.TryGetProperty("size", out JsonElement sizeEl)
                             ? sizeEl.GetInt64()
                             : 0;
+                        _remoteManagerUpdatedAt = assetUp;
                     }
-                    else if (name.StartsWith(ClientPrefix, StringComparison.OrdinalIgnoreCase) &&
-                             !name.StartsWith(ManagerPrefix, StringComparison.OrdinalIgnoreCase) &&
-                             name.EndsWith(AppImageSuffix, StringComparison.OrdinalIgnoreCase))
+                    else if (name.StartsWith(AppImageUtils.ClientPrefix, StringComparison.OrdinalIgnoreCase) &&
+                             !name.StartsWith(AppImageUtils.ManagerPrefix, StringComparison.OrdinalIgnoreCase) &&
+                             name.EndsWith(AppImageUtils.AppImageSuffix, StringComparison.OrdinalIgnoreCase))
                     {
                         _remoteClientFileName = name;
                         _remoteClientUrl = asset.TryGetProperty("browser_download_url", out JsonElement urlEl)
@@ -145,6 +172,7 @@ public partial class AppUpdaterViewModel : ObservableObject
                         _remoteClientSize = asset.TryGetProperty("size", out JsonElement sizeEl)
                             ? sizeEl.GetInt64()
                             : 0;
+                        _remoteClientUpdatedAt = assetUp;
                     }
                 }
             }
@@ -155,6 +183,7 @@ public partial class AppUpdaterViewModel : ObservableObject
                 {
                     UpdateStatus = $"Release {tagName} found, but AppImage asset is missing.";
                     UpdateAvailable = false;
+                    CanForceUpdate = false;
                 });
                 return;
             }
@@ -163,31 +192,150 @@ public partial class AppUpdaterViewModel : ObservableObject
 
             string remoteVerClean = tagName.TrimStart('v', 'V');
             string localVerClean = ClientFileSources.DisplayVersion.TrimStart('v', 'V');
-
-            bool isNewer = false;
             string remoteVerCore = remoteVerClean.Split('-')[0];
             string localVerCore = localVerClean.Split('-')[0];
 
+            bool isTagNewer;
             if (Version.TryParse(remoteVerCore, out Version? remoteV) && Version.TryParse(localVerCore, out Version? localV))
-            {
-                isNewer = remoteV > localV;
-            }
+                isTagNewer = remoteV > localV;
             else
+                isTagNewer = !string.Equals(remoteVerClean, localVerClean, StringComparison.OrdinalIgnoreCase);
+
+            if (isTagNewer)
             {
-                isNewer = !string.Equals(remoteVerClean, localVerClean, StringComparison.OrdinalIgnoreCase);
+                _dispatcherService.Invoke(() =>
+                {
+                    UpdateStatus = $"Update {tagName} available! (Current: V{ClientFileSources.DisplayVersion})";
+                    UpdateAvailable = true;
+                    CanForceUpdate = false;
+                });
+                return;
+            }
+
+            // Same version tag (or older): check if release assets were recently updated / differ from local files
+            string targetDir = AppImageUtils.ResolveAppImageDirectory();
+            string? localClient = AppImageUtils.FindLocalAppImage(targetDir, isManager: false, _remoteClientFileName);
+            string? localManager = AppImageUtils.FindLocalAppImage(targetDir, isManager: true, _remoteManagerFileName);
+
+            string? runningApp = AppImageUtils.GetRunningAppImagePath();
+            if (!string.IsNullOrEmpty(runningApp))
+            {
+                string runningName = Path.GetFileName(runningApp);
+                if (runningName.StartsWith(AppImageUtils.ManagerPrefix, StringComparison.OrdinalIgnoreCase))
+                    localManager = runningApp;
+                else if (runningName.StartsWith(AppImageUtils.ClientPrefix, StringComparison.OrdinalIgnoreCase))
+                    localClient = runningApp;
+            }
+
+            bool fileChanged = false;
+            string changeReason = string.Empty;
+
+            // Check Manager binary
+            if (!string.IsNullOrEmpty(_remoteManagerUrl))
+            {
+                if (localManager != null && File.Exists(localManager))
+                {
+                    if (!string.IsNullOrWhiteSpace(_remoteManagerDigest) &&
+                        _remoteManagerDigest.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string expectedSha = _remoteManagerDigest.Substring("sha256:".Length).Trim();
+                        string localSha = await AppImageUtils.ComputeFileSha256Async(localManager);
+                        if (!localSha.Equals(expectedSha, StringComparison.OrdinalIgnoreCase))
+                        {
+                            fileChanged = true;
+                            changeReason = "Manager build updated on GitHub";
+                        }
+                    }
+                    else if (_remoteManagerSize > 0 && new FileInfo(localManager).Length != _remoteManagerSize)
+                    {
+                        fileChanged = true;
+                        changeReason = "Manager file size changed on GitHub";
+                    }
+                    else if (_remoteManagerUpdatedAt != default &&
+                             _remoteManagerUpdatedAt > File.GetLastWriteTimeUtc(localManager).AddMinutes(2))
+                    {
+                        fileChanged = true;
+                        changeReason = "Manager re-uploaded on GitHub";
+                    }
+                }
+                else
+                {
+                    fileChanged = true;
+                    changeReason = "Manager AppImage not installed locally";
+                }
+            }
+
+            // Check Client binary
+            if (!fileChanged && !string.IsNullOrEmpty(_remoteClientUrl))
+            {
+                if (localClient != null && File.Exists(localClient))
+                {
+                    if (!string.IsNullOrWhiteSpace(_remoteClientDigest) &&
+                        _remoteClientDigest.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string expectedSha = _remoteClientDigest.Substring("sha256:".Length).Trim();
+                        string localSha = await AppImageUtils.ComputeFileSha256Async(localClient);
+                        if (!localSha.Equals(expectedSha, StringComparison.OrdinalIgnoreCase))
+                        {
+                            fileChanged = true;
+                            changeReason = "BonxieMux client build updated on GitHub";
+                        }
+                    }
+                    else if (_remoteClientSize > 0 && new FileInfo(localClient).Length != _remoteClientSize)
+                    {
+                        fileChanged = true;
+                        changeReason = "BonxieMux client file size changed on GitHub";
+                    }
+                    else if (_remoteClientUpdatedAt != default &&
+                             _remoteClientUpdatedAt > File.GetLastWriteTimeUtc(localClient).AddMinutes(2))
+                    {
+                        fileChanged = true;
+                        changeReason = "BonxieMux client re-uploaded on GitHub";
+                    }
+                }
+                else
+                {
+                    fileChanged = true;
+                    changeReason = "BonxieMux client AppImage not installed locally";
+                }
+            }
+
+            // Check saved settings metadata
+            if (!fileChanged && _settingsService != null)
+            {
+                string lastSavedClientDigest = _settingsService.Get<string>("LastInstalledClientDigest", string.Empty);
+                if (!string.IsNullOrEmpty(lastSavedClientDigest) &&
+                    !string.IsNullOrEmpty(_remoteClientDigest) &&
+                    !string.Equals(lastSavedClientDigest, _remoteClientDigest, StringComparison.OrdinalIgnoreCase))
+                {
+                    fileChanged = true;
+                    changeReason = "New client asset uploaded to release";
+                }
+
+                string lastSavedManagerDigest = _settingsService.Get<string>("LastInstalledManagerDigest", string.Empty);
+                if (!fileChanged &&
+                    !string.IsNullOrEmpty(lastSavedManagerDigest) &&
+                    !string.IsNullOrEmpty(_remoteManagerDigest) &&
+                    !string.Equals(lastSavedManagerDigest, _remoteManagerDigest, StringComparison.OrdinalIgnoreCase))
+                {
+                    fileChanged = true;
+                    changeReason = "New manager asset uploaded to release";
+                }
             }
 
             _dispatcherService.Invoke(() =>
             {
-                if (isNewer)
+                if (fileChanged)
                 {
-                    UpdateStatus = $"Update {tagName} available! (Current: V{ClientFileSources.DisplayVersion})";
+                    UpdateStatus = $"New build for {tagName} detected! ({changeReason})";
                     UpdateAvailable = true;
+                    CanForceUpdate = false;
                 }
                 else
                 {
-                    UpdateStatus = $"You are up to date! (V{ClientFileSources.DisplayVersion})";
+                    UpdateStatus = $"You are up to date! ({tagName} build is current)";
                     UpdateAvailable = false;
+                    CanForceUpdate = true;
                 }
             });
         }
@@ -197,6 +345,7 @@ public partial class AppUpdaterViewModel : ObservableObject
             {
                 UpdateStatus = $"Error checking updates: {ex.Message}";
                 UpdateAvailable = false;
+                CanForceUpdate = false;
             });
         }
         finally
@@ -211,8 +360,17 @@ public partial class AppUpdaterViewModel : ObservableObject
         await CheckForUpdateAsync();
     }
 
+    [RelayCommand]
+    private async Task ForceUpdate()
+    {
+        await DownloadAndInstallAsync();
+    }
+
     public async Task DownloadAndInstallAsync()
     {
+        if (string.IsNullOrEmpty(_remoteClientUrl) || string.IsNullOrEmpty(_remoteClientFileName))
+            await CheckForUpdateAsync();
+
         if (string.IsNullOrEmpty(_remoteClientUrl) || string.IsNullOrEmpty(_remoteClientFileName))
             return;
 
@@ -233,10 +391,7 @@ public partial class AppUpdaterViewModel : ObservableObject
             Directory.CreateDirectory(tempDir);
             ClientFileSources.RestrictDirectoryPermissions(tempDir);
 
-            string? runningAppImage = Environment.GetEnvironmentVariable("APPIMAGE");
-            string targetDir = !string.IsNullOrEmpty(runningAppImage) && File.Exists(runningAppImage)
-                ? Path.GetDirectoryName(runningAppImage)!
-                : AppContext.BaseDirectory;
+            string targetDir = AppImageUtils.ResolveAppImageDirectory();
 
             var assetsToDownload = new List<(string Name, string Url, string? Digest, long Size)>
             {
@@ -285,9 +440,7 @@ public partial class AppUpdaterViewModel : ObservableObject
                     {
                         string expectedSha256 = digest.Substring("sha256:".Length).Trim();
                         _dispatcherService.Invoke(() => UpdateStatus = $"Verifying SHA-256 for {name}...");
-                        await using FileStream verifyStream = File.OpenRead(filePath);
-                        byte[] actualHash = await SHA256.HashDataAsync(verifyStream);
-                        string actualHex = Convert.ToHexString(actualHash);
+                        string actualHex = await AppImageUtils.ComputeFileSha256Async(filePath);
                         if (!actualHex.Equals(expectedSha256, StringComparison.OrdinalIgnoreCase))
                         {
                             throw new InvalidDataException($"SHA-256 verification failed for {name} (expected {expectedSha256}, got {actualHex}).");
@@ -301,7 +454,7 @@ public partial class AppUpdaterViewModel : ObservableObject
             foreach (string downloaded in Directory.GetFiles(tempDir, "*.AppImage"))
             {
                 string fileName = Path.GetFileName(downloaded);
-                bool isManager = fileName.StartsWith(ManagerPrefix, StringComparison.OrdinalIgnoreCase);
+                bool isManager = fileName.StartsWith(AppImageUtils.ManagerPrefix, StringComparison.OrdinalIgnoreCase);
 
                 try
                 {
@@ -312,12 +465,12 @@ public partial class AppUpdaterViewModel : ObservableObject
                 }
                 catch { }
 
-                // Remove any older versioned AppImages of the same component in targetDir
+                // Unlink any older versioned AppImages of the same component in targetDir
                 foreach (string existing in Directory.GetFiles(targetDir, "*.AppImage"))
                 {
                     string existingName = Path.GetFileName(existing);
-                    bool existingIsManager = existingName.StartsWith(ManagerPrefix, StringComparison.OrdinalIgnoreCase);
-                    bool existingIsClient = existingName.StartsWith(ClientPrefix, StringComparison.OrdinalIgnoreCase) && !existingIsManager;
+                    bool existingIsManager = existingName.StartsWith(AppImageUtils.ManagerPrefix, StringComparison.OrdinalIgnoreCase);
+                    bool existingIsClient = existingName.StartsWith(AppImageUtils.ClientPrefix, StringComparison.OrdinalIgnoreCase) && !existingIsManager;
 
                     if ((isManager && existingIsManager) || (!isManager && existingIsClient))
                     {
@@ -326,18 +479,48 @@ public partial class AppUpdaterViewModel : ObservableObject
                 }
 
                 string destination = Path.Combine(targetDir, fileName);
+                try { if (File.Exists(destination)) File.Delete(destination); } catch { }
+
                 try
                 {
                     File.Move(downloaded, destination, overwrite: true);
                 }
                 catch
                 {
+                    try { if (File.Exists(destination)) File.Delete(destination); } catch { }
                     File.Copy(downloaded, destination, overwrite: true);
                     try { File.Delete(downloaded); } catch { }
                 }
+
+                try
+                {
+                    File.SetUnixFileMode(destination,
+                        UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                        UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
+                        UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+                }
+                catch { }
             }
 
             try { Directory.Delete(tempDir, true); } catch { }
+
+            // Save installation metadata in settings
+            try
+            {
+                if (!string.IsNullOrEmpty(_remoteTagName))
+                    _settingsService.Set("LastInstalledReleaseTag", _remoteTagName);
+                if (_remoteReleaseUpdatedAt != default)
+                    _settingsService.Set("LastInstalledReleaseUpdated", _remoteReleaseUpdatedAt.ToString("O"));
+                if (!string.IsNullOrEmpty(_remoteClientDigest))
+                    _settingsService.Set("LastInstalledClientDigest", _remoteClientDigest);
+                if (!string.IsNullOrEmpty(_remoteManagerDigest))
+                    _settingsService.Set("LastInstalledManagerDigest", _remoteManagerDigest);
+                if (_remoteClientUpdatedAt != default)
+                    _settingsService.Set("LastInstalledClientUpdated", _remoteClientUpdatedAt.ToString("O"));
+                if (_remoteManagerUpdatedAt != default)
+                    _settingsService.Set("LastInstalledManagerUpdated", _remoteManagerUpdatedAt.ToString("O"));
+            }
+            catch { }
 
             _dispatcherService.Invoke(() =>
             {
@@ -353,11 +536,13 @@ public partial class AppUpdaterViewModel : ObservableObject
 
             if (File.Exists(restartPath))
             {
-                Process.Start(new ProcessStartInfo(restartPath)
+                ProcessStartInfo psi = new(restartPath)
                 {
-                    UseShellExecute = true,
+                    UseShellExecute = false,
                     WorkingDirectory = targetDir
-                });
+                };
+                AppImageUtils.SanitizeAppImageEnvironment(psi);
+                Process.Start(psi);
             }
 
             Environment.Exit(0);

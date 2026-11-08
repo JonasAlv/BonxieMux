@@ -9,6 +9,8 @@ public interface IClientUpdateService
 
     bool UpdateAvailable { get; }
 
+    string? UpdateStatusMessage { get; }
+
     bool UsingNightlyChannel { get; }
 
     Task CheckForUpdateAsync();

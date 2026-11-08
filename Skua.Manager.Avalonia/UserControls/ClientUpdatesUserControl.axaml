@@ -84,6 +84,17 @@
                             <TextBlock Text="Download &amp; Install" VerticalAlignment="Center" FontWeight="Bold" />
                         </StackPanel>
                     </Button>
+
+                    <Button Classes="skua-button outline"
+                            Height="36"
+                            Command="{Binding UpdateCommand}"
+                            IsVisible="{Binding !UpdateVisible}"
+                            ToolTip.Tip="Force re-download the latest release AppImages even if local version matches.">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <materialIcons:MaterialIcon Kind="DownloadOutline" Width="16" Height="16" />
+                            <TextBlock Text="Re-download Latest" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>

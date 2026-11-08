@@ -107,7 +107,7 @@ public partial class ClientUpdatesViewModel : BotControlViewModelBase
             await _updateService.CheckForUpdateAsync();
             UpdateVisible = _updateService.UpdateAvailable;
             Latest = _updateService.LatestVersion;
-            Status = UpdateVisible ? $"Update available: {Latest}" : "You have the latest version";
+            Status = _updateService.UpdateStatusMessage ?? (UpdateVisible ? $"Update available: {Latest}" : "You have the latest version");
 
             if (UpdateVisible
                 && _settingsService.Get("UseNightlyBuilds", false)
@@ -127,9 +127,6 @@ public partial class ClientUpdatesViewModel : BotControlViewModelBase
     [RelayCommand]
     public async Task Update()
     {
-        if (!UpdateVisible)
-            return;
-
         IsBusy = true;
         Status = "Downloading update...";
         try
