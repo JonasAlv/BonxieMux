@@ -106,6 +106,41 @@ public class ScriptInfo
         get
         {
             if (!Downloaded) return false;
+
+            if (FilePath.EndsWith("CoreBots.cs", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(Sha256))
+            {
+                string shaFile = LocalFile + ".sha";
+                if (File.Exists(shaFile))
+                {
+                    try
+                    {
+                        string savedSha = File.ReadAllText(shaFile).Trim();
+                        return !string.Equals(savedSha, Sha256, StringComparison.OrdinalIgnoreCase);
+                    }
+                    catch { }
+                }
+
+                try
+                {
+                    string text = File.ReadAllText(LocalFile);
+                    if (text.Contains("// Neutralized Windows update check on Linux"))
+                    {
+                        string unpatched = text
+                            .Replace("// RunSync(() => SkuaVersionCheckerAsync()); // Neutralized Windows update check on Linux", "RunSync(() => SkuaVersionCheckerAsync());")
+                            .Replace("private async Task SkuaVersionCheckerAsync() => await Task.CompletedTask; private async Task __OldSkuaVersionCheckerAsync()", "private async Task SkuaVersionCheckerAsync()");
+                        using var sha = SHA256.Create();
+                        byte[] hash = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(unpatched));
+                        string unpatchedSha = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                        if (string.Equals(unpatchedSha, Sha256, StringComparison.OrdinalIgnoreCase))
+                        {
+                            try { File.WriteAllText(shaFile, Sha256); } catch { }
+                            return false;
+                        }
+                    }
+                }
+                catch { }
+            }
+
             if (LocalSize != Size) return true;
             if (!string.IsNullOrEmpty(Sha256) && LocalSha256 != null)
                 return !string.Equals(LocalSha256, Sha256, StringComparison.OrdinalIgnoreCase);

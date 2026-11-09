@@ -398,6 +398,14 @@ public partial class GetScriptsService : ObservableObject, IGetScriptsService
         {
             await File.WriteAllBytesAsync(temporaryFile, scriptBytes, token);
             File.Move(temporaryFile, info.LocalFile, true);
+            if (info.FilePath.EndsWith("CoreBots.cs", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(info.Sha256))
+            {
+                try
+                {
+                    await File.WriteAllTextAsync(info.LocalFile + ".sha", info.Sha256, token);
+                }
+                catch { }
+            }
         }
         finally
         {
@@ -469,6 +477,9 @@ public partial class GetScriptsService : ObservableObject, IGetScriptsService
             {
                 if (File.Exists(info.LocalFile))
                     File.Delete(info.LocalFile);
+                string shaFile = info.LocalFile + ".sha";
+                if (File.Exists(shaFile))
+                    File.Delete(shaFile);
                 info.CachedDownloaded = false;
                 info.CachedLocalSize = 0;
             }
