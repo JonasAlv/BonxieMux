@@ -35,9 +35,9 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
 
         StrongReferenceMessenger.Default.Register<ScriptDrop, ItemDroppedMessage, int>(this, (int)MessageChannels.GameEvents, AddDrop);
         StrongReferenceMessenger.Default.Register<ScriptDrop, DropPickupResultMessage, int>(this, (int)MessageChannels.GameEvents, PickupResult);
-        StrongReferenceMessenger.Default.Register<ScriptDrop, ItemSoldMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r._refusedIDs.Clear());
-        StrongReferenceMessenger.Default.Register<ScriptDrop, ItemBoughtMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r._refusedIDs.Clear());
-        StrongReferenceMessenger.Default.Register<ScriptDrop, ItemAddedToBankMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r._refusedIDs.Clear());
+        StrongReferenceMessenger.Default.Register<ScriptDrop, ItemSoldMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r.ClearRefusedAndFullStack());
+        StrongReferenceMessenger.Default.Register<ScriptDrop, ItemBoughtMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r.ClearRefusedAndFullStack());
+        StrongReferenceMessenger.Default.Register<ScriptDrop, ItemAddedToBankMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r.ClearRefusedAndFullStack());
         StrongReferenceMessenger.Default.Register<ScriptDrop, LogoutMessage, int>(this, (int)MessageChannels.GameEvents, ClearDrops);
         StrongReferenceMessenger.Default.Register<ScriptDrop, ScriptStoppedMessage, int>(this, (int)MessageChannels.ScriptStatus, ScriptStopped);
         Messenger.Register<ScriptDrop, PropertyChangedMessage<bool>>(this, OptionsChanged);
@@ -125,6 +125,7 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
         }
 
         _refusedIDs.TryRemove(drop.ID, out _);
+        RecordPendingPickup(drop);
         Send.Packet($"%xt%zm%getDrop%{Map.RoomID}%{drop.ID}%");
         return true;
     }
@@ -412,6 +413,10 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
 
     private void PickupResult(ScriptDrop recipient, DropPickupResultMessage message)
     {
+        recipient._pendingPickups.TryRemove(message.ItemID, out _);
+        if (recipient._lastPickupDropID == message.ItemID)
+            recipient._lastPickupDropID = 0;
+
         if (!message.Success)
         {
             recipient._refusedIDs[message.ItemID] = recipient.FreeSlots();
@@ -428,7 +433,10 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
     {
         recipient._bankLoadTried = DateTime.MinValue;
         Interlocked.Increment(ref recipient._lootSession);
-        recipient._refusedIDs.Clear();
+        recipient.ClearRefusedAndFullStack();
+        recipient._pendingPickups.Clear();
+        recipient._lastPickupDropID = 0;
+        recipient._lastPickupDropName = string.Empty;
         recipient._currentDropInfos.Clear();
         recipient.OnPropertyChanged(nameof(recipient.CurrentDropInfos));
         recipient.OnPropertyChanged(nameof(recipient.CurrentDrops));

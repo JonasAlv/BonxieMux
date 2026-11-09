@@ -614,7 +614,7 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 if (((string)args[0]).Contains("One Time Quest Only", StringComparison.OrdinalIgnoreCase))
                     OnOneTimeQuestOnly();
                 if (((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase))
-                    ((ScriptDrop)Drops).RejectFullStackDrops();
+                    Drops.RejectFullStackDrops();
                 dynamic packet = JsonConvert.DeserializeObject<dynamic>((string)args[0])!;
                 string? pextCmd = null;
                 try
@@ -795,7 +795,7 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
 
             case "packet":
                 if (((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase))
-                    ((ScriptDrop)Drops).RejectFullStackDrops();
+                    Drops.RejectFullStackDrops();
                 try
                 {
                     string[] parts = ((string)args[0]).Split('%', StringSplitOptions.RemoveEmptyEntries);

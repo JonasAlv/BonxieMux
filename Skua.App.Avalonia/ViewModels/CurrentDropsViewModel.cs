@@ -28,12 +28,20 @@ public partial class CurrentDropsViewModel : BotControlViewModelBase
     {
         StrongReferenceMessenger.Default.Register<CurrentDropsViewModel, ItemDroppedMessage, int>(this, (int)MessageChannels.GameEvents, CurrentDropsChanged);
         StrongReferenceMessenger.Default.Register<CurrentDropsViewModel, DropPickupResultMessage, int>(this, (int)MessageChannels.GameEvents, PickupResultReceived);
+        _drops.PropertyChanged += OnDropsPropertyChanged;
         RefreshDrops();
     }
 
     protected override void OnDeactivated()
     {
+        _drops.PropertyChanged -= OnDropsPropertyChanged;
         StrongReferenceMessenger.Default.UnregisterAll(this);
+    }
+
+    private void OnDropsPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(IScriptDrop.CurrentDropInfos) or nameof(IScriptDrop.CurrentDrops))
+            Dispatcher.UIThread.Post(RefreshDrops);
     }
 
     private readonly IScriptPlayer _player;

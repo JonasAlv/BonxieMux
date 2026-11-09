@@ -109,16 +109,41 @@ public class Player {
     }
 
     public static function rejectExcept(whitelist:String):String {
-        var pickup:Array = whitelist.split(',');
+        var pickup:Array = [];
+        if (whitelist != null && whitelist.length > 0) {
+            var raw:Array = whitelist.split(',');
+            for each (var entry:* in raw) {
+                var trimmed:String = String(entry).replace(/^\s+|\s+$/g, "").toLowerCase();
+                if (trimmed.length > 0) {
+                    pickup.push(trimmed);
+                }
+            }
+        }
         if (Main.instance.game.litePreference.data.bCustomDrops) {
             var drops:* = Main.instance.game.cDropsUI;
             if (drops == null) {
                 return "false";
             }
             // Rejection redraws the list, so iterate a snapshot of the underlying data.
-            for each (var item:* in drops.invTree.concat()) {
-                if (item != null && pickup.indexOf(String(item.sName).toLowerCase()) == -1) {
-                    drops.onBtNo(item);
+            var tree:* = drops.invTree;
+            if (tree is Array) {
+                for each (var item:* in tree.concat()) {
+                    if (item != null) {
+                        var sName:String = String(item.sName == null ? "" : item.sName).replace(/^\s+|\s+$/g, "").toLowerCase();
+                        if (pickup.indexOf(sName) == -1) {
+                            drops.onBtNo(item);
+                        }
+                    }
+                }
+            } else if (tree != null) {
+                for (var key:String in tree) {
+                    var objItem:* = tree[key];
+                    if (objItem != null) {
+                        var objName:String = String(objItem.sName == null ? "" : objItem.sName).replace(/^\s+|\s+$/g, "").toLowerCase();
+                        if (pickup.indexOf(objName) == -1) {
+                            drops.onBtNo(objItem);
+                        }
+                    }
                 }
             }
         } else {

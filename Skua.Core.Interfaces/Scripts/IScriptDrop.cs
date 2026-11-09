@@ -181,6 +181,7 @@ public interface IScriptDrop : INotifyPropertyChanged
     /// <param name="skipWait">Whether <see cref="IScriptOption.SafeTimings"/> is ignored.</param>
     void RejectAll(bool skipWait = false);
     void RejectCurrentDrops(bool keepAC);
+    void RejectFullStackDrops();
     Task<string> PickupACToBankAsync(CancellationToken cancellationToken = default);
     string ACBankingStatus { get; }
 

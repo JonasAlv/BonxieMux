@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Skua.Core.Interfaces;
 using Skua.Core.Models.Items;
 
@@ -18,6 +19,28 @@ public partial class ScriptDrop
     private int _pendingSession;
     private static int _bankingACDrops;
     internal static bool BankingACDrops => Volatile.Read(ref _bankingACDrops) != 0;
+
+    private readonly ConcurrentDictionary<int, byte> _fullStackIDs = new();
+    private readonly ConcurrentDictionary<string, byte> _fullStackNames = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<int, (string Name, DateTime Time)> _pendingPickups = new();
+    private volatile int _lastPickupDropID;
+    private volatile string _lastPickupDropName = string.Empty;
+    private DateTime _lastPickupTime = DateTime.MinValue;
+
+    private void RecordPendingPickup(ItemBase drop)
+    {
+        _lastPickupDropID = drop.ID;
+        _lastPickupDropName = drop.Name;
+        _lastPickupTime = DateTime.UtcNow;
+        _pendingPickups[drop.ID] = (drop.Name, DateTime.UtcNow);
+    }
+
+    private void ClearRefusedAndFullStack()
+    {
+        _refusedIDs.Clear();
+        _fullStackIDs.Clear();
+        _fullStackNames.Clear();
+    }
 
     public void RejectCurrentDrops(bool keepAC)
     {
@@ -130,6 +153,7 @@ public partial class ScriptDrop
                     continue;
                 }
                 // Use the same server operation as Pickup, bypassing only our automatic-queue guard.
+                RecordPendingPickup(drop);
                 Send.Packet($"%xt%zm%getDrop%{Map.RoomID}%{drop.ID}%");
                 _currentDropInfos.Remove(d => d.ID == drop.ID);
                 sent.Add((drop, previous?.Quantity ?? 0));
@@ -202,14 +226,54 @@ public partial class ScriptDrop
     {
         if (drop.Temp)
             return null;
-        InventoryItem? owned = Inventory.Items.FirstOrDefault(i => (drop.ID != 0 && i.ID == drop.ID) || (!string.IsNullOrEmpty(drop.Name) && string.Equals(i.Name, drop.Name, StringComparison.OrdinalIgnoreCase)));
-        int max = owned is { MaxStack: > 0 } ? owned.MaxStack : drop.MaxStack;
-        if (owned != null && max > 1 && owned.Quantity >= max)
-            return "full stack";
-        if (max != 1)
-            return null;
-        if (owned != null)
-            return "already owned";
+
+        if ((drop.ID != 0 && _fullStackIDs.ContainsKey(drop.ID)) ||
+            (!string.IsNullOrEmpty(drop.Name) && _fullStackNames.ContainsKey(drop.Name)))
+            return "full stack (server confirmed)";
+
+        InventoryItem? invOwned = Inventory.Items.FirstOrDefault(i =>
+            (drop.ID != 0 && i.ID == drop.ID) ||
+            (!string.IsNullOrEmpty(drop.Name) && string.Equals(i.Name, drop.Name, StringComparison.OrdinalIgnoreCase)));
+
+        InventoryItem? bankOwned = null;
+        if (_bank.Value.Loaded)
+        {
+            bankOwned = _bank.Value.Items.FirstOrDefault(i =>
+                (drop.ID != 0 && i.ID == drop.ID) ||
+                (!string.IsNullOrEmpty(drop.Name) && string.Equals(i.Name, drop.Name, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        int max = invOwned is { MaxStack: > 0 } ? invOwned.MaxStack :
+                  bankOwned is { MaxStack: > 0 } ? bankOwned.MaxStack :
+                  drop.MaxStack > 0 ? drop.MaxStack : 0;
+
+        if (max <= 0 && drop.ID > 0)
+        {
+            try
+            {
+                max = Flash.GetGameObject<int>($"world.invTree[{drop.ID}].iStk");
+            }
+            catch { }
+        }
+
+        if (invOwned != null)
+        {
+            if (max > 1 && invOwned.Quantity >= max)
+                return "full stack in inventory";
+            if (max == 1)
+                return "already owned in inventory";
+        }
+
+        if (bankOwned != null)
+        {
+            if (max > 1 && bankOwned.Quantity >= max)
+                return "full stack in bank";
+            if (max == 1)
+                return "already owned in bank";
+            if (!Options.PickupACDropsAndSendToBank)
+                return "already in the bank";
+        }
+
         if (!_bank.Value.Loaded)
         {
             if (Player.InCombat)
@@ -219,8 +283,25 @@ public partial class ScriptDrop
                 return null;
             _bankLoadTried = DateTime.UtcNow;
             _bank.Value.Load(true);
+
+            if (_bank.Value.Loaded)
+            {
+                bankOwned = _bank.Value.Items.FirstOrDefault(i =>
+                    (drop.ID != 0 && i.ID == drop.ID) ||
+                    (!string.IsNullOrEmpty(drop.Name) && string.Equals(i.Name, drop.Name, StringComparison.OrdinalIgnoreCase)));
+                if (bankOwned != null)
+                {
+                    if (max <= 0 && bankOwned.MaxStack > 0)
+                        max = bankOwned.MaxStack;
+                    if (max > 1 && bankOwned.Quantity >= max)
+                        return "full stack in bank";
+                    if (max == 1 || !Options.PickupACDropsAndSendToBank)
+                        return "already in the bank";
+                }
+            }
         }
-        return (_bank.Value.Contains(drop.ID) || (!string.IsNullOrEmpty(drop.Name) && _bank.Value.Contains(drop.Name))) ? "already in the bank" : null;
+
+        return null;
     }
 
     private DateTime _bankLoadTried = DateTime.MinValue;
@@ -245,9 +326,61 @@ public partial class ScriptDrop
 
     public void RejectFullStackDrops()
     {
-        ItemBase[] fullStack = CurrentDropInfos.Where(d => CannotTake(d) is not null).ToArray();
-        if (fullStack.Length > 0)
-            RejectDrops(fullStack);
+        List<ItemBase> toReject = new();
+
+        // 1. Drops that CannotTake can identify right away
+        ItemBase[] cannotTakeDrops = CurrentDropInfos.Where(d => CannotTake(d) is not null).ToArray();
+        toReject.AddRange(cannotTakeDrops);
+
+        // 2. Identify the drop that was just requested when server sent "Already have a full stack"
+        int lastID = _lastPickupDropID;
+        string lastName = _lastPickupDropName;
+        if (lastID != 0 && (DateTime.UtcNow - _lastPickupTime) < TimeSpan.FromSeconds(5))
+        {
+            _fullStackIDs.TryAdd(lastID, 0);
+            if (!string.IsNullOrEmpty(lastName))
+                _fullStackNames.TryAdd(lastName, 0);
+
+            ItemBase? pendingDrop = CurrentDropInfos.FirstOrDefault(d => (lastID != 0 && d.ID == lastID) || (!string.IsNullOrEmpty(lastName) && string.Equals(d.Name, lastName, StringComparison.OrdinalIgnoreCase)));
+            if (pendingDrop != null && !toReject.Contains(pendingDrop))
+                toReject.Add(pendingDrop);
+        }
+
+        // 3. Check any pending pickups from the last 5 seconds
+        DateTime cutoff = DateTime.UtcNow.AddSeconds(-5);
+        foreach (var kvp in _pendingPickups)
+        {
+            if (kvp.Value.Time >= cutoff)
+            {
+                ItemBase? pDrop = CurrentDropInfos.FirstOrDefault(d => d.ID == kvp.Key || string.Equals(d.Name, kvp.Value.Name, StringComparison.OrdinalIgnoreCase));
+                if (pDrop != null && !toReject.Contains(pDrop))
+                {
+                    _fullStackIDs.TryAdd(kvp.Key, 0);
+                    if (!string.IsNullOrEmpty(kvp.Value.Name))
+                        _fullStackNames.TryAdd(kvp.Value.Name, 0);
+                    toReject.Add(pDrop);
+                }
+            }
+        }
+
+        // 4. Fallback: if toReject is still empty and there is only 1 current drop on screen, that drop is the culprit
+        if (toReject.Count == 0)
+        {
+            ItemBase[] current = CurrentDropInfos.ToArray();
+            if (current.Length == 1)
+            {
+                _fullStackIDs.TryAdd(current[0].ID, 0);
+                if (!string.IsNullOrEmpty(current[0].Name))
+                    _fullStackNames.TryAdd(current[0].Name, 0);
+                toReject.Add(current[0]);
+            }
+        }
+
+        if (toReject.Count > 0)
+        {
+            System.Diagnostics.Trace.WriteLine($"[ScriptDrop] Rejected full stack drop(s): {string.Join(", ", toReject.Select(d => d.Name))}");
+            RejectDrops(toReject.ToArray());
+        }
     }
 
     private bool SafeAccount(string account) => _pendingSession == Volatile.Read(ref _lootSession) && Player.LoggedIn && Player.Username.Equals(account, StringComparison.OrdinalIgnoreCase);
