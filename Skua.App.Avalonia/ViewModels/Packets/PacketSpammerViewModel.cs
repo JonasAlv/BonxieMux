@@ -57,6 +57,9 @@ public partial class PacketSpammerViewModel : BotControlViewModelBase
     [RelayCommand]
     private async Task Spammer(CancellationToken token)
     {
+        if (Packets.Count == 0 || SpamDelay <= 0)
+            return;
+
         while (!token.IsCancellationRequested)
         {
             for (int i = 0; i < Packets.Count; i++)

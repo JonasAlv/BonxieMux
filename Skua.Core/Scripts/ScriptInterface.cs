@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Messaging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Skua.Core.Interfaces;
 using Skua.Core.Interfaces.Services;
 using Skua.Core.Messaging;
@@ -382,6 +383,7 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
 
                 _limit.LimitedRun("connDetail", 100, () => (lastConnChange, lastConnDetail) = CheckStuckonLoading(lastConnChange, lastConnDetail));
                 _limit.LimitedRun("loginWatchdog", 500, LoginWatchdogTick);
+                UpdateCounterAttack();
                 if (Manager.ScriptRunning)
                     RunScriptHandlers();
 
@@ -408,7 +410,7 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
             return;
 
         if (Options.Magnetise)
-            Flash.Call("magnetise");
+            Flash.Call("magnetize");
         if (Options.InfiniteRange)
             Flash.Call("infiniteRange");
         if (Options.AggroMonsters)
@@ -614,70 +616,51 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 if (((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase))
                     ((ScriptDrop)Drops).RejectFullStackDrops();
                 dynamic packet = JsonConvert.DeserializeObject<dynamic>((string)args[0])!;
-                string type = packet["params"].type;
-                dynamic data = packet["params"].dataObj;
-                if (type is not null and "json")
+                string? pextCmd = null;
+                try
                 {
-                    string cmd = data.cmd;
-                    switch (cmd)
+                    string type = packet["params"].type;
+                    dynamic data = packet["params"].dataObj;
+                    if (type is not null and "json")
                     {
-                        case "event":
-                            string zone = data.args?["zoneSet"]!;
-                            if (zone is not null)
-                                Messenger.Send<RunToAreaMessage, int>(new(zone), (int)MessageChannels.GameEvents);
-                            break;
-
-                        case "moveToArea":
-                            Stats.GetSpace();
-                            Messenger.Send<MapChangedMessage, int>(new(Convert.ToString(data.strMapName)), (int)MessageChannels.GameEvents);
-                            Map.FilePath = Convert.ToString(data.strMapFileName);
-                            Map.LastMap = Convert.ToString(data.strMapName);
-                            break;
-
-                        case "ct":
-                            dynamic p = data.p?[Player.Username.ToLower()]!;
-                            if (p is not null && p.intHP == 0)
-                            {
-                                // Combat-state packets can repeat while the player remains dead.
-                                if (!_playerDead)
-                                {
-                                    Stats.Deaths++;
-                                    Messenger.Send<PlayerDeathMessage, int>((int)MessageChannels.GameEvents);
-                                }
-
-                                _playerDead = true;
+                        string cmd = data.cmd;
+                        pextCmd = cmd;
+                        switch (cmd)
+                        {
+                            case "event":
+                                string zone = data.args?["zoneSet"]!;
+                                if (zone is not null)
+                                    Messenger.Send<RunToAreaMessage, int>(new(zone), (int)MessageChannels.GameEvents);
                                 break;
-                            }
 
-                            if (p is not null)
-                                _playerDead = false;
-                            dynamic anims = data.anims?[0]!;
-                            if (anims is not null)
-                            {
-                                string msg = anims["msg"];
-                                if (msg is not null && msg.Contains("prepares a counter attack!"))
-                                {
-                                    Messenger.Send<CounterAttackMessage, int>(new(false), (int)MessageChannels.GameEvents);
-                                    break;
-                                }
-                            }
-                            if (data.a is not null)
-                            {
-                                foreach (dynamic? a in data.a)
-                                {
-                                    if (a is null)
-                                        continue;
+                            case "moveToArea":
+                                Stats.GetSpace();
+                                Messenger.Send<MapChangedMessage, int>(new(Convert.ToString(data.strMapName)), (int)MessageChannels.GameEvents);
+                                Map.FilePath = Convert.ToString(data.strMapFileName);
+                                Map.LastMap = Convert.ToString(data.strMapName);
+                                break;
 
-                                    if (a.aura is null || (string)a.aura["nam"] is not "Counter Attack")
+                            case "ct":
+                                dynamic p = data.p?[Player.Username.ToLower()]!;
+                                if (p is not null && p.intHP == 0)
+                                {
+                                    // Combat-state packets can repeat while the player remains dead.
+                                    if (!_playerDead)
                                     {
-                                        continue;
+                                        Stats.Deaths++;
+                                        Messenger.Send<PlayerDeathMessage, int>((int)MessageChannels.GameEvents);
                                     }
 
-                                    Messenger.Send<CounterAttackMessage, int>(new(true), (int)MessageChannels.GameEvents);
+                                    _playerDead = true;
                                     break;
                                 }
-                            }
-                            break;
+
+                                if (p is not null)
+                                    _playerDead = false;
+
+                                if (data is JObject ctData)
+                                    HandleCounterAttack(ctData);
+                                break;
 
                         case "sellItem":
                             Stats.GetSpace();
@@ -795,6 +778,11 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                             break;
                     }
                 }
+                }
+                catch (Exception ex)
+                {
+                    _logger.DebugLog($"Error handling extension packet '{pextCmd}': {ex.Message}\n{ex.StackTrace}");
+                }
                 try
                 {
                     Messenger.Send<ExtensionPacketMessage, int>(new(packet), (int)MessageChannels.GameEvents);
@@ -808,79 +796,221 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
             case "packet":
                 if (((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase))
                     ((ScriptDrop)Drops).RejectFullStackDrops();
-                string[] parts = ((string)args[0]).Split('%', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length < 3)
-                    break;
-                switch (parts[2])
+                try
                 {
-                    case "eLO":
-                    case "eLO2":
-                        Log("In-game exit logout packet (eLO) detected. Disarming auto re-login.");
-                        Servers.IsIntentionalLogout = true;
-                        Servers.UserLoggedOut = true;
-                        _wdRestartScript = false;
-                        CancelRelogin();
-                        if (Manager.ScriptRunning)
-                            _ = Manager.StopScript();
+                    string[] parts = ((string)args[0]).Split('%', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 3)
                         break;
+                    switch (parts[2])
+                    {
+                        case "eLO":
+                        case "eLO2":
+                            Log("In-game exit logout packet (eLO) detected. Disarming auto re-login.");
+                            Servers.IsIntentionalLogout = true;
+                            Servers.UserLoggedOut = true;
+                            _wdRestartScript = false;
+                            CancelRelogin();
+                            if (Manager.ScriptRunning)
+                                _ = Manager.StopScript();
+                            break;
 
-                    case "eSL":
-                    case "eSL2":
-                        Log("In-game exit to server list packet (eSL) detected. Disarming auto re-login.");
-                        Servers.IsIntentionalLogout = true;
-                        Servers.UserLoggedOut = true;
-                        _wdRestartScript = false;
-                        CancelRelogin();
-                        if (Manager.ScriptRunning)
-                            _ = Manager.StopScript();
-                        break;
+                        case "eSL":
+                        case "eSL2":
+                            Log("In-game exit to server list packet (eSL) detected. Disarming auto re-login.");
+                            Servers.IsIntentionalLogout = true;
+                            Servers.UserLoggedOut = true;
+                            _wdRestartScript = false;
+                            CancelRelogin();
+                            if (Manager.ScriptRunning)
+                                _ = Manager.StopScript();
+                            break;
 
-                    case "moveToCell":
-                        if (parts.Length >= 6)
-                            Messenger.Send<CellChangedMessage, int>(new(Map.Name, parts[4], parts[5]), (int)MessageChannels.GameEvents);
-                        break;
+                        case "moveToCell":
+                            if (parts.Length >= 6)
+                                Messenger.Send<CellChangedMessage, int>(new(Map.Name, parts[4], parts[5]), (int)MessageChannels.GameEvents);
+                            break;
 
-                    case "buyItem":
-                        if (parts.Length >= 7 && int.TryParse(parts[5], out int sId) && int.TryParse(parts[4], out int iId) && int.TryParse(parts[6], out int sItemId))
-                        {
-                            Stats.GetSpace();
-                            Messenger.Send<TryBuyItemMessage, int>(new(sId, iId, sItemId), (int)MessageChannels.GameEvents);
-                        }
-                        break;
-
-                    case "acceptQuest":
-                        if (parts.Length >= 5 && int.TryParse(parts[4], out int qId))
-                        {
-                            Stats.QuestsAccepted++;
-                            Messenger.Send<QuestAcceptedMessage, int>(new(qId), (int)MessageChannels.GameEvents);
-                        }
-                        break;
-
-                    case "cmd":
-                        if (parts.Length >= 5 && parts[4] == "logout")
-                        {
-                            if (_waitForLogin)
+                        case "buyItem":
+                            if (parts.Length >= 7 && int.TryParse(parts[5], out int sId) && int.TryParse(parts[4], out int iId) && int.TryParse(parts[6], out int sItemId))
                             {
-                                break;
+                                Stats.GetSpace();
+                                Messenger.Send<TryBuyItemMessage, int>(new(sId, iId, sItemId), (int)MessageChannels.GameEvents);
                             }
+                            break;
 
-                            Messenger.Send<LogoutMessage, int>((int)MessageChannels.GameEvents);
-                            if (Servers.IsIntentionalLogout)
+                        case "acceptQuest":
+                            if (parts.Length >= 5 && int.TryParse(parts[4], out int qId))
                             {
-                                Log("Intentional logout confirmed. Auto re-login skipped.");
-                                CancelRelogin();
+                                Stats.QuestsAccepted++;
+                                Messenger.Send<QuestAcceptedMessage, int>(new(qId), (int)MessageChannels.GameEvents);
                             }
-                            else
+                            break;
+
+                        case "cmd":
+                            if (parts.Length >= 5 && parts[4] == "logout")
                             {
-                                Log($"Server logout command detected (Kicked: {Player.Kicked}). Triggering auto re-login.");
-                                BeginLogout(logoutNotified: true);
+                                if (_waitForLogin)
+                                {
+                                    break;
+                                }
+
+                                Messenger.Send<LogoutMessage, int>((int)MessageChannels.GameEvents);
+                                if (Servers.IsIntentionalLogout)
+                                {
+                                    Log("Intentional logout confirmed. Auto re-login skipped.");
+                                    CancelRelogin();
+                                }
+                                else
+                                {
+                                    Log($"Server logout command detected (Kicked: {Player.Kicked}). Triggering auto re-login.");
+                                    BeginLogout(logoutNotified: true);
+                                }
                             }
-                        }
-                        break;
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.DebugLog($"Error handling packet: {ex.Message}");
                 }
                 Messenger.Send<PacketMessage, int>(new((string)args[0]), (int)MessageChannels.GameEvents);
                 break;
         }
+    }
+
+    private const string CounterAttackWarning = "prepares a counter attack";
+    private const string CounterAttackAnimation = "Reflect";
+    private const string CounterAttackAuraName = "Counter Attack";
+
+    private const int CounterAttackWarningSeconds = 10;
+    private const int CounterAttackMarginSeconds = 1;
+
+    // A counter in progress, per monster ("m:<MapID>"): its counter aura (null until the aura arrives) and when the
+    // counter is assumed over if no removal packet comes.
+    private sealed record CounterAttackState(string? Aura, DateTime Expires);
+
+    private readonly Dictionary<string, CounterAttackState> _counterAttacks = new();
+    private readonly object _counterAttackLock = new();
+    // Whether the last CounterAttackMessage said a counter is on. Only the script timer thread touches it.
+    private bool _counterAttackSent;
+
+    /// <summary>
+    /// Tracks monsters' counter attacks from a <c>ct</c> packet. A warning message starts one. Its aura is the aura the
+    /// monster puts on itself in the same packet as its <c>Reflect</c> animation (or one named "Counter Attack"; the
+    /// shortest if there are several), so the name doesn't have to be known. A counter ends when that aura is removed
+    /// from that monster, when the monster dies, or when it expires. Messages are sent by
+    /// <see cref="UpdateCounterAttack"/>.
+    /// </summary>
+    private void HandleCounterAttack(JObject data)
+    {
+        lock (_counterAttackLock)
+        {
+            DateTime now = DateTime.Now;
+            HashSet<string> reflecting = new();
+            if (data["anims"] is JArray anims)
+            {
+                foreach (JToken anim in anims)
+                {
+                    string? caster = (string?)anim["cInf"];
+                    if (caster is null || !caster.StartsWith("m:"))
+                        continue;
+
+                    string? animStr = (string?)anim["animStr"];
+                    if (animStr is not null && animStr.Split(',').Contains(CounterAttackAnimation))
+                        reflecting.Add(caster);
+
+                    string? msg = (string?)anim["msg"];
+                    if (msg is null || !msg.Contains(CounterAttackWarning, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    // A new warning sets a fallback expiry until the aura arrives.
+                    DateTime expires = now.AddSeconds(CounterAttackWarningSeconds);
+                    if (!_counterAttacks.TryGetValue(caster, out CounterAttackState? prior) || prior.Expires < expires)
+                        _counterAttacks[caster] = new(prior?.Aura, expires);
+                }
+            }
+
+            // A dead monster can't counter.
+            if (data["m"] is JObject monsters)
+            {
+                foreach (JProperty monster in monsters.Properties())
+                {
+                    if ((int?)monster.Value["intState"] == 0)
+                        _counterAttacks.Remove($"m:{monster.Name}");
+                }
+            }
+
+            if (data["a"] is JArray actions)
+            {
+                Dictionary<string, (string Name, float Duration)> counterAuras = new();
+                foreach (JToken action in actions)
+                {
+                    string? cmd = (string?)action["cmd"];
+                    string? target = (string?)action["tInf"];
+                    if (cmd is null || target is null || !target.StartsWith("m:"))
+                        continue;
+
+                    switch (cmd)
+                    {
+                        case "aura+":
+                        case "aura++":
+                            if ((string?)action["cInf"] != target || action["auras"] is not JArray auras)
+                                break;
+                            foreach (JToken aura in auras)
+                            {
+                                string? name = (string?)aura["nam"];
+                                if (name is null || (!reflecting.Contains(target) && name != CounterAttackAuraName))
+                                    continue;
+
+                                // Counter auras are short (3-6 s); a longer one in the same packet (e.g. "Skill
+                                // Locked", 45 s) is something else the monster cast.
+                                float duration = (float?)aura["dur"] ?? 0;
+                                if (!counterAuras.TryGetValue(target, out (string Name, float Duration) best)
+                                    || (duration > 0 && (best.Duration <= 0 || duration < best.Duration)))
+                                    counterAuras[target] = (name, duration);
+                            }
+                            break;
+
+                        case "aura-":
+                        case "aura--":
+                            if (!_counterAttacks.TryGetValue(target, out CounterAttackState? counter) || counter.Aura is null)
+                                break;
+                            IEnumerable<JToken> removed = action["auras"] is JArray list ? list : new[] { action["aura"] }.OfType<JToken>();
+                            if (removed.Any(a => (string?)a["nam"] == counter.Aura))
+                                _counterAttacks.Remove(target);
+                            break;
+                    }
+                }
+
+                foreach ((string monster, (string name, float duration)) in counterAuras)
+                {
+                    double seconds = (duration > 0 ? duration : CounterAttackWarningSeconds) + CounterAttackMarginSeconds;
+                    _counterAttacks[monster] = new(name, now.AddSeconds(seconds));
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Sends <see cref="CounterAttackMessage"/> when the first counter starts and when the last one ends, including
+    /// counters that expire because their removal packet never came (lost, the monster left, or a warning with no
+    /// counter after it). Runs on the script timer thread only, so start and end messages can't arrive out of order.
+    /// </summary>
+    private void UpdateCounterAttack()
+    {
+        bool active;
+        lock (_counterAttackLock)
+        {
+            DateTime now = DateTime.Now;
+            foreach (string monster in _counterAttacks.Where(c => c.Value.Expires <= now).Select(c => c.Key).ToList())
+                _counterAttacks.Remove(monster);
+            active = _counterAttacks.Count > 0;
+        }
+
+        if (active == _counterAttackSent)
+            return;
+        _counterAttackSent = active;
+        Messenger.Send<CounterAttackMessage, int>(new(!active), (int)MessageChannels.GameEvents);
     }
 
     private Task? _reloginTask;
