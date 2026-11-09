@@ -793,6 +793,11 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 }
                 break;
 
+            case "packetFromServer":
+                if (args?.Length > 0 && args[0] is not null && ((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase))
+                    Drops.RejectFullStackDrops();
+                break;
+
             case "packet":
                 if (((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase))
                     Drops.RejectFullStackDrops();
