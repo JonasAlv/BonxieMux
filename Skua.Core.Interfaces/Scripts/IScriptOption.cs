@@ -253,6 +253,21 @@ public interface IScriptOption : INotifyPropertyChanged
     string StageQuality { get; set; }
 
     /// <summary>
+    /// Gets whether this client is currently the focused foreground tab and eligible for full stage quality rendering.
+    /// </summary>
+    bool CanRenderFullQuality { get; }
+
+    /// <summary>
+    /// Sets whether this window/tab is currently the focused foreground tab.
+    /// </summary>
+    void SetForegroundFocus(bool isForegroundFocused);
+
+    /// <summary>
+    /// Applies Flash stage quality: LOW if headless or a background tab; configured StageQuality only if foreground focused.
+    /// </summary>
+    void ApplyStageQuality();
+
+    /// <summary>
     /// Whether to show the in-game FPS counter
     /// </summary>
     bool ShowFPS { get; set; }

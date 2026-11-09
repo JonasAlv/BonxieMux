@@ -334,6 +334,46 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     private bool _showFPS = false;
 
     private string _stageQuality = "MEDIUM";
+    private bool _isForegroundFocused = true;
+
+    /// <summary>
+    /// Gets whether this client is currently the focused foreground tab and eligible for full stage quality rendering.
+    /// </summary>
+    public bool CanRenderFullQuality => !IsHeadlessNow() && _isForegroundFocused;
+
+    /// <summary>
+    /// Sets whether this window/tab is currently the focused foreground tab.
+    /// </summary>
+    public void SetForegroundFocus(bool isForegroundFocused)
+    {
+        if (_isForegroundFocused == isForegroundFocused)
+            return;
+
+        _isForegroundFocused = isForegroundFocused;
+        ApplyStageQuality();
+    }
+
+    /// <summary>
+    /// Applies Flash stage quality: LOW if headless or a background tab; configured StageQuality only if foreground focused.
+    /// </summary>
+    public void ApplyStageQuality()
+    {
+        try
+        {
+            if (_lazyFlash.Value == null)
+                return;
+
+            if (CanRenderFullQuality)
+            {
+                _lazyFlash.Value.Call("setGameObject", "stage.quality", StageQuality);
+            }
+            else
+            {
+                _lazyFlash.Value.Call("setGameObject", "stage.quality", "LOW");
+            }
+        }
+        catch { }
+    }
 
     /// <summary>
     /// Gets or sets the Flash rendering stage quality (LOW, MEDIUM, HIGH).
@@ -350,14 +390,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             SetProperty(ref _stageQuality, val);
             PersistGlobalStageQuality(val);
 
-            if (!IsHeadlessNow())
-            {
-                try
-                {
-                    _lazyFlash.Value?.Call("setGameObject", "stage.quality", val);
-                }
-                catch { }
-            }
+            ApplyStageQuality();
 
             BroadcastStageQualityToOtherClients(val);
         }
@@ -496,7 +529,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             else
             {
                 _lazyFlash.Value.Call("setGameObject", "stage.frameRate", SetFPS > 2 ? SetFPS : 30);
-                _lazyFlash.Value.Call("setGameObject", "stage.quality", StageQuality);
+                ApplyStageQuality();
                 _lazyFlash.Value.Call("world.rootClass.mixer.soundTransform.volume", 1);
             }
         }
@@ -721,7 +754,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (pi.Name is nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
+            if (!pi.CanWrite || pi.Name is nameof(CanRenderFullQuality) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
             if (_userOptions.ContainsKey(pi.Name))
             {
@@ -740,7 +773,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         ScriptOption defaults = new(_lazyFlash);
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (pi.Name is nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
+            if (!pi.CanWrite || pi.Name is nameof(CanRenderFullQuality) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
 
             pi.SetValue(this, pi.GetValue(defaults), null);

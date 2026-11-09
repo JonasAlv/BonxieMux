@@ -273,14 +273,26 @@ public partial class MainWindow : Window
 
         Deactivated += (s, e) =>
         {
+            _isWindowFocused = false;
             CloseDropdowns();
             ReleaseAllPressedKeys();
             Skua.App.Avalonia.Controls.GameHost.ForwardFocus(false);
+            Dispatcher.UIThread.Post(UpdateQualityFocusState);
         };
         Activated += (s, e) =>
         {
+            _isWindowFocused = true;
             ReleaseAllPressedKeys();
             Skua.App.Avalonia.Controls.GameHost.ForwardFocus(true);
+            Dispatcher.UIThread.Post(UpdateQualityFocusState);
+        };
+
+        PropertyChanged += (s, e) =>
+        {
+            if (e.Property == WindowStateProperty)
+            {
+                Dispatcher.UIThread.Post(UpdateQualityFocusState);
+            }
         };
 
         if (_options is INotifyPropertyChanged notifyOptions)

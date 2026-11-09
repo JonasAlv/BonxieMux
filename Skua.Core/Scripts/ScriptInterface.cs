@@ -538,11 +538,19 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
             case "loaded":
                 try
                 {
-                    if (Options.SetFPS > 2 && !Options.IsHeadlessNow())
-                        Flash.SetGameObject("stage.frameRate", Options.SetFPS);
+                    if (Options.IsHeadlessNow())
+                    {
+                        Flash.SetGameObject("stage.frameRate", 2);
+                        Flash.SetGameObject("stage.quality", "LOW");
+                        Flash.SetGameObject("world.rootClass.mixer.soundTransform.volume", 0);
+                    }
+                    else
+                    {
+                        if (Options.SetFPS > 2)
+                            Flash.SetGameObject("stage.frameRate", Options.SetFPS);
 
-                    if (!Options.IsHeadlessNow() && !string.IsNullOrEmpty(Options.StageQuality))
-                        Flash.SetGameObject("stage.quality", Options.StageQuality);
+                        Options.ApplyStageQuality();
+                    }
                 }
                 catch { }
                 OnGameLoaded();
@@ -550,8 +558,16 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 try { Options.Reset(); } catch { }
                 try
                 {
-                    if (!Options.IsHeadlessNow() && !string.IsNullOrEmpty(Options.StageQuality))
-                        Flash.SetGameObject("stage.quality", Options.StageQuality);
+                    if (Options.IsHeadlessNow())
+                    {
+                        Flash.SetGameObject("stage.frameRate", 2);
+                        Flash.SetGameObject("stage.quality", "LOW");
+                        Flash.SetGameObject("world.rootClass.mixer.soundTransform.volume", 0);
+                    }
+                    else
+                    {
+                        Options.ApplyStageQuality();
+                    }
                 }
                 catch { }
                 break;

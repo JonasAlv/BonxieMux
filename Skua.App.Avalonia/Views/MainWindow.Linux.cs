@@ -66,7 +66,26 @@ public partial class MainWindow : Window
     private string? _preThrottleQuality = null;
     private bool _isInGridView = false;
     private int _tabVisibility;
+    private bool _isWindowFocused = true;
     private bool _autoHeadlessHeld;
+
+    private void UpdateQualityFocusState()
+    {
+        try
+        {
+            var options = Ioc.Default.GetRequiredService<IScriptOption>();
+            bool isShown = _tabVisibility == 0 || _tabVisibility == 2;
+            if (WindowState == WindowState.Minimized || _tabVisibility is 1 or 4)
+                isShown = false;
+
+            bool isForeground = isShown && (_isWindowFocused || _tabVisibility == 0);
+            if (_tabVisibility is 1 or 3 or 4)
+                isForeground = false;
+
+            options.SetForegroundFocus(isForeground);
+        }
+        catch { }
+    }
 
     private readonly HashSet<Key> _pressedKeys = new();
 
@@ -150,15 +169,13 @@ public partial class MainWindow : Window
             if (targetFPS <= 2)
                 targetFPS = options.SetFPS > 0 ? options.SetFPS : 30;
 
-            string? targetQuality = !string.IsNullOrEmpty(_preThrottleQuality) ? _preThrottleQuality : options.StageQuality;
-            
             _preThrottleFPS = -1;
             _preThrottleQuality = null;
 
             if (targetFPS > 0)
                 bot.Flash?.SetGameObject("stage.frameRate", targetFPS);
-            if (!string.IsNullOrEmpty(targetQuality))
-                bot.Flash?.SetGameObject("stage.quality", targetQuality);
+
+            options.ApplyStageQuality();
         }
         catch { }
     }
@@ -389,16 +406,15 @@ public partial class MainWindow : Window
                             if (targetFPS <= 2)
                                 targetFPS = options.SetFPS > 0 ? options.SetFPS : 30;
 
-                            string? targetQuality = !string.IsNullOrEmpty(_preThrottleQuality) ? _preThrottleQuality : options.StageQuality;
                             _preThrottleFPS = -1;
                             _preThrottleQuality = null;
 
                             bot.Flash?.SetGameObject("stage.frameRate", targetFPS);
-                            if (!string.IsNullOrEmpty(targetQuality))
-                                bot.Flash?.SetGameObject("stage.quality", targetQuality);
+                            options.ApplyStageQuality();
                         }
                     }
                     catch { }
+                    UpdateQualityFocusState();
                 }
             });
             return IntPtr.Zero;
@@ -409,6 +425,7 @@ public partial class MainWindow : Window
             if (_tabVisibility is not 0 and not 2)
                 CloseDropdowns();
             Dispatcher.UIThread.Post(EvaluateAutoHeadless);
+            Dispatcher.UIThread.Post(UpdateQualityFocusState);
             return IntPtr.Zero;
         }
         else if (uMsg == WM_SKUA_LOGIN)
@@ -679,9 +696,6 @@ public partial class MainWindow : Window
                             int currentFPS = bot.Flash?.GetGameObject<int>("stage.frameRate") ?? -1;
                             if (currentFPS > 2)
                                 _preThrottleFPS = currentFPS;
-                            string? currentQuality = bot.Flash?.GetGameObject<string>("stage.quality");
-                            if (!string.IsNullOrEmpty(currentQuality))
-                                _preThrottleQuality = currentQuality;
                         }
 
                         bot.Flash?.SetGameObject("stage.frameRate", 2);
@@ -732,6 +746,7 @@ public partial class MainWindow : Window
         else if (uMsg == HotKeys.WM_SKUA_FOCUS)
         {
             bool focused = wParam != IntPtr.Zero;
+            _isWindowFocused = focused;
             Dispatcher.UIThread.Post(() =>
             {
                 ReleaseAllPressedKeys();
@@ -740,6 +755,7 @@ public partial class MainWindow : Window
                 {
                     RestoreFps();
                 }
+                UpdateQualityFocusState();
             });
             return IntPtr.Zero;
         }
