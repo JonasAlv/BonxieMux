@@ -231,7 +231,8 @@ internal static class Program
             .UseX11()
             .With(new X11PlatformOptions
             {
-                EnableIme = false
+                EnableIme = false,
+                WmClass = "BonxieMux-Manager"
             })
             .UseSkia();
 

@@ -69,12 +69,16 @@ public static class AppImageDesktopIntegration
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share");
             string appsDir = Path.Combine(xdgDataHome, "applications");
             string desktopFilePath = Path.Combine(appsDir, desktopFileName);
+            string wmDesktopFilePath = Path.Combine(appsDir, $"{wmClass}.desktop");
             string iconsBase = Path.Combine(xdgDataHome, "icons", "hicolor");
 
             string currentVersion = ClientFileSources.AssemblyVersion;
             bool needsUpdate = false;
 
-            if (!File.Exists(desktopFilePath))
+            string dest256 = Path.Combine(iconsBase, "256x256", "apps", $"{iconName}.png");
+            string dest256Wm = Path.Combine(iconsBase, "256x256", "apps", $"{wmClass}.png");
+
+            if (!File.Exists(desktopFilePath) || !File.Exists(wmDesktopFilePath) || !File.Exists(dest256) || !File.Exists(dest256Wm))
             {
                 needsUpdate = true;
             }
@@ -101,6 +105,11 @@ public static class AppImageDesktopIntegration
                 {
                     needsUpdate = true;
                 }
+                // If AppImage file was recompiled/touched since desktop entry was written
+                else if (File.GetLastWriteTimeUtc(appImagePath) > File.GetLastWriteTimeUtc(desktopFilePath))
+                {
+                    needsUpdate = true;
+                }
                 // If version changed
                 else if (string.IsNullOrWhiteSpace(oldVersion) ||
                          (Version.TryParse(oldVersion, out var oldV) &&
@@ -124,29 +133,42 @@ public static class AppImageDesktopIntegration
                 foreach (string s in sizes)
                 {
                     string src = Path.Combine(appDir, "usr", "share", "icons", "hicolor", s, "apps", $"{iconName}.png");
+                    if (!File.Exists(src))
+                        src = Path.Combine(appDir, "usr", "share", "icons", "hicolor", s, "apps", $"{wmClass}.png");
+
                     if (File.Exists(src))
                     {
                         string destDir = Path.Combine(iconsBase, s, "apps");
                         Directory.CreateDirectory(destDir);
-                        string dest = Path.Combine(destDir, $"{iconName}.png");
-                        File.Copy(src, dest, overwrite: true);
-                        ClientFileSources.RestrictFilePermissions(dest);
+                        string destLower = Path.Combine(destDir, $"{iconName}.png");
+                        string destClass = Path.Combine(destDir, $"{wmClass}.png");
+
+                        File.Copy(src, destLower, overwrite: true);
+                        ClientFileSources.RestrictFilePermissions(destLower);
+
+                        File.Copy(src, destClass, overwrite: true);
+                        ClientFileSources.RestrictFilePermissions(destClass);
                         copiedAnyIcon = true;
                     }
                 }
 
                 string rootIcon = Path.Combine(appDir, $"{iconName}.png");
+                if (!File.Exists(rootIcon))
+                    rootIcon = Path.Combine(appDir, $"{wmClass}.png");
+
                 if (File.Exists(rootIcon))
                 {
                     string dest256Dir = Path.Combine(iconsBase, "256x256", "apps");
                     Directory.CreateDirectory(dest256Dir);
-                    string dest256 = Path.Combine(dest256Dir, $"{iconName}.png");
-                    if (!File.Exists(dest256))
-                    {
-                        File.Copy(rootIcon, dest256, overwrite: true);
-                        ClientFileSources.RestrictFilePermissions(dest256);
-                        copiedAnyIcon = true;
-                    }
+                    string dLower = Path.Combine(dest256Dir, $"{iconName}.png");
+                    string dClass = Path.Combine(dest256Dir, $"{wmClass}.png");
+
+                    File.Copy(rootIcon, dLower, overwrite: true);
+                    ClientFileSources.RestrictFilePermissions(dLower);
+
+                    File.Copy(rootIcon, dClass, overwrite: true);
+                    ClientFileSources.RestrictFilePermissions(dClass);
+                    copiedAnyIcon = true;
                 }
             }
 
@@ -158,12 +180,17 @@ public static class AppImageDesktopIntegration
                     using var stream = AssetLoader.Open(new Uri("avares://Skua.Shared.Avalonia/Assets/SkuaIcon.png"));
                     string dest256Dir = Path.Combine(iconsBase, "256x256", "apps");
                     Directory.CreateDirectory(dest256Dir);
-                    string dest256 = Path.Combine(dest256Dir, $"{iconName}.png");
-                    using (var fs = File.Create(dest256))
+                    string dLower = Path.Combine(dest256Dir, $"{iconName}.png");
+                    string dClass = Path.Combine(dest256Dir, $"{wmClass}.png");
+
+                    using (var fs = File.Create(dLower))
                     {
                         stream.CopyTo(fs);
                     }
-                    ClientFileSources.RestrictFilePermissions(dest256);
+                    ClientFileSources.RestrictFilePermissions(dLower);
+
+                    File.Copy(dLower, dClass, overwrite: true);
+                    ClientFileSources.RestrictFilePermissions(dClass);
                 }
                 catch { }
             }
@@ -193,6 +220,13 @@ public static class AppImageDesktopIntegration
                 ClientFileSources.RestrictFilePermissions(tempFile);
                 File.Move(tempFile, desktopFilePath, overwrite: true);
                 ClientFileSources.RestrictFilePermissions(desktopFilePath);
+
+                // Create case-matching desktop file for Wayland compositors (KWin)
+                if (!string.Equals(desktopFilePath, wmDesktopFilePath, StringComparison.Ordinal))
+                {
+                    File.Copy(desktopFilePath, wmDesktopFilePath, overwrite: true);
+                    ClientFileSources.RestrictFilePermissions(wmDesktopFilePath);
+                }
             }
             finally
             {
@@ -200,8 +234,8 @@ public static class AppImageDesktopIntegration
                     File.Delete(tempFile);
             }
 
-            // 3. Notify the desktop environment to reload application shortcuts
-            NotifyDesktopDatabase(appsDir);
+            // 3. Notify the desktop environment to reload application shortcuts and icon caches
+            NotifyDesktopDatabase(appsDir, iconsBase);
         }
         catch (Exception ex)
         {
@@ -209,14 +243,22 @@ public static class AppImageDesktopIntegration
         }
     }
 
-    private static void NotifyDesktopDatabase(string appsDir)
+    private static void NotifyDesktopDatabase(string appsDir, string iconsBase)
+    {
+        RunUtility("update-desktop-database", $"\"{appsDir}\"");
+        RunUtility("gtk-update-icon-cache", $"-f -t \"{iconsBase}\"");
+        RunUtility("kbuildsycoca6", "--noincremental");
+        RunUtility("kbuildsycoca5", "--noincremental");
+    }
+
+    private static void RunUtility(string fileName, string args)
     {
         try
         {
             var psi = new ProcessStartInfo
             {
-                FileName = "update-desktop-database",
-                Arguments = $"\"{appsDir}\"",
+                FileName = fileName,
+                Arguments = args,
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
@@ -224,11 +266,8 @@ public static class AppImageDesktopIntegration
             };
 
             using var proc = Process.Start(psi);
-            proc?.WaitForExit(3000);
+            proc?.WaitForExit(2000);
         }
-        catch
-        {
-            // update-desktop-database is optional and may not be installed on all minimal distros
-        }
+        catch { }
     }
 }

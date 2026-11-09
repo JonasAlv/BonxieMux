@@ -89,11 +89,13 @@ def gen(src, appdir, name):
         img.resize((s, s), Image.Resampling.LANCZOS).save(os.path.join(p, f"{name}.png"))
 
 gen("$skua_icon", "$skua_appdir", "bonxiemux")
+gen("$skua_icon", "$skua_appdir", "BonxieMux")
 gen("$mgr_icon", "$mgr_appdir", "bonxiemux-manager")
+gen("$mgr_icon", "$mgr_appdir", "BonxieMux-Manager")
 EOF
 else
     echo "Note: python3 PIL not found, copying raw icon assets..."
-    for target in "$skua_appdir:bonxiemux" "$mgr_appdir:bonxiemux-manager"; do
+    for target in "$skua_appdir:bonxiemux" "$skua_appdir:BonxieMux" "$mgr_appdir:bonxiemux-manager" "$mgr_appdir:BonxieMux-Manager"; do
         appdir="${target%%:*}"
         name="${target##*:}"
         cp -f "$skua_icon" "$appdir/${name}.png"
@@ -116,6 +118,8 @@ Categories=Game;RolePlaying;
 StartupWMClass=BonxieMux
 EOF
 cp "$skua_appdir/bonxiemux.desktop" "$skua_appdir/usr/share/applications/bonxiemux.desktop"
+cp "$skua_appdir/bonxiemux.desktop" "$skua_appdir/BonxieMux.desktop"
+cp "$skua_appdir/bonxiemux.desktop" "$skua_appdir/usr/share/applications/BonxieMux.desktop"
 
 cat << 'EOF' > "$mgr_appdir/bonxiemux-manager.desktop"
 [Desktop Entry]
@@ -130,6 +134,8 @@ Categories=Game;
 StartupWMClass=BonxieMux-Manager
 EOF
 cp "$mgr_appdir/bonxiemux-manager.desktop" "$mgr_appdir/usr/share/applications/bonxiemux-manager.desktop"
+cp "$mgr_appdir/bonxiemux-manager.desktop" "$mgr_appdir/BonxieMux-Manager.desktop"
+cp "$mgr_appdir/bonxiemux-manager.desktop" "$mgr_appdir/usr/share/applications/BonxieMux-Manager.desktop"
 
 cat << 'EOF' > "$skua_appdir/AppRun"
 #!/usr/bin/env bash
