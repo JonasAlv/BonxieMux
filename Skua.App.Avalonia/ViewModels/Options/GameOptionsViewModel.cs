@@ -40,7 +40,9 @@ public class GameOptionsViewModel : BotControlViewModelBase
     private readonly Func<OptionSource, List<DisplayOptionItemViewModelBase>> _buildItems;
     private readonly LocalOptionSource _local;
     private OptionSource _source;
+    private static readonly List<string> QualityOptions = new() { "LOW", "MEDIUM", "HIGH" };
     private CBOChoiceOptionItemViewModel _reloginServerItem = null!;
+    private CBOChoiceOptionItemViewModel _stageQualityItem = null!;
     private List<string> _reloginServerNames = new();
     private DispatcherTimer? _accountsTimer;
     private bool _syncingAccounts;
@@ -64,6 +66,7 @@ public class GameOptionsViewModel : BotControlViewModelBase
         Accounts.Add(_selectedAccount);
 
         BuildReloginItem();
+        BuildQualityItem();
         BuildGroups();
         Sections = new List<OptionGroupViewModel> { OptionGroupViewModel.CreateAll(OptionGroups) }.Concat(OptionGroups).ToList();
         _selectedSection = Sections[0];
@@ -190,6 +193,7 @@ public class GameOptionsViewModel : BotControlViewModelBase
         _source.PropertyChanged += SourcePropertyChanged;
         GameOptions = _buildItems(next);
         BuildReloginItem();
+        BuildQualityItem();
         BuildGroups();
         string wantedSection = _selectedSection.Title;
         Sections = new List<OptionGroupViewModel> { OptionGroupViewModel.CreateAll(OptionGroups) }.Concat(OptionGroups).ToList();
@@ -211,6 +215,8 @@ public class GameOptionsViewModel : BotControlViewModelBase
     {
         if (e.PropertyName == nameof(IScriptOption.ReloginServer))
             Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(SelectedServer)));
+        if (e.PropertyName == nameof(IScriptOption.StageQuality))
+            Dispatcher.UIThread.Post(SyncQualityItemSelection);
     }
 
     private void BuildReloginItem()
@@ -221,6 +227,45 @@ public class GameOptionsViewModel : BotControlViewModelBase
         _reloginServerItem = new CBOChoiceOptionItemViewModel("Relogin Server", "Server to log back in to", "ReloginServer",
             _reloginServerNames, Math.Max(0, _reloginServerNames.IndexOf(SelectedServer ?? string.Empty)));
         _reloginServerItem.PropertyChanged += ReloginServerItem_PropertyChanged;
+    }
+
+    private void BuildQualityItem()
+    {
+        if (_stageQualityItem is not null)
+            _stageQualityItem.PropertyChanged -= StageQualityItem_PropertyChanged;
+
+        string current = _options.StageQuality ?? "MEDIUM";
+        int index = QualityOptions.FindIndex(q => string.Equals(q, current, StringComparison.OrdinalIgnoreCase));
+        if (index < 0) index = 1;
+
+        _stageQualityItem = new CBOChoiceOptionItemViewModel(
+            "Flash Stage Quality",
+            "Flash rendering quality (LOW, MEDIUM, HIGH). Applies globally across clients.",
+            nameof(IScriptOption.StageQuality),
+            QualityOptions,
+            index);
+        _stageQualityItem.PropertyChanged += StageQualityItem_PropertyChanged;
+    }
+
+    private void SyncQualityItemSelection()
+    {
+        if (_stageQualityItem is null)
+            return;
+
+        string current = _options.StageQuality ?? "MEDIUM";
+        int index = QualityOptions.FindIndex(q => string.Equals(q, current, StringComparison.OrdinalIgnoreCase));
+        if (index >= 0 && !Equals(_stageQualityItem.Value, index))
+            _stageQualityItem.Value = index;
+    }
+
+    private void StageQualityItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(DisplayOptionItemViewModelBase.Value)
+            && _stageQualityItem.Value is int index && index >= 0 && index < QualityOptions.Count)
+        {
+            string chosen = QualityOptions[index];
+            _source.Set(nameof(IScriptOption.StageQuality), chosen);
+        }
     }
 
     public List<DisplayOptionItemViewModelBase> GameOptions { get; private set; }
@@ -275,6 +320,7 @@ public class GameOptionsViewModel : BotControlViewModelBase
         List<DisplayOptionItemViewModelBase> visuals = InSection(VisualsOptions)
             .Concat(GameOptions.Where(i => BindingOf(i) is null))
             .ToList();
+        visuals.Add(_stageQualityItem);
         List<DisplayOptionItemViewModelBase> headless = InSection(HeadlessOptions);
         List<DisplayOptionItemViewModelBase> combat = InSection(CombatOptions);
         List<DisplayOptionItemViewModelBase> drops = InSection(DropsOptions);

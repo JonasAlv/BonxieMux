@@ -50,7 +50,7 @@ internal class Options
 
         foreach ((string name, Type type) in source.Properties)
         {
-            if (name is nameof(ScriptOption.RescueDelayMinutes) or nameof(ScriptOption.RescueDeathsBeforeCalling) or nameof(ScriptOption.RescueCooldownEnabled) or nameof(ScriptOption.RescueCooldownMinutes) or nameof(ScriptOption.RescueHelperDeathLimit) or nameof(ScriptOption.RescueHoldLimitMinutes) or nameof(ScriptOption.RescueUseBossLoadout) or nameof(IScriptOption.OptionDictionary) or nameof(ObservableRecipient.IsActive) or nameof(IScriptOption.GuildColor) or nameof(IScriptOption.NameColor) or "IsIpcMessageProcessing" or nameof(IScriptOption.ReloginTryDelay) or nameof(IScriptOption.UseFunctionBasedSkills) or nameof(IScriptOption.ReloginServer))
+            if (name is nameof(ScriptOption.RescueDelayMinutes) or nameof(ScriptOption.RescueDeathsBeforeCalling) or nameof(ScriptOption.RescueCooldownEnabled) or nameof(ScriptOption.RescueCooldownMinutes) or nameof(ScriptOption.RescueHelperDeathLimit) or nameof(ScriptOption.RescueHoldLimitMinutes) or nameof(ScriptOption.RescueUseBossLoadout) or nameof(IScriptOption.OptionDictionary) or nameof(ObservableRecipient.IsActive) or nameof(IScriptOption.GuildColor) or nameof(IScriptOption.NameColor) or "IsIpcMessageProcessing" or nameof(IScriptOption.ReloginTryDelay) or nameof(IScriptOption.UseFunctionBasedSkills) or nameof(IScriptOption.ReloginServer) or nameof(IScriptOption.StageQuality))
                 continue;
             string binding = name;
             if (HeadlessTexts.TryGetValue(binding, out (string Label, string Description) headless))

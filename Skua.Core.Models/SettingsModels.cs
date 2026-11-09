@@ -219,6 +219,9 @@ public class SharedSettings
     [JsonPropertyName("SyncThemeWithSystem")]
     public bool SyncThemeWithSystem { get; set; } = true;
 
+    [JsonPropertyName("StageQuality")]
+    public string StageQuality { get; set; } = "MEDIUM";
+
     [JsonExtensionData]
     public Dictionary<string, object>? ExtensionData { get; set; }
 

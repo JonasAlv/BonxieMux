@@ -27,6 +27,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         _userLagKiller = _settingsService?.Get<bool>("UserLagKiller", false) ?? false;
         _lagKiller = _userLagKiller;
         _isInitializing = true;
+        _stageQuality = ReadGlobalStageQuality();
         GetOptions();
         _pickupACDropsAndSendToBank = settingsService?.Get<bool>("BonxieMux.PickupACDropsAndSendToBank") ?? false;
         _rejectNonACDrops = settingsService?.Get<bool>("BonxieMux.RejectNonACDrops") ?? false;
@@ -332,6 +333,92 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     [ObjectBinding("ui.mcFPS.visible", HasSetter = true)]
     private bool _showFPS = false;
 
+    private string _stageQuality = "MEDIUM";
+
+    /// <summary>
+    /// Gets or sets the Flash rendering stage quality (LOW, MEDIUM, HIGH).
+    /// </summary>
+    public string StageQuality
+    {
+        get => _stageQuality;
+        set
+        {
+            string val = NormalizeStageQuality(value);
+            if (_stageQuality == val)
+                return;
+
+            SetProperty(ref _stageQuality, val);
+            PersistGlobalStageQuality(val);
+
+            if (!IsHeadlessNow())
+            {
+                try
+                {
+                    _lazyFlash.Value?.Call("setGameObject", "stage.quality", val);
+                }
+                catch { }
+            }
+
+            BroadcastStageQualityToOtherClients(val);
+        }
+    }
+
+    private static string NormalizeStageQuality(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "MEDIUM";
+
+        string upper = value.Trim().ToUpperInvariant();
+        return upper switch
+        {
+            "LOW" => "LOW",
+            "MEDIUM" => "MEDIUM",
+            "HIGH" => "HIGH",
+            _ => "MEDIUM"
+        };
+    }
+
+    private string ReadGlobalStageQuality()
+    {
+        try
+        {
+            string? saved = _settingsService?.Get<string>("StageQuality");
+            if (!string.IsNullOrWhiteSpace(saved))
+                return NormalizeStageQuality(saved);
+
+            return NormalizeStageQuality(_settingsService?.GetShared()?.StageQuality);
+        }
+        catch
+        {
+            return "MEDIUM";
+        }
+    }
+
+    private void PersistGlobalStageQuality(string quality)
+    {
+        try
+        {
+            _settingsService?.Set("StageQuality", quality);
+            var shared = _settingsService?.GetShared();
+            if (shared is not null)
+                shared.StageQuality = quality;
+        }
+        catch { }
+    }
+
+    private static void BroadcastStageQualityToOtherClients(string quality)
+    {
+        try
+        {
+            int myPid = Environment.ProcessId;
+            foreach (var other in Skua.Core.Services.OptionSharing.OtherClients(myPid))
+            {
+                Skua.Core.Services.OptionSharing.Send(other.ProcessId, new Skua.Core.Services.SharedOptionCommand("set", nameof(StageQuality), quality));
+            }
+        }
+        catch { }
+    }
+
     [ObservableProperty]
     private bool _aggroMonsters;
 
@@ -409,7 +496,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             else
             {
                 _lazyFlash.Value.Call("setGameObject", "stage.frameRate", SetFPS > 2 ? SetFPS : 30);
-                _lazyFlash.Value.Call("setGameObject", "stage.quality", "HIGH");
+                _lazyFlash.Value.Call("setGameObject", "stage.quality", StageQuality);
                 _lazyFlash.Value.Call("world.rootClass.mixer.soundTransform.volume", 1);
             }
         }

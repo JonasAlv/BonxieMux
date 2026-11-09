@@ -150,7 +150,7 @@ public partial class MainWindow : Window
             if (targetFPS <= 2)
                 targetFPS = options.SetFPS > 0 ? options.SetFPS : 30;
 
-            string? targetQuality = _preThrottleQuality;
+            string? targetQuality = !string.IsNullOrEmpty(_preThrottleQuality) ? _preThrottleQuality : options.StageQuality;
             
             _preThrottleFPS = -1;
             _preThrottleQuality = null;
@@ -389,7 +389,7 @@ public partial class MainWindow : Window
                             if (targetFPS <= 2)
                                 targetFPS = options.SetFPS > 0 ? options.SetFPS : 30;
 
-                            string? targetQuality = _preThrottleQuality;
+                            string? targetQuality = !string.IsNullOrEmpty(_preThrottleQuality) ? _preThrottleQuality : options.StageQuality;
                             _preThrottleFPS = -1;
                             _preThrottleQuality = null;
 

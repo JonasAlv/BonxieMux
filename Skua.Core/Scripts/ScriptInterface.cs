@@ -540,11 +540,20 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 {
                     if (Options.SetFPS > 2 && !Options.IsHeadlessNow())
                         Flash.SetGameObject("stage.frameRate", Options.SetFPS);
+
+                    if (!Options.IsHeadlessNow() && !string.IsNullOrEmpty(Options.StageQuality))
+                        Flash.SetGameObject("stage.quality", Options.StageQuality);
                 }
                 catch { }
                 OnGameLoaded();
                 Initialize();
                 try { Options.Reset(); } catch { }
+                try
+                {
+                    if (!Options.IsHeadlessNow() && !string.IsNullOrEmpty(Options.StageQuality))
+                        Flash.SetGameObject("stage.quality", Options.StageQuality);
+                }
+                catch { }
                 break;
 
             case "connectionLost":
