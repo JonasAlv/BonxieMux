@@ -372,40 +372,11 @@ public partial class GetScriptsService : ObservableObject, IGetScriptsService
         using HttpResponseMessage response = await ValidatedHttpExtensions.GetAsync(HttpClients.GitHubRaw, info.DownloadUrl, token);
         byte[] scriptBytes = await response.Content.ReadAsByteArrayAsync(token);
 
-        // Linux compatibility: Upstream CoreBots.cs includes Windows-specific updater code (SkuaVersionCheckerAsync)
-        // that queries GitHub atom feeds and halts execution on non-Windows OSes. We neutralize it on download
-        // so downloaded community scripts run out-of-the-box on Linux without manual patching.
-        if (info.FilePath.EndsWith("CoreBots.cs", StringComparison.OrdinalIgnoreCase))
-        {
-            string content = System.Text.Encoding.UTF8.GetString(scriptBytes);
-            bool modified = false;
-            if (content.Contains("RunSync(() => SkuaVersionCheckerAsync());"))
-            {
-                content = content.Replace("RunSync(() => SkuaVersionCheckerAsync());", "// RunSync(() => SkuaVersionCheckerAsync()); // Neutralized Windows update check on Linux");
-                modified = true;
-            }
-            if (!content.Contains("!OperatingSystem.IsWindows()") && content.Contains("private async Task SkuaVersionCheckerAsync()"))
-            {
-                content = content.Replace("private async Task SkuaVersionCheckerAsync()", "private async Task SkuaVersionCheckerAsync() => await Task.CompletedTask; private async Task __OldSkuaVersionCheckerAsync()");
-                modified = true;
-            }
-            if (modified)
-                scriptBytes = System.Text.Encoding.UTF8.GetBytes(content);
-        }
-
         string temporaryFile = info.LocalFile + $".{Environment.ProcessId}.{Guid.NewGuid():N}.tmp";
         try
         {
             await File.WriteAllBytesAsync(temporaryFile, scriptBytes, token);
             File.Move(temporaryFile, info.LocalFile, true);
-            if (info.FilePath.EndsWith("CoreBots.cs", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(info.Sha256))
-            {
-                try
-                {
-                    await File.WriteAllTextAsync(info.LocalFile + ".sha", info.Sha256, token);
-                }
-                catch { }
-            }
         }
         finally
         {
