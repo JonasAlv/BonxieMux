@@ -14,7 +14,7 @@ CURRENT_DIR="$BUILD_DIR/payload/current"
 APP_BIN="$SCRIPT_DIR/Skua.App.Avalonia/bin/Release/net10.0"
 MGR_BIN="$SCRIPT_DIR/Skua.Manager.Avalonia/bin/Release/net10.0"
 SWF_SOURCE="$SCRIPT_DIR/Skua.AS3/skua/bin/skua.swf"
-SKUA_ICON="$SCRIPT_DIR/Skua.Core/SkuaIcon.png"
+SKUA_ICON="$SCRIPT_DIR/Skua.Shared.Avalonia/Assets/SkuaIcon.png"
 
 PROPS_FILE="$SCRIPT_DIR/Directory.Build.props"
 if [[ ! -s "$PROPS_FILE" ]]; then

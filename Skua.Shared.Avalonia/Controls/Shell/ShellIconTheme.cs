@@ -20,11 +20,14 @@ public static class ShellIconTheme
     /// <summary>The icon for the current OS theme; null until <see cref="Track"/> runs.</summary>
     public static WindowIcon? Current { get; private set; }
 
-    public static void Track(Application app, string darkThemeIcoUri)
+    public static void Track(
+        Application app,
+        string darkThemeIconUri = "avares://Skua.Shared.Avalonia/Assets/SkuaIcon.png",
+        string lightThemeIconUri = "avares://Skua.Shared.Avalonia/Assets/SkuaIconLightTheme.png")
     {
         _app = app;
-        _darkThemeIcon = Load(darkThemeIcoUri);
-        _lightThemeIcon = Load("avares://Skua.Shared.Avalonia/Assets/SkuaIconLightTheme.ico");
+        _darkThemeIcon = Load(darkThemeIconUri);
+        _lightThemeIcon = Load(lightThemeIconUri);
         Window.WindowOpenedEvent.AddClassHandler<Window>((window, _) => window.Icon = Current);
         if (app.PlatformSettings is { } settings)
             settings.ColorValuesChanged += (_, values) => Dispatcher.UIThread.Post(() => Apply(values.ThemeVariant));
