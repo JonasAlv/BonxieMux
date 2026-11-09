@@ -1,4 +1,6 @@
+using Avalonia;
 using Avalonia.Media;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using Skua.Core.Interfaces;
 using Skua.Core.Models;
@@ -45,6 +47,7 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         _settingsService = settingsService;
         _useAccentOnMainTitleBar = ReadUseAccentOnMainTitleBarSetting();
         _useAccentOnManagerTitleBar = ReadUseAccentOnManagerTitleBarSetting();
+        _syncThemeWithSystem = ReadSyncThemeWithSystemSetting();
 
         _applyThrottleTimer = new DispatcherTimer
         {
@@ -112,6 +115,11 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         }
 
         ApplyThemeItem(current);
+        HookSystemThemeChanges();
+        if (_syncThemeWithSystem)
+        {
+            SyncWithSystemTheme();
+        }
     }
 
     public event ThemeChangedEventHandler? ThemeChanged;
@@ -315,6 +323,30 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             PersistUseAccentOnManagerTitleBarSetting(value);
             OnPropertyChanged();
             ThemeChanged?.Invoke(_primaryColor);
+        }
+    }
+
+    private bool _syncThemeWithSystem = true;
+
+    /// <summary>
+    /// Gets or sets whether the application's dark/light theme mode automatically syncs with the desktop OS theme.
+    /// </summary>
+    public bool SyncThemeWithSystem
+    {
+        get => _syncThemeWithSystem;
+        set
+        {
+            if (_syncThemeWithSystem == value)
+                return;
+
+            _syncThemeWithSystem = value;
+            PersistSyncThemeWithSystemSetting(value);
+            OnPropertyChanged();
+
+            if (_syncThemeWithSystem)
+            {
+                SyncWithSystemTheme();
+            }
         }
     }
 
@@ -571,9 +603,78 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         }
     }
 
+    private bool ReadSyncThemeWithSystemSetting()
+    {
+        try
+        {
+            return _settingsService.Get<bool>("SyncThemeWithSystem", true);
+        }
+        catch
+        {
+            return true;
+        }
+    }
+
+    private void PersistSyncThemeWithSystemSetting(bool enabled)
+    {
+        try
+        {
+            _settingsService.Set("SyncThemeWithSystem", enabled);
+            var shared = _settingsService.GetShared();
+            shared.SyncThemeWithSystem = enabled;
+        }
+        catch { }
+    }
+
+    public void SyncWithSystemTheme()
+    {
+        if (!_syncThemeWithSystem)
+            return;
+
+        var platformSettings = Application.Current?.PlatformSettings;
+        if (platformSettings is null)
+            return;
+
+        ApplySystemThemeVariant(platformSettings.GetColorValues().ThemeVariant);
+    }
+
+    private void ApplySystemThemeVariant(PlatformThemeVariant variant)
+    {
+        bool isDark = variant != PlatformThemeVariant.Light;
+        if (IsDarkTheme != isDark)
+        {
+            ApplyBaseTheme(isDark);
+        }
+    }
+
+    private void HookSystemThemeChanges()
+    {
+        if (Application.Current?.PlatformSettings is { } settings)
+        {
+            settings.ColorValuesChanged += (_, values) =>
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (SyncThemeWithSystem)
+                    {
+                        ApplySystemThemeVariant(values.ThemeVariant);
+                    }
+                });
+            };
+        }
+    }
+
     private void ApplyThemeItem(ThemeItem item)
     {
-        _isDarkTheme = item.IsDarkTheme;
+        if (_syncThemeWithSystem && Application.Current?.PlatformSettings is { } settings)
+        {
+            var variant = settings.GetColorValues().ThemeVariant;
+            _isDarkTheme = variant != PlatformThemeVariant.Light;
+        }
+        else
+        {
+            _isDarkTheme = item.IsDarkTheme;
+        }
         _isColorAdjusted = item.UseColorAdjustment;
         _desiredContrastRatio = item.DesiredContrastRatio;
         _contrastValue = NormalizeContrastValue(item.ContrastValue);
@@ -729,43 +830,19 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
 
     private void ApplyColorToActiveScheme(Color color, bool immediate = false)
     {
-        if (ActiveScheme == ColorScheme.PrimaryForeground)
+        if (ActiveScheme == ColorScheme.PrimaryForeground || ActiveScheme == ColorScheme.SecondaryForeground)
         {
             if (IsColorAdjusted)
             {
                 CaptureAdjustmentBaseline();
                 _baselinePrimaryForegroundColor = color;
-                ComputeColorAdjustments();
-            }
-            else
-            {
-                _primaryForegroundColor = color;
-            }
-        }
-        else if (ActiveScheme == ColorScheme.SecondaryForeground)
-        {
-            if (IsColorAdjusted)
-            {
-                CaptureAdjustmentBaseline();
                 _baselineSecondaryForegroundColor = color;
                 ComputeColorAdjustments();
             }
             else
             {
+                _primaryForegroundColor = color;
                 _secondaryForegroundColor = color;
-            }
-        }
-        else if (ActiveScheme == ColorScheme.Secondary)
-        {
-            if (IsColorAdjusted)
-            {
-                CaptureAdjustmentBaseline();
-                _baselineSecondaryColor = color;
-                ComputeColorAdjustments();
-            }
-            else
-            {
-                _secondaryColor = color;
             }
         }
         else
@@ -774,11 +851,13 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             {
                 CaptureAdjustmentBaseline();
                 _baselinePrimaryColor = color;
+                _baselineSecondaryColor = color;
                 ComputeColorAdjustments();
             }
             else
             {
                 _primaryColor = color;
+                _secondaryColor = color;
             }
         }
 

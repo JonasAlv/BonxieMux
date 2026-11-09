@@ -71,6 +71,44 @@ public class ApplicationThemesViewModel : BotControlViewModelBase
         }
     }
 
+    /// <summary>
+    /// Controls whether the Manager title bar uses the active theme's accent color.
+    /// </summary>
+    public bool UseAccentOnManagerTitleBar
+    {
+        get => ThemeService is AvaloniaThemeService avaloniaTheme && avaloniaTheme.UseAccentOnManagerTitleBar;
+        set
+        {
+            if (ThemeService is not AvaloniaThemeService avaloniaTheme || avaloniaTheme.UseAccentOnManagerTitleBar == value)
+                return;
+
+            avaloniaTheme.UseAccentOnManagerTitleBar = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Controls whether changes to the Manager's theme automatically sync with BonxieMux.
+    /// Maps to the persistent "syncTheme" setting.
+    /// </summary>
+    public bool SyncThemeWithApp
+    {
+        get => _settingsService.Get("syncTheme", false);
+        set
+        {
+            if (_settingsService.Get("syncTheme", false) == value)
+                return;
+
+            _settingsService.Set("syncTheme", value);
+            OnPropertyChanged();
+
+            if (value && ThemeService is AvaloniaThemeService ats)
+            {
+                ManagerThemeBroadcaster.Broadcast(ats);
+            }
+        }
+    }
+
     public ThemeSettingsViewModel ThemeSettings { get; }
     public ColorSchemeEditorViewModel ColorSchemeEditor { get; }
     public BackgroundThemeViewModel BackgroundTheme { get; }

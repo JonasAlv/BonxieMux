@@ -21,6 +21,7 @@ public interface IThemeService
     float DesiredContrastRatio { get; set; }
     bool IsColorAdjusted { get; set; }
     bool IsDarkTheme { get; set; }
+    bool SyncThemeWithSystem { get; set; }
     object? SelectedColor { get; set; }
     ColorScheme ActiveScheme { get; set; }
 

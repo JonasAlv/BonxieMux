@@ -216,6 +216,9 @@ public class SharedSettings
     [JsonPropertyName("CheckBotScriptsUpdates")]
     public bool CheckBotScriptsUpdates { get; set; } = true;
 
+    [JsonPropertyName("SyncThemeWithSystem")]
+    public bool SyncThemeWithSystem { get; set; } = true;
+
     [JsonExtensionData]
     public Dictionary<string, object>? ExtensionData { get; set; }
 

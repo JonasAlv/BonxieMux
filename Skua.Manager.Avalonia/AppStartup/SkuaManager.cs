@@ -7,6 +7,7 @@ using Skua.Core.Interfaces;
 using Skua.Core.Interfaces.Services;
 using Skua.Core.Messaging;
 using Skua.Manager.Avalonia.ViewModels;
+using Skua.Shared.Avalonia.Services;
 using Skua.Shared.Avalonia.ViewModels;
 using Skua.Shared.Avalonia.ViewModels.Options;
 using Skua.Shared.Avalonia.ViewModels.ScriptRepo;
@@ -37,12 +38,23 @@ internal class SkuaManager
     {
         List<DisplayOptionItemViewModelBase> options = new()
         {
-            CreateSettingOptionItem<bool>("Use Manager theme on BonxieMux", "Whether to use, when launching from the Launcher tab, the same theme as the Manager in any launched App", "syncTheme")
+            CreateSettingOptionItem<bool>(
+                "Sync Manager theme with BonxieMux",
+                "Automatically synchronizes the Manager's active theme, dark/light mode, and accent colors with launched and running BonxieMux windows in real time.",
+                "syncTheme")
         };
 
         return new(options, s.GetRequiredService<ISettingsService>(), s.GetRequiredService<IFileDialogService>());
 
-        static RelayCommand<T> CreateSettingCommand<T>(string key) => new(b => Ioc.Default.GetRequiredService<ISettingsService>().Set(key, b));
+        static RelayCommand<T> CreateSettingCommand<T>(string key) => new(b =>
+        {
+            var settings = Ioc.Default.GetRequiredService<ISettingsService>();
+            settings.Set(key, b);
+            if (key == "syncTheme" && b is true && Ioc.Default.GetService<IThemeService>() is AvaloniaThemeService ats)
+            {
+                ManagerThemeBroadcaster.Broadcast(ats);
+            }
+        });
         static CommandOptionItemViewModel<T> CreateSettingOptionItem<T>(string content, string description, string key) => new(content, description, key, (IRelayCommand)CreateSettingCommand<T>(key), Ioc.Default.GetRequiredService<ISettingsService>().Get<T>(key));
     }
 }

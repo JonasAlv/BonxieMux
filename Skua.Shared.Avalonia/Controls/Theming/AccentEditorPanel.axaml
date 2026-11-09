@@ -9,7 +9,11 @@
     <!-- Mode & Custom Color Bar -->
     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalAlignment="Center">
       <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+        <sharedSettings:LabeledToggleRow Label="Sync with System"
+                                         ToolTip.Tip="Automatically sync dark/light mode with the desktop system theme"
+                                         IsChecked="{Binding ThemeService.SyncThemeWithSystem, Mode=TwoWay}" />
         <sharedSettings:LabeledToggleRow Label="Dark Mode"
+                                         IsEnabled="{Binding !ThemeService.SyncThemeWithSystem}"
                                          IsChecked="{Binding ThemeService.IsDarkTheme, Mode=TwoWay}" />
         <sharedSettings:LabeledToggleRow x:Name="ColorAdjustmentToggle"
                                          Label="Auto Color Contrast"
