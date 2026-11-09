@@ -141,7 +141,6 @@ log_success "Built AS3 game client: ${OUTPUT_PATH} (${SWF_SIZE} bytes)"
 
 # 4. Synchronize built SWF to active development and runtime paths
 SYNC_TARGETS=(
-    "${SCRIPT_DIR}/../Skua.App.Avalonia/skua.swf"
     "${SCRIPT_DIR}/../Skua.App.Avalonia/bin/Debug/net10.0/skua.swf"
     "${SCRIPT_DIR}/../Skua.App.Avalonia/bin/Release/net10.0/skua.swf"
     "${SCRIPT_DIR}/../Build/payload/current/skua.swf"
