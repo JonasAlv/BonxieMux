@@ -202,7 +202,7 @@ public partial class ScriptDrop
     {
         if (drop.Temp)
             return null;
-        InventoryItem? owned = Inventory.Items.FirstOrDefault(i => i.ID == drop.ID);
+        InventoryItem? owned = Inventory.Items.FirstOrDefault(i => (drop.ID != 0 && i.ID == drop.ID) || (!string.IsNullOrEmpty(drop.Name) && string.Equals(i.Name, drop.Name, StringComparison.OrdinalIgnoreCase)));
         int max = owned is { MaxStack: > 0 } ? owned.MaxStack : drop.MaxStack;
         if (owned != null && max > 1 && owned.Quantity >= max)
             return "full stack";
@@ -212,13 +212,15 @@ public partial class ScriptDrop
             return "already owned";
         if (!_bank.Value.Loaded)
         {
+            if (Player.InCombat)
+                return null;
             // Reading the bank is slow and can fail: not more than once a minute.
             if (DateTime.UtcNow - _bankLoadTried < TimeSpan.FromMinutes(1))
                 return null;
             _bankLoadTried = DateTime.UtcNow;
             _bank.Value.Load(true);
         }
-        return _bank.Value.Contains(drop.ID) ? "already in the bank" : null;
+        return (_bank.Value.Contains(drop.ID) || (!string.IsNullOrEmpty(drop.Name) && _bank.Value.Contains(drop.Name))) ? "already in the bank" : null;
     }
 
     private DateTime _bankLoadTried = DateTime.MinValue;
@@ -226,12 +228,26 @@ public partial class ScriptDrop
     /// <summary>Rejects just these drops and leaves every other drop where it is (the game only offers "reject all except these names").</summary>
     private bool RejectDrops(ItemBase[] items)
     {
-        string[] keep = CurrentDropInfos.Where(d => items.All(i => i.ID != d.ID)).Select(d => d.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-        if (!Flash.Call<bool>("rejectExcept", string.Join(',', keep).ToLowerInvariant())) return false;
-        _currentDropInfos.Remove(d => items.Any(i => i.ID == d.ID));
+        if (items.Length == 0)
+            return true;
+        string[] keep = CurrentDropInfos.Where(d => items.All(i => (i.ID != 0 && d.ID != 0 ? i.ID != d.ID : true) && !string.Equals(i.Name, d.Name, StringComparison.OrdinalIgnoreCase)))
+            .Select(d => d.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        try
+        {
+            Flash.Call<bool>("rejectExcept", string.Join(',', keep).ToLowerInvariant());
+        }
+        catch { }
+        _currentDropInfos.Remove(d => items.Any(i => (i.ID != 0 && d.ID != 0 && i.ID == d.ID) || string.Equals(i.Name, d.Name, StringComparison.OrdinalIgnoreCase)));
         OnPropertyChanged(nameof(CurrentDropInfos));
         OnPropertyChanged(nameof(CurrentDrops));
         return true;
+    }
+
+    public void RejectFullStackDrops()
+    {
+        ItemBase[] fullStack = CurrentDropInfos.Where(d => CannotTake(d) is not null).ToArray();
+        if (fullStack.Length > 0)
+            RejectDrops(fullStack);
     }
 
     private bool SafeAccount(string account) => _pendingSession == Volatile.Read(ref _lootSession) && Player.LoggedIn && Player.Username.Equals(account, StringComparison.OrdinalIgnoreCase);

@@ -381,6 +381,7 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 });
 
                 _limit.LimitedRun("connDetail", 100, () => (lastConnChange, lastConnDetail) = CheckStuckonLoading(lastConnChange, lastConnDetail));
+                _limit.LimitedRun("loginWatchdog", 500, LoginWatchdogTick);
                 if (Manager.ScriptRunning)
                     RunScriptHandlers();
 
@@ -533,6 +534,13 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 break;
 
             case "loaded":
+                try
+                {
+                    if (Options.SetFPS > 2 && !Options.IsHeadlessNow())
+                        Flash.SetGameObject("stage.frameRate", Options.SetFPS);
+                }
+                catch { }
+                OnGameLoaded();
                 Initialize();
                 try { Options.Reset(); } catch { }
                 break;
@@ -599,6 +607,12 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 break;
 
             case "pext":
+                if (((string)args[0]).Contains("Missing Quest Progress", StringComparison.OrdinalIgnoreCase))
+                    OnMissingQuestProgress();
+                if (((string)args[0]).Contains("One Time Quest Only", StringComparison.OrdinalIgnoreCase))
+                    OnOneTimeQuestOnly();
+                if (((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase))
+                    ((ScriptDrop)Drops).RejectFullStackDrops();
                 dynamic packet = JsonConvert.DeserializeObject<dynamic>((string)args[0])!;
                 string type = packet["params"].type;
                 dynamic data = packet["params"].dataObj;
@@ -737,6 +751,10 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                                 Stats.QuestsCompleted++;
                                 Messenger.Send<QuestTurninMessage, int>(new(Convert.ToInt32(data.QuestID)), (int)MessageChannels.GameEvents);
                             }
+                            else
+                            {
+                                try { OnQuestTurnInFailed(Convert.ToInt32(data.QuestID)); } catch { }
+                            }
                             break;
 
                         case "loadBank":
@@ -788,6 +806,8 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 break;
 
             case "packet":
+                if (((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase))
+                    ((ScriptDrop)Drops).RejectFullStackDrops();
                 string[] parts = ((string)args[0]).Split('%', StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length < 3)
                     break;
@@ -798,6 +818,7 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                         Log("In-game exit logout packet (eLO) detected. Disarming auto re-login.");
                         Servers.IsIntentionalLogout = true;
                         Servers.UserLoggedOut = true;
+                        _wdRestartScript = false;
                         CancelRelogin();
                         if (Manager.ScriptRunning)
                             _ = Manager.StopScript();
@@ -808,6 +829,7 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                         Log("In-game exit to server list packet (eSL) detected. Disarming auto re-login.");
                         Servers.IsIntentionalLogout = true;
                         Servers.UserLoggedOut = true;
+                        _wdRestartScript = false;
                         CancelRelogin();
                         if (Manager.ScriptRunning)
                             _ = Manager.StopScript();
@@ -892,8 +914,16 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
         }
 
         Log("Auto re-login triggered.");
+        bool wasRunning = Manager.ScriptRunning;
+        WdLog($" auto re-login started; script running now: {wasRunning}, running recently: {ScriptRanRecently}.");
         CancellationTokenSource reloginCts = new();
         _reloginCTS = reloginCts;
+        if (wasRunning || _wdScriptWhenInGame || ScriptRanRecently)
+        {
+            _wdRestartScript = true;
+            _wdReloginMarker = Environment.TickCount | 1;
+            _wdFallbackSince = 0;
+        }
         // Claim the re-login before awaiting the script stop, so the crash recovery doesn't start a
         // second login meanwhile.
         _waitForLogin = true;
@@ -901,7 +931,8 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
         {
             if (!logoutNotified)
                 Messenger.Send<LogoutMessage, int>((int)MessageChannels.GameEvents);
-            await Manager.StopScript();
+            if (wasRunning)
+                await Manager.StopScript();
             reloginCts.Token.ThrowIfCancellationRequested();
             bool kicked = Player.Kicked;
             Messenger.Send<ReloginTriggeredMessage, int>(new(kicked), (int)MessageChannels.GameEvents);

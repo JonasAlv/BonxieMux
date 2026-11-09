@@ -111,6 +111,11 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
             return false;
         if (!drop.Temp && !Inventory.HasSpaceFor(drop))
             return false;
+        if (CannotTake(drop) is not null)
+        {
+            RejectDrops(new[] { drop });
+            return false;
+        }
         // The automatic loop only re-sends a refused drop once a slot has freed up; an explicit pickup always retries.
         if (_loopToken.Value is not null && _refusedIDs.TryGetValue(drop.ID, out (int Bag, int Misc) refused))
         {
@@ -147,12 +152,21 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
     public void Pickup(params string[] names)
     {
         HashSet<string> wanted = new(names, StringComparer.OrdinalIgnoreCase);
-        PickupEach(CurrentDropInfos.Where(d => wanted.Contains(d.Name.Trim())));
+        ItemBase[] wantedDrops = CurrentDropInfos.Where(d => wanted.Contains(d.Name.Trim())).ToArray();
+        ItemBase[] refused = wantedDrops.Where(d => CannotTake(d) is not null).ToArray();
+        if (refused.Length > 0)
+            RejectDrops(refused);
+        PickupEach(wantedDrops.Where(d => refused.All(r => r.ID != d.ID) && !WaitingForSlot(d)));
     }
 
     public void Pickup(params int[] ids)
     {
-        PickupEach(CurrentDropInfos.Where(d => ids.Contains(d.ID)));
+        HashSet<int> wanted = new(ids);
+        ItemBase[] wantedDrops = CurrentDropInfos.Where(d => wanted.Contains(d.ID)).ToArray();
+        ItemBase[] refused = wantedDrops.Where(d => CannotTake(d) is not null).ToArray();
+        if (refused.Length > 0)
+            RejectDrops(refused);
+        PickupEach(wantedDrops.Where(d => refused.All(r => r.ID != d.ID) && !WaitingForSlot(d)));
     }
 
     public void PickupACItems()
@@ -179,7 +193,10 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
 
     public void PickupAll(bool skipWait = false)
     {
-        int[] sent = _currentDropInfos.Items.Where(SendPickup).Select(d => d.ID).ToArray();
+        ItemBase[] refused = CurrentDropInfos.Where(d => CannotTake(d) is not null).ToArray();
+        if (refused.Length > 0)
+            RejectDrops(refused);
+        int[] sent = _currentDropInfos.Items.Where(d => !WaitingForSlot(d)).Where(SendPickup).Select(d => d.ID).ToArray();
         OnPropertyChanged(nameof(CurrentDropInfos));
         OnPropertyChanged(nameof(CurrentDrops));
         if (!skipWait)
