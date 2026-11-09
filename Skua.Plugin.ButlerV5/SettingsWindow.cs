@@ -33,7 +33,7 @@ public sealed class SettingsWindow : Window
         Height = 630;
         MinWidth = 720;
         MinHeight = 440;
-        WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        Skua.Shared.Avalonia.Services.WindowPlacementHelper.CenterOnActiveScreen(this);
         AvaloniaUi.PrepareWindow(this);
 
         Grid root = new()

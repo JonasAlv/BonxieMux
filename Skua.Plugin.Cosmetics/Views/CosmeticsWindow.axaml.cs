@@ -48,6 +48,7 @@ public partial class CosmeticsWindow : Window
         _service = service;
 
         InitializeComponent();
+        Skua.Shared.Avalonia.Services.WindowPlacementHelper.CenterOnActiveScreen(this);
 
         _service.CatalogUpdated += OnServiceCatalogUpdated;
         _service.FavoritesUpdated += OnServiceFavoritesUpdated;

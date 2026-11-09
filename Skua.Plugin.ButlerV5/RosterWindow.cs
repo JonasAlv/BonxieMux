@@ -31,7 +31,7 @@ public sealed class RosterWindow : Window
         Height = 490;
         MinWidth = 450;
         MinHeight = 320;
-        WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        Skua.Shared.Avalonia.Services.WindowPlacementHelper.CenterOnActiveScreen(this);
         AvaloniaUi.PrepareWindow(this);
 
         Grid root = new()
