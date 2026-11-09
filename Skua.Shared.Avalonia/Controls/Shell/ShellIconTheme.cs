@@ -8,27 +8,38 @@ using System;
 namespace Skua.Shared.Avalonia.Controls.Shell;
 
 /// <summary>
-/// Taskbar, alt-tab and tray icons sit on the OS's own chrome, so they follow the OS theme rather than the
-/// app theme: white bird on a dark taskbar, dark bird on a light one.
+/// Tray icons sit on the OS system tray/panel, so they follow the desktop OS theme:
+/// SkuaShellImage.png on dark panels, SkuaShellImageLightTheme.png on light panels.
+/// The window and desktop taskbar icons use SkuaIcon.png.
 /// </summary>
 public static class ShellIconTheme
 {
     private static Application? _app;
-    private static WindowIcon? _darkThemeIcon;
-    private static WindowIcon? _lightThemeIcon;
+    private static WindowIcon? _darkTrayIcon;
+    private static WindowIcon? _lightTrayIcon;
+    private static WindowIcon? _windowIcon;
 
-    /// <summary>The icon for the current OS theme; null until <see cref="Track"/> runs.</summary>
-    public static WindowIcon? Current { get; private set; }
+    /// <summary>The tray icon for the current desktop OS theme.</summary>
+    public static WindowIcon? CurrentTrayIcon { get; private set; }
+
+    /// <summary>The icon for the current OS theme (tray icon), kept for backwards compatibility.</summary>
+    public static WindowIcon? Current => CurrentTrayIcon;
+
+    /// <summary>The desktop taskbar / window icon.</summary>
+    public static WindowIcon? WindowIcon => _windowIcon;
 
     public static void Track(
         Application app,
-        string darkThemeIconUri = "avares://Skua.Shared.Avalonia/Assets/SkuaIcon.png",
-        string lightThemeIconUri = "avares://Skua.Shared.Avalonia/Assets/SkuaIconLightTheme.png")
+        string darkTrayIconUri = "avares://Skua.Shared.Avalonia/Assets/SkuaShellImage.png",
+        string lightTrayIconUri = "avares://Skua.Shared.Avalonia/Assets/SkuaShellImageLightTheme.png",
+        string windowIconUri = "avares://Skua.Shared.Avalonia/Assets/SkuaIcon.png")
     {
         _app = app;
-        _darkThemeIcon = Load(darkThemeIconUri);
-        _lightThemeIcon = Load(lightThemeIconUri);
-        Window.WindowOpenedEvent.AddClassHandler<Window>((window, _) => window.Icon = Current);
+        _darkTrayIcon = Load(darkTrayIconUri);
+        _lightTrayIcon = Load(lightTrayIconUri);
+        _windowIcon = Load(windowIconUri);
+
+        Window.WindowOpenedEvent.AddClassHandler<Window>((window, _) => window.Icon = _windowIcon);
         if (app.PlatformSettings is { } settings)
             settings.ColorValuesChanged += (_, values) => Dispatcher.UIThread.Post(() => Apply(values.ThemeVariant));
         Apply(app.PlatformSettings?.GetColorValues().ThemeVariant ?? PlatformThemeVariant.Dark);
@@ -36,13 +47,13 @@ public static class ShellIconTheme
 
     private static void Apply(PlatformThemeVariant osTheme)
     {
-        Current = osTheme == PlatformThemeVariant.Light ? _lightThemeIcon : _darkThemeIcon;
+        CurrentTrayIcon = osTheme == PlatformThemeVariant.Light ? _lightTrayIcon : _darkTrayIcon;
         if (_app?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             foreach (Window window in desktop.Windows)
-                window.Icon = Current;
+                window.Icon = _windowIcon;
         if (_app is not null && TrayIcon.GetIcons(_app) is { } trays)
             foreach (TrayIcon tray in trays)
-                tray.Icon = Current;
+                tray.Icon = CurrentTrayIcon;
     }
 
     private static WindowIcon Load(string avaresUri)

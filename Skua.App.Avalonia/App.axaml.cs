@@ -898,7 +898,7 @@ public partial class App : Application
     {
         try
         {
-            var icon = Skua.Shared.Avalonia.Controls.Shell.ShellIconTheme.Current;
+            var icon = Skua.Shared.Avalonia.Controls.Shell.ShellIconTheme.CurrentTrayIcon ?? Skua.Shared.Avalonia.Controls.Shell.ShellIconTheme.Current;
 
             _trayIcon = new TrayIcon
             {

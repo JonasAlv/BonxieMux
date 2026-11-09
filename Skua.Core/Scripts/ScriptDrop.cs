@@ -112,10 +112,7 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
         if (!drop.Temp && !Inventory.HasSpaceFor(drop))
             return false;
         if (CannotTake(drop) is not null)
-        {
-            RejectDrops(new[] { drop });
             return false;
-        }
         // The automatic loop only re-sends a refused drop once a slot has freed up; an explicit pickup always retries.
         if (_loopToken.Value is not null && _refusedIDs.TryGetValue(drop.ID, out (int Bag, int Misc) refused))
         {
@@ -155,8 +152,6 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
         HashSet<string> wanted = new(names, StringComparer.OrdinalIgnoreCase);
         ItemBase[] wantedDrops = CurrentDropInfos.Where(d => wanted.Contains(d.Name.Trim())).ToArray();
         ItemBase[] refused = wantedDrops.Where(d => CannotTake(d) is not null).ToArray();
-        if (refused.Length > 0)
-            RejectDrops(refused);
         PickupEach(wantedDrops.Where(d => refused.All(r => r.ID != d.ID) && !WaitingForSlot(d)));
     }
 
@@ -165,8 +160,6 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
         HashSet<int> wanted = new(ids);
         ItemBase[] wantedDrops = CurrentDropInfos.Where(d => wanted.Contains(d.ID)).ToArray();
         ItemBase[] refused = wantedDrops.Where(d => CannotTake(d) is not null).ToArray();
-        if (refused.Length > 0)
-            RejectDrops(refused);
         PickupEach(wantedDrops.Where(d => refused.All(r => r.ID != d.ID) && !WaitingForSlot(d)));
     }
 
@@ -175,12 +168,7 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
         ItemBase[] ac = CurrentDropInfos.Where(d => d.Coins).ToArray();
         if (ac.Length == 0)
             return;
-        // The same rule as "Pickup AC Drops And Send To Bank": a drop the server would refuse (a full stack, or an item that can only be
-        // owned once and is already in the inventory or bank) is rejected, not asked for again and again. A drop that was refused for
-        // lack of space waits until a slot has freed up, even when a script calls this over and over.
         ItemBase[] refused = ac.Where(d => CannotTake(d) is not null).ToArray();
-        if (refused.Length > 0)
-            RejectDrops(refused);
         PickupEach(ac.Where(d => refused.All(r => r.ID != d.ID) && !WaitingForSlot(d)));
     }
 
@@ -194,10 +182,7 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
 
     public void PickupAll(bool skipWait = false)
     {
-        ItemBase[] refused = CurrentDropInfos.Where(d => CannotTake(d) is not null).ToArray();
-        if (refused.Length > 0)
-            RejectDrops(refused);
-        int[] sent = _currentDropInfos.Items.Where(d => !WaitingForSlot(d)).Where(SendPickup).Select(d => d.ID).ToArray();
+        int[] sent = _currentDropInfos.Items.Where(d => !WaitingForSlot(d) && CannotTake(d) is null).Where(SendPickup).Select(d => d.ID).ToArray();
         OnPropertyChanged(nameof(CurrentDropInfos));
         OnPropertyChanged(nameof(CurrentDrops));
         if (!skipWait)

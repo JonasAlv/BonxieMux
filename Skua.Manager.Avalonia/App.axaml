@@ -32,7 +32,7 @@
     </Application.Styles>
     <TrayIcon.Icons>
         <TrayIcons>
-            <TrayIcon Icon="avares://Skua.Shared.Avalonia/Assets/SkuaIcon.png"
+            <TrayIcon Icon="avares://Skua.Shared.Avalonia/Assets/SkuaShellImage.png"
                       ToolTipText="BonxieMux Manager"
                       Clicked="TrayIcon_Clicked">
                 <TrayIcon.Menu>

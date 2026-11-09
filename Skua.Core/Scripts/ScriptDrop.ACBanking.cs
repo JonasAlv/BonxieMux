@@ -124,14 +124,13 @@ public partial class ScriptDrop
             if (!SafeToBank(account)) return "Combat resumed; AC banking will wait.";
             List<string> banked = new(), failed = new(), rejected = new();
 
-            // An item the bank already holds (one that cannot be owned twice) is rejected, not picked up and banked again.
+            // An item that cannot be taken (already full stack or owned in bank) is filtered out, not picked up and banked again.
             if (drops.Length > 0)
             {
                 if (!_bank.Value.Loaded) _bank.Value.Load(true);
                 ItemBase[] already = drops.Where(d => CannotTake(d) is not null).ToArray();
-                if (already.Length > 0 && RejectDrops(already))
+                if (already.Length > 0)
                 {
-                    rejected.AddRange(already.Select(d => d.Name));
                     foreach (ItemBase d in already)
                         _pickupAttempts.Remove(d.ID);
                     drops = drops.Where(d => already.All(a => a.ID != d.ID)).ToArray();
@@ -326,13 +325,7 @@ public partial class ScriptDrop
 
     public void RejectFullStackDrops()
     {
-        List<ItemBase> toReject = new();
-
-        // 1. Drops that CannotTake can identify right away
-        ItemBase[] cannotTakeDrops = CurrentDropInfos.Where(d => CannotTake(d) is not null).ToArray();
-        toReject.AddRange(cannotTakeDrops);
-
-        // 2. Identify the drop that was just requested when server sent "Already have a full stack"
+        // 1. Identify the drop that was just requested when server sent "Already have a full stack"
         int lastID = _lastPickupDropID;
         string lastName = _lastPickupDropName;
         if (lastID != 0 && (DateTime.UtcNow - _lastPickupTime) < TimeSpan.FromSeconds(5))
@@ -340,47 +333,31 @@ public partial class ScriptDrop
             _fullStackIDs.TryAdd(lastID, 0);
             if (!string.IsNullOrEmpty(lastName))
                 _fullStackNames.TryAdd(lastName, 0);
-
-            ItemBase? pendingDrop = CurrentDropInfos.FirstOrDefault(d => (lastID != 0 && d.ID == lastID) || (!string.IsNullOrEmpty(lastName) && string.Equals(d.Name, lastName, StringComparison.OrdinalIgnoreCase)));
-            if (pendingDrop != null && !toReject.Contains(pendingDrop))
-                toReject.Add(pendingDrop);
         }
 
-        // 3. Check any pending pickups from the last 5 seconds
+        // 2. Check any pending pickups from the last 5 seconds
         DateTime cutoff = DateTime.UtcNow.AddSeconds(-5);
         foreach (var kvp in _pendingPickups)
         {
             if (kvp.Value.Time >= cutoff)
             {
-                ItemBase? pDrop = CurrentDropInfos.FirstOrDefault(d => d.ID == kvp.Key || string.Equals(d.Name, kvp.Value.Name, StringComparison.OrdinalIgnoreCase));
-                if (pDrop != null && !toReject.Contains(pDrop))
-                {
-                    _fullStackIDs.TryAdd(kvp.Key, 0);
-                    if (!string.IsNullOrEmpty(kvp.Value.Name))
-                        _fullStackNames.TryAdd(kvp.Value.Name, 0);
-                    toReject.Add(pDrop);
-                }
+                _fullStackIDs.TryAdd(kvp.Key, 0);
+                if (!string.IsNullOrEmpty(kvp.Value.Name))
+                    _fullStackNames.TryAdd(kvp.Value.Name, 0);
             }
         }
 
-        // 4. Fallback: if toReject is still empty and there is only 1 current drop on screen, that drop is the culprit
-        if (toReject.Count == 0)
+        // 3. Fallback: if only 1 current drop on screen, that drop is the culprit
+        ItemBase[] current = CurrentDropInfos.ToArray();
+        if (current.Length == 1)
         {
-            ItemBase[] current = CurrentDropInfos.ToArray();
-            if (current.Length == 1)
-            {
-                _fullStackIDs.TryAdd(current[0].ID, 0);
-                if (!string.IsNullOrEmpty(current[0].Name))
-                    _fullStackNames.TryAdd(current[0].Name, 0);
-                toReject.Add(current[0]);
-            }
+            _fullStackIDs.TryAdd(current[0].ID, 0);
+            if (!string.IsNullOrEmpty(current[0].Name))
+                _fullStackNames.TryAdd(current[0].Name, 0);
         }
 
-        if (toReject.Count > 0)
-        {
-            System.Diagnostics.Trace.WriteLine($"[ScriptDrop] Rejected full stack drop(s): {string.Join(", ", toReject.Select(d => d.Name))}");
-            RejectDrops(toReject.ToArray());
-        }
+        // Do not reject the item from Flash or remove it from CurrentDropInfos so it stays on the drop list.
+        System.Diagnostics.Trace.WriteLine($"[ScriptDrop] Server confirmed full stack drop; keeping on drop list without re-requesting.");
     }
 
     private bool SafeAccount(string account) => _pendingSession == Volatile.Read(ref _lootSession) && Player.LoggedIn && Player.Username.Equals(account, StringComparison.OrdinalIgnoreCase);
