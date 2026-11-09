@@ -28,6 +28,20 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
         <Setter Property="FontSize" Value="12" />
     </Style>
+
+    <!-- Outer frame border for custom client-decorated windows -->
+    <Style Selector="Border.window-frame">
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaWindowBorderBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource SkuaWindowBorderThickness}" />
+        <Setter Property="Background" Value="{DynamicResource SkuaPageBrush}" />
+    </Style>
+
+    <Style Selector="Window[WindowState=Maximized] Border.window-frame">
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Window[WindowState=FullScreen] Border.window-frame">
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
 </Styles>
 
 

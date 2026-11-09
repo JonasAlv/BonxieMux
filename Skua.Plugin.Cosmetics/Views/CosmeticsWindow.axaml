@@ -164,9 +164,7 @@
         </Style>
     </Window.Styles>
 
-    <Border BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="1"
-            Background="{DynamicResource SkuaSurfaceBrush}">
+    <Border Classes="window-frame">
         <Grid RowDefinitions="Auto,Auto,*">
             <!-- 1. Window Title Bar -->
             <shell:WindowTitleBar Grid.Row="0" TitleText="Cosmetics &amp; Outfits" />

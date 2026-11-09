@@ -26,6 +26,7 @@
         >
 
   <!-- This root class enables shared shell selectors from Theme.axaml (Window.skua ...). -->
+  <Border Classes="window-frame">
   <Grid RowDefinitions="Auto,*">
 
     <sharedShell:WindowTitleBar Grid.Row="0"
@@ -151,6 +152,7 @@
     </Grid>
 
   </Grid>
+  </Border>
 
 </Window>
 

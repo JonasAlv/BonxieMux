@@ -15,8 +15,9 @@
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="32">
-    <Grid x:Name="RootGrid" RowDefinitions="32,Auto,*">
-        <sharedShell:WindowTitleBar x:Name="MainTitleBar" Grid.Row="0" TitleText="BonxieMux" />
+    <Border Classes="window-frame">
+        <Grid x:Name="RootGrid" RowDefinitions="32,Auto,*">
+            <sharedShell:WindowTitleBar x:Name="MainTitleBar" Grid.Row="0" TitleText="BonxieMux" />
 
         <!-- Top Tab Bar & Army Bar -->
         <Border x:Name="TabBarBorder" Grid.Row="1"
@@ -411,4 +412,5 @@
             </StackPanel>
         </Grid>
     </Grid>
+    </Border>
 </Window>

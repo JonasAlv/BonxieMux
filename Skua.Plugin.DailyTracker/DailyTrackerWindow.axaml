@@ -14,9 +14,7 @@
         ExtendClientAreaTitleBarHeightHint="32"
         WindowStartupLocation="Manual">
 
-    <Border BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="1"
-            Background="{DynamicResource SkuaSurfaceBrush}">
+    <Border Classes="window-frame">
         <Grid RowDefinitions="Auto,*">
             <shell:WindowTitleBar Grid.Row="0" TitleText="Daily &amp; Weekly Tracker" />
 

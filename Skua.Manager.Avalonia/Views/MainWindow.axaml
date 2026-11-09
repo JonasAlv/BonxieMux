@@ -20,52 +20,54 @@
         ExtendClientAreaTitleBarHeightHint="32">
 
     <!-- This root class enables shared shell selectors from Theme.axaml (Window.skua ...). -->
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <Border Classes="window-frame">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <sharedShell:WindowTitleBar Grid.Row="0"
-                                    x:Name="TitleBar"
-                                    TitleText="{Binding Title}" />
+            <sharedShell:WindowTitleBar Grid.Row="0"
+                                        x:Name="TitleBar"
+                                        TitleText="{Binding Title}" />
 
-        <!-- Top Nav -->
-        <DockPanel Grid.Row="1"
-                   Height="44"
-                   Margin="8,4,8,4">
-            <ListBox Classes="top-tabs-client"
-                     ItemsSource="{Binding Tabs}"
-                     SelectedItem="{Binding SelectedTab}"
-                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                     HorizontalAlignment="Stretch">
-                <ListBox.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="4" />
-                    </ItemsPanelTemplate>
-                </ListBox.ItemsPanel>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Header}"
-                                   VerticalAlignment="Center"
-                                   TextAlignment="Center"
-                                   Margin="14,0"
-                                   Padding="0" />
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </DockPanel>
+            <!-- Top Nav -->
+            <DockPanel Grid.Row="1"
+                       Height="44"
+                       Margin="8,4,8,4">
+                <ListBox Classes="top-tabs-client"
+                         ItemsSource="{Binding Tabs}"
+                         SelectedItem="{Binding SelectedTab}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         HorizontalAlignment="Stretch">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="4" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Header}"
+                                       VerticalAlignment="Center"
+                                       TextAlignment="Center"
+                                       Margin="14,0"
+                                       Padding="0" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
 
-        <!-- Content Area -->
-        <ContentControl Grid.Row="2"
-                        Margin="4,2,4,4"
-                        Content="{Binding SelectedTab.Content}"
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Stretch" />
-        <managerControls:ToastHost Grid.RowSpan="3" />
-    </Grid>
+            <!-- Content Area -->
+            <ContentControl Grid.Row="2"
+                            Margin="4,2,4,4"
+                            Content="{Binding SelectedTab.Content}"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch" />
+            <managerControls:ToastHost Grid.RowSpan="3" />
+        </Grid>
+    </Border>
 
 </Window>
 
