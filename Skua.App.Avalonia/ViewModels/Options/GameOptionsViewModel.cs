@@ -25,7 +25,8 @@ public class GameOptionsViewModel : BotControlViewModelBase
     };
 
     // Sections by IScriptOption property name; options not listed go to Gameplay.
-    private static readonly string[] VisualsOptions = { "LagKiller", "HidePlayers", "OptimizePlayers", "DisableFX", "DisableCollisions", "DamageNumbers", "CompactNumbers", "ShowFPS", "SetFPS" };
+    private static readonly string[] VisualsOptions = { "LagKiller", "HidePlayers", "OptimizePlayers", "DisableFX", "DisableCollisions", "ShowFPS", "SetFPS" };
+    private static readonly string[] TweaksOptions = { "DamageNumbers", "CompactNumbers" };
     private static readonly string[] HeadlessOptions =
     {
         "HeadlessMode", "AutoHeadless", "AutoHeadlessBackgroundTabs", "AutoHeadlessGridView", "AutoHeadlessWhenMinimized", "AutoHeadlessLiftOnFocus"
@@ -320,14 +321,15 @@ public class GameOptionsViewModel : BotControlViewModelBase
         List<DisplayOptionItemViewModelBase> visuals = InSection(VisualsOptions)
             .Concat(GameOptions.Where(i => BindingOf(i) is null))
             .ToList();
-        visuals.Add(_stageQualityItem);
+        List<DisplayOptionItemViewModelBase> tweaks = InSection(TweaksOptions);
+        tweaks.Add(_stageQualityItem);
         List<DisplayOptionItemViewModelBase> headless = InSection(HeadlessOptions);
         List<DisplayOptionItemViewModelBase> combat = InSection(CombatOptions);
         List<DisplayOptionItemViewModelBase> drops = InSection(DropsOptions);
         List<DisplayOptionItemViewModelBase> relogin = InSection(ReloginOptions);
         relogin.Insert(0, _reloginServerItem);
 
-        HashSet<DisplayOptionItemViewModelBase> used = new(visuals.Concat(headless).Concat(combat).Concat(drops).Concat(relogin));
+        HashSet<DisplayOptionItemViewModelBase> used = new(visuals.Concat(tweaks).Concat(headless).Concat(combat).Concat(drops).Concat(relogin));
         List<DisplayOptionItemViewModelBase> gameplay = GameOptions.Where(i => !used.Contains(i))
             .OrderBy(i => i.Content, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -335,6 +337,7 @@ public class GameOptionsViewModel : BotControlViewModelBase
         OptionGroups = new List<OptionGroupViewModel>
         {
             new() { Title = "Performance & Visuals", ShortTitle = "Visuals", Icon = "Speedometer", Items = visuals },
+            new() { Title = "Tweaks", ShortTitle = "Tweaks", Icon = "TuneVerticalVariant", Items = tweaks },
             new() { Title = "Headless", ShortTitle = "Headless", Icon = "MonitorOff", Items = headless },
             new() { Title = "Combat & Targeting", ShortTitle = "Combat", Icon = "SwordCross", Items = combat },
             new() { Title = "Drops & Looting", ShortTitle = "Drops", Icon = "PackageVariantClosed", Items = drops },
