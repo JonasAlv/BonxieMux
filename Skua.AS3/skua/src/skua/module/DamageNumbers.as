@@ -1,4 +1,6 @@
 package skua.module {
+import flash.display.DisplayObject;
+import flash.display.DisplayObjectContainer;
 import flash.display.Sprite;
 import flash.display.Stage;
 import flash.events.Event;
@@ -104,25 +106,41 @@ public class DamageNumbers extends Module {
     // -------------------------------------------------------------------------
 
     private static function ensureInitialized(game:*):void {
-        if (game == null || game.stage == null) {
+        if (game == null || game.stage == null || game.world == null || game.world.CHARS == null) {
             return;
         }
 
-        var theStage:Stage = game.stage as Stage;
-        if (theStage == null) {
+        var world:DisplayObjectContainer = game.world as DisplayObjectContainer;
+        var charsObj:DisplayObject = game.world.CHARS as DisplayObject;
+        if (world == null || charsObj == null || charsObj.parent != world) {
             return;
         }
 
         if (_container == null) {
-            buildContainer(theStage);
-        } else if (_container.parent != theStage) {
-            // Keep game at stage index 0 (AQW scripts read stage.getChildAt(0) as rootClass)
-            theStage.addChild(_container);
+            buildContainer();
+        }
+
+        // Attach inside game.world directly above CHARS (below FG and all game.ui frames),
+        // matching the exact layer priority of AQW's default damage numbers.
+        var charsIndex:int = world.getChildIndex(charsObj);
+        if (_container.parent != world) {
+            world.addChildAt(_container, Math.min(charsIndex + 1, world.numChildren));
+        } else {
+            var currentIndex:int = world.getChildIndex(_container);
+            if (currentIndex < charsIndex) {
+                world.setChildIndex(_container, charsIndex);
+            } else if (currentIndex > charsIndex + 1) {
+                world.setChildIndex(_container, charsIndex + 1);
+            }
+        }
+
+        var theStage:Stage = game.stage as Stage;
+        if (theStage != null) {
             attachStageHooks(theStage);
         }
     }
 
-    private static function buildContainer(theStage:Stage):void {
+    private static function buildContainer():void {
         _container = new Sprite();
         _container.name = "CustomDamageNumbersLayer";
         _container.mouseEnabled = false;
@@ -134,9 +152,6 @@ public class DamageNumbers extends Module {
             _pool.push(p);
             _container.addChild(p);
         }
-
-        theStage.addChild(_container);
-        attachStageHooks(theStage);
 
         // Timer fires independently of the stage ENTER_FRAME loop so it never interferes with input handlers.
         _lastFrameTime = getTimer();
@@ -195,6 +210,10 @@ public class DamageNumbers extends Module {
         var modEnabled:Boolean = (_instance != null && _instance.enabled);
         var active:Boolean = isInGame(game);
         var anyActive:Boolean = (modEnabled || modernRewardsEnabled);
+
+        if (active && anyActive) {
+            ensureInitialized(game);
+        }
 
         syncNativeDisplay(game, active && modEnabled);
 
@@ -285,11 +304,19 @@ public class DamageNumbers extends Module {
 
     private static function handlePacket(e:*):void {
         var game:* = Main.instance != null ? Main.instance.getGame() : null;
-        if (!isInGame(game) || _container == null) {
+        if (!isInGame(game)) {
+            return;
+        }
+        var modEnabled:Boolean = (_instance != null && _instance.enabled);
+        if (!modEnabled && !modernRewardsEnabled) {
+            return;
+        }
+        ensureInitialized(game);
+        if (_container == null || _container.stage == null) {
             return;
         }
         var stageObj:Stage = _container.stage;
-        if (stageObj != null && stageObj.frameRate <= 4) {
+        if (stageObj.frameRate <= 4) {
             return;
         }
         if (game.world.visible === false) {
