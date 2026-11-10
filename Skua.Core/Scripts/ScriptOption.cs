@@ -790,6 +790,12 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     [CallBinding("setCompactNumbers", Get = false, HasSetter = true)]
     private bool _compactNumbers;
 
+    [CallBinding("setUnitFrameHealth", Get = false, HasSetter = true)]
+    private bool _unitFrameHealth = true;
+
+    [CallBinding("setMovableTargetFrame", Get = false, HasSetter = true)]
+    private bool _movableTargetFrame = true;
+
     [ObservableProperty]
     private bool _autoCrowdMode = true;
 

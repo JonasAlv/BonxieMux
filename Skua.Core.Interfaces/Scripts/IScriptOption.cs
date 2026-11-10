@@ -294,6 +294,14 @@ public interface IScriptOption : INotifyPropertyChanged
     /// Abbreviates large floating combat and reward numbers using compact K/M suffixes.
     /// </summary>
     bool CompactNumbers { get; set; }
+    /// <summary>
+    /// Displays formatted current/max HP on the left and live HP percentage on the right of player and target frames.
+    /// </summary>
+    bool UnitFrameHealth { get; set; }
+    /// <summary>
+    /// Allows dragging the native target frame to a custom position (disabling reverts it to the default position).
+    /// </summary>
+    bool MovableTargetFrame { get; set; }
 
     /// <summary>
     /// Determines whether cutscenes should be skipped.

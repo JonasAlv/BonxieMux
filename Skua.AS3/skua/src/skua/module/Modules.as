@@ -68,6 +68,7 @@ public class Modules {
         registerModule(new DisableFX());
         registerModule(new StreamerModeModule());
         registerModule(new DamageNumbers());
+        registerModule(new NativeFramesEnhancer());
     }
 }
 }

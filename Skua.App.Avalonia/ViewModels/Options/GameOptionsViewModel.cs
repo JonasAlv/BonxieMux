@@ -26,7 +26,7 @@ public class GameOptionsViewModel : BotControlViewModelBase
 
     // Sections by IScriptOption property name; options not listed go to Gameplay.
     private static readonly string[] VisualsOptions = { "LagKiller", "HidePlayers", "OptimizePlayers", "DisableFX", "DisableCollisions", "ShowFPS", "SetFPS" };
-    private static readonly string[] TweaksOptions = { "DamageNumbers", "CompactNumbers" };
+    private static readonly string[] TweaksOptions = { "DamageNumbers", "CompactNumbers", "UnitFrameHealth", "MovableTargetFrame" };
     private static readonly string[] HeadlessOptions =
     {
         "HeadlessMode", "AutoHeadless", "AutoHeadlessBackgroundTabs", "AutoHeadlessGridView", "AutoHeadlessWhenMinimized", "AutoHeadlessLiftOnFocus"
