@@ -309,24 +309,30 @@ public partial class MainWindow : Window
                 }
                 else if (e.PropertyName is nameof(IScriptOption.HeadlessMode) or Skua.Core.Scripts.ScriptOption.AutoHeadlessActiveChanged)
                 {
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        // Turning manual headless off also releases an automatic headless hold.
-                        // Otherwise a tab can remain hidden after it becomes visible again.
-                        if (e.PropertyName == nameof(IScriptOption.HeadlessMode) && !_options.HeadlessMode)
-                        {
-                            _autoHeadlessHeld = false;
-                            EvaluateAutoHeadless();
-                        }
-                        bool isHeadless = _options.IsHeadlessNow();
-                        if (HeadlessOverlay != null) HeadlessOverlay.IsVisible = isHeadless;
-                        if (FlashHost != null)
-                        {
-                            FlashHost.IsVisible = !isHeadless && _isFlashLoaded;
-                        }
-                    });
+                    bool resetHeld = e.PropertyName == nameof(IScriptOption.HeadlessMode) && !_options.HeadlessMode;
+                    if (Dispatcher.UIThread.CheckAccess())
+                        UpdateHeadlessHostVisibility(resetHeld);
+                    else
+                        Dispatcher.UIThread.Post(() => UpdateHeadlessHostVisibility(resetHeld));
                 }
             };
+        }
+    }
+
+    private void UpdateHeadlessHostVisibility(bool resetHeld)
+    {
+        // Turning manual headless off also releases an automatic headless hold.
+        // Otherwise a tab can remain hidden after it becomes visible again.
+        if (resetHeld)
+        {
+            _autoHeadlessHeld = false;
+            EvaluateAutoHeadless();
+        }
+        bool isHeadless = _options.IsHeadlessNow();
+        if (HeadlessOverlay != null) HeadlessOverlay.IsVisible = isHeadless;
+        if (FlashHost != null)
+        {
+            FlashHost.IsVisible = !isHeadless && _isFlashLoaded;
         }
     }
 

@@ -451,6 +451,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
     private string _stageQuality = "MEDIUM";
     private bool _isForegroundFocused = true;
+    private readonly SemaphoreSlim _renderStateGate = new(1, 1);
 
     /// <summary>
     /// Gets whether this client is currently the focused foreground tab and eligible for full stage quality rendering.
@@ -466,7 +467,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             return;
 
         _isForegroundFocused = isForegroundFocused;
-        ApplyStageQuality();
+        ScheduleRenderStateWork(() => ApplyStageQualityInternal(flushGamePref: false, triggeredFromGameUi: false));
     }
 
     /// <summary>
@@ -489,12 +490,12 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
             if (IsHeadlessNow())
             {
-                flash.Call("setGameObject", "stage.frameRate", 2);
-                flash.Call("world.rootClass.mixer.soundTransform.volume", 0);
+                try { flash.Call("setGameObject", "stage.frameRate", 2); } catch { }
+                try { flash.Call("setGameObject", "world.rootClass.mixer.soundTransform.volume", 0); } catch { }
             }
             else if (flushGamePref && SetFPS > 2 && CanRenderFullQuality)
             {
-                flash.Call("setGameObject", "stage.frameRate", SetFPS);
+                try { flash.Call("setGameObject", "stage.frameRate", SetFPS); } catch { }
             }
 
             ApplyStageQualityInternal(flushGamePref, triggeredFromGameUi: false);
@@ -692,32 +693,55 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         if (_autoHeadlessActive == active) return;
         bool before = IsHeadlessNow();
         _autoHeadlessActive = active;
-        if (before != IsHeadlessNow()) ApplyHeadless(IsHeadlessNow());
+        bool nowHeadless = IsHeadlessNow();
+        // Notify UI before dispatching Flash IPC so XMapWindow(_player) and Avalonia repaints never wait on a blocked player.
         OnPropertyChanged(AutoHeadlessActiveChanged);
+        if (before != nowHeadless)
+            ScheduleRenderStateWork(ApplyHeadlessCurrentState);
     }
 
-    partial void OnHeadlessModeChanged(bool value) => ApplyHeadless(value || _autoHeadlessActive);
+    partial void OnHeadlessModeChanged(bool value) => ScheduleRenderStateWork(ApplyHeadlessCurrentState);
 
-    private void ApplyHeadless(bool value)
+    private void ScheduleRenderStateWork(Action work)
     {
-        try
+        _ = Task.Run(async () =>
         {
-            _lazyFlash.Value.Call("headless", value);
-            if (value)
+            await _renderStateGate.WaitAsync().ConfigureAwait(false);
+            try
             {
-                _lazyFlash.Value.Call("setGameObject", "stage.frameRate", 2);
-                _lazyFlash.Value.Call("world.rootClass.mixer.soundTransform.volume", 0);
-                ApplyStageQuality();
-                Skua.Core.Utils.MemoryUtils.TrimWorkingSet();
+                work();
             }
-            else
+            catch { }
+            finally
             {
-                _lazyFlash.Value.Call("setGameObject", "stage.frameRate", SetFPS > 2 ? SetFPS : 30);
-                ApplyStageQuality();
-                _lazyFlash.Value.Call("world.rootClass.mixer.soundTransform.volume", 1);
+                _renderStateGate.Release();
             }
+        });
+    }
+
+    private void ApplyHeadlessCurrentState()
+    {
+        bool value = IsHeadlessNow();
+        var flash = _lazyFlash.Value;
+        if (flash == null)
+            return;
+
+        try { flash.Call("headless", value); } catch { }
+
+        if (value)
+        {
+            try { flash.Call("setGameObject", "stage.frameRate", 2); } catch { }
+            try { flash.Call("setGameObject", "world.rootClass.mixer.soundTransform.volume", 0); } catch { }
+            ApplyStageQualityInternal(flushGamePref: false, triggeredFromGameUi: false);
+            Skua.Core.Utils.MemoryUtils.TrimWorkingSet();
         }
-        catch { }
+        else
+        {
+            int targetFps = SetFPS > 2 ? SetFPS : 30;
+            try { flash.Call("setGameObject", "stage.frameRate", targetFps); } catch { }
+            ApplyStageQualityInternal(flushGamePref: false, triggeredFromGameUi: false);
+            try { flash.Call("setGameObject", "world.rootClass.mixer.soundTransform.volume", 1); } catch { }
+        }
     }
 
     private bool _streamerMode;

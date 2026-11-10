@@ -67,6 +67,8 @@ public partial class MainWindow : Window
     private int _tabVisibility;
     private bool _isWindowFocused = true;
     private bool _autoHeadlessHeld;
+    private volatile bool _throttleWanted;
+    private readonly System.Threading.SemaphoreSlim _throttleGate = new(1, 1);
 
     private void UpdateQualityFocusState()
     {
@@ -118,7 +120,8 @@ public partial class MainWindow : Window
 
         AddHandler(PointerPressedEvent, (s, e) =>
         {
-            RestoreFps();
+            if (_throttleWanted || _preThrottleFPS > 2)
+                ScheduleThrottleState(false);
             if (IsVisible)
             {
                 IntPtr handle = this.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
@@ -152,30 +155,65 @@ public partial class MainWindow : Window
         else
             Focus();
 
-        RestoreFps();
+        ScheduleThrottleState(false);
     }
 
-    private void RestoreFps()
+    private void ScheduleThrottleState(bool throttle)
     {
+        if (_isInGridView && throttle)
+            return;
+
+        _throttleWanted = throttle;
+        _ = Task.Run(ApplyThrottleStateAsync);
+    }
+
+    private async Task ApplyThrottleStateAsync()
+    {
+        await _throttleGate.WaitAsync().ConfigureAwait(false);
         try
         {
+            bool throttle = _throttleWanted && !_isInGridView;
             var options = Ioc.Default.GetRequiredService<IScriptOption>();
-            if (options.IsHeadlessNow()) return;
+            if (options.IsHeadlessNow())
+                return;
 
             var bot = Ioc.Default.GetRequiredService<IScriptInterface>();
-            int currentFPS = bot.Flash?.GetGameObject<int>("stage.frameRate") ?? -1;
-            int targetFPS = _preThrottleFPS > 2 ? _preThrottleFPS : (currentFPS > 2 ? currentFPS : options.SetFPS);
-            if (targetFPS <= 2)
-                targetFPS = options.SetFPS > 0 ? options.SetFPS : 30;
+            if (bot.Flash == null)
+                return;
 
-            _preThrottleFPS = -1;
+            if (throttle)
+            {
+                if (_preThrottleFPS <= 0)
+                {
+                    int currentFPS = bot.Flash.GetGameObject<int>("stage.frameRate");
+                    if (currentFPS > 2)
+                        _preThrottleFPS = currentFPS;
+                }
 
-            if (targetFPS > 0)
-                bot.Flash?.SetGameObject("stage.frameRate", targetFPS);
+                bot.Flash.SetGameObject("stage.frameRate", 2);
+                bot.Flash.SetGameObject("stage.quality", "LOW");
+                Skua.Core.Utils.MemoryUtils.TrimWorkingSet();
+            }
+            else
+            {
+                int currentFPS = bot.Flash.GetGameObject<int>("stage.frameRate");
+                int targetFPS = _preThrottleFPS > 2 ? _preThrottleFPS : (currentFPS > 2 ? currentFPS : options.SetFPS);
+                if (targetFPS <= 2)
+                    targetFPS = options.SetFPS > 0 ? options.SetFPS : 30;
 
-            options.ApplyStageQuality();
+                _preThrottleFPS = -1;
+
+                if (targetFPS > 0)
+                    bot.Flash.SetGameObject("stage.frameRate", targetFPS);
+
+                options.ApplyStageQuality();
+            }
         }
         catch { }
+        finally
+        {
+            _throttleGate.Release();
+        }
     }
 
     private void ReleaseAllPressedKeys()
@@ -393,24 +431,7 @@ public partial class MainWindow : Window
                 if (isGrid)
                 {
                     // In Grid View, all windows are foreground visible windows. Restore full FPS and quality.
-                    try
-                    {
-                        var options = Ioc.Default.GetRequiredService<IScriptOption>();
-                        if (!options.IsHeadlessNow())
-                        {
-                            var bot = Ioc.Default.GetRequiredService<IScriptInterface>();
-                            int currentFPS = bot.Flash?.GetGameObject<int>("stage.frameRate") ?? -1;
-                            int targetFPS = _preThrottleFPS > 2 ? _preThrottleFPS : (currentFPS > 2 ? currentFPS : options.SetFPS);
-                            if (targetFPS <= 2)
-                                targetFPS = options.SetFPS > 0 ? options.SetFPS : 30;
-
-                            _preThrottleFPS = -1;
-
-                            bot.Flash?.SetGameObject("stage.frameRate", targetFPS);
-                            options.ApplyStageQuality();
-                        }
-                    }
-                    catch { }
+                    ScheduleThrottleState(false);
                     UpdateQualityFocusState();
                 }
             });
@@ -421,8 +442,10 @@ public partial class MainWindow : Window
             _tabVisibility = wParam.ToInt32();
             if (_tabVisibility is not 0 and not 2)
                 CloseDropdowns();
-            Dispatcher.UIThread.Post(EvaluateAutoHeadless);
-            Dispatcher.UIThread.Post(UpdateQualityFocusState);
+            EvaluateAutoHeadless();
+            UpdateQualityFocusState();
+            if (_tabVisibility is 0 or 2)
+                ScheduleThrottleState(false);
             return IntPtr.Zero;
         }
         else if (uMsg == WM_SKUA_LOGIN)
@@ -674,38 +697,7 @@ public partial class MainWindow : Window
         else if (uMsg == 0x0400 + 452) // WM_SKUA_THROTTLE
         {
             bool throttle = wParam.ToInt32() == 1;
-            if (_isInGridView && throttle)
-            {
-                // In Grid View, all windows are treated as foreground windows - never throttle!
-                return IntPtr.Zero;
-            }
-
-            var options = Ioc.Default.GetRequiredService<IScriptOption>();
-            if (!options.IsHeadlessNow())
-            {
-                var bot = Ioc.Default.GetRequiredService<IScriptInterface>();
-                try
-                {
-                    if (throttle)
-                    {
-                        if (_preThrottleFPS <= 0)
-                        {
-                            int currentFPS = bot.Flash?.GetGameObject<int>("stage.frameRate") ?? -1;
-                            if (currentFPS > 2)
-                                _preThrottleFPS = currentFPS;
-                        }
-
-                        bot.Flash?.SetGameObject("stage.frameRate", 2);
-                        bot.Flash?.SetGameObject("stage.quality", "LOW");
-                        Skua.Core.Utils.MemoryUtils.TrimWorkingSet();
-                    }
-                    else
-                    {
-                        RestoreFps();
-                    }
-                }
-                catch { }
-            }
+            ScheduleThrottleState(throttle);
             return IntPtr.Zero;
         }
         else if (uMsg == WM_SKUA_OPEN_BANK)
@@ -744,16 +736,13 @@ public partial class MainWindow : Window
         {
             bool focused = wParam != IntPtr.Zero;
             _isWindowFocused = focused;
-            Dispatcher.UIThread.Post(() =>
+            ReleaseAllPressedKeys();
+            Skua.App.Avalonia.Controls.GameHost.ForwardFocus(focused);
+            if (focused)
             {
-                ReleaseAllPressedKeys();
-                Skua.App.Avalonia.Controls.GameHost.ForwardFocus(focused);
-                if (focused)
-                {
-                    RestoreFps();
-                }
-                UpdateQualityFocusState();
-            });
+                ScheduleThrottleState(false);
+            }
+            UpdateQualityFocusState();
             return IntPtr.Zero;
         }
         else if (uMsg == HotKeys.WM_SKUA_RELOAD_HOTKEYS)

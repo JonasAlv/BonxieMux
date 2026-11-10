@@ -84,6 +84,13 @@ public class GameHost : NativeControlHost
         }
     }
 
+    protected override void OnSizeChanged(SizeChangedEventArgs e)
+    {
+        base.OnSizeChanged(e);
+        if (IsVisible)
+            FitPlayer();
+    }
+
     private void UpdatePlayerVisibility(bool visible)
     {
         if (_display == 0)
@@ -126,6 +133,8 @@ public class GameHost : NativeControlHost
             return;
         }
         if (XGetGeometry(_display, _holder, out _, out _, out _, out uint width, out uint height, out _, out _) == 0)
+            return;
+        if (width <= 2 || height <= 2)
             return;
         if (XQueryTree(_display, _holder, out _, out _, out nint children, out uint count) == 0)
             return;

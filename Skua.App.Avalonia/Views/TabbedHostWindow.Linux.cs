@@ -268,7 +268,9 @@ public partial class TabbedHostWindow : Window
         {
             lock (_xLock)
             {
-                XMoveResizeWindow(display, childHwnd, -32000, -32000, 1, 1);
+                // Keep the window's laid-out dimensions intact across unmaps so Avalonia and the child GL surface
+                // do not thrash to 1x1 and lose top-bar layout while switching tabs.
+                XMoveWindow(display, childHwnd, -32000, -32000);
                 XUnmapWindow(display, childHwnd);
                 XFlush(display);
             }
