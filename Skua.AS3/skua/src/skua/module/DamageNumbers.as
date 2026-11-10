@@ -843,15 +843,9 @@ public class DamageNumbers extends Module {
 }
 }
 
-import flash.display.Bitmap;
-import flash.display.BitmapData;
-import flash.display.PixelSnapping;
 import flash.display.Sprite;
-import flash.display.StageQuality;
 import flash.filters.BitmapFilterQuality;
 import flash.filters.GlowFilter;
-import flash.geom.Matrix;
-import flash.text.AntiAliasType;
 import flash.text.TextField;
 import flash.text.TextFieldAutoSize;
 import flash.text.TextFormat;
@@ -859,30 +853,16 @@ import flash.text.TextFormatAlign;
 
 /**
  * Lightweight, pooled particle for floating combat text numbers.
- * Pre-renders each spawned number + glow off-screen via drawWithQuality(HIGH) into
- * a bucket-reused BitmapData so typography and outlines remain crisp even when
- * the host Flash stage is running at LOW quality.
  */
 class DamageParticle extends Sprite {
     private static const FONT_FAMILY:String = "_sans";
-    private static const GLOW_PAD:int = 10;
 
-    // Static cached filters (quality HIGH only runs once per spawn offscreen)
-    private static var GLOW_NORMAL:GlowFilter = new GlowFilter(0x000000, 0.95, 3, 3, 4, BitmapFilterQuality.HIGH);
-    private static var GLOW_CRIT:GlowFilter   = new GlowFilter(0x000000, 1.0, 5, 5, 6, BitmapFilterQuality.HIGH);
-    private static var GLOW_REWARD:GlowFilter = new GlowFilter(0x000000, 1.0, 4, 4, 5, BitmapFilterQuality.HIGH);
+    // Static cached filter arrays to avoid per-particle allocations while keeping a crisp solid black outline
+    private static var FILTERS_NORMAL:Array = [new GlowFilter(0x000000, 1.0, 2, 2, 8, BitmapFilterQuality.MEDIUM)];
+    private static var FILTERS_CRIT:Array   = [new GlowFilter(0x000000, 1.0, 3, 3, 10, BitmapFilterQuality.MEDIUM)];
+    private static var FILTERS_REWARD:Array = [new GlowFilter(0x000000, 1.0, 3, 3, 8, BitmapFilterQuality.MEDIUM)];
 
-    // Shared scratch objects used purely for offscreen baking
-    private static var _scratchBox:Sprite = null;
-    private static var _scratchTf:TextField = null;
-    private static var _scratchMat:Matrix = new Matrix();
-
-    private var _bmp:Bitmap;
-    private var _bd:BitmapData = null;
-    private var _posX:Number = 0;
-    private var _posY:Number = 0;
-    private var _snapPixels:Boolean = false;
-
+    public var tf:TextField;
     public var vx:Number = 0;
     public var vy:Number = 0;
     public var life:Number = 0;
@@ -899,19 +879,11 @@ class DamageParticle extends Sprite {
         mouseChildren = false;
         visible = false;
 
-        _bmp = new Bitmap(null, PixelSnapping.AUTO, true);
-        addChild(_bmp);
-    }
-
-    private static function ensureScratch():void {
-        if (_scratchBox != null) return;
-        _scratchBox = new Sprite();
-        _scratchTf = new TextField();
-        _scratchTf.autoSize = TextFieldAutoSize.LEFT;
-        _scratchTf.antiAliasType = AntiAliasType.ADVANCED;
-        _scratchTf.selectable = false;
-        _scratchTf.mouseEnabled = false;
-        _scratchBox.addChild(_scratchTf);
+        tf = new TextField();
+        tf.autoSize = TextFieldAutoSize.CENTER;
+        tf.selectable = false;
+        tf.mouseEnabled = false;
+        addChild(tf);
     }
 
     public function spawn(text:String, color:uint, fontSize:int, isCritical:Boolean, startX:Number, startY:Number, isDamageOverTime:Boolean):void {
@@ -922,25 +894,41 @@ class DamageParticle extends Sprite {
         life = 0;
         maxLife = isCrit ? 1.05 : (isDot ? 0.95 : 0.85);
 
-        // Bake Crits directly at resting pixel size (fontSize * 1.25) so 1:1 pixels stay crisp even on LOW quality
-        var bakedFontSize:int = isCrit ? Math.round(fontSize * 1.25) : fontSize;
-        bakeAndShow(text, color, bakedFontSize, isCrit ? GLOW_CRIT : GLOW_NORMAL, startX, startY);
+        var fmt:TextFormat = new TextFormat(FONT_FAMILY, fontSize, color, true);
+        fmt.align = TextFormatAlign.CENTER;
+        tf.defaultTextFormat = fmt;
+        tf.text = text;
+
+        // Crisp opaque black pixel outline for contrast against bright spell effects and backgrounds
+        tf.filters = isCrit ? FILTERS_CRIT : FILTERS_NORMAL;
+
+        tf.x = -tf.width * 0.5;
+        tf.y = -tf.height * 0.5;
+
+        x = startX;
+        y = startY;
+        alpha = 1.0;
 
         if (isCrit) {
-            baseScale = _snapPixels ? 1.0 : 1.4;
+            baseScale = 1.75;
+            scaleX = baseScale;
+            scaleY = baseScale;
             vx = (Math.random() - 0.5) * 0.6;
             vy = -4.8;
         } else if (isDot) {
-            baseScale = 1.0;
+            baseScale = 0.95;
+            scaleX = baseScale;
+            scaleY = baseScale;
             vx = (Math.random() - 0.5) * 0.3;
             vy = -2.6;
         } else {
             baseScale = 1.0;
+            scaleX = baseScale;
+            scaleY = baseScale;
             vx = (Math.random() - 0.5) * 0.8;
             vy = -3.2;
         }
-        scaleX = baseScale;
-        scaleY = baseScale;
+
         visible = true;
     }
 
@@ -952,63 +940,27 @@ class DamageParticle extends Sprite {
         life = 0;
         maxLife = 1.25;
 
-        bakeAndShow(text, color, fontSize + 1, GLOW_REWARD, startX, startY);
+        var fmt:TextFormat = new TextFormat(FONT_FAMILY, fontSize, color, true);
+        fmt.align = TextFormatAlign.CENTER;
+        tf.defaultTextFormat = fmt;
+        tf.text = text;
 
-        baseScale = _snapPixels ? 1.0 : 1.15;
+        tf.filters = FILTERS_REWARD;
+
+        tf.x = -tf.width * 0.5;
+        tf.y = -tf.height * 0.5;
+
+        x = startX;
+        y = startY;
+        alpha = 1.0;
+
+        baseScale = 1.15;
         scaleX = baseScale;
         scaleY = baseScale;
         vx = (Math.random() - 0.5) * 0.2;
         vy = -2.0;
+
         visible = true;
-    }
-
-    private function bakeAndShow(text:String, color:uint, fontSize:int, glow:GlowFilter, startX:Number, startY:Number):void {
-        ensureScratch();
-        _snapPixels = (stage != null && stage.quality != null && String(stage.quality).toLowerCase() == "low");
-
-        var fmt:TextFormat = new TextFormat(FONT_FAMILY, fontSize, color, true);
-        fmt.align = TextFormatAlign.CENTER;
-        _scratchTf.defaultTextFormat = fmt;
-        _scratchTf.text = text;
-        _scratchTf.filters = [glow];
-
-        var neededW:int = Math.ceil(_scratchTf.width) + GLOW_PAD * 2;
-        var neededH:int = Math.ceil(_scratchTf.height) + GLOW_PAD * 2;
-        var texW:int = ((neededW + 31) >> 5) << 5;
-        var texH:int = ((neededH + 15) >> 4) << 4;
-        if (texW < 32) texW = 32;
-        if (texH < 32) texH = 32;
-
-        if (_bd == null || _bd.width < neededW || _bd.height < neededH) {
-            if (_bd != null) {
-                _bd.dispose();
-            }
-            _bd = new BitmapData(texW, texH, true, 0x00000000);
-        } else {
-            _bd.fillRect(_bd.rect, 0x00000000);
-        }
-
-        _scratchMat.identity();
-        _scratchMat.tx = Math.round((_bd.width - _scratchTf.width) * 0.5);
-        _scratchMat.ty = Math.round((_bd.height - _scratchTf.height) * 0.5);
-
-        try {
-            _bd.drawWithQuality(_scratchBox, _scratchMat, null, null, null, true, StageQuality.HIGH);
-        } catch (drawErr:Error) {
-            _bd.draw(_scratchBox, _scratchMat, null, null, null, true);
-        }
-
-        _bmp.bitmapData = _bd;
-        _bmp.pixelSnapping = _snapPixels ? PixelSnapping.AUTO : PixelSnapping.NEVER;
-        _bmp.smoothing = true;
-        _bmp.x = -(_bd.width >> 1);
-        _bmp.y = -(_bd.height >> 1);
-
-        _posX = startX;
-        _posY = startY;
-        x = _snapPixels ? Math.round(_posX) : _posX;
-        y = _snapPixels ? Math.round(_posY) : _posY;
-        alpha = 1.0;
     }
 
     public function step(dt:Number):Boolean {
@@ -1020,21 +972,19 @@ class DamageParticle extends Sprite {
         }
 
         var frameFactor:Number = dt * 60.0;
-        _posX += vx * frameFactor;
-        _posY += vy * frameFactor;
-        x = _snapPixels ? Math.round(_posX) : _posX;
-        y = _snapPixels ? Math.round(_posY) : _posY;
+        x += vx * frameFactor;
+        y += vy * frameFactor;
 
         if (isCrit) {
             vy *= Math.pow(0.88, frameFactor);
-            if (!_snapPixels && scaleX > 1.0) {
-                scaleX -= dt * 2.0;
-                if (scaleX < 1.0) scaleX = 1.0;
+            if (scaleX > 1.25) {
+                scaleX -= dt * 2.5;
+                if (scaleX < 1.25) scaleX = 1.25;
                 scaleY = scaleX;
             }
         } else if (isReward) {
             vy *= Math.pow(0.93, frameFactor);
-            if (!_snapPixels && scaleX > 1.0) {
+            if (scaleX > 1.0) {
                 scaleX -= dt * 0.8;
                 if (scaleX < 1.0) scaleX = 1.0;
                 scaleY = scaleX;
@@ -1056,10 +1006,5 @@ class DamageParticle extends Sprite {
     public function release():void {
         inUse = false;
         visible = false;
-        _bmp.bitmapData = null;
-        if (_bd != null) {
-            _bd.dispose();
-            _bd = null;
-        }
     }
 }
