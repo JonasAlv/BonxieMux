@@ -283,6 +283,11 @@ public interface IScriptOption : INotifyPropertyChanged
     void ApplySharedStageQuality(string? quality);
 
     /// <summary>
+    /// Applies a global AcceptACDrops update received from a sibling client without re-broadcasting.
+    /// </summary>
+    void ApplySharedAcceptACDrops(bool value);
+
+    /// <summary>
     /// Whether to show the in-game FPS counter
     /// </summary>
     bool ShowFPS { get; set; }

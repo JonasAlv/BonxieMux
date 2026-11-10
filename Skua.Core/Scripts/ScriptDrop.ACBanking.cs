@@ -9,6 +9,7 @@ public partial class ScriptDrop
     private readonly Lazy<IScriptBank> _bank;
     private readonly Lazy<IScriptCombat> _combat;
     private readonly SemaphoreSlim _bankGate = new(1, 1);
+    private readonly SemaphoreSlim _acPickupGate = new(1, 1);
     private readonly CancellationTokenSource _autoLootCts = new();
     private readonly Task _autoLootTask;
     private readonly Dictionary<int, (string Name, int Attempts)> _pendingBank = new();
@@ -20,8 +21,9 @@ public partial class ScriptDrop
     private static int _bankingACDrops;
     internal static bool BankingACDrops => Volatile.Read(ref _bankingACDrops) != 0;
 
-    private readonly ConcurrentDictionary<int, byte> _fullStackIDs = new();
-    private readonly ConcurrentDictionary<string, byte> _fullStackNames = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly TimeSpan FullStackCooldown = TimeSpan.FromSeconds(60);
+    private readonly ConcurrentDictionary<int, DateTime> _fullStackIDs = new();
+    private readonly ConcurrentDictionary<string, DateTime> _fullStackNames = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<int, (string Name, DateTime Time)> _pendingPickups = new();
     private volatile int _lastPickupDropID;
     private volatile string _lastPickupDropName = string.Empty;
@@ -40,6 +42,14 @@ public partial class ScriptDrop
         _refusedIDs.Clear();
         _fullStackIDs.Clear();
         _fullStackNames.Clear();
+    }
+
+    private void ClearFullStackMark(int id, string? name)
+    {
+        if (id != 0)
+            _fullStackIDs.TryRemove(id, out _);
+        if (!string.IsNullOrEmpty(name))
+            _fullStackNames.TryRemove(name, out _);
     }
 
     public void RejectCurrentDrops(bool keepAC)
@@ -68,15 +78,47 @@ public partial class ScriptDrop
             return status;
         }, cancellationToken);
 
+    private async Task PickupACItemsAsync(CancellationToken token)
+    {
+        if (!await _acPickupGate.WaitAsync(0, token))
+            return;
+        try
+        {
+            ItemBase[] toPickup = GetLootableACDrops();
+            foreach (ItemBase drop in toPickup)
+            {
+                if (token.IsCancellationRequested || !Player.Playing || !Options.AcceptACDrops || Options.PickupACDropsAndSendToBank)
+                    break;
+                if (!SendPickup(drop))
+                    continue;
+
+                DateTime until = DateTime.UtcNow.AddSeconds(2);
+                while (!token.IsCancellationRequested && Player.Playing && !HasReply(drop.ID) && DateTime.UtcNow < until)
+                    await Task.Delay(40, token);
+            }
+        }
+        finally
+        {
+            _acPickupGate.Release();
+        }
+    }
+
     private async Task AutoLootLoop()
     {
         CancellationToken token = _autoLootCts.Token;
+        _loopToken.Value = token;
         while (!token.IsCancellationRequested)
         {
             try
             {
                 await Task.Delay(250, token);
                 if (!Player.LoggedIn) continue;
+                // Keep AcceptACDrops working independently of script start/stop lifecycle unless AC banking owns AC pickups.
+                if (Options.AcceptACDrops && !Options.PickupACDropsAndSendToBank && !(Options.AcceptAllDrops && Enabled)
+                    && Player.Playing && CurrentDropInfos.Any(d => d.Coins))
+                {
+                    await PickupACItemsAsync(token);
+                }
                 // Rejection is legal during combat and must never be blocked behind banking.
                 if (Options.RejectNonACDrops && CurrentDropInfos.Any(d => !d.Coins))
                     RejectCurrentDrops(true);
@@ -138,14 +180,16 @@ public partial class ScriptDrop
             }
 
             // Every pickup goes out at once; then each is waited for. One at a time took a round trip per item.
-            List<(ItemBase Drop, int Before)> sent = new();
+            List<(ItemBase Drop, int Before, int BeforeBank)> sent = new();
             foreach (ItemBase drop in drops)
             {
                 if (!SafeToBank(account) || (automatic && !Options.PickupACDropsAndSendToBank)) break;
                 if (session != Volatile.Read(ref _lootSession) || !CurrentDropInfos.Any(d => d.ID == drop.ID)) continue;
                 _pickupAttempts[drop.ID] = _pickupAttempts.GetValueOrDefault(drop.ID) + 1;
                 InventoryItem? previous = Inventory.Items.FirstOrDefault(i => i.ID == drop.ID);
-                if (previous?.Equipped == true || (previous != null && !Inventory.CanBank(previous)) || !Inventory.HasSpaceFor(drop))
+                InventoryItem? previousBank = _bank.Value.Loaded ? _bank.Value.Items.FirstOrDefault(i => i.ID == drop.ID) : null;
+                bool canStackInBank = previousBank != null && ResolveMaxStack(drop, null, previousBank) is > 1 and var max && previousBank.Quantity < max;
+                if (previous?.Equipped == true || (previous != null && !Inventory.CanBank(previous)) || (!Inventory.HasSpaceFor(drop) && !canStackInBank))
                 {
                     failed.Add(drop.Name);
                     _lootRetry[drop.ID] = DateTime.UtcNow.AddSeconds(30);
@@ -155,13 +199,23 @@ public partial class ScriptDrop
                 RecordPendingPickup(drop);
                 Send.Packet($"%xt%zm%getDrop%{Map.RoomID}%{drop.ID}%");
                 _currentDropInfos.Remove(d => d.ID == drop.ID);
-                sent.Add((drop, previous?.Quantity ?? 0));
+                sent.Add((drop, previous?.Quantity ?? 0, previousBank?.Quantity ?? 0));
             }
             DateTime until = DateTime.UtcNow.AddSeconds(10);
             while (sent.Count > 0 && SafeAccount(account) && DateTime.UtcNow < until)
             {
                 sent.RemoveAll(s =>
                 {
+                    if (_bank.Value.Loaded)
+                    {
+                        InventoryItem? bankItem = _bank.Value.Items.FirstOrDefault(i => i.ID == s.Drop.ID);
+                        if (bankItem != null && bankItem.Quantity > s.BeforeBank)
+                        {
+                            _pickupAttempts.Remove(s.Drop.ID);
+                            banked.Add(s.Drop.Name);
+                            return true;
+                        }
+                    }
                     InventoryItem? item = Inventory.Items.FirstOrDefault(i => i.ID == s.Drop.ID);
                     if (item == null || item.Quantity <= s.Before) return false;
                     _pendingBank[s.Drop.ID] = (s.Drop.Name, 0);
@@ -216,32 +270,13 @@ public partial class ScriptDrop
         }
     }
 
-    /// <summary>
-    /// Why an AC drop would be refused by the server, or null when it can be taken: a stack that is already full, or an item that can only
-    /// be owned once (stack size 1) and is already in the inventory or in the bank. Trying anyway only makes the game print red
-    /// "You already have a full stack of that item" messages, so such drops are rejected instead of picked up.
-    /// </summary>
-    private string? CannotTake(ItemBase drop)
-    {
-        if (drop.Temp)
-            return null;
-
-        if ((drop.ID != 0 && _fullStackIDs.ContainsKey(drop.ID)) ||
-            (!string.IsNullOrEmpty(drop.Name) && _fullStackNames.ContainsKey(drop.Name)))
-            return "full stack (server confirmed)";
-
-        InventoryItem? invOwned = Inventory.Items.FirstOrDefault(i =>
+    private InventoryItem? FindItem(IEnumerable<InventoryItem> items, ItemBase drop) =>
+        items.FirstOrDefault(i =>
             (drop.ID != 0 && i.ID == drop.ID) ||
             (!string.IsNullOrEmpty(drop.Name) && string.Equals(i.Name, drop.Name, StringComparison.OrdinalIgnoreCase)));
 
-        InventoryItem? bankOwned = null;
-        if (_bank.Value.Loaded)
-        {
-            bankOwned = _bank.Value.Items.FirstOrDefault(i =>
-                (drop.ID != 0 && i.ID == drop.ID) ||
-                (!string.IsNullOrEmpty(drop.Name) && string.Equals(i.Name, drop.Name, StringComparison.OrdinalIgnoreCase)));
-        }
-
+    private int ResolveMaxStack(ItemBase drop, InventoryItem? invOwned, InventoryItem? bankOwned)
+    {
         int max = invOwned is { MaxStack: > 0 } ? invOwned.MaxStack :
                   bankOwned is { MaxStack: > 0 } ? bankOwned.MaxStack :
                   drop.MaxStack > 0 ? drop.MaxStack : 0;
@@ -254,6 +289,51 @@ public partial class ScriptDrop
             }
             catch { }
         }
+        return max;
+    }
+
+    private bool CanStackInBank(ItemBase drop)
+    {
+        if (drop.Temp || !_bank.Value.Loaded)
+            return false;
+        InventoryItem? bankOwned = FindItem(_bank.Value.Items, drop);
+        if (bankOwned == null)
+            return false;
+        int max = ResolveMaxStack(drop, null, bankOwned);
+        return max > 1 && bankOwned.Quantity < max;
+    }
+
+    private bool HasServerFullStackMark(ItemBase drop)
+    {
+        DateTime now = DateTime.UtcNow;
+        if (drop.ID != 0 && _fullStackIDs.TryGetValue(drop.ID, out DateTime idMarked))
+        {
+            if (now - idMarked < FullStackCooldown)
+                return true;
+            _fullStackIDs.TryRemove(drop.ID, out _);
+        }
+        if (!string.IsNullOrEmpty(drop.Name) && _fullStackNames.TryGetValue(drop.Name, out DateTime nameMarked))
+        {
+            if (now - nameMarked < FullStackCooldown)
+                return true;
+            _fullStackNames.TryRemove(drop.Name, out _);
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Why a drop would be refused by the server, or null when it can be taken: a stack that is already full, or an item that can only
+    /// be owned once (stack size 1) and is already in the inventory or in the bank. Partial bank stacks remain lootable because AQW
+    /// merges them directly into the bank stack.
+    /// </summary>
+    private string? CannotTake(ItemBase drop)
+    {
+        if (drop.Temp)
+            return null;
+
+        InventoryItem? invOwned = FindItem(Inventory.Items, drop);
+        InventoryItem? bankOwned = _bank.Value.Loaded ? FindItem(_bank.Value.Items, drop) : null;
+        int max = ResolveMaxStack(drop, invOwned, bankOwned);
 
         if (invOwned != null)
         {
@@ -261,6 +341,8 @@ public partial class ScriptDrop
                 return "full stack in inventory";
             if (max == 1)
                 return "already owned in inventory";
+            if (max > 1 && invOwned.Quantity < max && (bankOwned == null || bankOwned.Quantity < max))
+                ClearFullStackMark(drop.ID, drop.Name);
         }
 
         if (bankOwned != null)
@@ -269,9 +351,12 @@ public partial class ScriptDrop
                 return "full stack in bank";
             if (max == 1)
                 return "already owned in bank";
-            if (!Options.PickupACDropsAndSendToBank)
-                return "already in the bank";
+            if (max > 1 && bankOwned.Quantity < max)
+                ClearFullStackMark(drop.ID, drop.Name);
         }
+
+        if (HasServerFullStackMark(drop))
+            return "full stack (server confirmed)";
 
         if (!_bank.Value.Loaded)
         {
@@ -285,17 +370,16 @@ public partial class ScriptDrop
 
             if (_bank.Value.Loaded)
             {
-                bankOwned = _bank.Value.Items.FirstOrDefault(i =>
-                    (drop.ID != 0 && i.ID == drop.ID) ||
-                    (!string.IsNullOrEmpty(drop.Name) && string.Equals(i.Name, drop.Name, StringComparison.OrdinalIgnoreCase)));
+                bankOwned = FindItem(_bank.Value.Items, drop);
                 if (bankOwned != null)
                 {
-                    if (max <= 0 && bankOwned.MaxStack > 0)
-                        max = bankOwned.MaxStack;
+                    max = ResolveMaxStack(drop, invOwned, bankOwned);
                     if (max > 1 && bankOwned.Quantity >= max)
                         return "full stack in bank";
-                    if (max == 1 || !Options.PickupACDropsAndSendToBank)
-                        return "already in the bank";
+                    if (max == 1)
+                        return "already owned in bank";
+                    if (max > 1 && bankOwned.Quantity < max)
+                        ClearFullStackMark(drop.ID, drop.Name);
                 }
             }
         }
@@ -323,38 +407,57 @@ public partial class ScriptDrop
         return true;
     }
 
+    private bool IsConfirmedNotFull(int id, string? name)
+    {
+        ItemBase probe = new() { ID = id, Name = name ?? string.Empty };
+        InventoryItem? invOwned = FindItem(Inventory.Items, probe);
+        InventoryItem? bankOwned = _bank.Value.Loaded ? FindItem(_bank.Value.Items, probe) : null;
+        int max = ResolveMaxStack(probe, invOwned, bankOwned);
+        if (max <= 1)
+            return false;
+        if (invOwned != null && invOwned.Quantity < max && bankOwned == null)
+            return true;
+        if (bankOwned != null && bankOwned.Quantity < max && invOwned == null)
+            return true;
+        return false;
+    }
+
     public void RejectFullStackDrops()
     {
-        // 1. Identify the drop that was just requested when server sent "Already have a full stack"
+        DateTime now = DateTime.UtcNow;
+        int candidateId = 0;
+        string candidateName = string.Empty;
+
         int lastID = _lastPickupDropID;
         string lastName = _lastPickupDropName;
-        if (lastID != 0 && (DateTime.UtcNow - _lastPickupTime) < TimeSpan.FromSeconds(5))
+        if (lastID != 0 && (now - _lastPickupTime) < TimeSpan.FromSeconds(5) && !IsConfirmedNotFull(lastID, lastName))
         {
-            _fullStackIDs.TryAdd(lastID, 0);
-            if (!string.IsNullOrEmpty(lastName))
-                _fullStackNames.TryAdd(lastName, 0);
+            candidateId = lastID;
+            candidateName = lastName;
         }
-
-        // 2. Check any pending pickups from the last 5 seconds
-        DateTime cutoff = DateTime.UtcNow.AddSeconds(-5);
-        foreach (var kvp in _pendingPickups)
+        else if (_pendingPickups.Count == 1)
         {
-            if (kvp.Value.Time >= cutoff)
+            var sole = _pendingPickups.FirstOrDefault();
+            if (sole.Key != 0 && (now - sole.Value.Time) < TimeSpan.FromSeconds(5) && !IsConfirmedNotFull(sole.Key, sole.Value.Name))
             {
-                _fullStackIDs.TryAdd(kvp.Key, 0);
-                if (!string.IsNullOrEmpty(kvp.Value.Name))
-                    _fullStackNames.TryAdd(kvp.Value.Name, 0);
+                candidateId = sole.Key;
+                candidateName = sole.Value.Name;
+            }
+        }
+        else if ((now - _lastPickupTime) < TimeSpan.FromSeconds(5))
+        {
+            ItemBase[] current = CurrentDropInfos.ToArray();
+            if (current.Length == 1 && !IsConfirmedNotFull(current[0].ID, current[0].Name))
+            {
+                candidateId = current[0].ID;
+                candidateName = current[0].Name;
             }
         }
 
-        // 3. Fallback: if only 1 current drop on screen, that drop is the culprit
-        ItemBase[] current = CurrentDropInfos.ToArray();
-        if (current.Length == 1)
-        {
-            _fullStackIDs.TryAdd(current[0].ID, 0);
-            if (!string.IsNullOrEmpty(current[0].Name))
-                _fullStackNames.TryAdd(current[0].Name, 0);
-        }
+        if (candidateId != 0)
+            _fullStackIDs[candidateId] = now;
+        if (!string.IsNullOrEmpty(candidateName))
+            _fullStackNames[candidateName] = now;
 
         // Do not reject the item from Flash or remove it from CurrentDropInfos so it stays on the drop list.
         System.Diagnostics.Trace.WriteLine($"[ScriptDrop] Server confirmed full stack drop; keeping on drop list without re-requesting.");

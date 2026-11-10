@@ -29,6 +29,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         _isInitializing = true;
         _stageQuality = ReadGlobalStageQuality();
         GetOptions();
+        _acceptACDrops = ReadGlobalAcceptACDrops();
         _pickupACDropsAndSendToBank = settingsService?.Get<bool>("BonxieMux.PickupACDropsAndSendToBank") ?? false;
         _rejectNonACDrops = settingsService?.Get<bool>("BonxieMux.RejectNonACDrops") ?? false;
         OptionDictionary = GenerateDictionary().ToImmutableDictionary();
@@ -192,7 +193,72 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     public bool AcceptACDrops
     {
         get => _acceptACDrops;
-        set => SetProperty(ref _acceptACDrops, value, true);
+        set
+        {
+            if (!SetProperty(ref _acceptACDrops, value, true))
+                return;
+            if (!_isInitializing)
+            {
+                PersistGlobalAcceptACDrops(value);
+                BroadcastSharedCommandToOtherClients("acceptACDrops", nameof(AcceptACDrops), value ? "True" : "False");
+            }
+        }
+    }
+
+    public void ApplySharedAcceptACDrops(bool value)
+    {
+        if (_acceptACDrops == value)
+            return;
+
+        SetProperty(ref _acceptACDrops, value, true);
+        try
+        {
+            var shared = _settingsService?.GetShared();
+            if (shared is not null)
+            {
+                shared.AcceptACDrops = value;
+                shared.HasAcceptACDrops = true;
+            }
+        }
+        catch { }
+    }
+
+    private bool ReadGlobalAcceptACDrops()
+    {
+        try
+        {
+            var shared = _settingsService?.GetShared();
+            if (shared is not null)
+            {
+                if (shared.HasAcceptACDrops || shared.AcceptACDrops)
+                    return shared.AcceptACDrops;
+                if (_userOptions is not null &&
+                    _userOptions.TryGetValue(nameof(AcceptACDrops), out string? legacy) &&
+                    bool.TryParse(legacy, out bool legacyVal) &&
+                    legacyVal)
+                {
+                    PersistGlobalAcceptACDrops(true);
+                    return true;
+                }
+            }
+            return _settingsService?.Get<bool>(nameof(AcceptACDrops)) ?? false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void PersistGlobalAcceptACDrops(bool value)
+    {
+        try
+        {
+            var shared = _settingsService?.GetShared();
+            if (shared is not null)
+                shared.HasAcceptACDrops = true;
+            _settingsService?.Set(nameof(AcceptACDrops), value);
+        }
+        catch { }
     }
 
     private bool _pickupACDropsAndSendToBank;
@@ -475,7 +541,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
             ApplyStageQualityInternal(flushGamePref: true, triggeredFromGameUi: false);
 
-            BroadcastStageQualityToOtherClients(val);
+            BroadcastSharedCommandToOtherClients("stageQuality", nameof(StageQuality), val);
         }
     }
 
@@ -496,7 +562,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
         ApplyStageQualityInternal(flushGamePref: false, triggeredFromGameUi: true);
 
-        BroadcastStageQualityToOtherClients(val);
+        BroadcastSharedCommandToOtherClients("stageQuality", nameof(StageQuality), val);
     }
 
     /// <summary>
@@ -557,14 +623,14 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         catch { }
     }
 
-    private static void BroadcastStageQualityToOtherClients(string quality)
+    private static void BroadcastSharedCommandToOtherClients(string kind, string name, string value)
     {
         try
         {
             int myPid = Environment.ProcessId;
             foreach (var other in Skua.Core.Services.OptionSharing.OtherClients(myPid))
             {
-                Skua.Core.Services.OptionSharing.Send(other.ProcessId, new Skua.Core.Services.SharedOptionCommand("stageQuality", nameof(StageQuality), quality));
+                Skua.Core.Services.OptionSharing.Send(other.ProcessId, new Skua.Core.Services.SharedOptionCommand(kind, name, value));
             }
         }
         catch { }
@@ -865,7 +931,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         StringCollection saveOptions = new();
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (pi.Name is nameof(OptionDictionary) or nameof(StageQuality) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
+            if (pi.Name is nameof(OptionDictionary) or nameof(StageQuality) or nameof(AcceptACDrops) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
             string key = pi.Name;
             object? value = pi.GetValue(this);
@@ -876,6 +942,13 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
     public void Reset()
     {
+        if (!_isInitializing && _settingsService is not null)
+        {
+            _settingsService.ReloadSettings();
+            ApplySharedAcceptACDrops(ReadGlobalAcceptACDrops());
+            ApplySharedStageQuality(ReadGlobalStageQuality());
+        }
+
         if (_userOptions is null)
         {
             ResetToDefault();
@@ -884,7 +957,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (!pi.CanWrite || pi.Name is nameof(CanRenderFullQuality) or nameof(StageQuality) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
+            if (!pi.CanWrite || pi.Name is nameof(CanRenderFullQuality) or nameof(StageQuality) or nameof(AcceptACDrops) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
             if (_userOptions.ContainsKey(pi.Name))
             {
@@ -903,7 +976,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         ScriptOption defaults = new(_lazyFlash);
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (!pi.CanWrite || pi.Name is nameof(CanRenderFullQuality) or nameof(StageQuality) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
+            if (!pi.CanWrite || pi.Name is nameof(CanRenderFullQuality) or nameof(StageQuality) or nameof(AcceptACDrops) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
 
             pi.SetValue(this, pi.GetValue(defaults), null);

@@ -124,6 +124,9 @@ public static class OptionSharing
             case "stageQuality" when command.Value is { } qualityValue:
                 options.ApplySharedStageQuality(qualityValue);
                 break;
+            case "acceptACDrops" when bool.TryParse(command.Value, out bool acceptAc):
+                options.ApplySharedAcceptACDrops(acceptAc);
+                break;
             case "set" when command.Name is { } name && command.Value is { } text:
                 PropertyInfo? p = SharedProperties(options).FirstOrDefault(x => x.Name == name);
                 if (p is null)

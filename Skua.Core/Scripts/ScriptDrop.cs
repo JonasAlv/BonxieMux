@@ -38,6 +38,7 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
         StrongReferenceMessenger.Default.Register<ScriptDrop, ItemSoldMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r.ClearRefusedAndFullStack());
         StrongReferenceMessenger.Default.Register<ScriptDrop, ItemBoughtMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r.ClearRefusedAndFullStack());
         StrongReferenceMessenger.Default.Register<ScriptDrop, ItemAddedToBankMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r.ClearRefusedAndFullStack());
+        StrongReferenceMessenger.Default.Register<ScriptDrop, QuestTurninMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r.ClearRefusedAndFullStack());
         StrongReferenceMessenger.Default.Register<ScriptDrop, LogoutMessage, int>(this, (int)MessageChannels.GameEvents, ClearDrops);
         StrongReferenceMessenger.Default.Register<ScriptDrop, ScriptStoppedMessage, int>(this, (int)MessageChannels.ScriptStatus, ScriptStopped);
         Messenger.Register<ScriptDrop, PropertyChangedMessage<bool>>(this, OptionsChanged);
@@ -109,7 +110,7 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
         // AC drops go through the banking loop and non-AC drops are refused when those options are on.
         if ((drop.Coins && Options.PickupACDropsAndSendToBank) || (!drop.Coins && Options.RejectNonACDrops))
             return false;
-        if (!drop.Temp && !Inventory.HasSpaceFor(drop))
+        if (!drop.Temp && !Inventory.HasSpaceFor(drop) && !CanStackInBank(drop))
             return false;
         if (CannotTake(drop) is not null)
             return false;
@@ -163,13 +164,27 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
         PickupEach(wantedDrops.Where(d => refused.All(r => r.ID != d.ID) && !WaitingForSlot(d)));
     }
 
-    public void PickupACItems()
+    private ItemBase[] GetLootableACDrops()
     {
         ItemBase[] ac = CurrentDropInfos.Where(d => d.Coins).ToArray();
         if (ac.Length == 0)
-            return;
-        ItemBase[] refused = ac.Where(d => CannotTake(d) is not null).ToArray();
-        PickupEach(ac.Where(d => refused.All(r => r.ID != d.ID) && !WaitingForSlot(d)));
+            return Array.Empty<ItemBase>();
+        return ac.Where(d => !WaitingForSlot(d) && CannotTake(d) is null).ToArray();
+    }
+
+    public void PickupACItems()
+    {
+        _acPickupGate.Wait();
+        try
+        {
+            ItemBase[] toPickup = GetLootableACDrops();
+            if (toPickup.Length > 0)
+                PickupEach(toPickup);
+        }
+        finally
+        {
+            _acPickupGate.Release();
+        }
     }
 
     private bool WaitingForSlot(ItemBase drop)
@@ -389,6 +404,10 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
         switch (message.PropertyName)
         {
             case nameof(IScriptOption.AcceptACDrops):
+                if (message.NewValue)
+                    recipient.ClearRefusedAndFullStack();
+                recipient.Start();
+                break;
             case nameof(IScriptOption.AcceptAllDrops):
             case nameof(IScriptOption.RejectAllDrops):
                 recipient.Start();
@@ -398,7 +417,7 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
 
     private void PickupResult(ScriptDrop recipient, DropPickupResultMessage message)
     {
-        recipient._pendingPickups.TryRemove(message.ItemID, out _);
+        string? removedName = recipient._pendingPickups.TryRemove(message.ItemID, out var removedPending) ? removedPending.Name : null;
         if (recipient._lastPickupDropID == message.ItemID)
             recipient._lastPickupDropID = 0;
 
@@ -408,6 +427,8 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
             return;
         }
 
+        ItemBase? pickedDrop = recipient.CurrentDropInfos.FirstOrDefault(d => d.ID == message.ItemID);
+        recipient.ClearFullStackMark(message.ItemID, pickedDrop?.Name ?? removedName);
         recipient._refusedIDs.TryRemove(message.ItemID, out _);
         recipient._currentDropInfos.Remove(d => d.ID == message.ItemID);
         recipient.OnPropertyChanged(nameof(recipient.CurrentDropInfos));

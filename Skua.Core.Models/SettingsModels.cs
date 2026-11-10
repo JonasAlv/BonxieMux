@@ -222,6 +222,12 @@ public class SharedSettings
     [JsonPropertyName("StageQuality")]
     public string StageQuality { get; set; } = "MEDIUM";
 
+    [JsonPropertyName("AcceptACDrops")]
+    public bool AcceptACDrops { get; set; } = false;
+
+    [JsonPropertyName("HasAcceptACDrops")]
+    public bool HasAcceptACDrops { get; set; } = false;
+
     [JsonExtensionData]
     public Dictionary<string, object>? ExtensionData { get; set; }
 
