@@ -188,6 +188,17 @@ public class Main extends MovieClip {
             return;
         }
 
+        var qTarget:* = event.target;
+        while (qTarget != null && qTarget != this.game && qTarget != this.stg) {
+            if (qTarget.name == "btnLeftQual" || qTarget.name == "btnRightQual") {
+                if (this.game && this.game.userPreference && this.game.userPreference.data && this.game.userPreference.data.quality) {
+                    this.external.call("stageQualityChanged", String(this.game.userPreference.data.quality));
+                }
+                return;
+            }
+            qTarget = qTarget.parent;
+        }
+
         var p:* = event.target.parent;
         while (p != null) {
             if (p.name == "iList") {
@@ -376,6 +387,45 @@ public class Main extends MovieClip {
         var parts:Array = path.split('.');
         var obj:* = _getObjectA(instance.game, parts);
         obj[key] = value;
+    }
+
+    public static function syncStageQuality(prefQuality:String, runtimeQuality:String, flushPref:Boolean):void {
+        try {
+            if (instance.game == null) {
+                return;
+            }
+
+            var prefChanged:Boolean = false;
+            if (instance.game.userPreference != null && instance.game.userPreference.data != null && prefQuality != null && prefQuality.length > 0) {
+                prefChanged = instance.game.userPreference.data.quality != prefQuality;
+                if (prefChanged) {
+                    instance.game.userPreference.data.quality = prefQuality;
+                    if (flushPref) {
+                        try {
+                            instance.game.userPreference.flush();
+                        } catch (flushEx:Error) {}
+                    }
+                }
+            }
+
+            if (instance.game.stage != null && runtimeQuality != null && runtimeQuality.length > 0) {
+                if (runtimeQuality == "AUTO") {
+                    if (prefChanged || String(instance.game.stage.quality).toLowerCase() == "low") {
+                        instance.game.stage.quality = "HIGH";
+                    }
+                } else {
+                    instance.game.stage.quality = runtimeQuality;
+                }
+            }
+
+            if (prefChanged && instance.game.mcO != null) {
+                if (instance.game.mcO.stage == null) {
+                    instance.game.mcO = null;
+                } else if ("mcVis" in instance.game.mcO && instance.game.mcO.mcVis != null && "txtQuality" in instance.game.mcO.mcVis && instance.game.mcO.mcVis.txtQuality != null) {
+                    instance.game.mcO.mcVis.txtQuality.text = prefQuality;
+                }
+            }
+        } catch (ex:Error) {}
     }
 
     public static function getArrayObject(path:String, index:int):String {

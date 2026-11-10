@@ -248,7 +248,7 @@ public interface IScriptOption : INotifyPropertyChanged
     int SetFPS { get; set; }
 
     /// <summary>
-    /// Flash rendering stage quality (LOW, MEDIUM, HIGH).
+    /// Flash rendering stage quality (LOW, MEDIUM, HIGH, AUTO).
     /// </summary>
     string StageQuality { get; set; }
 
@@ -263,9 +263,24 @@ public interface IScriptOption : INotifyPropertyChanged
     void SetForegroundFocus(bool isForegroundFocused);
 
     /// <summary>
-    /// Applies Flash stage quality: LOW if headless or a background tab; configured StageQuality only if foreground focused.
+    /// Applies Flash stage quality and syncs in-game Visuals preference: LOW if headless or a background tab; configured StageQuality if foreground focused.
     /// </summary>
-    void ApplyStageQuality();
+    void ApplyStageQuality(bool flushGamePref = false);
+
+    /// <summary>
+    /// Re-enforces headless render limits (if headless) and Flash stage quality.
+    /// </summary>
+    void EnforceRenderState(bool flushGamePref = false);
+
+    /// <summary>
+    /// Updates global StageQuality after the user changes Visuals inside the game's Options UI.
+    /// </summary>
+    void SyncStageQualityFromGame(string? quality);
+
+    /// <summary>
+    /// Applies a global StageQuality update received from a sibling client without re-broadcasting.
+    /// </summary>
+    void ApplySharedStageQuality(string? quality);
 
     /// <summary>
     /// Whether to show the in-game FPS counter

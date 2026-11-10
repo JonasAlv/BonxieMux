@@ -64,6 +64,8 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             recipient.ApplyStreamerMode(true);
     }
 
+    private CancellationTokenSource? _mapQualityCts;
+
     private void MapChanged(ScriptOption recipient, MapChangedMessage message)
     {
         if (recipient.AutoCrowdMode && recipient._priorCrowdMode != null)
@@ -83,6 +85,54 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
                 recipient.ApplyStreamerMode(true);
             });
         }
+
+        EnforceMapQualityAsync(recipient);
+    }
+
+    private static void EnforceMapQualityAsync(ScriptOption recipient)
+    {
+        try
+        {
+            recipient.EnforceRenderState(flushGamePref: false);
+
+            var cts = new CancellationTokenSource();
+            var previous = Interlocked.Exchange(ref recipient._mapQualityCts, cts);
+            try { previous?.Cancel(); } catch (ObjectDisposedException) { }
+            CancellationToken token = cts.Token;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    // Wait for the new map SWF load to finish so any frame-1 quality reset is overridden.
+                    for (int i = 0; i < 40 && !token.IsCancellationRequested; i++)
+                    {
+                        await Task.Delay(250, token);
+                        var flash = recipient._lazyFlash.Value;
+                        if (flash == null)
+                            break;
+
+                        bool loading = !flash.IsNull("world") && flash.GetGameObject<bool>("world.mapLoadInProgress");
+                        if (!loading)
+                        {
+                            await Task.Delay(150, token);
+                            break;
+                        }
+                    }
+
+                    if (!token.IsCancellationRequested)
+                        recipient.EnforceRenderState(flushGamePref: false);
+                }
+                catch (OperationCanceledException) { }
+                catch { }
+                finally
+                {
+                    Interlocked.CompareExchange(ref recipient._mapQualityCts, null, cts);
+                    cts.Dispose();
+                }
+            });
+        }
+        catch { }
     }
 
     private void ScriptStopped(ScriptOption recipient, ScriptStoppedMessage message)
@@ -354,29 +404,62 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     }
 
     /// <summary>
-    /// Applies Flash stage quality: LOW if headless or a background tab; configured StageQuality only if foreground focused.
+    /// Applies Flash stage quality and syncs AQW's in-game Visuals preference:
+    /// LOW if headless or a background tab; configured StageQuality if foreground focused.
     /// </summary>
-    public void ApplyStageQuality()
+    public void ApplyStageQuality(bool flushGamePref = false) =>
+        ApplyStageQualityInternal(flushGamePref, triggeredFromGameUi: false);
+
+    /// <summary>
+    /// Re-enforces headless render limits (when headless) and Flash stage quality.
+    /// </summary>
+    public void EnforceRenderState(bool flushGamePref = false)
     {
         try
         {
-            if (_lazyFlash.Value == null)
+            var flash = _lazyFlash.Value;
+            if (flash == null || flash.IsNull("stage"))
                 return;
 
-            if (CanRenderFullQuality)
+            if (IsHeadlessNow())
             {
-                _lazyFlash.Value.Call("setGameObject", "stage.quality", StageQuality);
+                flash.Call("setGameObject", "stage.frameRate", 2);
+                flash.Call("world.rootClass.mixer.soundTransform.volume", 0);
             }
-            else
+            else if (flushGamePref && SetFPS > 2 && CanRenderFullQuality)
             {
-                _lazyFlash.Value.Call("setGameObject", "stage.quality", "LOW");
+                flash.Call("setGameObject", "stage.frameRate", SetFPS);
             }
+
+            ApplyStageQualityInternal(flushGamePref, triggeredFromGameUi: false);
+        }
+        catch { }
+    }
+
+    private void ApplyStageQualityInternal(bool flushGamePref, bool triggeredFromGameUi)
+    {
+        try
+        {
+            var flash = _lazyFlash.Value;
+            if (flash == null || flash.IsNull("stage"))
+                return;
+
+            bool isAuto = string.Equals(StageQuality, "AUTO", StringComparison.OrdinalIgnoreCase);
+            string prefQuality = !CanRenderFullQuality && isAuto ? "LOW" : StageQuality;
+            string runtimeQuality = triggeredFromGameUi
+                ? string.Empty
+                : (CanRenderFullQuality ? StageQuality : "LOW");
+            bool shouldFlush = !triggeredFromGameUi
+                && flushGamePref
+                && string.Equals(prefQuality, StageQuality, StringComparison.OrdinalIgnoreCase);
+
+            flash.Call("syncStageQuality", prefQuality, runtimeQuality, shouldFlush);
         }
         catch { }
     }
 
     /// <summary>
-    /// Gets or sets the Flash rendering stage quality (LOW, MEDIUM, HIGH).
+    /// Gets or sets the Flash rendering stage quality (LOW, MEDIUM, HIGH, AUTO).
     /// </summary>
     public string StageQuality
     {
@@ -390,10 +473,44 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             SetProperty(ref _stageQuality, val);
             PersistGlobalStageQuality(val);
 
-            ApplyStageQuality();
+            ApplyStageQualityInternal(flushGamePref: true, triggeredFromGameUi: false);
 
             BroadcastStageQualityToOtherClients(val);
         }
+    }
+
+    /// <summary>
+    /// Updates global StageQuality after the user changes Visuals inside the game's Options UI.
+    /// </summary>
+    public void SyncStageQualityFromGame(string? quality)
+    {
+        string val = NormalizeStageQuality(quality);
+        if (_stageQuality == val)
+        {
+            ApplyStageQualityInternal(flushGamePref: false, triggeredFromGameUi: true);
+            return;
+        }
+
+        SetProperty(ref _stageQuality, val);
+        PersistGlobalStageQuality(val);
+
+        ApplyStageQualityInternal(flushGamePref: false, triggeredFromGameUi: true);
+
+        BroadcastStageQualityToOtherClients(val);
+    }
+
+    /// <summary>
+    /// Applies a global StageQuality update received from a sibling client without re-broadcasting.
+    /// </summary>
+    public void ApplySharedStageQuality(string? quality)
+    {
+        string val = NormalizeStageQuality(quality);
+        if (_stageQuality == val)
+            return;
+
+        SetProperty(ref _stageQuality, val);
+        PersistGlobalStageQuality(val);
+        ApplyStageQualityInternal(flushGamePref: true, triggeredFromGameUi: false);
     }
 
     private static string NormalizeStageQuality(string? value)
@@ -407,6 +524,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             "LOW" => "LOW",
             "MEDIUM" => "MEDIUM",
             "HIGH" => "HIGH",
+            "AUTO" => "AUTO",
             _ => "MEDIUM"
         };
     }
@@ -446,7 +564,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             int myPid = Environment.ProcessId;
             foreach (var other in Skua.Core.Services.OptionSharing.OtherClients(myPid))
             {
-                Skua.Core.Services.OptionSharing.Send(other.ProcessId, new Skua.Core.Services.SharedOptionCommand("set", nameof(StageQuality), quality));
+                Skua.Core.Services.OptionSharing.Send(other.ProcessId, new Skua.Core.Services.SharedOptionCommand("stageQuality", nameof(StageQuality), quality));
             }
         }
         catch { }
@@ -522,8 +640,8 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             if (value)
             {
                 _lazyFlash.Value.Call("setGameObject", "stage.frameRate", 2);
-                _lazyFlash.Value.Call("setGameObject", "stage.quality", "LOW");
                 _lazyFlash.Value.Call("world.rootClass.mixer.soundTransform.volume", 0);
+                ApplyStageQuality();
                 Skua.Core.Utils.MemoryUtils.TrimWorkingSet();
             }
             else
@@ -735,7 +853,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         StringCollection saveOptions = new();
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (pi.Name is nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
+            if (pi.Name is nameof(OptionDictionary) or nameof(StageQuality) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
             string key = pi.Name;
             object? value = pi.GetValue(this);
@@ -754,7 +872,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (!pi.CanWrite || pi.Name is nameof(CanRenderFullQuality) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
+            if (!pi.CanWrite || pi.Name is nameof(CanRenderFullQuality) or nameof(StageQuality) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
             if (_userOptions.ContainsKey(pi.Name))
             {
@@ -773,7 +891,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         ScriptOption defaults = new(_lazyFlash);
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (!pi.CanWrite || pi.Name is nameof(CanRenderFullQuality) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
+            if (!pi.CanWrite || pi.Name is nameof(CanRenderFullQuality) or nameof(StageQuality) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
 
             pi.SetValue(this, pi.GetValue(defaults), null);

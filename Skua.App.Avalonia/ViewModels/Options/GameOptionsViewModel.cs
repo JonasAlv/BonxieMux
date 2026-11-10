@@ -40,7 +40,7 @@ public class GameOptionsViewModel : BotControlViewModelBase
     private readonly Func<OptionSource, List<DisplayOptionItemViewModelBase>> _buildItems;
     private readonly LocalOptionSource _local;
     private OptionSource _source;
-    private static readonly List<string> QualityOptions = new() { "LOW", "MEDIUM", "HIGH" };
+    private static readonly List<string> QualityOptions = new() { "LOW", "MEDIUM", "HIGH", "AUTO" };
     private CBOChoiceOptionItemViewModel _reloginServerItem = null!;
     private CBOChoiceOptionItemViewModel _stageQualityItem = null!;
     private List<string> _reloginServerNames = new();
@@ -240,7 +240,7 @@ public class GameOptionsViewModel : BotControlViewModelBase
 
         _stageQualityItem = new CBOChoiceOptionItemViewModel(
             "Flash Stage Quality",
-            "Flash rendering quality (LOW, MEDIUM, HIGH). Applies globally across clients.",
+            "Flash rendering quality (LOW, MEDIUM, HIGH, AUTO). Synced with in-game Visuals and applied globally across clients.",
             nameof(IScriptOption.StageQuality),
             QualityOptions,
             index);

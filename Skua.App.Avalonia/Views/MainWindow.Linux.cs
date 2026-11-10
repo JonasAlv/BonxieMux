@@ -63,7 +63,6 @@ public partial class MainWindow : Window
     private const int WM_SKUA_DOCK = 0x0400 + 471;
 
     private int _preThrottleFPS = -1;
-    private string? _preThrottleQuality = null;
     private bool _isInGridView = false;
     private int _tabVisibility;
     private bool _isWindowFocused = true;
@@ -170,7 +169,6 @@ public partial class MainWindow : Window
                 targetFPS = options.SetFPS > 0 ? options.SetFPS : 30;
 
             _preThrottleFPS = -1;
-            _preThrottleQuality = null;
 
             if (targetFPS > 0)
                 bot.Flash?.SetGameObject("stage.frameRate", targetFPS);
@@ -407,7 +405,6 @@ public partial class MainWindow : Window
                                 targetFPS = options.SetFPS > 0 ? options.SetFPS : 30;
 
                             _preThrottleFPS = -1;
-                            _preThrottleQuality = null;
 
                             bot.Flash?.SetGameObject("stage.frameRate", targetFPS);
                             options.ApplyStageQuality();

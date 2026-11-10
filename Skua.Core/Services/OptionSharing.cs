@@ -121,6 +121,9 @@ public static class OptionSharing
             case "save": options.Save(); break;
             case "reset": options.Reset(); break;
             case "defaults": options.ResetToDefault(); break;
+            case "stageQuality" when command.Value is { } qualityValue:
+                options.ApplySharedStageQuality(qualityValue);
+                break;
             case "set" when command.Name is { } name && command.Value is { } text:
                 PropertyInfo? p = SharedProperties(options).FirstOrDefault(x => x.Name == name);
                 if (p is null)

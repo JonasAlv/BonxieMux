@@ -536,40 +536,18 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 break;
 
             case "loaded":
-                try
-                {
-                    if (Options.IsHeadlessNow())
-                    {
-                        Flash.SetGameObject("stage.frameRate", 2);
-                        Flash.SetGameObject("stage.quality", "LOW");
-                        Flash.SetGameObject("world.rootClass.mixer.soundTransform.volume", 0);
-                    }
-                    else
-                    {
-                        if (Options.SetFPS > 2)
-                            Flash.SetGameObject("stage.frameRate", Options.SetFPS);
-
-                        Options.ApplyStageQuality();
-                    }
-                }
-                catch { }
+                Options.EnforceRenderState(flushGamePref: true);
                 OnGameLoaded();
                 Initialize();
                 try { Options.Reset(); } catch { }
-                try
+                Options.EnforceRenderState(flushGamePref: true);
+                break;
+
+            case "stageQualityChanged":
+                if (args is { Length: > 0 } && args[0] is string gameQuality)
                 {
-                    if (Options.IsHeadlessNow())
-                    {
-                        Flash.SetGameObject("stage.frameRate", 2);
-                        Flash.SetGameObject("stage.quality", "LOW");
-                        Flash.SetGameObject("world.rootClass.mixer.soundTransform.volume", 0);
-                    }
-                    else
-                    {
-                        Options.ApplyStageQuality();
-                    }
+                    Options.SyncStageQualityFromGame(gameQuality);
                 }
-                catch { }
                 break;
 
             case "connectionLost":
