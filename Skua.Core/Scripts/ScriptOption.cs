@@ -459,17 +459,27 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     [ObjectBinding("ui.mcFPS.visible", HasSetter = true)]
     private bool _showFPS = false;
 
+    private readonly record struct RenderSyncKey(
+        int TargetFps,
+        double TargetVolume,
+        string PrefQuality,
+        string RuntimeQuality,
+        bool ShouldFlush);
+
     private string _stageQuality = "MEDIUM";
     private bool _isForegroundFocused = true;
     private bool _isBackgroundThrottled;
     private bool _mutedByHeadless;
-    private bool _wasReducedState;
     private bool _renderHasPendingRequest;
     private bool _renderForceRuntimeQuality;
     private bool _renderFlushGamePrefPending;
+    private bool _renderForceApplyPending;
+    private bool _hasAppliedRenderKey;
+    private RenderSyncKey _lastAppliedRenderKey;
+    private DateTime _lastWorkingSetTrimUtc = DateTime.MinValue;
     private long _renderDesiredVersion;
     private bool _renderWorkerRunning;
-    private CancellationTokenSource? _renderInFlightCts;
+    private CancellationTokenSource? _renderWaitCts;
     private readonly object _renderLock = new();
 
     /// <summary>
@@ -514,13 +524,13 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     /// LOW if headless or a background tab; configured StageQuality if foreground focused.
     /// </summary>
     public void ApplyStageQuality(bool flushGamePref = false) =>
-        RequestRenderStateSync(flushGamePref: flushGamePref);
+        RequestRenderStateSync(flushGamePref: flushGamePref, forceApply: true);
 
     /// <summary>
     /// Re-enforces headless/throttled render limits and Flash stage quality.
     /// </summary>
     public void EnforceRenderState(bool flushGamePref = false) =>
-        RequestRenderStateSync(flushGamePref: flushGamePref);
+        RequestRenderStateSync(flushGamePref: flushGamePref, forceApply: true);
 
     /// <summary>
     /// Gets or sets the Flash rendering stage quality (LOW, MEDIUM, HIGH, AUTO).
@@ -537,7 +547,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             SetProperty(ref _stageQuality, val);
             PersistGlobalStageQuality(val);
 
-            RequestRenderStateSync(flushGamePref: true);
+            RequestRenderStateSync(flushGamePref: true, forceApply: true);
 
             BroadcastSharedCommandToOtherClients("stageQuality", nameof(StageQuality), val);
         }
@@ -551,14 +561,14 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         string val = NormalizeStageQuality(quality);
         if (_stageQuality == val)
         {
-            RequestRenderStateSync(flushGamePref: false, triggeredFromGameUi: true);
+            RequestRenderStateSync(flushGamePref: false, triggeredFromGameUi: true, forceApply: true);
             return;
         }
 
         SetProperty(ref _stageQuality, val);
         PersistGlobalStageQuality(val);
 
-        RequestRenderStateSync(flushGamePref: false, triggeredFromGameUi: true);
+        RequestRenderStateSync(flushGamePref: false, triggeredFromGameUi: true, forceApply: true);
 
         BroadcastSharedCommandToOtherClients("stageQuality", nameof(StageQuality), val);
     }
@@ -574,7 +584,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
         SetProperty(ref _stageQuality, val);
         PersistGlobalStageQuality(val);
-        RequestRenderStateSync(flushGamePref: true);
+        RequestRenderStateSync(flushGamePref: true, forceApply: true);
     }
 
     private static string NormalizeStageQuality(string? value)
@@ -708,7 +718,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
     partial void OnHeadlessModeChanged(bool value) => RequestRenderStateSync(flushGamePref: false);
 
-    private void RequestRenderStateSync(bool flushGamePref, bool triggeredFromGameUi = false)
+    private void RequestRenderStateSync(bool flushGamePref, bool triggeredFromGameUi = false, bool forceApply = false)
     {
         bool startWorker = false;
         CancellationTokenSource? toCancel = null;
@@ -717,25 +727,18 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         {
             if (flushGamePref)
                 _renderFlushGamePrefPending = true;
+            if (forceApply)
+                _renderForceApplyPending = true;
 
             if (!_renderHasPendingRequest || !triggeredFromGameUi)
                 _renderForceRuntimeQuality = !triggeredFromGameUi;
             _renderHasPendingRequest = true;
 
-            bool nowHeadless = IsHeadlessNow();
-            if (nowHeadless)
-                _mutedByHeadless = true;
-
-            bool nowReduced = nowHeadless || _isBackgroundThrottled;
-            bool leavingReduced = _wasReducedState && !nowReduced;
-            _wasReducedState = nowReduced;
-
             _renderDesiredVersion++;
 
-            // Cancel any stalled in-flight IPC wait or retry delay whenever render state flips
-            // (especially waking from headless/throttled) so the latest state runs immediately.
-            if (leavingReduced || _renderInFlightCts != null)
-                toCancel = _renderInFlightCts;
+            // Cancel any pending settle debounce or retry sleep so state transitions proceed promptly,
+            // while never aborting an already-transmitted TCP request (avoids flooding Mugetsu).
+            toCancel = _renderWaitCts;
 
             if (!_renderWorkerRunning)
             {
@@ -754,50 +757,108 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     {
         long lastRetryVersion = -1;
         int retriesForVersion = 0;
-        bool memoryTrimmed = false;
 
         while (true)
         {
             long version;
             bool isHeadless;
             bool isReduced;
-            bool allowFullQuality;
-            int targetFps;
-            double targetVolume;
-            string prefQuality;
-            string runtimeQuality;
-            bool shouldFlush;
-            CancellationTokenSource cts = new();
+            bool shouldDebounceReduced;
+            RenderSyncKey key;
+            bool forceApply;
+            CancellationTokenSource? waitCts = null;
 
             lock (_renderLock)
             {
                 version = _renderDesiredVersion;
                 isHeadless = IsHeadlessNow();
                 isReduced = isHeadless || _isBackgroundThrottled;
-                allowFullQuality = !isReduced && _isForegroundFocused;
+                bool allowFullQuality = !isReduced && _isForegroundFocused;
 
-                targetFps = isReduced ? 2 : (SetFPS > 2 ? SetFPS : 30);
-                targetVolume = isHeadless ? 0.0 : (_mutedByHeadless ? 1.0 : -1.0);
+                int targetFps = isReduced ? 2 : (SetFPS > 2 ? SetFPS : 30);
+                double targetVolume = isHeadless ? 0.0 : (_mutedByHeadless ? 1.0 : -1.0);
 
                 bool isAuto = string.Equals(StageQuality, "AUTO", StringComparison.OrdinalIgnoreCase);
-                prefQuality = !allowFullQuality && isAuto ? "LOW" : StageQuality;
+                string prefQuality = !allowFullQuality && isAuto ? "LOW" : StageQuality;
                 bool fromGameUi = _renderHasPendingRequest && !_renderForceRuntimeQuality;
-                runtimeQuality = fromGameUi
+                string runtimeQuality = fromGameUi
                     ? string.Empty
                     : (allowFullQuality ? StageQuality : "LOW");
-                shouldFlush = !fromGameUi
+                bool shouldFlush = !fromGameUi
                     && _renderFlushGamePrefPending
                     && string.Equals(prefQuality, StageQuality, StringComparison.OrdinalIgnoreCase);
 
-                _renderHasPendingRequest = false;
-                _renderForceRuntimeQuality = false;
-                _renderInFlightCts = cts;
+                key = new RenderSyncKey(targetFps, targetVolume, prefQuality, runtimeQuality, shouldFlush);
+                forceApply = _renderForceApplyPending;
+
+                if (!forceApply && _hasAppliedRenderKey && key.Equals(_lastAppliedRenderKey))
+                {
+                    _renderHasPendingRequest = false;
+                    _renderForceRuntimeQuality = false;
+                    _renderWorkerRunning = false;
+                    return;
+                }
+
+                // Debounce entry into reduced/headless state slightly so rapid tab switching does not
+                // churn FPS=2 / LOW quality while switching back and forth.
+                shouldDebounceReduced = isReduced && version != lastRetryVersion && _hasAppliedRenderKey;
+                if (shouldDebounceReduced)
+                {
+                    waitCts = new CancellationTokenSource();
+                    _renderWaitCts = waitCts;
+                }
+                else
+                {
+                    _renderHasPendingRequest = false;
+                    _renderForceRuntimeQuality = false;
+                    _renderForceApplyPending = false;
+                }
             }
 
-            if (version != lastRetryVersion)
+            if (waitCts != null)
+            {
+                try
+                {
+                    await Task.Delay(220, waitCts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) { }
+                finally
+                {
+                    lock (_renderLock)
+                    {
+                        if (ReferenceEquals(_renderWaitCts, waitCts))
+                            _renderWaitCts = null;
+                    }
+                    waitCts.Dispose();
+                }
+
+                lock (_renderLock)
+                {
+                    if (_renderDesiredVersion != version)
+                    {
+                        lastRetryVersion = version;
+                        retriesForVersion = 0;
+                        continue;
+                    }
+
+                    // Settle period passed with same reduced state; mark this version as settled and execute.
+                    lastRetryVersion = version;
+                    retriesForVersion = 0;
+                    _renderHasPendingRequest = false;
+                    _renderForceRuntimeQuality = false;
+                    _renderForceApplyPending = false;
+                }
+            }
+            else if (version != lastRetryVersion)
             {
                 lastRetryVersion = version;
                 retriesForVersion = 0;
+            }
+
+            if (isHeadless)
+            {
+                lock (_renderLock)
+                    _mutedByHeadless = true;
             }
 
             bool applied = false;
@@ -806,38 +867,47 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
                 var flash = _lazyFlash.Value;
                 if (flash != null)
                 {
-                    TimeSpan timeout = TimeSpan.FromMilliseconds(isReduced ? 1200 : 1500);
+                    TimeSpan timeout = TimeSpan.FromMilliseconds(isReduced ? 650 : 900);
                     applied = flash.TryCall<bool>(
                         "syncRenderState",
                         timeout,
-                        cts.Token,
+                        CancellationToken.None,
                         out bool ok,
-                        targetFps, targetVolume, prefQuality, runtimeQuality, shouldFlush) && ok;
+                        key.TargetFps, key.TargetVolume, key.PrefQuality, key.RuntimeQuality, key.ShouldFlush) && ok;
                 }
             }
             catch { }
 
-            if (isHeadless && !memoryTrimmed)
+            if (isHeadless && DateTime.UtcNow - _lastWorkingSetTrimUtc >= TimeSpan.FromSeconds(60))
             {
-                memoryTrimmed = true;
-                try { Skua.Core.Utils.MemoryUtils.TrimWorkingSet(); } catch { }
-            }
-            else if (!isHeadless)
-            {
-                memoryTrimmed = false;
+                _lastWorkingSetTrimUtc = DateTime.UtcNow;
+                _ = Task.Delay(2000).ContinueWith(_ =>
+                {
+                    if (IsHeadlessNow())
+                    {
+                        try { Skua.Core.Utils.MemoryUtils.TrimWorkingSet(); } catch { }
+                    }
+                });
             }
 
             bool shouldRetry = false;
             int retryDelayMs = 0;
+            CancellationTokenSource? retryWaitCts = null;
 
             lock (_renderLock)
             {
                 if (applied)
                 {
-                    if (shouldFlush)
+                    _hasAppliedRenderKey = true;
+                    _lastAppliedRenderKey = key;
+                    if (key.ShouldFlush)
                         _renderFlushGamePrefPending = false;
-                    if (!isHeadless && targetVolume >= 0)
+                    if (!isHeadless && key.TargetVolume >= 0)
                         _mutedByHeadless = false;
+                }
+                else
+                {
+                    _hasAppliedRenderKey = false;
                 }
 
                 bool superseded = _renderDesiredVersion != version;
@@ -851,42 +921,38 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
                             1 => 120,
                             2 => 200,
                             3 => 300,
-                            4 => 450,
-                            _ => 600
+                            4 => 400,
+                            _ => 500
                         };
+                        retryWaitCts = new CancellationTokenSource();
+                        _renderWaitCts = retryWaitCts;
                         shouldRetry = true;
                     }
                     else
                     {
-                        if (ReferenceEquals(_renderInFlightCts, cts))
-                            _renderInFlightCts = null;
                         _renderWorkerRunning = false;
-                        cts.Dispose();
                         return;
                     }
                 }
-                else
-                {
-                    if (ReferenceEquals(_renderInFlightCts, cts))
-                        _renderInFlightCts = null;
-                }
             }
 
-            if (shouldRetry)
+            if (shouldRetry && retryWaitCts != null)
             {
                 try
                 {
-                    await Task.Delay(retryDelayMs, cts.Token).ConfigureAwait(false);
+                    await Task.Delay(retryDelayMs, retryWaitCts.Token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) { }
+                finally
+                {
+                    lock (_renderLock)
+                    {
+                        if (ReferenceEquals(_renderWaitCts, retryWaitCts))
+                            _renderWaitCts = null;
+                    }
+                    retryWaitCts.Dispose();
+                }
             }
-
-            lock (_renderLock)
-            {
-                if (ReferenceEquals(_renderInFlightCts, cts))
-                    _renderInFlightCts = null;
-            }
-            cts.Dispose();
         }
     }
 

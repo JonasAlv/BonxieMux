@@ -18,6 +18,7 @@
 
         Title="{Binding Title}"
         Icon="avares://Skua.Shared.Avalonia/Assets/SkuaIcon.png"
+        Background="{DynamicResource SkuaPageBrush}"
 
         SystemDecorations="BorderOnly"
         ExtendClientAreaToDecorationsHint="True"

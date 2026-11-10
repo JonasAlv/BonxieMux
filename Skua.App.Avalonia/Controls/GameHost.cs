@@ -18,6 +18,7 @@ public class GameHost : NativeControlHost
     private static nint _display;
     private nint _holder;
     private DispatcherTimer? _fitTimer;
+    private DispatcherTimer? _unmapDelayTimer;
     private nint _player;
     private bool _playerUnmapped;
 
@@ -74,6 +75,7 @@ public class GameHost : NativeControlHost
         if (control.Handle != _holder)
             base.DestroyNativeControlCore(control);
         _fitTimer?.Stop();
+        _unmapDelayTimer?.Stop();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -107,7 +109,8 @@ public class GameHost : NativeControlHost
             return;
 
         FitPlayer();
-        Dispatcher.UIThread.Post(FitPlayer, DispatcherPriority.Loaded);
+        if (_player == 0 || _playerUnmapped)
+            Dispatcher.UIThread.Post(FitPlayer, DispatcherPriority.Loaded);
     }
 
     private void UpdatePlayerVisibility(bool visible)
@@ -117,20 +120,36 @@ public class GameHost : NativeControlHost
 
         if (visible)
         {
+            _unmapDelayTimer?.Stop();
             _fitTimer?.Start();
             RefreshLayout();
         }
         else
         {
             _fitTimer?.Stop();
-            if (_player == 0 && _holder != 0)
-                _player = FindPlayerWindow();
-            if (_player != 0)
+            // Debounce XUnmapWindow slightly so rapid tab switching does not repeatedly tear down
+            // and re-acquire OpenGL swapchains inside the player on every click.
+            if (_unmapDelayTimer == null)
             {
-                XUnmapWindow(_display, _player);
-                XFlush(_display);
-                _playerUnmapped = true;
+                _unmapDelayTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+                _unmapDelayTimer.Tick += (_, _) =>
+                {
+                    _unmapDelayTimer.Stop();
+                    if (IsVisible || _display == 0)
+                        return;
+
+                    if (_player == 0 && _holder != 0)
+                        _player = FindPlayerWindow();
+                    if (_player != 0 && !_playerUnmapped)
+                    {
+                        XUnmapWindow(_display, _player);
+                        XFlush(_display);
+                        _playerUnmapped = true;
+                    }
+                };
             }
+            _unmapDelayTimer.Stop();
+            _unmapDelayTimer.Start();
         }
     }
 

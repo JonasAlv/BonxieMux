@@ -36,14 +36,11 @@ public partial class MainWindow : Window
     private readonly MainMenuViewModel _mainMenuVm;
     private readonly MainViewModel _mainViewModel;
     private MenuItem? _pluginsMenuItem;
-    private DispatcherTimer? _tabTitleSyncTimer;
-    private DispatcherTimer? _throttleTimer;
-    private DispatcherTimer? _optionCommandTimer;
+    private readonly CancellationTokenSource _ipcCancelCts = new();
     private string _lastTabState = "";
     private DateTime _lastScriptRunning = DateTime.MinValue;
     private bool _isFlashLoaded;
     private bool _isTitleBarPermanentlyHidden = false;
-    private readonly CancellationTokenSource _ipcCancelCts = new();
 
     public void HideTitleBar()
     {
@@ -411,65 +408,84 @@ public partial class MainWindow : Window
         _flash.InitializeFlash();
         TabIpc.StartListener(this, Environment.ProcessId, _ipcCancelCts.Token);
 
-        _tabTitleSyncTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _ = Task.Run(() => RunBackgroundTabSyncLoopAsync(_ipcCancelCts.Token));
+        _ = Task.Run(() => RunOptionCommandLoopAsync(_ipcCancelCts.Token));
+    }
+
+    private async Task RunBackgroundTabSyncLoopAsync(CancellationToken ct)
+    {
         string lastWrittenUsername = "";
-        _tabTitleSyncTimer.Tick += (s, ev) =>
+        int tick = 0;
+
+        try
         {
-            try
-            {
-                var bot = Ioc.Default.GetRequiredService<IScriptInterface>();
-                if (!bot.Player.LoggedIn || string.IsNullOrWhiteSpace(bot.Player.Username))
-                    return;
-
-                string username = bot.Player.Username;
-                string dir = ClientFileSources.TabsDIR;
-                System.IO.Directory.CreateDirectory(dir);
-
-                if (username != lastWrittenUsername)
-                {
-                    lastWrittenUsername = username;
-                    string usernameFile = System.IO.Path.Combine(dir, $"{Environment.ProcessId}.txt");
-                    System.IO.File.WriteAllText(usernameFile, username);
-                }
-
-                IScriptMap map = Ioc.Default.GetRequiredService<IScriptMap>();
-                IScriptPlayer player = Ioc.Default.GetRequiredService<IScriptPlayer>();
-                IScriptOption options = Ioc.Default.GetRequiredService<IScriptOption>();
-                if (!map.Loaded || string.IsNullOrWhiteSpace(map.Name) || string.IsNullOrWhiteSpace(player.Cell))
-                    return;
-
-                // Report the server-assigned room number rather than the internal area ID or requested private-room number.
-                string room = map.RoomNumber > 0 ? map.RoomNumber.ToString() : string.Empty;
-                string locationFile = System.IO.Path.Combine(dir, $"{Environment.ProcessId}.location.json");
-                string temporaryFile = locationFile + ".tmp";
-                string locationJson = JsonSerializer.Serialize(new
-                {
-                    Map = map.Name,
-                    Room = room,
-                    Cell = player.Cell,
-                    Pad = string.IsNullOrWhiteSpace(player.Pad) ? "Spawn" : player.Pad,
-                    Username = username,
-                    UpdatedUtc = DateTime.UtcNow
-                });
-                System.IO.File.WriteAllText(temporaryFile, locationJson);
-                System.IO.File.Move(temporaryFile, locationFile, true);
-            }
-            catch { }
-        };
-        _tabTitleSyncTimer.Start();
-
-        _throttleTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-        _throttleTimer.Tick += (_, _) =>
-        {
-            WriteTabState();
             PublishSharedOptions();
-        };
-        _throttleTimer.Start();
 
-        _optionCommandTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(700) };
-        _optionCommandTimer.Tick += (_, _) => ApplySharedOptionCommands();
-        _optionCommandTimer.Start();
-        PublishSharedOptions();
+            while (!ct.IsCancellationRequested)
+            {
+                await Task.Delay(1000, ct).ConfigureAwait(false);
+
+                try
+                {
+                    var bot = Ioc.Default.GetRequiredService<IScriptInterface>();
+                    if (bot.Player.LoggedIn && !string.IsNullOrWhiteSpace(bot.Player.Username))
+                    {
+                        string username = bot.Player.Username;
+                        string dir = ClientFileSources.TabsDIR;
+                        System.IO.Directory.CreateDirectory(dir);
+
+                        if (username != lastWrittenUsername)
+                        {
+                            lastWrittenUsername = username;
+                            string usernameFile = System.IO.Path.Combine(dir, $"{Environment.ProcessId}.txt");
+                            System.IO.File.WriteAllText(usernameFile, username);
+                        }
+
+                        IScriptMap map = Ioc.Default.GetRequiredService<IScriptMap>();
+                        IScriptPlayer player = Ioc.Default.GetRequiredService<IScriptPlayer>();
+                        if (map.Loaded && !string.IsNullOrWhiteSpace(map.Name) && !string.IsNullOrWhiteSpace(player.Cell))
+                        {
+                            // Report the server-assigned room number rather than the internal area ID or requested private-room number.
+                            string room = map.RoomNumber > 0 ? map.RoomNumber.ToString() : string.Empty;
+                            string locationFile = System.IO.Path.Combine(dir, $"{Environment.ProcessId}.location.json");
+                            string temporaryFile = locationFile + ".tmp";
+                            string locationJson = JsonSerializer.Serialize(new
+                            {
+                                Map = map.Name,
+                                Room = room,
+                                Cell = player.Cell,
+                                Pad = string.IsNullOrWhiteSpace(player.Pad) ? "Spawn" : player.Pad,
+                                Username = username,
+                                UpdatedUtc = DateTime.UtcNow
+                            });
+                            System.IO.File.WriteAllText(temporaryFile, locationJson);
+                            System.IO.File.Move(temporaryFile, locationFile, true);
+                        }
+                    }
+                }
+                catch { }
+
+                if ((++tick & 1) == 0)
+                {
+                    WriteTabState();
+                    PublishSharedOptions();
+                }
+            }
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task RunOptionCommandLoopAsync(CancellationToken ct)
+    {
+        try
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                await Task.Delay(700, ct).ConfigureAwait(false);
+                ApplySharedOptionCommands();
+            }
+        }
+        catch (OperationCanceledException) { }
     }
 
     /// <summary>
@@ -532,11 +548,9 @@ public partial class MainWindow : Window
 
     private void MainWindow_Closed(object? sender, EventArgs e)
     {
-        _throttleTimer?.Stop();
-        _optionCommandTimer?.Stop();
         Skua.Core.Services.OptionSharing.Remove(Environment.ProcessId);
         App.DisposeTrayIcon();
-        _tabTitleSyncTimer?.Stop();
+        _ipcCancelCts.Cancel();
         try
         {
             string dir = ClientFileSources.TabsDIR;
@@ -555,7 +569,6 @@ public partial class MainWindow : Window
         }
         catch { }
 
-        _ipcCancelCts.Cancel();
         _flash.FlashCall -= OnFlashCall;
         _startup.Dispose();
         _flash.Dispose();

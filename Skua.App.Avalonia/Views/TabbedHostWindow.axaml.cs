@@ -56,6 +56,7 @@ public partial class TabbedHostWindow : Window
         public Process Process { get; set; } = null!;
         public IntPtr ChildHwnd { get; set; } = IntPtr.Zero;
         public bool IsThrottled { get; set; } = false;
+        public int LastVisibility { get; set; } = -1;
         public bool IsCustomNamed { get; set; } = false;
         public bool IsLoaded { get; set; } = false;
         public bool IsDetached { get; set; } = false;
@@ -225,6 +226,8 @@ public partial class TabbedHostWindow : Window
                 _lastW = int.MinValue;
                 _lastH = int.MinValue;
                 _lastActiveHwnd = IntPtr.Zero;
+                foreach (var info in _tabs.Values)
+                    info.LastVisibility = -1;
             }
 
             ScheduleReposition();
@@ -2784,7 +2787,11 @@ public partial class TabbedHostWindow : Window
                     if (info.ChildHwnd != IntPtr.Zero && !info.IsDetached)
                     {
                         PlatformHideChild(info.ChildHwnd);
-                        PostChildMessage(info.ChildHwnd, HotKeys.WM_SKUA_VISIBILITY, new IntPtr(4), IntPtr.Zero);
+                        if (!info.IsLoaded || info.LastVisibility != 4)
+                        {
+                            info.LastVisibility = 4;
+                            PostChildMessage(info.ChildHwnd, HotKeys.WM_SKUA_VISIBILITY, new IntPtr(4), IntPtr.Zero);
+                        }
                     }
                 }
                 return;
@@ -2999,7 +3006,11 @@ public partial class TabbedHostWindow : Window
             {
                 visibility = selectedTab != null && _tabs.TryGetValue(selectedTab, out TabInfo? activeInfo) && ReferenceEquals(info, activeInfo) ? 0 : 1;
             }
-            PostChildMessage(info.ChildHwnd, HotKeys.WM_SKUA_VISIBILITY, new IntPtr(visibility), IntPtr.Zero);
+            if (!info.IsLoaded || info.LastVisibility != visibility)
+            {
+                info.LastVisibility = visibility;
+                PostChildMessage(info.ChildHwnd, HotKeys.WM_SKUA_VISIBILITY, new IntPtr(visibility), IntPtr.Zero);
+            }
         }
     }
 

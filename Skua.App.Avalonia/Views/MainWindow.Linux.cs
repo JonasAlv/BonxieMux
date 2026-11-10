@@ -181,13 +181,15 @@ public partial class MainWindow : Window
         if (HotKeys.IsDetachedMode || _isInGridView || _gameOnly)
             return;
 
-        if (TopNavBorder is { } topNav)
+        if (TopNavBorder is { } topNav && !topNav.IsVisible)
         {
-            if (!topNav.IsVisible)
-                topNav.IsVisible = true;
+            topNav.IsVisible = true;
             topNav.InvalidateMeasure();
             topNav.InvalidateVisual();
         }
+
+        // Ensure an opaque repaint whenever returning visible on X11.
+        this.InvalidateVisual();
     }
 
     private void ReleaseAllPressedKeys()
@@ -428,8 +430,8 @@ public partial class MainWindow : Window
             }
             EvaluateAutoHeadless();
             UpdateQualityFocusState();
-            if (_tabVisibility is 0 or 2 && !_options.IsHeadlessNow())
-                FlashHost?.RefreshLayout();
+            if (_tabVisibility is 0 or 2 && !_options.IsHeadlessNow() && FlashHost is { IsVisible: true })
+                FlashHost.RefreshLayout();
             return IntPtr.Zero;
         }
         else if (uMsg == WM_SKUA_LOGIN)
