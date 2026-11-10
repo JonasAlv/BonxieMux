@@ -62,13 +62,10 @@ public partial class MainWindow : Window
     private const int WM_SKUA_DETACH = 0x0400 + 470;
     private const int WM_SKUA_DOCK = 0x0400 + 471;
 
-    private int _preThrottleFPS = -1;
     private bool _isInGridView = false;
     private int _tabVisibility;
     private bool _isWindowFocused = true;
     private bool _autoHeadlessHeld;
-    private volatile bool _throttleWanted;
-    private readonly System.Threading.SemaphoreSlim _throttleGate = new(1, 1);
 
     private void UpdateQualityFocusState()
     {
@@ -120,8 +117,7 @@ public partial class MainWindow : Window
 
         AddHandler(PointerPressedEvent, (s, e) =>
         {
-            if (_throttleWanted || _preThrottleFPS > 2)
-                ScheduleThrottleState(false);
+            UpdateBackgroundThrottleState(false);
             if (IsVisible)
             {
                 IntPtr handle = this.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
@@ -155,64 +151,42 @@ public partial class MainWindow : Window
         else
             Focus();
 
-        ScheduleThrottleState(false);
+        UpdateBackgroundThrottleState(false);
     }
 
-    private void ScheduleThrottleState(bool throttle)
+    private void UpdateBackgroundThrottleState(bool throttle)
     {
-        if (_isInGridView && throttle)
-            return;
-
-        _throttleWanted = throttle;
-        _ = Task.Run(ApplyThrottleStateAsync);
-    }
-
-    private async Task ApplyThrottleStateAsync()
-    {
-        await _throttleGate.WaitAsync().ConfigureAwait(false);
         try
         {
-            bool throttle = _throttleWanted && !_isInGridView;
             var options = Ioc.Default.GetRequiredService<IScriptOption>();
-            if (options.IsHeadlessNow())
-                return;
-
-            var bot = Ioc.Default.GetRequiredService<IScriptInterface>();
-            if (bot.Flash == null)
-                return;
-
-            if (throttle)
-            {
-                if (_preThrottleFPS <= 0)
-                {
-                    int currentFPS = bot.Flash.GetGameObject<int>("stage.frameRate");
-                    if (currentFPS > 2)
-                        _preThrottleFPS = currentFPS;
-                }
-
-                bot.Flash.SetGameObject("stage.frameRate", 2);
-                bot.Flash.SetGameObject("stage.quality", "LOW");
-                Skua.Core.Utils.MemoryUtils.TrimWorkingSet();
-            }
-            else
-            {
-                int currentFPS = bot.Flash.GetGameObject<int>("stage.frameRate");
-                int targetFPS = _preThrottleFPS > 2 ? _preThrottleFPS : (currentFPS > 2 ? currentFPS : options.SetFPS);
-                if (targetFPS <= 2)
-                    targetFPS = options.SetFPS > 0 ? options.SetFPS : 30;
-
-                _preThrottleFPS = -1;
-
-                if (targetFPS > 0)
-                    bot.Flash.SetGameObject("stage.frameRate", targetFPS);
-
-                options.ApplyStageQuality();
-            }
+            options.SetBackgroundThrottle(throttle && !_isInGridView);
         }
         catch { }
-        finally
+    }
+
+    private void ScheduleScaleModeShowAll()
+    {
+        _ = Task.Run(() =>
         {
-            _throttleGate.Release();
+            try
+            {
+                _flash.TryCall<object?>("setGameObject", TimeSpan.FromMilliseconds(1500), System.Threading.CancellationToken.None, out _, "stage.scaleMode", "showAll");
+            }
+            catch { }
+        });
+    }
+
+    private void EnsureTopNavVisible()
+    {
+        if (HotKeys.IsDetachedMode || _isInGridView || _gameOnly)
+            return;
+
+        if (TopNavBorder is { } topNav)
+        {
+            if (!topNav.IsVisible)
+                topNav.IsVisible = true;
+            topNav.InvalidateMeasure();
+            topNav.InvalidateVisual();
         }
     }
 
@@ -378,12 +352,13 @@ public partial class MainWindow : Window
                 try
                 {
                     FlashHost?.SetScaleMode(false);
-                    _flash.Call("setGameObject", "stage.scaleMode", "showAll");
                 }
                 catch { }
+                ScheduleScaleModeShowAll();
                 try
                 {
                     _options.Reset();
+                    _options.EnforceRenderState(flushGamePref: false);
                 }
                 catch { }
             });
@@ -406,35 +381,39 @@ public partial class MainWindow : Window
             bool isGrid = wParam.ToInt32() == 1;
             _isInGridView = isGrid;
 
-            Dispatcher.UIThread.Post(() =>
+            void ApplyGridViewState()
             {
-                var topNav = this.FindControl<global::Avalonia.Controls.Control>("TopNavBorder");
-                if (topNav != null)
+                if (!HotKeys.IsDetachedMode && !_gameOnly && TopNavBorder is { } topNav)
                     topNav.IsVisible = !isGrid;
-                
+
                 var titleBar = this.FindControl<global::Avalonia.Controls.Control>("TitleBar");
                 if (titleBar != null && !_isTitleBarPermanentlyHidden)
                     titleBar.IsVisible = !isGrid;
-                
+
                 this.MinWidth = 0;
                 this.MinHeight = 0;
 
-                if (FlashHost != null)
-                    FlashHost.SetScaleMode(false);
-
-                try
-                {
-                    _flash.Call("setGameObject", "stage.scaleMode", "showAll");
-                }
-                catch { }
+                FlashHost?.SetScaleMode(false);
+                ScheduleScaleModeShowAll();
 
                 if (isGrid)
                 {
                     // In Grid View, all windows are foreground visible windows. Restore full FPS and quality.
-                    ScheduleThrottleState(false);
+                    UpdateBackgroundThrottleState(false);
                     UpdateQualityFocusState();
                 }
-            });
+                else
+                {
+                    EnsureTopNavVisible();
+                    if (!_options.IsHeadlessNow())
+                        FlashHost?.RefreshLayout();
+                }
+            }
+
+            if (Dispatcher.UIThread.CheckAccess())
+                ApplyGridViewState();
+            else
+                Dispatcher.UIThread.Post(ApplyGridViewState);
             return IntPtr.Zero;
         }
         else if (uMsg == HotKeys.WM_SKUA_VISIBILITY)
@@ -442,10 +421,15 @@ public partial class MainWindow : Window
             _tabVisibility = wParam.ToInt32();
             if (_tabVisibility is not 0 and not 2)
                 CloseDropdowns();
+            if (_tabVisibility is 0 or 2)
+            {
+                EnsureTopNavVisible();
+                UpdateBackgroundThrottleState(false);
+            }
             EvaluateAutoHeadless();
             UpdateQualityFocusState();
-            if (_tabVisibility is 0 or 2)
-                ScheduleThrottleState(false);
+            if (_tabVisibility is 0 or 2 && !_options.IsHeadlessNow())
+                FlashHost?.RefreshLayout();
             return IntPtr.Zero;
         }
         else if (uMsg == WM_SKUA_LOGIN)
@@ -697,7 +681,7 @@ public partial class MainWindow : Window
         else if (uMsg == 0x0400 + 452) // WM_SKUA_THROTTLE
         {
             bool throttle = wParam.ToInt32() == 1;
-            ScheduleThrottleState(throttle);
+            UpdateBackgroundThrottleState(throttle);
             return IntPtr.Zero;
         }
         else if (uMsg == WM_SKUA_OPEN_BANK)
@@ -740,7 +724,7 @@ public partial class MainWindow : Window
             Skua.App.Avalonia.Controls.GameHost.ForwardFocus(focused);
             if (focused)
             {
-                ScheduleThrottleState(false);
+                UpdateBackgroundThrottleState(false);
             }
             UpdateQualityFocusState();
             return IntPtr.Zero;

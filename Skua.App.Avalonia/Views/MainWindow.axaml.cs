@@ -332,7 +332,15 @@ public partial class MainWindow : Window
         if (HeadlessOverlay != null) HeadlessOverlay.IsVisible = isHeadless;
         if (FlashHost != null)
         {
-            FlashHost.IsVisible = !isHeadless && _isFlashLoaded;
+            bool shouldShowFlash = !isHeadless && _isFlashLoaded;
+            bool wasVisible = FlashHost.IsVisible;
+            FlashHost.IsVisible = shouldShowFlash;
+            if (!wasVisible && shouldShowFlash)
+            {
+                TopNavBorder?.InvalidateMeasure();
+                TopNavBorder?.InvalidateVisual();
+                _options.EnforceRenderState(flushGamePref: false);
+            }
         }
     }
 

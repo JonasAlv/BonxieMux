@@ -19,6 +19,7 @@ public class GameHost : NativeControlHost
     private nint _holder;
     private DispatcherTimer? _fitTimer;
     private nint _player;
+    private bool _playerUnmapped;
 
     public static event Action? GameClicked
     {
@@ -91,6 +92,24 @@ public class GameHost : NativeControlHost
             FitPlayer();
     }
 
+    /// <summary>
+    /// Ensures the embedded X11 player is mapped and sized to match the laid-out host bounds when visible.
+    /// </summary>
+    public void RefreshLayout()
+    {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(RefreshLayout);
+            return;
+        }
+
+        if (!IsVisible || _display == 0 || _holder == 0)
+            return;
+
+        FitPlayer();
+        Dispatcher.UIThread.Post(FitPlayer, DispatcherPriority.Loaded);
+    }
+
     private void UpdatePlayerVisibility(bool visible)
     {
         if (_display == 0)
@@ -98,46 +117,30 @@ public class GameHost : NativeControlHost
 
         if (visible)
         {
-            if (_player != 0)
-            {
-                XMapWindow(_display, _player);
-                XFlush(_display);
-            }
             _fitTimer?.Start();
-            FitPlayer();
+            RefreshLayout();
         }
         else
         {
             _fitTimer?.Stop();
+            if (_player == 0 && _holder != 0)
+                _player = FindPlayerWindow();
             if (_player != 0)
             {
                 XUnmapWindow(_display, _player);
                 XFlush(_display);
+                _playerUnmapped = true;
             }
         }
     }
 
-    // Polls the sizes every 200 ms to keep the child window fitted to the holder.
-    private void FitPlayer()
+    private nint FindPlayerWindow()
     {
         if (_display == 0 || _holder == 0)
-            return;
+            return 0;
 
-        if (!IsVisible)
-        {
-            if (_player != 0)
-            {
-                XUnmapWindow(_display, _player);
-                XFlush(_display);
-            }
-            return;
-        }
-        if (XGetGeometry(_display, _holder, out _, out _, out _, out uint width, out uint height, out _, out _) == 0)
-            return;
-        if (width <= 2 || height <= 2)
-            return;
         if (XQueryTree(_display, _holder, out _, out _, out nint children, out uint count) == 0)
-            return;
+            return 0;
 
         nint player = 0;
         try
@@ -154,6 +157,31 @@ public class GameHost : NativeControlHost
                 XFree(children);
         }
 
+        return player;
+    }
+
+    // Polls the sizes every 200 ms to keep the child window fitted to the holder.
+    private void FitPlayer()
+    {
+        if (_display == 0 || _holder == 0)
+            return;
+
+        if (!IsVisible)
+        {
+            if (_player != 0 && !_playerUnmapped)
+            {
+                XUnmapWindow(_display, _player);
+                XFlush(_display);
+                _playerUnmapped = true;
+            }
+            return;
+        }
+        if (XGetGeometry(_display, _holder, out _, out _, out _, out uint width, out uint height, out _, out _) == 0)
+            return;
+        if (width <= 2 || height <= 2)
+            return;
+
+        nint player = FindPlayerWindow();
         if (player == 0)
         {
             _player = 0;
@@ -168,10 +196,14 @@ public class GameHost : NativeControlHost
 
         bool playerChanged = _player != player;
         _player = player;
-        if (playerChanged)
+        bool shouldMap = playerChanged || _playerUnmapped;
+        if (shouldMap)
+        {
             XMapWindow(_display, player);
+            _playerUnmapped = false;
+        }
 
-        if (playerChanged || playerWidth != width || playerHeight != height)
+        if (shouldMap || playerWidth != width || playerHeight != height)
         {
             XMoveResizeWindow(_display, player, 0, 0, width, height);
             XFlush(_display);

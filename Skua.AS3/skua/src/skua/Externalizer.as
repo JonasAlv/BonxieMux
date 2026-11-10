@@ -118,6 +118,7 @@ public class Externalizer {
         // Utilities
         this.addCallback("injectScript", Main.injectScript);
         this.addCallback("syncStageQuality", Main.syncStageQuality);
+        this.addCallback("syncRenderState", Main.syncRenderState);
 
         // Remote Registry
         this.addCallback("lnkCreate", RemoteRegistry.ext_create);

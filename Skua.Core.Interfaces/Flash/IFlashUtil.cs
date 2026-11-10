@@ -59,6 +59,22 @@ public interface IFlashUtil : IDisposable
     object? Call(string function, Type type, params object[] args);
 
     /// <summary>
+    /// Make a flash call for the specified <paramref name="function"/> with a custom timeout and cancellation token,
+    /// returning <see langword="false"/> if the call timed out, was cancelled, or failed before receiving a reply.
+    /// </summary>
+    bool TryCall<T>(string function, TimeSpan timeout, CancellationToken cancellationToken, out T? result, params object[] args)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            result = default;
+            return false;
+        }
+
+        result = Call<T>(function, args);
+        return true;
+    }
+
+    /// <summary>
     /// Converts a <see cref="XElement"/> to <see cref="object"/>.
     /// </summary>
     /// <param name="el">Element to parse.</param>

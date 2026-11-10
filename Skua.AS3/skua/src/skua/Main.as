@@ -428,6 +428,41 @@ public class Main extends MovieClip {
         } catch (ex:Error) {}
     }
 
+    public static function syncRenderState(fps:Number, volume:Number, prefQuality:String, runtimeQuality:String, flushPref:Boolean):Boolean {
+        try {
+            if (instance.game == null || instance.game.stage == null) {
+                return false;
+            }
+
+            // Raise frame rate immediately when leaving headless/throttled mode so rendering resumes on the next tick.
+            if (fps > 2) {
+                instance.game.stage.frameRate = fps;
+            }
+
+            syncStageQuality(prefQuality, runtimeQuality, flushPref);
+
+            if (volume >= 0) {
+                try {
+                    var mixer:* = _getObjectA(instance.game, ["world", "rootClass", "mixer"]);
+                    if (mixer != null && mixer.soundTransform != null) {
+                        var st:* = mixer.soundTransform;
+                        st.volume = volume;
+                        try {
+                            mixer.soundTransform = st;
+                        } catch (assignEx:Error) {}
+                    }
+                } catch (volEx:Error) {}
+            }
+
+            if (fps > 0 && fps <= 2) {
+                instance.game.stage.frameRate = fps;
+            }
+
+            return true;
+        } catch (ex:Error) {}
+        return false;
+    }
+
     public static function getArrayObject(path:String, index:int):String {
         var obj:* = _getObjectS(instance.game, path);
         return JSON.stringify(obj[index]);

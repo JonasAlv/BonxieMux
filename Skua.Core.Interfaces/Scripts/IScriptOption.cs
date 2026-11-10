@@ -263,6 +263,11 @@ public interface IScriptOption : INotifyPropertyChanged
     void SetForegroundFocus(bool isForegroundFocused);
 
     /// <summary>
+    /// Sets whether this client is throttled because it is a background tab.
+    /// </summary>
+    void SetBackgroundThrottle(bool throttled);
+
+    /// <summary>
     /// Applies Flash stage quality and syncs in-game Visuals preference: LOW if headless or a background tab; configured StageQuality if foreground focused.
     /// </summary>
     void ApplyStageQuality(bool flushGamePref = false);

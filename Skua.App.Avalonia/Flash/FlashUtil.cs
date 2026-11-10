@@ -416,6 +416,18 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         return defaultValue is T typed ? typed : default!;
     }
 
+    public bool TryCall<T>(string function, TimeSpan timeout, CancellationToken cancellationToken, out T? result, params object[] args)
+    {
+        if (TryCallInternal(function, typeof(T), timeout, cancellationToken, throwOnTimeout: false, out object? raw, args))
+        {
+            result = raw is T value ? value : GetDefaultValue<T>();
+            return true;
+        }
+
+        result = GetDefaultValue<T>();
+        return false;
+    }
+
     public object Call(string function, Type type, params object[] args)
     {
         if (_lazyManager.Value.ShouldExit && Thread.CurrentThread.Name == "Script Thread")
@@ -423,34 +435,8 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
 
         try
         {
-            if (_bridge is not { } writer)
-                return default!;
-
-            int id = Interlocked.Increment(ref _nextId);
-            TaskCompletionSource<JObject> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-            _pending[id] = tcs;
-            try
-            {
-                string request = JsonConvert.SerializeObject(new { id, name = function, args = args.Select(ToJs) });
-                lock (_sendLock)
-                    writer.WriteLine(request);
-
-                if (!tcs.Task.Wait(CallTimeout))
-                    throw new TimeoutException($"No answer from the game player within {CallTimeout.TotalSeconds}s.");
-            }
-            finally
-            {
-                _pending.TryRemove(id, out _);
-            }
-
-            string? result = tcs.Task.Result["r"] switch
-            {
-                null or { Type: JTokenType.Null } => null,
-                JValue { Value: bool b } => b ? "true" : "false",
-                JValue v => Convert.ToString(v.Value, CultureInfo.InvariantCulture),
-                JToken t => t.ToString(Formatting.None)
-            };
-            return result is null ? default! : Convert.ChangeType(result, type, CultureInfo.InvariantCulture);
+            TryCallInternal(function, type, CallTimeout, CancellationToken.None, throwOnTimeout: true, out object? value, args);
+            return value!;
         }
         catch (Exception e)
         {
@@ -462,6 +448,73 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
                 _messenger.Send<FlashErrorMessage>(new(e, function, safeArgs));
             }
             return default!;
+        }
+    }
+
+    private bool TryCallInternal(
+        string function,
+        Type type,
+        TimeSpan timeout,
+        CancellationToken cancellationToken,
+        bool throwOnTimeout,
+        out object? value,
+        params object[] args)
+    {
+        value = default;
+        if (cancellationToken.IsCancellationRequested || _bridge is not { } writer)
+            return false;
+
+        int id = Interlocked.Increment(ref _nextId);
+        TaskCompletionSource<JObject> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        _pending[id] = tcs;
+        try
+        {
+            string request = JsonConvert.SerializeObject(new { id, name = function, args = args.Select(ToJs) });
+            lock (_sendLock)
+                writer.WriteLine(request);
+
+            bool completed;
+            try
+            {
+                completed = tcs.Task.Wait((int)Math.Max(1, timeout.TotalMilliseconds), cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                return false;
+            }
+
+            if (!completed)
+            {
+                if (throwOnTimeout)
+                    throw new TimeoutException($"No answer from the game player within {timeout.TotalSeconds}s.");
+                return false;
+            }
+        }
+        finally
+        {
+            _pending.TryRemove(id, out _);
+        }
+
+        JObject response = tcs.Task.Result;
+        if (!response.ContainsKey("id") && !response.ContainsKey("r"))
+            return false;
+
+        string? result = response["r"] switch
+        {
+            null or { Type: JTokenType.Null } => null,
+            JValue { Value: bool b } => b ? "true" : "false",
+            JValue v => Convert.ToString(v.Value, CultureInfo.InvariantCulture),
+            JToken t => t.ToString(Formatting.None)
+        };
+        try
+        {
+            value = result is null ? default : Convert.ChangeType(result, type, CultureInfo.InvariantCulture);
+            return true;
+        }
+        catch when (!throwOnTimeout)
+        {
+            value = default;
+            return false;
         }
     }
 

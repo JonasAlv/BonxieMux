@@ -33,6 +33,11 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         _pickupACDropsAndSendToBank = settingsService?.Get<bool>("BonxieMux.PickupACDropsAndSendToBank") ?? false;
         _rejectNonACDrops = settingsService?.Get<bool>("BonxieMux.RejectNonACDrops") ?? false;
         OptionDictionary = GenerateDictionary().ToImmutableDictionary();
+        PropertyChanged += (_, e) =>
+        {
+            if (!_isInitializing && e.PropertyName == nameof(SetFPS) && (IsHeadlessNow() || _isBackgroundThrottled))
+                RequestRenderStateSync(flushGamePref: false);
+        };
         StrongReferenceMessenger.Default.Register<ScriptOption, ScriptStartedMessage, int>(this, (int)MessageChannels.ScriptStatus, ScriptStarted);
         StrongReferenceMessenger.Default.Register<ScriptOption, ScriptStoppedMessage, int>(this, (int)MessageChannels.ScriptStatus, ScriptStopped);
         StrongReferenceMessenger.Default.Register<ScriptOption, MapChangedMessage, int>(this, (int)MessageChannels.GameEvents, MapChanged);
@@ -113,7 +118,12 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
                         if (flash == null)
                             break;
 
-                        bool loading = !flash.IsNull("world") && flash.GetGameObject<bool>("world.mapLoadInProgress");
+                        if (!flash.TryCall<bool>("isNull", TimeSpan.FromMilliseconds(1000), token, out bool isWorldNull, "world"))
+                            continue;
+
+                        bool loading = !isWorldNull
+                            && flash.TryCall<bool>("getGameObject", TimeSpan.FromMilliseconds(1000), token, out bool mapLoading, "world.mapLoadInProgress")
+                            && mapLoading;
                         if (!loading)
                         {
                             await Task.Delay(150, token);
@@ -451,23 +461,52 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
     private string _stageQuality = "MEDIUM";
     private bool _isForegroundFocused = true;
-    private readonly SemaphoreSlim _renderStateGate = new(1, 1);
+    private bool _isBackgroundThrottled;
+    private bool _mutedByHeadless;
+    private bool _wasReducedState;
+    private bool _renderHasPendingRequest;
+    private bool _renderForceRuntimeQuality;
+    private bool _renderFlushGamePrefPending;
+    private long _renderDesiredVersion;
+    private bool _renderWorkerRunning;
+    private CancellationTokenSource? _renderInFlightCts;
+    private readonly object _renderLock = new();
 
     /// <summary>
     /// Gets whether this client is currently the focused foreground tab and eligible for full stage quality rendering.
     /// </summary>
-    public bool CanRenderFullQuality => !IsHeadlessNow() && _isForegroundFocused;
+    public bool CanRenderFullQuality => !IsHeadlessNow() && !_isBackgroundThrottled && _isForegroundFocused;
 
     /// <summary>
     /// Sets whether this window/tab is currently the focused foreground tab.
     /// </summary>
     public void SetForegroundFocus(bool isForegroundFocused)
     {
-        if (_isForegroundFocused == isForegroundFocused)
-            return;
+        lock (_renderLock)
+        {
+            if (_isForegroundFocused == isForegroundFocused)
+                return;
 
-        _isForegroundFocused = isForegroundFocused;
-        ScheduleRenderStateWork(() => ApplyStageQualityInternal(flushGamePref: false, triggeredFromGameUi: false));
+            _isForegroundFocused = isForegroundFocused;
+        }
+
+        RequestRenderStateSync(flushGamePref: false);
+    }
+
+    /// <summary>
+    /// Sets whether this client is throttled because it is a background tab.
+    /// </summary>
+    public void SetBackgroundThrottle(bool throttled)
+    {
+        lock (_renderLock)
+        {
+            if (_isBackgroundThrottled == throttled)
+                return;
+
+            _isBackgroundThrottled = throttled;
+        }
+
+        RequestRenderStateSync(flushGamePref: false);
     }
 
     /// <summary>
@@ -475,55 +514,13 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     /// LOW if headless or a background tab; configured StageQuality if foreground focused.
     /// </summary>
     public void ApplyStageQuality(bool flushGamePref = false) =>
-        ApplyStageQualityInternal(flushGamePref, triggeredFromGameUi: false);
+        RequestRenderStateSync(flushGamePref: flushGamePref);
 
     /// <summary>
-    /// Re-enforces headless render limits (when headless) and Flash stage quality.
+    /// Re-enforces headless/throttled render limits and Flash stage quality.
     /// </summary>
-    public void EnforceRenderState(bool flushGamePref = false)
-    {
-        try
-        {
-            var flash = _lazyFlash.Value;
-            if (flash == null || flash.IsNull("stage"))
-                return;
-
-            if (IsHeadlessNow())
-            {
-                try { flash.Call("setGameObject", "stage.frameRate", 2); } catch { }
-                try { flash.Call("setGameObject", "world.rootClass.mixer.soundTransform.volume", 0); } catch { }
-            }
-            else if (flushGamePref && SetFPS > 2 && CanRenderFullQuality)
-            {
-                try { flash.Call("setGameObject", "stage.frameRate", SetFPS); } catch { }
-            }
-
-            ApplyStageQualityInternal(flushGamePref, triggeredFromGameUi: false);
-        }
-        catch { }
-    }
-
-    private void ApplyStageQualityInternal(bool flushGamePref, bool triggeredFromGameUi)
-    {
-        try
-        {
-            var flash = _lazyFlash.Value;
-            if (flash == null || flash.IsNull("stage"))
-                return;
-
-            bool isAuto = string.Equals(StageQuality, "AUTO", StringComparison.OrdinalIgnoreCase);
-            string prefQuality = !CanRenderFullQuality && isAuto ? "LOW" : StageQuality;
-            string runtimeQuality = triggeredFromGameUi
-                ? string.Empty
-                : (CanRenderFullQuality ? StageQuality : "LOW");
-            bool shouldFlush = !triggeredFromGameUi
-                && flushGamePref
-                && string.Equals(prefQuality, StageQuality, StringComparison.OrdinalIgnoreCase);
-
-            flash.Call("syncStageQuality", prefQuality, runtimeQuality, shouldFlush);
-        }
-        catch { }
-    }
+    public void EnforceRenderState(bool flushGamePref = false) =>
+        RequestRenderStateSync(flushGamePref: flushGamePref);
 
     /// <summary>
     /// Gets or sets the Flash rendering stage quality (LOW, MEDIUM, HIGH, AUTO).
@@ -540,7 +537,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             SetProperty(ref _stageQuality, val);
             PersistGlobalStageQuality(val);
 
-            ApplyStageQualityInternal(flushGamePref: true, triggeredFromGameUi: false);
+            RequestRenderStateSync(flushGamePref: true);
 
             BroadcastSharedCommandToOtherClients("stageQuality", nameof(StageQuality), val);
         }
@@ -554,14 +551,14 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         string val = NormalizeStageQuality(quality);
         if (_stageQuality == val)
         {
-            ApplyStageQualityInternal(flushGamePref: false, triggeredFromGameUi: true);
+            RequestRenderStateSync(flushGamePref: false, triggeredFromGameUi: true);
             return;
         }
 
         SetProperty(ref _stageQuality, val);
         PersistGlobalStageQuality(val);
 
-        ApplyStageQualityInternal(flushGamePref: false, triggeredFromGameUi: true);
+        RequestRenderStateSync(flushGamePref: false, triggeredFromGameUi: true);
 
         BroadcastSharedCommandToOtherClients("stageQuality", nameof(StageQuality), val);
     }
@@ -577,7 +574,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
         SetProperty(ref _stageQuality, val);
         PersistGlobalStageQuality(val);
-        ApplyStageQualityInternal(flushGamePref: true, triggeredFromGameUi: false);
+        RequestRenderStateSync(flushGamePref: true);
     }
 
     private static string NormalizeStageQuality(string? value)
@@ -688,59 +685,208 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     public const string AutoHeadlessActiveChanged = "AutoHeadlessActive";
     private bool _autoHeadlessActive;
     public bool IsHeadlessNow() => _headlessMode || _autoHeadlessActive;
+
     public void SetAutoHeadless(bool active)
     {
-        if (_autoHeadlessActive == active) return;
-        bool before = IsHeadlessNow();
-        _autoHeadlessActive = active;
-        bool nowHeadless = IsHeadlessNow();
+        bool before;
+        bool nowHeadless;
+        lock (_renderLock)
+        {
+            if (_autoHeadlessActive == active)
+                return;
+
+            before = IsHeadlessNow();
+            _autoHeadlessActive = active;
+            nowHeadless = IsHeadlessNow();
+        }
+
         // Notify UI before dispatching Flash IPC so XMapWindow(_player) and Avalonia repaints never wait on a blocked player.
         OnPropertyChanged(AutoHeadlessActiveChanged);
         if (before != nowHeadless)
-            ScheduleRenderStateWork(ApplyHeadlessCurrentState);
+            RequestRenderStateSync(flushGamePref: false);
     }
 
-    partial void OnHeadlessModeChanged(bool value) => ScheduleRenderStateWork(ApplyHeadlessCurrentState);
+    partial void OnHeadlessModeChanged(bool value) => RequestRenderStateSync(flushGamePref: false);
 
-    private void ScheduleRenderStateWork(Action work)
+    private void RequestRenderStateSync(bool flushGamePref, bool triggeredFromGameUi = false)
     {
-        _ = Task.Run(async () =>
+        bool startWorker = false;
+        CancellationTokenSource? toCancel = null;
+
+        lock (_renderLock)
         {
-            await _renderStateGate.WaitAsync().ConfigureAwait(false);
+            if (flushGamePref)
+                _renderFlushGamePrefPending = true;
+
+            if (!_renderHasPendingRequest || !triggeredFromGameUi)
+                _renderForceRuntimeQuality = !triggeredFromGameUi;
+            _renderHasPendingRequest = true;
+
+            bool nowHeadless = IsHeadlessNow();
+            if (nowHeadless)
+                _mutedByHeadless = true;
+
+            bool nowReduced = nowHeadless || _isBackgroundThrottled;
+            bool leavingReduced = _wasReducedState && !nowReduced;
+            _wasReducedState = nowReduced;
+
+            _renderDesiredVersion++;
+
+            // Cancel any stalled in-flight IPC wait or retry delay whenever render state flips
+            // (especially waking from headless/throttled) so the latest state runs immediately.
+            if (leavingReduced || _renderInFlightCts != null)
+                toCancel = _renderInFlightCts;
+
+            if (!_renderWorkerRunning)
+            {
+                _renderWorkerRunning = true;
+                startWorker = true;
+            }
+        }
+
+        try { toCancel?.Cancel(); } catch (ObjectDisposedException) { }
+
+        if (startWorker)
+            _ = Task.Run(RunRenderStateSyncLoopAsync);
+    }
+
+    private async Task RunRenderStateSyncLoopAsync()
+    {
+        long lastRetryVersion = -1;
+        int retriesForVersion = 0;
+        bool memoryTrimmed = false;
+
+        while (true)
+        {
+            long version;
+            bool isHeadless;
+            bool isReduced;
+            bool allowFullQuality;
+            int targetFps;
+            double targetVolume;
+            string prefQuality;
+            string runtimeQuality;
+            bool shouldFlush;
+            CancellationTokenSource cts = new();
+
+            lock (_renderLock)
+            {
+                version = _renderDesiredVersion;
+                isHeadless = IsHeadlessNow();
+                isReduced = isHeadless || _isBackgroundThrottled;
+                allowFullQuality = !isReduced && _isForegroundFocused;
+
+                targetFps = isReduced ? 2 : (SetFPS > 2 ? SetFPS : 30);
+                targetVolume = isHeadless ? 0.0 : (_mutedByHeadless ? 1.0 : -1.0);
+
+                bool isAuto = string.Equals(StageQuality, "AUTO", StringComparison.OrdinalIgnoreCase);
+                prefQuality = !allowFullQuality && isAuto ? "LOW" : StageQuality;
+                bool fromGameUi = _renderHasPendingRequest && !_renderForceRuntimeQuality;
+                runtimeQuality = fromGameUi
+                    ? string.Empty
+                    : (allowFullQuality ? StageQuality : "LOW");
+                shouldFlush = !fromGameUi
+                    && _renderFlushGamePrefPending
+                    && string.Equals(prefQuality, StageQuality, StringComparison.OrdinalIgnoreCase);
+
+                _renderHasPendingRequest = false;
+                _renderForceRuntimeQuality = false;
+                _renderInFlightCts = cts;
+            }
+
+            if (version != lastRetryVersion)
+            {
+                lastRetryVersion = version;
+                retriesForVersion = 0;
+            }
+
+            bool applied = false;
             try
             {
-                work();
+                var flash = _lazyFlash.Value;
+                if (flash != null)
+                {
+                    TimeSpan timeout = TimeSpan.FromMilliseconds(isReduced ? 1200 : 1500);
+                    applied = flash.TryCall<bool>(
+                        "syncRenderState",
+                        timeout,
+                        cts.Token,
+                        out bool ok,
+                        targetFps, targetVolume, prefQuality, runtimeQuality, shouldFlush) && ok;
+                }
             }
             catch { }
-            finally
+
+            if (isHeadless && !memoryTrimmed)
             {
-                _renderStateGate.Release();
+                memoryTrimmed = true;
+                try { Skua.Core.Utils.MemoryUtils.TrimWorkingSet(); } catch { }
             }
-        });
-    }
+            else if (!isHeadless)
+            {
+                memoryTrimmed = false;
+            }
 
-    private void ApplyHeadlessCurrentState()
-    {
-        bool value = IsHeadlessNow();
-        var flash = _lazyFlash.Value;
-        if (flash == null)
-            return;
+            bool shouldRetry = false;
+            int retryDelayMs = 0;
 
-        try { flash.Call("headless", value); } catch { }
+            lock (_renderLock)
+            {
+                if (applied)
+                {
+                    if (shouldFlush)
+                        _renderFlushGamePrefPending = false;
+                    if (!isHeadless && targetVolume >= 0)
+                        _mutedByHeadless = false;
+                }
 
-        if (value)
-        {
-            try { flash.Call("setGameObject", "stage.frameRate", 2); } catch { }
-            try { flash.Call("setGameObject", "world.rootClass.mixer.soundTransform.volume", 0); } catch { }
-            ApplyStageQualityInternal(flushGamePref: false, triggeredFromGameUi: false);
-            Skua.Core.Utils.MemoryUtils.TrimWorkingSet();
-        }
-        else
-        {
-            int targetFps = SetFPS > 2 ? SetFPS : 30;
-            try { flash.Call("setGameObject", "stage.frameRate", targetFps); } catch { }
-            ApplyStageQualityInternal(flushGamePref: false, triggeredFromGameUi: false);
-            try { flash.Call("setGameObject", "world.rootClass.mixer.soundTransform.volume", 1); } catch { }
+                bool superseded = _renderDesiredVersion != version;
+                if (!superseded)
+                {
+                    if (!applied && !isReduced && retriesForVersion < 5)
+                    {
+                        retriesForVersion++;
+                        retryDelayMs = retriesForVersion switch
+                        {
+                            1 => 120,
+                            2 => 200,
+                            3 => 300,
+                            4 => 450,
+                            _ => 600
+                        };
+                        shouldRetry = true;
+                    }
+                    else
+                    {
+                        if (ReferenceEquals(_renderInFlightCts, cts))
+                            _renderInFlightCts = null;
+                        _renderWorkerRunning = false;
+                        cts.Dispose();
+                        return;
+                    }
+                }
+                else
+                {
+                    if (ReferenceEquals(_renderInFlightCts, cts))
+                        _renderInFlightCts = null;
+                }
+            }
+
+            if (shouldRetry)
+            {
+                try
+                {
+                    await Task.Delay(retryDelayMs, cts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) { }
+            }
+
+            lock (_renderLock)
+            {
+                if (ReferenceEquals(_renderInFlightCts, cts))
+                    _renderInFlightCts = null;
+            }
+            cts.Dispose();
         }
     }
 
