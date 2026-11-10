@@ -67,6 +67,7 @@ public class Modules {
         registerModule(new DisableCollisions());
         registerModule(new DisableFX());
         registerModule(new StreamerModeModule());
+        registerModule(new DamageNumbers());
     }
 }
 }
