@@ -286,6 +286,14 @@ public interface IScriptOption : INotifyPropertyChanged
     /// Whether to show the in-game FPS counter
     /// </summary>
     bool ShowFPS { get; set; }
+    /// <summary>
+    /// Enables modern floating combat damage, heal, and reward numbers.
+    /// </summary>
+    bool DamageNumbers { get; set; }
+    /// <summary>
+    /// Abbreviates large floating combat and reward numbers using compact K/M suffixes.
+    /// </summary>
+    bool CompactNumbers { get; set; }
 
     /// <summary>
     /// Determines whether cutscenes should be skipped.

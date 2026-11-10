@@ -22,14 +22,13 @@ public class DamageNumbers extends Module {
     private static var _instance:DamageNumbers = null;
 
     // -------------------------------------------------------------------------
-    // Configuration (mirrors DamageNumbers.hx defaults; runtime-adjustable)
+    // Configuration
     // -------------------------------------------------------------------------
-    public static var filterMode:int = 0; // 0 = Self & Target, 1 = Self Only, 2 = Target Only, 3 = All
     public static var compactFormat:Boolean = false;
-    public static var showIncoming:Boolean = true;
-    public static var showDots:Boolean = true;
-    public static var showHeals:Boolean = true;
-    public static var modernRewardsEnabled:Boolean = false;
+
+    public static function setCompactFormat(enable:*):void {
+        compactFormat = (enable === true || enable === 1 || String(enable).toLowerCase() == "true");
+    }
 
     // Object pool
     private static const POOL_SIZE:int = 80;
@@ -61,6 +60,11 @@ public class DamageNumbers extends Module {
         super("DamageNumbers");
         _instance = this;
         enabled = true;
+        try {
+            if (Main.instance != null && Main.instance.external != null) {
+                Main.instance.external.addCallback("setCompactNumbers", setCompactFormat);
+            }
+        } catch (err:Error) {}
     }
 
     override public function onToggle(game:*):void {
@@ -178,7 +182,7 @@ public class DamageNumbers extends Module {
     }
 
     private static function onDisplayObjectAdded(e:Event):void {
-        if (!modernRewardsEnabled || _instance == null || !_instance.enabled) {
+        if (_instance == null || !_instance.enabled) {
             return;
         }
         var obj:* = e.target;
@@ -209,9 +213,8 @@ public class DamageNumbers extends Module {
 
         var modEnabled:Boolean = (_instance != null && _instance.enabled);
         var active:Boolean = isInGame(game);
-        var anyActive:Boolean = (modEnabled || modernRewardsEnabled);
 
-        if (active && anyActive) {
+        if (active && modEnabled) {
             ensureInitialized(game);
         }
 
@@ -220,7 +223,7 @@ public class DamageNumbers extends Module {
         var stageObj:Stage = _container.stage;
         var throttled:Boolean = (stageObj != null && stageObj.frameRate <= 4);
         var worldVisible:Boolean = (game != null && game.world != null && game.world.visible !== false);
-        var showLayer:Boolean = (active && anyActive && worldVisible && !throttled);
+        var showLayer:Boolean = (active && modEnabled && worldVisible && !throttled);
 
         _container.visible = showLayer;
         if (!showLayer) {
@@ -306,8 +309,7 @@ public class DamageNumbers extends Module {
         if (!isInGame(game)) {
             return;
         }
-        var modEnabled:Boolean = (_instance != null && _instance.enabled);
-        if (!modEnabled && !modernRewardsEnabled) {
+        if (_instance == null || !_instance.enabled) {
             return;
         }
         ensureInitialized(game);
@@ -342,10 +344,6 @@ public class DamageNumbers extends Module {
                 return;
             }
 
-            if (_instance == null || !_instance.enabled) {
-                return;
-            }
-
             if (cmd == "sar") {
                 processSingleResult(game, d);
             } else if (cmd == "sars") {
@@ -375,7 +373,7 @@ public class DamageNumbers extends Module {
     }
 
     private static function processGoldExpResult(game:*, d:*):void {
-        if (d == null || !modernRewardsEnabled || _container == null) {
+        if (d == null || _container == null) {
             return;
         }
         var exp:int = (d.intExp != null) ? int(d.intExp) : 0;
@@ -555,8 +553,6 @@ public class DamageNumbers extends Module {
     private static function spawnCombatNumber(game:*, cInf:String, tInf:String, hp:int, type:String, isDot:Boolean, isHot:Boolean = false):void {
         if (tInf == "" || _container == null) return;
 
-        if (isDot && !showDots) return;
-
         var myUid:* = (game != null && game.sfc != null) ? game.sfc.myUserId : null;
         var myTag:String = (myUid != null) ? ("p:" + myUid) : "";
         var isTargetingMe:Boolean = (tInf != "" && tInf == myTag);
@@ -574,30 +570,12 @@ public class DamageNumbers extends Module {
         } catch (err:Error) {}
 
         var isMyAttack:Boolean = (cInf != "" && cInf == myTag) || (cInf == "" && isCurrentTarget && !isTargetingMe);
-
-        var passesFilter:Boolean = false;
-        switch (filterMode) {
-            case 0:
-                passesFilter = isMyAttack || isCurrentTarget || (isTargetingMe && showIncoming);
-                break;
-            case 1:
-                passesFilter = isMyAttack || (isTargetingMe && showIncoming);
-                break;
-            case 2:
-                passesFilter = isCurrentTarget;
-                break;
-            case 3:
-                passesFilter = true;
-                break;
-        }
-        if (!passesFilter) return;
+        if (!isMyAttack && !isCurrentTarget && !isTargetingMe) return;
 
         var isHealAction:Boolean = (hp < 0 || isHot || type == "heal");
         var isDecayed:Boolean = isHealAction && hasDecayAura(game, tInf);
         var isInvertedHeal:Boolean = isHealAction && (hp > 0 || isDecayed);
         var isNormalHeal:Boolean = isHealAction && !isInvertedHeal;
-
-        if (isNormalHeal && !showHeals) return;
 
         var targetMC:* = getTargetMC(game, tInf);
         if (targetMC == null || targetMC.stage == null) return;

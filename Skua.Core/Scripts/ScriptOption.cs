@@ -784,6 +784,12 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     [ModuleBinding("HidePlayers")]
     private bool _hidePlayers;
 
+    [ModuleBinding("DamageNumbers")]
+    private bool _damageNumbers = true;
+
+    [CallBinding("setCompactNumbers", Get = false, HasSetter = true)]
+    private bool _compactNumbers;
+
     [ObservableProperty]
     private bool _autoCrowdMode = true;
 
