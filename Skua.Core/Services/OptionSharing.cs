@@ -127,6 +127,9 @@ public static class OptionSharing
             case "acceptACDrops" when bool.TryParse(command.Value, out bool acceptAc):
                 options.ApplySharedAcceptACDrops(acceptAc);
                 break;
+            case "antiLag" when bool.TryParse(command.Value, out bool antiLagVal):
+                options.ApplySharedAntiLag(antiLagVal);
+                break;
             case "set" when command.Name is { } name && command.Value is { } text:
                 PropertyInfo? p = SharedProperties(options).FirstOrDefault(x => x.Name == name);
                 if (p is null)

@@ -192,6 +192,24 @@ public interface IScriptOption : INotifyPropertyChanged
     bool OptimizePlayers { get; set; }
 
     /// <summary>
+    /// Manual Anti-Lag switch: applies the full Anti-Lag bundle across all tabs until turned off.
+    /// </summary>
+    bool AntiLag { get; set; }
+    void ApplySharedAntiLag(bool value);
+
+    /// <summary>
+    /// Master switch for automatic Anti-Lag when tabs are not showing.
+    /// </summary>
+    bool AutoAntiLag { get; set; }
+
+    /// <summary>
+    /// When enabled (default), selecting/showing a tab takes it out of automatic Anti-Lag.
+    /// When disabled, a tab stays in automatic Anti-Lag even when focused until AutoAntiLag or AntiLag is turned off.
+    /// </summary>
+    bool AutoAntiLagLiftOnFocus { get; set; }
+    void SetTabShown(bool shown);
+
+    /// <summary>
     /// When enabled, automatically turns in-game Crowd Mode on when a script runs, and restores it when the script stops.
     /// </summary>
     bool AutoCrowdMode { get; set; }

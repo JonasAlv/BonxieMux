@@ -764,7 +764,7 @@ public class Follower
     private readonly record struct AntiLagSnapshot(
         bool LagKiller, bool FreezeMonsterPosition, bool DisableMonsterAnimation,
         bool DisableDamageStrobe, bool DisableSelfAnimation, bool DisableWeaponAnimation,
-        bool DisableSkillAnimation, bool DisableAuraAnimations, bool MonstersHidden);
+        bool DisableSkillAnimation, bool DisableAuraAnimations, bool MonstersHidden, string CrowdMode);
 
     private void ApplyAntiLag()
     {
@@ -872,7 +872,8 @@ public class Follower
                 _bot.Lite.DisableWeaponAnimation,
                 _bot.Lite.DisableSkillAnimation,
                 _bot.Lite.DisableAuraAnimations,
-                _bot.Flash.GetGameObject<bool>("ui.monsterIcon.redX.visible"));
+                _bot.Flash.GetGameObject<bool>("ui.monsterIcon.redX.visible"),
+                _bot.Flash.GetGameObject<string>("litePreference.data.sCrowd") ?? "off");
         }
         catch (Exception ex)
         {
@@ -903,6 +904,11 @@ public class Follower
             _bot.Lite.DisableSkillAnimation = s.DisableSkillAnimation;
             _bot.Lite.DisableAuraAnimations = s.DisableAuraAnimations;
 
+            string restoreCrowd = !string.IsNullOrEmpty(s.CrowdMode) ? s.CrowdMode : "off";
+            _bot.Flash.SetGameObject("litePreference.data.sCrowd", restoreCrowd);
+            _bot.Flash.SetGameObject("world.rootClass.crowdOn", restoreCrowd == "on");
+            _bot.Flash.CallGameFunction("world.rootClass.applyPlayerCache");
+
             // Restore monster visibility to what it was (toggle only if it differs now).
             bool hidden = _bot.Flash.GetGameObject<bool>("ui.monsterIcon.redX.visible");
             if (hidden != s.MonstersHidden)
@@ -928,6 +934,10 @@ public class Follower
             _bot.Lite.DisableWeaponAnimation = on;
             _bot.Lite.DisableSkillAnimation = on;
             _bot.Lite.DisableAuraAnimations = on;
+
+            _bot.Flash.SetGameObject("litePreference.data.sCrowd", on ? "on" : "off");
+            _bot.Flash.SetGameObject("world.rootClass.crowdOn", on);
+            _bot.Flash.CallGameFunction("world.rootClass.applyPlayerCache");
 
             // Hide/show monster visuals. world.toggleMonsters is a TOGGLE, so only flip it
             // when the current state doesn't match; redX.visible is true when hidden.

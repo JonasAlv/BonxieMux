@@ -42,44 +42,337 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         StrongReferenceMessenger.Default.Register<ScriptOption, ScriptStoppedMessage, int>(this, (int)MessageChannels.ScriptStatus, ScriptStopped);
         StrongReferenceMessenger.Default.Register<ScriptOption, MapChangedMessage, int>(this, (int)MessageChannels.GameEvents, MapChanged);
         _isInitializing = false;
+        EvaluateAntiLagState();
         _rescueSettings = WatchDog.Shared.SharedRescueSettings.Instance;
         _rescueSettings.Changed += NotifyRescueSettingsChanged;
     }
 
-    private void ScriptStarted(ScriptOption recipient, ScriptStartedMessage message)
-    {
-        recipient._scriptRunning = true;
-        recipient._userLagKiller = recipient._lagKiller;
+    private readonly record struct LiteAnimationSnapshot(
+        bool LagKiller,
+        bool FreezeMonsterPosition,
+        bool DisableMonsterAnimation,
+        bool DisableDamageStrobe,
+        bool DisableSelfAnimation,
+        bool DisableWeaponAnimation,
+        bool DisableSkillAnimation,
+        bool DisableAuraAnimations,
+        bool MonstersHidden,
+        string CrowdMode);
 
-        if (recipient.AutoCrowdMode)
+    private readonly object _antiLagSyncLock = new();
+    private LiteAnimationSnapshot? _priorLiteAnimations;
+    private bool _scriptAntiLagActive;
+    private bool _tabIsShown = true;
+    private bool _autoAntiLagHeld;
+    private bool _manualOrAutoAntiLagDesired;
+    private bool _anyAntiLagApplied;
+    private bool _suppressUserLagKillerSave;
+    private long _antiLagEpoch;
+
+    private bool _antiLag;
+    public bool AntiLag
+    {
+        get => _antiLag;
+        set
         {
+            if (!SetProperty(ref _antiLag, value, true))
+                return;
+
+            if (!value)
+                _autoAntiLagHeld = false;
+
+            if (!_isInitializing)
+            {
+                EvaluateAntiLagState();
+                BroadcastSharedCommandToOtherClients("antiLag", nameof(AntiLag), value ? "True" : "False");
+            }
+        }
+    }
+
+    public void ApplySharedAntiLag(bool value)
+    {
+        if (_antiLag == value)
+            return;
+
+        SetProperty(ref _antiLag, value, true);
+        if (!value)
+            _autoAntiLagHeld = false;
+
+        EvaluateAntiLagState();
+    }
+
+    [ObservableProperty]
+    private bool _autoAntiLag = false;
+
+    [ObservableProperty]
+    private bool _autoAntiLagLiftOnFocus = true;
+
+    partial void OnAutoAntiLagChanged(bool value)
+    {
+        if (!value)
+            _autoAntiLagHeld = false;
+        EvaluateAntiLagState();
+    }
+
+    partial void OnAutoAntiLagLiftOnFocusChanged(bool value) => EvaluateAntiLagState();
+
+    public void SetTabShown(bool shown)
+    {
+        if (_tabIsShown == shown)
+            return;
+
+        _tabIsShown = shown;
+        EvaluateAntiLagState();
+    }
+
+    private bool IsManualOrAutoAntiLagWanted()
+    {
+        bool wantAuto = false;
+        if (_autoAntiLag)
+        {
+            if (!_tabIsShown)
+            {
+                wantAuto = true;
+                _autoAntiLagHeld = true;
+            }
+            else if (_autoAntiLagHeld && !_autoAntiLagLiftOnFocus)
+            {
+                wantAuto = true;
+            }
+            else
+            {
+                _autoAntiLagHeld = false;
+            }
+        }
+        else
+        {
+            _autoAntiLagHeld = false;
+        }
+
+        _manualOrAutoAntiLagDesired = _antiLag || wantAuto;
+        return _manualOrAutoAntiLagDesired;
+    }
+
+    private void EvaluateAntiLagState()
+    {
+        if (_isInitializing)
+            return;
+
+        bool wantManualOrAuto;
+        bool wantEffective;
+        long epoch;
+
+        lock (_antiLagSyncLock)
+        {
+            wantManualOrAuto = IsManualOrAutoAntiLagWanted();
+            wantEffective = wantManualOrAuto || (_scriptRunning && _scriptAntiLagActive);
+            if (wantEffective == _anyAntiLagApplied)
+                return;
+
+            _anyAntiLagApplied = wantEffective;
+            epoch = ++_antiLagEpoch;
+        }
+
+        if (wantEffective)
+        {
+            if (_priorLiteAnimations == null)
+                CaptureLiteAnimationState();
+
+            _ = Task.Run(() => ApplyFullAntiLagBundleWithGuard(epoch, reassertAfterStop: false));
+        }
+        else
+        {
+            _ = Task.Run(() => RestoreLiteAnimationState(forceRestoreCrowd: true, clearSnapshot: !_scriptRunning));
+        }
+    }
+
+    private void ApplyFullAntiLagBundleWithGuard(long expectedEpoch, bool reassertAfterStop)
+    {
+        ApplyFullAntiLagBundle();
+
+        if (!reassertAfterStop)
+            return;
+
+        // CoreBots.StopBotAsync runs a background Task.Run on stop that calls world.toggleMonsters
+        // without awaiting. Re-assert our Anti-Lag state after a short settle delay so CoreBots'
+        // stop task never leaves monsters visible while manual Anti-Lag or Auto Anti-Lag is active.
+        _ = Task.Run(async () =>
+        {
+            int[] delaysMs = [250, 600];
+            foreach (int delay in delaysMs)
+            {
+                await Task.Delay(delay).ConfigureAwait(false);
+                lock (_antiLagSyncLock)
+                {
+                    if (_antiLagEpoch != expectedEpoch || !_anyAntiLagApplied)
+                        return;
+                }
+                ApplyFullAntiLagBundle();
+            }
+        });
+    }
+
+    private void ApplyFullAntiLagBundle()
+    {
+        try
+        {
+            var flash = _lazyFlash.Value;
+            if (flash == null || !flash.IsWorldLoaded)
+                return;
+
+            _suppressUserLagKillerSave = true;
             try
             {
-                var flash = recipient._lazyFlash.Value;
-                if (flash != null)
-                {
-                    string current = flash.GetGameObject<string>("litePreference.data.sCrowd") ?? "off";
-                    recipient._priorCrowdMode = current;
-                    recipient.ApplyCrowdMode(true);
-                }
+                LagKiller = true;
             }
-            catch { }
+            finally
+            {
+                _suppressUserLagKillerSave = false;
+            }
+
+            flash.SetGameObject("litePreference.data.bFreezeMons", true);
+            flash.SetGameObject("litePreference.data.bDisMonAnim", true);
+            flash.SetGameObject("litePreference.data.bDisDmgStrobe", true);
+            flash.SetGameObject("litePreference.data.bDisSelfMAnim", true);
+            flash.SetGameObject("litePreference.data.bDisWepAnim", true);
+            flash.SetGameObject("litePreference.data.bDisSkillAnim", true);
+            flash.SetGameObject("litePreference.data.bDisAuraAnim", true);
+
+            if (!flash.GetGameObject<bool>("ui.monsterIcon.redX.visible"))
+                flash.CallGameFunction("world.toggleMonsters");
+
+            ApplyCrowdMode(true);
         }
+        catch { }
+    }
+
+    private void ScriptStarted(ScriptOption recipient, ScriptStartedMessage message)
+    {
+        lock (recipient._antiLagSyncLock)
+        {
+            recipient._scriptRunning = true;
+            recipient._scriptAntiLagActive = false;
+            if (!recipient._anyAntiLagApplied)
+                recipient._userLagKiller = recipient._lagKiller;
+        }
+
+        if (recipient._priorLiteAnimations == null)
+            recipient.CaptureLiteAnimationState();
 
         if (recipient.StreamerMode)
             recipient.ApplyStreamerMode(true);
+    }
+
+    internal void OnLiteAntiLagTriggered()
+    {
+        lock (_antiLagSyncLock)
+        {
+            if (!_scriptRunning || _scriptAntiLagActive)
+                return;
+
+            _scriptAntiLagActive = true;
+            _anyAntiLagApplied = true;
+            _antiLagEpoch++;
+        }
+
+        ApplyCrowdMode(true);
+    }
+
+    private void CaptureLiteAnimationState()
+    {
+        try
+        {
+            var flash = _lazyFlash.Value;
+            if (flash == null || !flash.IsWorldLoaded)
+            {
+                _priorLiteAnimations = null;
+                return;
+            }
+
+            _priorLiteAnimations = new LiteAnimationSnapshot(
+                LagKiller: _userLagKiller,
+                FreezeMonsterPosition: flash.GetGameObject<bool>("litePreference.data.bFreezeMons"),
+                DisableMonsterAnimation: flash.GetGameObject<bool>("litePreference.data.bDisMonAnim"),
+                DisableDamageStrobe: flash.GetGameObject<bool>("litePreference.data.bDisDmgStrobe"),
+                DisableSelfAnimation: flash.GetGameObject<bool>("litePreference.data.bDisSelfMAnim"),
+                DisableWeaponAnimation: flash.GetGameObject<bool>("litePreference.data.bDisWepAnim"),
+                DisableSkillAnimation: flash.GetGameObject<bool>("litePreference.data.bDisSkillAnim"),
+                DisableAuraAnimations: flash.GetGameObject<bool>("litePreference.data.bDisAuraAnim"),
+                MonstersHidden: flash.GetGameObject<bool>("ui.monsterIcon.redX.visible"),
+                CrowdMode: flash.GetGameObject<string>("litePreference.data.sCrowd") ?? "off");
+        }
+        catch
+        {
+            _priorLiteAnimations = null;
+        }
+    }
+
+    private void RestoreLiteAnimationState(bool forceRestoreCrowd = false, bool clearSnapshot = true)
+    {
+        var snapshot = _priorLiteAnimations;
+        if (clearSnapshot)
+            _priorLiteAnimations = null;
+
+        bool wasAntiLagActive = _scriptAntiLagActive || forceRestoreCrowd;
+        if (clearSnapshot)
+            _scriptAntiLagActive = false;
+
+        if (snapshot is not { } s)
+            return;
+
+        ApplySnapshotValues(s, wasAntiLagActive);
+    }
+
+    private void ApplySnapshotValues(LiteAnimationSnapshot s, bool restoreCrowd)
+    {
+        try
+        {
+            _suppressUserLagKillerSave = true;
+            try
+            {
+                LagKiller = s.LagKiller;
+            }
+            finally
+            {
+                _suppressUserLagKillerSave = false;
+            }
+
+            var flash = _lazyFlash.Value;
+            if (flash == null || !flash.IsWorldLoaded)
+                return;
+
+            flash.SetGameObject("litePreference.data.bFreezeMons", s.FreezeMonsterPosition);
+            flash.SetGameObject("litePreference.data.bDisMonAnim", s.DisableMonsterAnimation);
+            flash.SetGameObject("litePreference.data.bDisDmgStrobe", s.DisableDamageStrobe);
+            flash.SetGameObject("litePreference.data.bDisSelfMAnim", s.DisableSelfAnimation);
+            flash.SetGameObject("litePreference.data.bDisWepAnim", s.DisableWeaponAnimation);
+            flash.SetGameObject("litePreference.data.bDisSkillAnim", s.DisableSkillAnimation);
+            flash.SetGameObject("litePreference.data.bDisAuraAnim", s.DisableAuraAnimations);
+
+            bool hidden = flash.GetGameObject<bool>("ui.monsterIcon.redX.visible");
+            if (hidden != s.MonstersHidden)
+                flash.CallGameFunction("world.toggleMonsters");
+
+            if (restoreCrowd)
+            {
+                string restore = !string.IsNullOrEmpty(s.CrowdMode) ? s.CrowdMode : "off";
+                ApplyCrowdMode(restore == "on", restore);
+            }
+        }
+        catch { }
     }
 
     private CancellationTokenSource? _mapQualityCts;
 
     private void MapChanged(ScriptOption recipient, MapChangedMessage message)
     {
-        if (recipient.AutoCrowdMode && recipient._priorCrowdMode != null)
+        if (recipient._anyAntiLagApplied && recipient._priorLiteAnimations != null)
         {
             Task.Run(async () =>
             {
                 await Task.Delay(500);
-                recipient.ApplyCrowdMode(true);
+                if (recipient._anyAntiLagApplied)
+                    recipient.ApplyCrowdMode(true);
             });
         }
 
@@ -149,24 +442,29 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     private void ScriptStopped(ScriptOption recipient, ScriptStoppedMessage message)
     {
         recipient.AutoRelogin = false;
-        recipient._scriptRunning = false;
-        recipient.LagKiller = recipient._userLagKiller;
         recipient.AggroAllMonsters = false;
         recipient.AggroMonsters = false;
         recipient.SkipCutscenes = false;
 
-        if (recipient.AutoCrowdMode)
+        bool keepAntiLag;
+        long epoch;
+        lock (recipient._antiLagSyncLock)
         {
-            try
-            {
-                string restore = !string.IsNullOrEmpty(recipient._priorCrowdMode)
-                    ? recipient._priorCrowdMode
-                    : "off";
+            recipient._scriptRunning = false;
+            keepAntiLag = recipient.IsManualOrAutoAntiLagWanted();
+            recipient._anyAntiLagApplied = keepAntiLag;
+            epoch = ++recipient._antiLagEpoch;
+        }
 
-                recipient.ApplyCrowdMode(restore == "on", restore);
-                recipient._priorCrowdMode = null;
-            }
-            catch { }
+        if (keepAntiLag)
+        {
+            recipient._scriptAntiLagActive = false;
+            recipient.ApplyFullAntiLagBundleWithGuard(epoch, reassertAfterStop: true);
+        }
+        else
+        {
+            recipient.LagKiller = recipient._userLagKiller;
+            recipient.RestoreLiteAnimationState();
         }
     }
 
@@ -435,10 +733,14 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         get => _lagKiller;
         set
         {
-            if (!_scriptRunning && !_isInitializing && _settingsService != null)
+            if (!_scriptRunning && !_anyAntiLagApplied && !_suppressUserLagKillerSave && !_isInitializing && _settingsService != null)
             {
                 _userLagKiller = value;
                 _settingsService.Set("UserLagKiller", value);
+            }
+            else if (_scriptRunning && value)
+            {
+                OnLiteAntiLagTriggered();
             }
 
             try
@@ -1101,8 +1403,6 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     [ObservableProperty]
     private bool _autoCrowdMode = true;
 
-    private string? _priorCrowdMode;
-
     private string? _reloginServer = "Twilly";
 
     public string? ReloginServer
@@ -1193,7 +1493,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (!pi.CanWrite || pi.Name is nameof(CanRenderFullQuality) or nameof(StageQuality) or nameof(AcceptACDrops) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
+            if (!pi.CanWrite || (_scriptRunning && pi.Name == nameof(LagKiller)) || pi.Name is nameof(CanRenderFullQuality) or nameof(StageQuality) or nameof(AcceptACDrops) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
             if (_userOptions.ContainsKey(pi.Name))
             {
@@ -1212,7 +1512,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         ScriptOption defaults = new(_lazyFlash);
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (!pi.CanWrite || pi.Name is nameof(CanRenderFullQuality) or nameof(StageQuality) or nameof(AcceptACDrops) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
+            if (!pi.CanWrite || (_scriptRunning && pi.Name == nameof(LagKiller)) || pi.Name is nameof(CanRenderFullQuality) or nameof(StageQuality) or nameof(AcceptACDrops) or nameof(OptionDictionary) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
 
             pi.SetValue(this, pi.GetValue(defaults), null);

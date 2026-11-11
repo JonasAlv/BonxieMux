@@ -294,10 +294,10 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
             lock (_threadLock)
             {
                 _currentScriptThread = scriptThread;
-                scriptThread.Start();
             }
 
             StrongReferenceMessenger.Default.Send<ScriptStartedMessage, int>((int)MessageChannels.ScriptStatus);
+            scriptThread.Start();
             _diagnostics.RecordEvent("Script", "Started", correlationId: scriptCorrelationId);
 
             return null;

@@ -26,7 +26,10 @@ internal class Options
         [nameof(IScriptOption.AutoHeadlessBackgroundTabs)] = ("Headless for background tabs", "Needs Auto Headless. A tab that is not the selected one goes headless."),
         [nameof(IScriptOption.AutoHeadlessGridView)] = ("Grid View counts as showing", "Needs Auto Headless. While Grid View is on, every tile stays live. Off, Grid View does not count as showing and forces headless mode during Grid View."),
         [nameof(IScriptOption.AutoHeadlessWhenMinimized)] = ("Headless when minimized or in the tray", "Needs Auto Headless. All tabs go headless while the tab window is minimized or hidden in the tray."),
-        [nameof(IScriptOption.AutoHeadlessLiftOnFocus)] = ("Showing a tab ends headless", "Needs Auto Headless. Selecting a tab takes it out of automatic headless. Off, it stays headless until Auto Headless is turned off or you switch Headless Mode off.")
+        [nameof(IScriptOption.AutoHeadlessLiftOnFocus)] = ("Showing a tab ends headless", "Needs Auto Headless. Selecting a tab takes it out of automatic headless. Off, it stays headless until Auto Headless is turned off or you switch Headless Mode off."),
+        [nameof(IScriptOption.AntiLag)] = ("Anti-Lag", "Manual. Applies the full Anti-Lag bundle (Lag Killer, disabled animations, hidden monsters, Crowd Mode) across all tabs until you turn it off."),
+        [nameof(IScriptOption.AutoAntiLag)] = ("Auto Anti-Lag", "Master switch. Automatically turns on Anti-Lag for tabs while they are not showing."),
+        [nameof(IScriptOption.AutoAntiLagLiftOnFocus)] = ("Showing a tab ends Auto Anti-Lag", "Needs Auto Anti-Lag. Selecting a tab restores its normal visuals and animations. Off, it stays in Anti-Lag even when focused until Auto Anti-Lag or Anti-Lag is turned off.")
     };
 
     internal static GameOptionsViewModel CreateGameOptions(IServiceProvider s)
@@ -50,7 +53,7 @@ internal class Options
 
         foreach ((string name, Type type) in source.Properties)
         {
-            if (name is nameof(ScriptOption.RescueDelayMinutes) or nameof(ScriptOption.RescueDeathsBeforeCalling) or nameof(ScriptOption.RescueCooldownEnabled) or nameof(ScriptOption.RescueCooldownMinutes) or nameof(ScriptOption.RescueHelperDeathLimit) or nameof(ScriptOption.RescueHoldLimitMinutes) or nameof(ScriptOption.RescueUseBossLoadout) or nameof(IScriptOption.OptionDictionary) or nameof(ObservableRecipient.IsActive) or nameof(IScriptOption.GuildColor) or nameof(IScriptOption.NameColor) or "IsIpcMessageProcessing" or nameof(IScriptOption.ReloginTryDelay) or nameof(IScriptOption.UseFunctionBasedSkills) or nameof(IScriptOption.ReloginServer) or nameof(IScriptOption.StageQuality) or nameof(IScriptOption.CanRenderFullQuality))
+            if (name is nameof(ScriptOption.RescueDelayMinutes) or nameof(ScriptOption.RescueDeathsBeforeCalling) or nameof(ScriptOption.RescueCooldownEnabled) or nameof(ScriptOption.RescueCooldownMinutes) or nameof(ScriptOption.RescueHelperDeathLimit) or nameof(ScriptOption.RescueHoldLimitMinutes) or nameof(ScriptOption.RescueUseBossLoadout) or nameof(IScriptOption.OptionDictionary) or nameof(ObservableRecipient.IsActive) or nameof(IScriptOption.GuildColor) or nameof(IScriptOption.NameColor) or "IsIpcMessageProcessing" or nameof(IScriptOption.ReloginTryDelay) or nameof(IScriptOption.UseFunctionBasedSkills) or nameof(IScriptOption.ReloginServer) or nameof(IScriptOption.StageQuality) or nameof(IScriptOption.CanRenderFullQuality) or nameof(IScriptOption.AutoCrowdMode))
                 continue;
             string binding = name;
             if (HeadlessTexts.TryGetValue(binding, out (string Label, string Description) headless))

@@ -76,6 +76,8 @@ public partial class MainWindow : Window
             if (WindowState == WindowState.Minimized || _tabVisibility is 1 or 4)
                 isShown = false;
 
+            options.SetTabShown(isShown);
+
             bool isForeground = isShown && (_isWindowFocused || _tabVisibility == 0);
             if (_tabVisibility is 1 or 3 or 4)
                 isForeground = false;
