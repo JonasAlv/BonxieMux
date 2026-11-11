@@ -7,7 +7,7 @@
         xmlns:controls="clr-namespace:Skua.App.Avalonia.Controls"
         x:Class="Skua.App.Avalonia.Views.TabbedHostWindow"
         Classes="skua"
-        Title="BonxieMux" Icon="avares://Skua.Shared.Avalonia/Assets/SkuaIcon.png" Height="700" Width="1100"
+        Title="BonxieMux" Icon="avares://Skua.Shared.Avalonia/Assets/AppIcon.png" Height="700" Width="1100"
         CanResize="True"
         WindowStartupLocation="Manual"
         Background="{DynamicResource SkuaPageBrush}"

@@ -177,7 +177,10 @@ public static class AppImageDesktopIntegration
             {
                 try
                 {
-                    using var stream = AssetLoader.Open(new Uri("avares://Skua.Shared.Avalonia/Assets/SkuaIcon.png"));
+                    string assetUri = identity == AppIdentity.Manager
+                        ? "avares://Skua.Shared.Avalonia/Assets/ManagerIcon.png"
+                        : "avares://Skua.Shared.Avalonia/Assets/AppIcon.png";
+                    using var stream = AssetLoader.Open(new Uri(assetUri));
                     string dest256Dir = Path.Combine(iconsBase, "256x256", "apps");
                     Directory.CreateDirectory(dest256Dir);
                     string dLower = Path.Combine(dest256Dir, $"{iconName}.png");

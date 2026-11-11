@@ -69,8 +69,8 @@ cp -a "$CURRENT_DIR/." "$skua_appdir/current/"
 cp -a "$CURRENT_DIR/." "$mgr_appdir/current/"
 
 # Icon generation
-skua_icon="$SKUA_ICON"
-mgr_icon="$SKUA_ICON"
+skua_icon="$APP_ICON"
+mgr_icon="$MANAGER_ICON"
 
 if python3 -c "from PIL import Image" 2>/dev/null; then
     python3 - <<EOF
@@ -95,13 +95,12 @@ gen("$mgr_icon", "$mgr_appdir", "BonxieMux-Manager")
 EOF
 else
     echo "Note: python3 PIL not found, copying raw icon assets..."
-    for target in "$skua_appdir:bonxiemux" "$skua_appdir:BonxieMux" "$mgr_appdir:bonxiemux-manager" "$mgr_appdir:BonxieMux-Manager"; do
-        appdir="${target%%:*}"
-        name="${target##*:}"
-        cp -f "$skua_icon" "$appdir/${name}.png"
-        cp -f "$skua_icon" "$appdir/.DirIcon"
+    for target in "$skua_appdir:bonxiemux:$skua_icon" "$skua_appdir:BonxieMux:$skua_icon" "$mgr_appdir:bonxiemux-manager:$mgr_icon" "$mgr_appdir:BonxieMux-Manager:$mgr_icon"; do
+        IFS=':' read -r appdir name src_icon <<< "$target"
+        cp -f "$src_icon" "$appdir/${name}.png"
+        cp -f "$src_icon" "$appdir/.DirIcon"
         mkdir -p "$appdir/usr/share/icons/hicolor/256x256/apps"
-        cp -f "$skua_icon" "$appdir/usr/share/icons/hicolor/256x256/apps/${name}.png"
+        cp -f "$src_icon" "$appdir/usr/share/icons/hicolor/256x256/apps/${name}.png"
     done
 fi
 

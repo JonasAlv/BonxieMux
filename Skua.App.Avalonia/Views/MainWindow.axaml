@@ -17,7 +17,7 @@
         WindowStartupLocation="Manual"
 
         Title="{Binding Title}"
-        Icon="avares://Skua.Shared.Avalonia/Assets/SkuaIcon.png"
+        Icon="avares://Skua.Shared.Avalonia/Assets/AppIcon.png"
         Background="{DynamicResource SkuaPageBrush}"
 
         SystemDecorations="BorderOnly"

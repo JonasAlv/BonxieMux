@@ -18,13 +18,17 @@ public partial class WindowTitleBar : UserControl
     public static readonly StyledProperty<string> TitleTextProperty =
         AvaloniaProperty.Register<WindowTitleBar, string>(nameof(TitleText), "BonxieMux");
 
-    private static readonly Uri BuiltInIconUri = new("avares://Skua.Shared.Avalonia/Assets/SkuaShellImage.png");
-    private static readonly Uri LightThemeIconUri = new("avares://Skua.Shared.Avalonia/Assets/SkuaShellImageLightTheme.png");
+    public const string AppIconUri = "avares://Skua.Shared.Avalonia/Assets/AppIcon.png";
+    public const string ManagerIconUri = "avares://Skua.Shared.Avalonia/Assets/ManagerIcon.png";
+
+    private static readonly Uri BuiltInIconUri = new(AppIconUri);
     private static IImage? _defaultIconSource;
-    private static IImage? _lightThemeIconSource;
+    private static WindowIcon? _defaultWindowIcon;
     private static string? _artworkPath;
     private Bitmap? _artworkBitmap;
     private bool _usesInstanceArtwork;
+
+    public static WindowIcon? DefaultWindowIcon => _defaultWindowIcon;
 
     public static event Action<string?>? ArtworkPathChanged;
 
@@ -35,15 +39,17 @@ public partial class WindowTitleBar : UserControl
     }
 
     /// <summary>
-    /// Sets the icon title bars show when none is given, so each app can use its own. Title bars created
-    /// before the call keep the old one. The image is loaded here: if the URI is malformed or does not
-    /// resolve to a loadable image, the current default is kept and this returns false.
+    /// Sets the default title bar, window, and tray icon for the current application process.
     /// </summary>
     public static bool SetDefaultIcon(string avaresUri)
     {
         try
         {
-            _defaultIconSource = LoadIcon(new Uri(avaresUri));
+            var uri = new Uri(avaresUri);
+            _defaultIconSource = LoadIcon(uri);
+            using var stream = AssetLoader.Open(uri);
+            _defaultWindowIcon = new WindowIcon(stream);
+            Window.WindowOpenedEvent.AddClassHandler<Window>((window, _) => window.Icon ??= _defaultWindowIcon);
             return true;
         }
         catch (Exception)
@@ -97,7 +103,6 @@ public partial class WindowTitleBar : UserControl
         ApplyThemeIcon();
         ActualThemeVariantChanged += (_, _) =>
         {
-            ApplyThemeIcon();
             ApplyAccentForeground();
         };
         PropertyChanged += (_, e) =>
@@ -155,14 +160,12 @@ public partial class WindowTitleBar : UserControl
         ToolTip.SetTip(MaximizeButton, maximized ? "Restore" : "Maximize");
     }
 
-    /// <summary>White bird on dark themes, dark bird on light ones (the badge behind it is near-white there).</summary>
     private void ApplyThemeIcon()
     {
-        IImage dark = _defaultIconSource ??= LoadIcon(BuiltInIconUri);
-        IImage light = _lightThemeIconSource ??= LoadIcon(LightThemeIconUri);
-        if (IconSource is not null && IconSource != dark && IconSource != light)
+        IImage icon = _defaultIconSource ??= LoadIcon(BuiltInIconUri);
+        if (IconSource is not null && IconSource != icon)
             return; // a caller set its own icon
-        SetCurrentValue(IconSourceProperty, ActualThemeVariant == ThemeVariant.Light ? light : dark);
+        SetCurrentValue(IconSourceProperty, icon);
     }
 
     private void ApplyAccentForeground()

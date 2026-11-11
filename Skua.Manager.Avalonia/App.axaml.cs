@@ -30,7 +30,7 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        Skua.Shared.Avalonia.Controls.Shell.ShellIconTheme.Track(this);
+        Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar.SetDefaultIcon(Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar.ManagerIconUri);
         var services = new ServiceCollection();
 
         services.AddCommonServices();

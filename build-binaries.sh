@@ -139,9 +139,11 @@ EOF
 chmod +x "$BINARY_DIR/BonxieMux.Manager.sh"
 
 # Create root icons if available
-if [[ -f "$SKUA_ICON" ]]; then
-    cp -f "$SKUA_ICON" "$BINARY_DIR/bonxiemux.png"
-    cp -f "$SKUA_ICON" "$BINARY_DIR/bonxiemux-manager.png"
+if [[ -f "$APP_ICON" ]]; then
+    cp -f "$APP_ICON" "$BINARY_DIR/bonxiemux.png"
+fi
+if [[ -f "$MANAGER_ICON" ]]; then
+    cp -f "$MANAGER_ICON" "$BINARY_DIR/bonxiemux-manager.png"
 fi
 
 echo "Compressing binary release archives..."
