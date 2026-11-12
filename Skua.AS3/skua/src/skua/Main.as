@@ -25,7 +25,7 @@ import skua.module.ModalMC;
 import skua.module.Modules;
 import skua.util.SFSEvent;
 
-[SWF(frameRate="30", backgroundColor="#000000", width="958", height="550")]
+[SWF(frameRate="24", backgroundColor="#000000", width="958", height="550")]
 public class Main extends MovieClip {
     public static var instance:Main;
     private static var _gameClass:Class;

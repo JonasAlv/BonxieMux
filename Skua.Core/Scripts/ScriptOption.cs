@@ -26,6 +26,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         _settingsService = settingsService;
         _userLagKiller = _settingsService?.Get<bool>("UserLagKiller", false) ?? false;
         _lagKiller = _userLagKiller;
+        _userSetFPS = _setFPS;
         _isInitializing = true;
         _stageQuality = ReadGlobalStageQuality();
         GetOptions();
@@ -464,6 +465,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         else
         {
             recipient.LagKiller = recipient._userLagKiller;
+            recipient.SetFPS = recipient._userSetFPS;
             recipient.RestoreLiteAnimationState();
         }
     }
@@ -755,8 +757,30 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         }
     }
 
-    [ObjectBinding("stage.frameRate", Get = false, HasSetter = true)]
-    private int _setFPS = 30;
+    private int _setFPS = 24;
+    private int _userSetFPS = 24;
+
+    public int SetFPS
+    {
+        get => _setFPS;
+        set
+        {
+            // Ignore script-side FPS overrides (e.g. CoreBots setting 30) so the user's Options > Game FPS always wins.
+            if (Thread.CurrentThread.Name == "Script Thread")
+                return;
+
+            if (CommunityToolkit.Mvvm.DependencyInjection.Ioc.Default.GetService<IScriptManager>()?.ScriptRunning != true)
+                _userSetFPS = value;
+
+            if (_setFPS == value)
+                return;
+
+            _setFPS = value;
+            if (!IsHeadlessNow() && !_isBackgroundThrottled)
+                Flash.SetGameObject("stage.frameRate", value);
+            OnPropertyChanged(nameof(SetFPS));
+        }
+    }
 
     [ObjectBinding("ui.mcFPS.visible", HasSetter = true)]
     private bool _showFPS = false;
@@ -1077,7 +1101,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
                 isReduced = isHeadless || _isBackgroundThrottled;
                 bool allowFullQuality = !isReduced && _isForegroundFocused;
 
-                int targetFps = isReduced ? 2 : (SetFPS > 2 ? SetFPS : 30);
+                int targetFps = isReduced ? 2 : (SetFPS > 2 ? SetFPS : 24);
                 double targetVolume = isHeadless ? 0.0 : (_mutedByHeadless ? 1.0 : -1.0);
 
                 bool isAuto = string.Equals(StageQuality, "AUTO", StringComparison.OrdinalIgnoreCase);
