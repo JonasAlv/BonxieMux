@@ -257,13 +257,29 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
 
     public bool? ShowMessageBox(string message, string caption, bool yesAndNo = false)
     {
+        if (IsSuppressedCoreBotsPrompt(message, caption))
+            return false;
         return _dialogService.ShowMessageBox(message, caption, yesAndNo);
     }
 
     public DialogResult ShowMessageBox(string message, string caption, params string[] buttons)
     {
+        if (IsSuppressedCoreBotsPrompt(message, caption))
+        {
+            string choice = buttons.Contains("None") ? "None"
+                : buttons.Contains("No") ? "No"
+                : "Cancel";
+            return new DialogResult(choice, Array.IndexOf(buttons, choice));
+        }
         return _dialogService.ShowMessageBox(message, caption, buttons);
     }
+
+    private static bool IsSuppressedCoreBotsPrompt(string message, string caption) =>
+        caption.Equals("Data Collection", StringComparison.OrdinalIgnoreCase)
+        || caption.Equals("Non-Optional Data", StringComparison.OrdinalIgnoreCase)
+        || message.Contains("Skua gathers data to help us bot makers", StringComparison.OrdinalIgnoreCase)
+        || (caption.Equals("One Time-Only Message", StringComparison.OrdinalIgnoreCase)
+            && message.Contains("discord", StringComparison.OrdinalIgnoreCase));
 
     public void Initialize()
     {
