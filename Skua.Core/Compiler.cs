@@ -30,6 +30,78 @@ public class Compiler : CSharpScriptExecution
     private static readonly CSharpParseOptions _parseOptions = new(
         LanguageVersion.Latest,
         DocumentationMode.None);
+    private static readonly SyntaxTree? _nonWindowsFormsStubTree = OperatingSystem.IsWindows()
+        ? null
+        : CSharpSyntaxTree.ParseText("""
+            namespace System.Windows.Forms
+            {
+                public enum FormStartPosition { Manual, CenterScreen, WindowsDefaultLocation, WindowsDefaultBounds, CenterParent }
+                public enum FormBorderStyle { None, FixedSingle, Fixed3D, FixedDialog, Sizable, FixedToolWindow, SizableToolWindow }
+                public enum DockStyle { None, Top, Bottom, Left, Right, Fill }
+                public enum ProgressBarStyle { Blocks, Continuous, Marquee }
+                public enum DialogResult { None, OK, Cancel, Abort, Retry, Ignore, Yes, No }
+                public enum MessageBoxButtons { OK, OKCancel, AbortRetryIgnore, YesNoCancel, YesNo, RetryCancel }
+                public enum MessageBoxIcon { None, Hand, Question, Exclamation, Asterisk, Stop, Error, Warning, Information }
+
+                public delegate void MethodInvoker();
+                public class PaintEventArgs : EventArgs { public object? Graphics { get; } }
+                public delegate void PaintEventHandler(object? sender, PaintEventArgs e);
+
+                public class Control : IDisposable
+                {
+                    public string Text { get; set; } = string.Empty;
+                    public System.Drawing.Size Size { get; set; }
+                    public DockStyle Dock { get; set; }
+                    public int Width { get; set; }
+                    public int Height { get; set; }
+                    public System.Drawing.Color ForeColor { get; set; }
+                    public System.Drawing.Color BackColor { get; set; }
+                    public ControlCollection Controls { get; } = new();
+                    public event PaintEventHandler? Paint { add { } remove { } }
+                    public object? Invoke(Delegate method) => method.DynamicInvoke();
+                    public virtual void Dispose() { }
+                    public class ControlCollection
+                    {
+                        public void Add(Control? value) { }
+                    }
+                }
+
+                public class Form : Control
+                {
+                    public FormStartPosition StartPosition { get; set; }
+                    public FormBorderStyle FormBorderStyle { get; set; }
+                    public bool MaximizeBox { get; set; }
+                    public bool MinimizeBox { get; set; }
+                    public event EventHandler? Shown { add { } remove { } }
+                    public void Show() { }
+                    public DialogResult ShowDialog() => DialogResult.None;
+                    public void Close() { }
+                }
+
+                public class ProgressBar : Control
+                {
+                    public int Minimum { get; set; }
+                    public int Maximum { get; set; }
+                    public int Value { get; set; }
+                    public ProgressBarStyle Style { get; set; }
+                }
+
+                public static class Application
+                {
+                    public static void Run(Form mainForm) { }
+                    public static void DoEvents() { }
+                    public static void Exit() { }
+                }
+
+                public static class MessageBox
+                {
+                    public static DialogResult Show(string text, string caption = "", MessageBoxButtons buttons = MessageBoxButtons.OK, MessageBoxIcon icon = MessageBoxIcon.None) => DialogResult.OK;
+                }
+            }
+            """, _parseOptions);
+
+    private static IEnumerable<SyntaxTree> WithPlatformStubs(SyntaxTree tree)
+        => _nonWindowsFormsStubTree is null ? [tree] : [tree, _nonWindowsFormsStubTree];
     private readonly object _namespaceCacheLock = new();
     private string? _cachedNamespacePrefix = null;
     private int _lastNamespaceHash = 0;
@@ -206,7 +278,7 @@ public class Compiler : CSharpScriptExecution
         CSharpCompilation compilation = CSharpCompilation.Create(GeneratedClassName + ".cs")
             .WithOptions(_compilationOptions)
             .WithReferences(References)
-            .AddSyntaxTrees(tree);
+            .AddSyntaxTrees(WithPlatformStubs(tree));
 
         if (SaveGeneratedCode)
             GeneratedClassCode = sourceWithNamespaces;
@@ -474,7 +546,7 @@ public class Compiler : CSharpScriptExecution
         CSharpCompilation compilation = CSharpCompilation.Create(assemblyName)
             .WithOptions(_compilationOptions)
             .WithReferences(References)
-            .AddSyntaxTrees(tree);
+            .AddSyntaxTrees(WithPlatformStubs(tree));
 
         if (SaveGeneratedCode)
             GeneratedClassCode = source;
