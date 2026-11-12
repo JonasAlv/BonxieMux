@@ -619,7 +619,8 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                     OnMissingQuestProgress();
                 if (((string)args[0]).Contains("One Time Quest Only", StringComparison.OrdinalIgnoreCase))
                     OnOneTimeQuestOnly();
-                if (((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase))
+                if (((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase)
+                    || ((string)args[0]).Contains("Item already in your Bank", StringComparison.OrdinalIgnoreCase))
                     Drops.RejectFullStackDrops();
                 dynamic packet = JsonConvert.DeserializeObject<dynamic>((string)args[0])!;
                 string? pextCmd = null;
@@ -800,12 +801,14 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 break;
 
             case "packetFromServer":
-                if (args?.Length > 0 && args[0] is not null && ((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase))
+                if (args?.Length > 0 && args[0] is not null && (((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase)
+                    || ((string)args[0]).Contains("Item already in your Bank", StringComparison.OrdinalIgnoreCase)))
                     Drops.RejectFullStackDrops();
                 break;
 
             case "packet":
-                if (((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase))
+                if (((string)args[0]).Contains("Already have a full stack", StringComparison.OrdinalIgnoreCase)
+                    || ((string)args[0]).Contains("Item already in your Bank", StringComparison.OrdinalIgnoreCase))
                     Drops.RejectFullStackDrops();
                 try
                 {

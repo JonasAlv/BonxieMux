@@ -331,6 +331,9 @@ public partial class ScriptDrop
         if (drop.Temp)
             return null;
 
+        if (HasServerFullStackMark(drop))
+            return "full stack (server confirmed)";
+
         InventoryItem? invOwned = FindItem(Inventory.Items, drop);
         InventoryItem? bankOwned = _bank.Value.Loaded ? FindItem(_bank.Value.Items, drop) : null;
         int max = ResolveMaxStack(drop, invOwned, bankOwned);
@@ -354,9 +357,6 @@ public partial class ScriptDrop
             if (max > 1 && bankOwned.Quantity < max)
                 ClearFullStackMark(drop.ID, drop.Name);
         }
-
-        if (HasServerFullStackMark(drop))
-            return "full stack (server confirmed)";
 
         if (!_bank.Value.Loaded)
         {

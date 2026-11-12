@@ -5,7 +5,7 @@
     <movie outputType="Application" />
     <movie input="" />
     <movie path="bin\skua.swf" />
-    <movie fps="30" />
+    <movie fps="24" />
     <movie width="958" />
     <movie height="550" />
     <movie version="28" />

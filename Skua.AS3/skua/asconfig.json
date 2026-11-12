@@ -5,7 +5,7 @@
       "C:/Program Files/Adobe/Adobe Animate CC 2019/Common/Configuration/Component Source/ActionScript 3.0/User Interface"
     ],
     "output": "bin/skua.swf",
-    "default-frame-rate": 30,
+    "default-frame-rate": 24,
     "default-background-color": "#000000",
     "default-size": {
       "width": 958,

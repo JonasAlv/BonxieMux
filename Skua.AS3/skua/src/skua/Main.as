@@ -619,7 +619,7 @@ public class Main extends MovieClip {
         var message:String = packet.params.message;
         if (message.indexOf('[Sending - STR]: %xt%zm%') == 0) {
             instance.external.call('packet', message.substr('[Sending - STR]: '.length).replace(/^\s+|\s+$/g, ''));
-        } else if (message.indexOf("Already have a full stack") > -1) {
+        } else if (message.indexOf("Already have a full stack") > -1 || message.indexOf("Item already in your Bank") > -1) {
             // The only thing the host reads from this stream. Every server packet already reaches it through "pext",
             // so forwarding all of them again just doubled the bridge traffic.
             instance.external.call("packetFromServer",processPacket(message));
