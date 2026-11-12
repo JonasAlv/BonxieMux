@@ -35,10 +35,10 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
 
         StrongReferenceMessenger.Default.Register<ScriptDrop, ItemDroppedMessage, int>(this, (int)MessageChannels.GameEvents, AddDrop);
         StrongReferenceMessenger.Default.Register<ScriptDrop, DropPickupResultMessage, int>(this, (int)MessageChannels.GameEvents, PickupResult);
-        StrongReferenceMessenger.Default.Register<ScriptDrop, ItemSoldMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r.ClearRefusedAndFullStack());
-        StrongReferenceMessenger.Default.Register<ScriptDrop, ItemBoughtMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r.ClearRefusedAndFullStack());
-        StrongReferenceMessenger.Default.Register<ScriptDrop, ItemAddedToBankMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r.ClearRefusedAndFullStack());
-        StrongReferenceMessenger.Default.Register<ScriptDrop, QuestTurninMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r.ClearRefusedAndFullStack());
+        StrongReferenceMessenger.Default.Register<ScriptDrop, ItemSoldMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r._refusedIDs.Clear());
+        StrongReferenceMessenger.Default.Register<ScriptDrop, ItemBoughtMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r._refusedIDs.Clear());
+        StrongReferenceMessenger.Default.Register<ScriptDrop, ItemAddedToBankMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r._refusedIDs.Clear());
+        StrongReferenceMessenger.Default.Register<ScriptDrop, QuestTurninMessage, int>(this, (int)MessageChannels.GameEvents, (r, _) => r._refusedIDs.Clear());
         StrongReferenceMessenger.Default.Register<ScriptDrop, LogoutMessage, int>(this, (int)MessageChannels.GameEvents, ClearDrops);
         StrongReferenceMessenger.Default.Register<ScriptDrop, ScriptStoppedMessage, int>(this, (int)MessageChannels.ScriptStatus, ScriptStopped);
         Messenger.Register<ScriptDrop, PropertyChangedMessage<bool>>(this, OptionsChanged);

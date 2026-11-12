@@ -21,7 +21,7 @@ public partial class ScriptDrop
     private static int _bankingACDrops;
     internal static bool BankingACDrops => Volatile.Read(ref _bankingACDrops) != 0;
 
-    private static readonly TimeSpan FullStackCooldown = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan FullStackCooldown = TimeSpan.FromMinutes(10);
     private readonly ConcurrentDictionary<int, DateTime> _fullStackIDs = new();
     private readonly ConcurrentDictionary<string, DateTime> _fullStackNames = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<int, (string Name, DateTime Time)> _pendingPickups = new();
@@ -95,6 +95,18 @@ public partial class ScriptDrop
                 DateTime until = DateTime.UtcNow.AddSeconds(2);
                 while (!token.IsCancellationRequested && Player.Playing && !HasReply(drop.ID) && DateTime.UtcNow < until)
                     await Task.Delay(40, token);
+
+                if (!token.IsCancellationRequested && Player.Playing && !HasReply(drop.ID))
+                {
+                    DateTime now = DateTime.UtcNow;
+                    if (drop.ID != 0)
+                    {
+                        _fullStackIDs[drop.ID] = now;
+                        _pendingPickups.TryRemove(drop.ID, out _);
+                    }
+                    if (!string.IsNullOrEmpty(drop.Name))
+                        _fullStackNames[drop.Name] = now;
+                }
             }
         }
         finally
@@ -189,7 +201,7 @@ public partial class ScriptDrop
                 InventoryItem? previous = Inventory.Items.FirstOrDefault(i => i.ID == drop.ID);
                 InventoryItem? previousBank = _bank.Value.Loaded ? _bank.Value.Items.FirstOrDefault(i => i.ID == drop.ID) : null;
                 bool canStackInBank = previousBank != null && ResolveMaxStack(drop, null, previousBank) is > 1 and var max && previousBank.Quantity < max;
-                if (previous?.Equipped == true || (previous != null && !Inventory.CanBank(previous)) || (!Inventory.HasSpaceFor(drop) && !canStackInBank))
+                if (previous?.Equipped == true || (previous != null && !Inventory.CanBank(previous)) || (!Inventory.HasSpaceFor(drop) && !canStackInBank) || HasServerFullStackMark(drop))
                 {
                     failed.Add(drop.Name);
                     _lootRetry[drop.ID] = DateTime.UtcNow.AddSeconds(30);
