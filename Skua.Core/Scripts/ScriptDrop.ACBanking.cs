@@ -417,8 +417,6 @@ public partial class ScriptDrop
             return false;
         if (invOwned != null && invOwned.Quantity < max && bankOwned == null)
             return true;
-        if (bankOwned != null && bankOwned.Quantity < max && invOwned == null)
-            return true;
         return false;
     }
 
@@ -455,7 +453,10 @@ public partial class ScriptDrop
         }
 
         if (candidateId != 0)
+        {
             _fullStackIDs[candidateId] = now;
+            _pendingPickups.TryRemove(candidateId, out _);
+        }
         if (!string.IsNullOrEmpty(candidateName))
             _fullStackNames[candidateName] = now;
 

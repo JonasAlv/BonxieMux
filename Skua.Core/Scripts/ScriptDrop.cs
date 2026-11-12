@@ -146,7 +146,7 @@ public partial class ScriptDrop : ObservableRecipient, IScriptDrop, IAsyncDispos
         token.ThrowIfCancellationRequested();
     }
 
-    private bool HasReply(int id) => _refusedIDs.ContainsKey(id) || !CurrentDropInfos.Any(d => d.ID == id);
+    private bool HasReply(int id) => _refusedIDs.ContainsKey(id) || _fullStackIDs.ContainsKey(id) || !CurrentDropInfos.Any(d => d.ID == id);
 
     public void Pickup(params string[] names)
     {
