@@ -52,6 +52,30 @@ public partial class ScriptInventory : IScriptInventory
     // Keep Items complete; only slot usage is category-specific.
     public int UsedSlots => Flash.Call<int>("inventoryBagUsedSlots");
     public bool HasCategories => Flash.Call<bool>("hasInventoryCategories");
+
+    // The game player filters on its side, so only the few equipped items cross the bridge instead of the whole inventory.
+    public List<InventoryItem> EquippedItems
+    {
+        get
+        {
+            string? json = Flash.Call("equippedItems");
+            if (string.IsNullOrWhiteSpace(json))
+                return new();
+
+            try
+            {
+                return JsonConvert.DeserializeObject<List<InventoryItem>>(json) ?? new();
+            }
+            catch (JsonException)
+            {
+                return new();
+            }
+        }
+    }
+
+    public bool IsEquipped(string name) => EquippedItems.Exists(i => i.Name == name);
+
+    public bool IsEquipped(int id) => EquippedItems.Exists(i => i.ID == id);
     public int MiscSlots => Flash.Call<int>("inventoryMiscSlots");
     public int MiscUsedSlots => Flash.Call<int>("inventoryMiscUsedSlots");
     public int MiscFreeSlots => MiscSlots - MiscUsedSlots;

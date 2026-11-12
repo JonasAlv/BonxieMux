@@ -41,6 +41,11 @@ public interface IScriptStatus
     IScriptOptionContainer? Config { get; set; }
 
     /// <summary>
+    /// The configuration options active for the currently running script, if any.
+    /// </summary>
+    IScriptOptionContainer? RunningConfig => Config;
+
+    /// <summary>
     /// Asynchronously restarts the currently running script.
     /// </summary>
     /// <returns>A task that represents the asynchronous restart operation.</returns>

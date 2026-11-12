@@ -1,5 +1,6 @@
 using Skua.Core.Interfaces;
 using Skua.Core.Models.Monsters;
+using Skua.Core.Models.Skills;
 
 namespace Skua.Core.Skills;
 
@@ -23,9 +24,9 @@ public class AdvancedSkillProvider : ISkillProvider
     }
 
     private readonly UseRule[] _none = new[] { new UseRule(SkillRule.None) };
-    private string? _lastTargetKey;
 
     public bool ResetOnTarget { get; set; } = false;
+    private string? _lastTargetKey;
     public int SkillCount => _currentCommand.SkillCount;
 
     public (int, int) GetNextSkill()
@@ -43,6 +44,7 @@ public class AdvancedSkillProvider : ISkillProvider
             {
                 _currentCommand.Skills.Add(index, skill);
                 _currentCommand.UseRules.Add(trimmed.Length <= 1 ? _none : ParseUseRule(trimmed[1..]));
+                _currentCommand.MatchAny.Add(trimmed.Length > 1 && SkillRuleText.HasOr(trimmed[1..]));
                 ++index;
             }
         }
@@ -332,7 +334,8 @@ public class AdvancedSkillProvider : ISkillProvider
             rules.Add(new UseRule(SkillRule.MultiAura, shouldSkip, multiAuraChecks, op));
         }
 
-        return rules.Count == 0 ? new[] { new UseRule(SkillRule.None) } : rules.ToArray();
+        // A step with nothing but the skip flag ("3S") keeps it: use the skill if it can be used now, else move on.
+        return rules.Count == 0 ? new[] { new UseRule(SkillRule.None) { ShouldSkip = shouldSkip } } : rules.ToArray();
     }
 
     public void Save(string file)
@@ -377,6 +380,7 @@ public class AdvancedSkillProvider : ISkillProvider
     private string? GetCurrentTargetKey()
     {
         Monster? target = _player.Target;
+
         if (target == null)
             return null;
 

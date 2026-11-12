@@ -122,12 +122,27 @@ public partial class ScriptServers : ObservableRecipient, IScriptServers
         finally { _internalLogout = false; }
     }
 
-    [MethodCallBinding("logout", RunMethodPost = true, GameFunction = true)]
-    private void _logout()
+    private long _logoutStartedAt;
+
+    public bool IsLogoutInProgress => Volatile.Read(ref _logoutStartedAt) is long started && Environment.TickCount64 - started < 5000;
+
+    public void Logout()
     {
         IsIntentionalLogout = true;
+        Volatile.Write(ref _logoutStartedAt, Environment.TickCount64);
         if (!_internalLogout)
             UserLoggedOut = true;
+        try
+        {
+            Flash.CallGameFunction("logout");
+        }
+        finally
+        {
+            IsIntentionalLogout = true;
+            Volatile.Write(ref _logoutStartedAt, Environment.TickCount64);
+            if (!_internalLogout)
+                UserLoggedOut = true;
+        }
         CommunityToolkit.Mvvm.Messaging.StrongReferenceMessenger.Default.Send<Skua.Core.Messaging.LogoutRequestedMessage, int>(new(), (int)Skua.Core.Messaging.MessageChannels.GameEvents);
         DisconnectToLogin();
     }
@@ -680,7 +695,7 @@ public partial class ScriptServers : ObservableRecipient, IScriptServers
         {
             try { Flash.Call("loadPolicyFiles"); } catch { }
         }
-        else if (!_accountLockoutDetected)
+        else if (!_accountLockoutDetected && !Player.Playing)
         {
             ReloginLog("Server list screen failed to load (authentication timeout or modal lock). Resetting login UI.");
             try
@@ -694,9 +709,44 @@ public partial class ScriptServers : ObservableRecipient, IScriptServers
         return success;
     }
 
+    private readonly SemaphoreSlim _loginGate = new(1, 1);
+    private int _loginLoops;
+
+    public bool IsReloginInProgress => Volatile.Read(ref _loginLoops) > 0;
+
+    private async Task<bool> WaitForWorldLoaded(CancellationToken token)
+    {
+        for (int i = 0; i < 150 && !token.IsCancellationRequested; i++)
+        {
+            if (Flash.IsWorldLoaded)
+                return true;
+            await Task.Delay(100, token);
+        }
+        return Flash.IsWorldLoaded;
+    }
+
     private async Task<bool> EnsureLogin(string? preferredName, CancellationToken token)
     {
-        int tries = 0;
+        bool waited = !_loginGate.Wait(0);
+        if (waited)
+            await _loginGate.WaitAsync(token);
+
+        Interlocked.Increment(ref _loginLoops);
+        try
+        {
+            // A loop that queued behind another one shouldn't clear a lockout the first loop just set.
+            if (!waited)
+                _accountLockoutDetected = false;
+            else if (_accountLockoutDetected)
+                return false;
+
+            if (Player.LoggedIn && Player.Playing)
+            {
+                await WaitForWorldLoaded(token);
+                return true;
+            }
+
+            int tries = 0;
         HashSet<string> attemptedServers = new(StringComparer.OrdinalIgnoreCase);
         string? preferredServerName = preferredName;
         try
@@ -815,5 +865,11 @@ public partial class ScriptServers : ObservableRecipient, IScriptServers
         if (!Player.Playing && !_accountLockoutDetected)
             ReloginLog("Unable to reconnect within configured retries.");
         return Player.Playing;
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _loginLoops);
+            _loginGate.Release();
+        }
     }
 }

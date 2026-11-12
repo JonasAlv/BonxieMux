@@ -77,24 +77,107 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
     [ObservableProperty]
     private bool _scriptRunning = false;
 
-    [ObservableProperty]
-    private bool _scriptPaused = false;
+    private readonly object _pauseLock = new();
+    private bool _scriptPaused;
+    private bool _pauseRequested;
+    private bool _pauseStopping;
+    private Task<bool> _pauseTransition = Task.FromResult(true);
+
+    public bool ScriptPaused
+    {
+        get { lock (_pauseLock) return _scriptPaused; }
+        set { _ = SetPausedAsync(value); }
+    }
 
     public ManualResetEventSlim ScriptPauseEvent { get; } = new(true);
 
-    partial void OnScriptPausedChanged(bool value)
+    public Task<bool> SetPausedAsync(bool paused)
     {
-        if (value)
+        bool changed;
+        lock (_pauseLock)
         {
+            if (_pauseStopping)
+                return Task.FromResult(false);
+
+            _pauseRequested = paused;
+            if (!paused)
+            {
+                if (!_scriptPaused)
+                    return Task.FromResult(true);
+
+                Task<bool> previous = _pauseTransition;
+                _pauseTransition = Task.Run(() => ResumeScriptAsync(previous));
+                return _pauseTransition;
+            }
+
+            changed = !_scriptPaused;
             Skills.Pause();
             ScriptPauseEvent.Reset();
+            _scriptPaused = true;
         }
-        else
+
+        if (changed)
+            OnPropertyChanged(nameof(ScriptPaused));
+        return Task.FromResult(true);
+    }
+
+    private async Task<bool> ResumeScriptAsync(Task<bool> previous)
+    {
+        try
         {
-            _lazyBot.Value.Auto.Stop();
+            await previous.ConfigureAwait(false);
+            await _lazyBot.Value.Auto.StopAsync().ConfigureAwait(false);
+            lock (_pauseLock)
+            {
+                if (_pauseStopping || _pauseRequested)
+                    return false;
+
+                Skills.Resume();
+                ScriptPauseEvent.Set();
+                _scriptPaused = false;
+            }
+            OnPropertyChanged(nameof(ScriptPaused));
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.ScriptLog($"Could not resume script: {ex.Message}");
+            return false;
+        }
+    }
+
+    private async Task StopAutoForScriptAsync()
+    {
+        Task<bool> pending;
+        lock (_pauseLock)
+        {
+            _pauseStopping = true;
+            _pauseRequested = true;
+            pending = _pauseTransition;
+        }
+
+        await pending.ConfigureAwait(false);
+        try
+        {
+            await _lazyBot.Value.Auto.StopAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.ScriptLog($"Could not stop script automation: {ex.Message}");
+        }
+    }
+
+    private void ResetPauseState(bool stopping)
+    {
+        lock (_pauseLock)
+        {
+            _pauseStopping = stopping;
+            _pauseRequested = false;
+            _scriptPaused = false;
             Skills.Resume();
             ScriptPauseEvent.Set();
         }
+        OnPropertyChanged(nameof(ScriptPaused));
     }
 
     [ObservableProperty]
@@ -113,13 +196,14 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
 
     public IScriptOptionContainer? Config { get; set; }
 
+    public IScriptOptionContainer? RunningConfig { get; private set; }
+
     public string? OverrideStorage { get; set; }
     public bool SilentConfig { get; set; }
 
     public CancellationTokenSource? ScriptCts { get; private set; }
 
-    private volatile bool _isRunningStoppingEvent;
-    public bool ShouldExit => !_isRunningStoppingEvent && (ScriptCts?.IsCancellationRequested ?? false);
+    public bool ShouldExit => ScriptCts?.IsCancellationRequested ?? false;
 
     public async Task<Exception?> StartScript()
     {
@@ -140,55 +224,73 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
             scriptCorrelationId = _scriptRunId!;
         }
 
+        bool startAnnounced = false;
+
+        // Read before the first await: callers (scheduler, Army Queue) set and clear OverrideStorage around their
+        // own work, so it may belong to another task by the time this start builds its options.
+        string? overrideStorage = OverrideStorage;
+
         using IDiagnosticActivity startActivity = _diagnostics.BeginActivity("Script", "Start", scriptCorrelationId);
 
         try
         {
-            await _lazyBot.Value.Auto.StopAsync();
+            await StopAutoForScriptAsync();
 
             UnloadPreviousScript();
 
             string scriptContent = File.ReadAllText(LoadedScript);
             object? script = await Task.Run(() => Compile(scriptContent));
 
-            LoadScriptConfig(script);
+            // Use this start's own container throughout: Config is shared and another configuration task (e.g. the
+            // Army Queue) can replace it while this start awaits.
+            IScriptOptionContainer? config = BuildScriptConfig(script, overrideStorage);
+            if (config is not null)
+                Config = config;
 
-            // CoreBots scripts with Skip Options off show this window themselves at start.
-            bool scriptShowsOptions = Config?.Options.Exists(o => o.Name == "SkipOption") == true && !Config.Get<bool>("SkipOption");
-            if (Config != null && Config.ResetOptions.Count > 0 && !scriptShowsOptions)
-            {
-                await Task.Run(() => Config.Configure());
-                lock (_configuredLock)
-                {
-                    _configured[Config.Storage] = true;
-                }
-            }
-
-            bool hasOptions = Config != null && (Config.Options.Count > 0 || Config.MultipleOptions.Count > 0);
+            bool hasOptions = config != null && (config.Options.Count > 0 || config.MultipleOptions.Count > 0);
             bool needsConfig;
             lock (_configuredLock)
             {
-                needsConfig = hasOptions && _configured.TryGetValue(Config!.Storage, out bool b) && !b;
+                needsConfig = hasOptions && _configured.TryGetValue(config!.Storage, out bool b) && !b;
             }
 
+            // A saved enum choice the script no longer has was reset to its default on load: show the options
+            // window with the explanation before the script runs, even if the script skips its own options window.
+            bool hasResets = config != null && config.ResetNotices.Count > 0;
 
-            if (needsConfig)
+            if (needsConfig || hasResets)
             {
                 if (!SilentConfig)
-                    await Task.Run(() => Config!.Configure());
-
-                lock (_configuredLock)
+                    await Task.Run(() => config!.Configure());
+                else if (hasResets)
                 {
-                    _configured[Config!.Storage] = true;
+                    foreach (string notice in config!.ResetNotices)
+                        _logger.ScriptLog($"[Options] {notice}");
+                }
+
+                if (needsConfig)
+                {
+                    lock (_configuredLock)
+                    {
+                        _configured[config!.Storage] = true;
+                    }
                 }
             }
+
+            // The running script reads Bot.Config through RunningConfig, which only this run sets, so a later
+            // change to Config by another configuration task doesn't reach it. Cleared when the run ends.
+            RunningConfig = config;
 
             Handlers.Clear();
 
             lock (_stateLock)
             {
-                _runScriptStoppingBool = true;
+                _runScriptStoppingBool = false;
             }
+
+            // ScriptRunning is already true while compiling and configuring, so a pause (hotkey or button) can land
+            // before this run has a thread, or in a failed start or the last run's teardown. Start unpaused.
+            ResetPauseState(stopping: false);
 
             Thread scriptThread = new(() =>
             {
@@ -235,11 +337,10 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
                     if (shouldSendStoppingMessage)
                     {
                         StrongReferenceMessenger.Default.Send<ScriptStoppingMessage, int>((int)MessageChannels.ScriptStatus);
-                        _isRunningStoppingEvent = true;
                         try
                         {
                             Task<bool?> messageTask = Task.Run(async () => await StrongReferenceMessenger.Default.Send<ScriptStoppingRequestMessage, int>(new(exception), (int)MessageChannels.ScriptStatus));
-                            if (messageTask.Wait(TimeSpan.FromSeconds(15)))
+                            if (messageTask.Wait(TimeSpan.FromSeconds(2)))
                             {
                                 switch (messageTask.Result)
                                 {
@@ -261,13 +362,10 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
                             }
                         }
                         catch { }
-                        finally
-                        {
-                            _isRunningStoppingEvent = false;
-                        }
                     }
 
                     script = null;
+                    StopAutoForScriptAsync().GetAwaiter().GetResult();
                     Skills.Stop();
                     Drops.Stop();
 
@@ -275,9 +373,10 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
                     UnloadPreviousScript();
                     ScriptCts?.Dispose();
                     ScriptCts = null;
-                    ScriptPaused = false;
+                    ResetPauseState(stopping: true);
                     _diagnostics.RecordEvent("Script", "Stopped", correlationId: scriptCorrelationId);
                     StrongReferenceMessenger.Default.Send<ScriptStoppedMessage, int>((int)MessageChannels.ScriptStatus);
+                    RunningConfig = null;
                     ScriptRunning = false;
                     lock (_threadLock)
                     {
@@ -291,25 +390,33 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
                 IsBackground = true
             };
 
+            // Announce the start before the thread runs: a script that ends at once sends its stopped (and error)
+            // messages from its own thread, and those must not reach listeners before this one (the loader would
+            // stay "[Running]", the feed would log the start after the stop).
+            StrongReferenceMessenger.Default.Send<ScriptStartedMessage, int>((int)MessageChannels.ScriptStatus);
+            startAnnounced = true;
+            _diagnostics.RecordEvent("Script", "Started", correlationId: scriptCorrelationId);
+
             lock (_threadLock)
             {
                 _currentScriptThread = scriptThread;
+                scriptThread.Start();
             }
-
-            StrongReferenceMessenger.Default.Send<ScriptStartedMessage, int>((int)MessageChannels.ScriptStatus);
-            scriptThread.Start();
-            _diagnostics.RecordEvent("Script", "Started", correlationId: scriptCorrelationId);
 
             return null;
         }
         catch (Exception e)
         {
             _diagnostics.RecordEvent("Script", "StartFailed", correlationId: scriptCorrelationId);
+            ResetPauseState(stopping: true);
             lock (_threadLock)
             {
                 ScriptRunning = false;
                 _scriptRunId = null;
             }
+            // Started was sent but the thread never ran: close the run for its listeners.
+            if (startAnnounced)
+                StrongReferenceMessenger.Default.Send<ScriptStoppedMessage, int>((int)MessageChannels.ScriptStatus);
             return e;
         }
     }
@@ -321,24 +428,13 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
         await Task.Run(async () =>
         {
             await Task.Delay(5000);
-
-            // Scripts (CoreBots) restart themselves when stopped by a logout; starting while still disconnected
-            // makes them stop with "Please log-in". Wait for auto relogin to bring the player back first.
-            IScriptInterface bot = _lazyBot.Value;
-            Stopwatch waited = Stopwatch.StartNew();
-            while (!(bot.Player.LoggedIn && bot.Flash.IsWorldLoaded) && bot.Options.AutoRelogin && waited.Elapsed < TimeSpan.FromMinutes(10))
-                await Task.Delay(1000);
-
-            // Auto relogin may have restarted it already
-            if (ScriptRunning)
-                return;
             await StartScript();
         });
     }
 
     public async ValueTask StopScript(bool runScriptStoppingEvent = true)
     {
-        ScriptPaused = false;
+        Task autoStop = StopAutoForScriptAsync();
 
         string? scriptCorrelationId;
         lock (_threadLock)
@@ -361,6 +457,7 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
             return;
         }
 
+        await autoStop.ConfigureAwait(false);
         await Wait.ForTrueAsync(() => ScriptCts == null, 30).ConfigureAwait(false);
 
         Thread? thread;
@@ -454,8 +551,7 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
             throw new ScriptCompileException($"Script file '{LoadedScript}' contains no class definitions after processing includes and references. Scripts must contain at least one class.", final);
         }
 
-        StringComparer pathComparer = StringComparer.Ordinal;
-        ConcurrentDictionary<string, string> sourceCache = new(pathComparer);
+        ConcurrentDictionary<string, string> sourceCache = new(StringComparer.OrdinalIgnoreCase);
 
         // Recursively discover all transitive includes using single-pass BFS and populate sourceCache
         DiscoverAllIncludes(references, sourceCache);
@@ -580,7 +676,7 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
             }
         }
 
-        return SanitizeScriptSourceForLinux(sb.ToString().Trim());
+        return sb.ToString().Trim();
     }
 
     private string? ResolveImport(string ownerFile, string specifier)
@@ -588,18 +684,13 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
         Skua.Core.Models.Scripts.ScriptPathResolution resolution = _pathResolver.Resolve(ownerFile, specifier);
         if (resolution.IsAmbiguous)
             _diagnostics.RecordEvent("Script", "ImportAmbiguous", correlationId: GetScriptCorrelationId());
-        if (resolution.Error is not null)
-            _diagnostics.RecordEvent("Script", "ImportResolutionFailed", unit: $"{ownerFile} -> {specifier}: {resolution.Error}", correlationId: GetScriptCorrelationId());
-        else if (resolution.SelectedPath is null)
-            _diagnostics.RecordEvent("Script", "ImportUnresolved", unit: $"{ownerFile} -> {specifier}", correlationId: GetScriptCorrelationId());
 
         return resolution.SelectedPath;
     }
 
     private void DiscoverAllIncludes(HashSet<string> references, ConcurrentDictionary<string, string> sourceCache)
     {
-        StringComparer pathComparer = StringComparer.Ordinal;
-        HashSet<string> visited = new(pathComparer);
+        HashSet<string> visited = new(StringComparer.OrdinalIgnoreCase);
         Queue<string> queue = new();
 
         _includedFilesLock.EnterReadLock();
@@ -625,7 +716,7 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
             try
             {
                 string fileContent = File.ReadAllText(currentFile);
-                sourceCache[currentFile] = SanitizeScriptSourceForLinux(fileContent);
+                sourceCache[currentFile] = fileContent;
 
                 List<string> newIncludes = ExtractIncludeDirectivesFromSource(fileContent, currentFile, references);
                 if (newIncludes.Count > 0)
@@ -706,10 +797,17 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
 
     public void LoadScriptConfig(object? script)
     {
-        if (script is null)
-            return;
+        IScriptOptionContainer? opts = BuildScriptConfig(script, OverrideStorage);
+        if (opts is not null)
+            Config = opts;
+    }
 
-        IScriptOptionContainer opts = Config = Ioc.Default.GetRequiredService<IScriptOptionContainer>();
+    private IScriptOptionContainer? BuildScriptConfig(object? script, string? overrideStorage)
+    {
+        if (script is null)
+            return null;
+
+        IScriptOptionContainer opts = Ioc.Default.GetRequiredService<IScriptOptionContainer>();
         Type t = script.GetType();
         FieldInfo? storageField = t.GetField("OptionsStorage");
         FieldInfo? optsField = t.GetField("Options");
@@ -734,7 +832,7 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
         }
         if (optsField is not null)
             opts.Options.AddRange((List<IOption>)optsField.GetValue(script)!);
-        if (!string.IsNullOrWhiteSpace(OverrideStorage)) opts.Storage = OverrideStorage; else if (storageField is not null) opts.Storage = (string)storageField.GetValue(script)!;
+        if (!string.IsNullOrWhiteSpace(overrideStorage)) opts.Storage = overrideStorage; else if (storageField is not null) opts.Storage = (string)storageField.GetValue(script)!;
         lock (_configuredLock)
         {
             if (dontPreconfField is not null)
@@ -745,6 +843,7 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
 
         opts.SetDefaults();
         opts.Load();
+        return opts;
     }
 
     private static bool CanLoadAssembly(string path)
@@ -768,18 +867,12 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
         using MemoryStream ms = new();
         ms.Write(sourceHash, 0, sourceHash.Length);
 
-        byte[] platformBytes = Encoding.UTF8.GetBytes("linux");
-        ms.Write(platformBytes, 0, platformBytes.Length);
-
-        foreach (string file in includedFiles.OrderBy(f => f, StringComparer.Ordinal))
+        foreach (string file in includedFiles.OrderBy(f => f))
         {
             if (File.Exists(file))
             {
                 byte[] pathBytes = Encoding.UTF8.GetBytes(file);
                 ms.Write(pathBytes, 0, pathBytes.Length);
-
-                byte[] includeSourceHash = sha256.ComputeHash(Encoding.UTF8.GetBytes(SanitizeScriptSourceForLinux(File.ReadAllText(file))));
-                ms.Write(includeSourceHash, 0, includeSourceHash.Length);
 
                 long ticks = File.GetLastWriteTimeUtc(file).Ticks;
                 byte[] ticksBytes = BitConverter.GetBytes(ticks);
@@ -812,9 +905,8 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
         ConcurrentDictionary<string, bool> compilationCompleted = new();
         object lockObj = new();
 
-        StringComparer pathComparer = StringComparer.Ordinal;
-        ConcurrentDictionary<string, List<string>> dependencyGraph = new(pathComparer);
-        ConcurrentDictionary<string, (string source, string fileName, int hash, string cachePath)> fileInfoCache = new(pathComparer);
+        ConcurrentDictionary<string, List<string>> dependencyGraph = new();
+        ConcurrentDictionary<string, (string source, string fileName, int hash, string cachePath)> fileInfoCache = new();
 
         string cacheDir = _cacheScriptsDir;
 
@@ -833,7 +925,7 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
 
         Parallel.ForEach(includedFilesSnapshot, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, includedFile =>
         {
-            string includeSource = sourceCache.TryGetValue(includedFile, out string? cached) ? cached : SanitizeScriptSourceForLinux(File.ReadAllText(includedFile));
+            string includeSource = sourceCache.TryGetValue(includedFile, out string? cached) ? cached : File.ReadAllText(includedFile);
             sourceCache[includedFile] = includeSource;
             CheckScriptVersionRequirement(includeSource);
             List<string> deps = ExtractIncludeDependencies(includeSource, includedFile);
@@ -845,7 +937,7 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
                 try
                 {
                     matchingFile = _includedFiles.FirstOrDefault(path => path.Equals(dep, StringComparison.Ordinal));
-                    if (matchingFile is null)
+                    if (matchingFile is null && OperatingSystem.IsWindows())
                         matchingFile = _includedFiles.FirstOrDefault(path => path.Equals(dep, StringComparison.OrdinalIgnoreCase));
                 }
                 finally
@@ -896,7 +988,7 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
 
             foreach (string newFile in newlyAddedFiles)
             {
-                string includeSource = sourceCache.TryGetValue(newFile, out string? cached) ? cached : SanitizeScriptSourceForLinux(File.ReadAllText(newFile));
+                string includeSource = sourceCache.TryGetValue(newFile, out string? cached) ? cached : File.ReadAllText(newFile);
                 sourceCache[newFile] = includeSource;
                 CheckScriptVersionRequirement(includeSource);
                 List<string> deps = ExtractIncludeDependencies(includeSource, newFile);
@@ -907,8 +999,9 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
                     _includedFilesLock.EnterReadLock();
                     try
                     {
-                        matchingFile = _includedFiles.FirstOrDefault(path => path.Equals(dep, StringComparison.Ordinal))
-                            ?? _includedFiles.FirstOrDefault(path => path.Equals(dep, StringComparison.OrdinalIgnoreCase));
+                        matchingFile = _includedFiles.FirstOrDefault(path => path.Equals(dep, StringComparison.Ordinal));
+                        if (matchingFile is null && OperatingSystem.IsWindows())
+                            matchingFile = _includedFiles.FirstOrDefault(path => path.Equals(dep, StringComparison.OrdinalIgnoreCase));
                     }
                     finally
                     {
@@ -933,18 +1026,18 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
         }
 
         // Compute dependency-aware hashes in topological order (leaves first)
-        Dictionary<string, int> fileHashes = new(pathComparer);
+        Dictionary<string, int> fileHashes = new(StringComparer.OrdinalIgnoreCase);
         using (SHA256 sha256 = SHA256.Create())
         {
             foreach (string file in orderedFiles)
             {
-                string src = sourceCache.TryGetValue(file, out string? cached) ? cached : SanitizeScriptSourceForLinux(File.ReadAllText(file));
+                string src = sourceCache.TryGetValue(file, out string? cached) ? cached : File.ReadAllText(file);
                 byte[] srcBytes = Encoding.UTF8.GetBytes(src);
                 if (dependencyGraph.TryGetValue(file, out List<string>? fileDeps) && fileDeps.Count > 0)
                 {
                     using MemoryStream ms = new();
                     ms.Write(srcBytes, 0, srcBytes.Length);
-                    foreach (string dep in fileDeps.OrderBy(d => d, pathComparer))
+                    foreach (string dep in fileDeps.OrderBy(d => d, StringComparer.OrdinalIgnoreCase))
                     {
                         if (fileHashes.TryGetValue(dep, out int depHash))
                         {
@@ -980,7 +1073,7 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
             }
             else
             {
-                string src = sourceCache.TryGetValue(file, out string? cached) ? cached : SanitizeScriptSourceForLinux(File.ReadAllText(file));
+                string src = sourceCache.TryGetValue(file, out string? cached) ? cached : File.ReadAllText(file);
                 fileInfoCache[file] = (src, includeFileName, includeHash, compiledPath);
             }
         }
@@ -1296,54 +1389,7 @@ public partial class ScriptManager : ObservableObject, IScriptManager, IDisposab
             }
         }
 
-        return SanitizeScriptSourceForLinux(sb.ToString().Trim());
-    }
-
-    private static string SanitizeScriptSourceForLinux(string source)
-    {
-        if (string.IsNullOrEmpty(source))
-            return source;
-
-        source = source
-            .Replace("using System.Windows.Forms;\r\n", "", StringComparison.Ordinal)
-            .Replace("using System.Windows.Forms;\n", "", StringComparison.Ordinal)
-            .Replace("using System.Windows.Forms;", "", StringComparison.Ordinal)
-            .Replace("using Microsoft.Win32;\r\n", "", StringComparison.Ordinal)
-            .Replace("using Microsoft.Win32;\n", "", StringComparison.Ordinal)
-            .Replace("using Microsoft.Win32;", "", StringComparison.Ordinal)
-            .Replace("(System.Windows.Forms.MethodInvoker)", "(System.Action)", StringComparison.Ordinal)
-            .Replace("System.Windows.Forms.MethodInvoker", "System.Action", StringComparison.Ordinal)
-            .Replace("if (!OperatingSystem.IsWindowsVersionAtLeast(10))", "if (OperatingSystem.IsWindows() && !OperatingSystem.IsWindowsVersionAtLeast(10))", StringComparison.Ordinal)
-            .Replace("Process.Start(\"explorer\",", "Process.Start(\"xdg-open\",", StringComparison.Ordinal)
-            .Replace("Process.Start(\"explorer.exe\",", "Process.Start(\"xdg-open\",", StringComparison.Ordinal)
-            .Replace("Process.Start(\"notepad.exe\",", "Process.Start(\"xdg-open\",", StringComparison.Ordinal)
-            .Replace("\"Skua\", \"Options\"", "\"BonxieMux\", \"options\"", StringComparison.Ordinal)
-            .Replace("\"Skua\",\n                \"Options\"", "\"BonxieMux\",\n                \"options\"", StringComparison.Ordinal)
-            .Replace("\"Skua\",\r\n                \"Options\"", "\"BonxieMux\",\r\n                \"options\"", StringComparison.Ordinal)
-            .Replace("\"Skua\", \"Scripts\"", "\"BonxieMux\", \"Scripts\"", StringComparison.Ordinal)
-            .Replace("attribute.Value == \"VibeSkuaAvalonia\"", "(attribute.Value == \"BonxieMuxAvalonia\" || attribute.Value == \"VibeSkuaAvalonia\")", StringComparison.Ordinal)
-            .Replace("RunSync(() => SkuaVersionCheckerAsync());", "// RunSync(() => SkuaVersionCheckerAsync());", StringComparison.Ordinal)
-            .Replace("CollectData(changeTo);", "// CollectData(changeTo);", StringComparison.Ordinal)
-            .Replace("if (OTM_Contains(internalName))", "if (internalName.StartsWith(\"discord\", StringComparison.OrdinalIgnoreCase) || OTM_Contains(internalName))", StringComparison.Ordinal)
-            .Replace("+ \"Please join the Skua Discord to report this.\\n\"", "", StringComparison.Ordinal)
-            .Replace("+ \"Do you wish to be brought to the Discord?\"", "", StringComparison.Ordinal)
-            .Replace("if (Bot.ShowMessageBox(message, \"Skua Report\", true) == true)", "if (false)", StringComparison.Ordinal)
-            .Replace("AprilFools();", "// AprilFools();", StringComparison.Ordinal)
-            .Replace("UserSpecificMessages();", "// UserSpecificMessages();", StringComparison.Ordinal);
-
-        const string progressBlockStart = "// Create a new thread for the progress bar to avoid blocking the main thread";
-        int blockStart = source.IndexOf(progressBlockStart, StringComparison.Ordinal);
-        if (blockStart >= 0)
-        {
-            int blockEnd = source.IndexOf("}).Start();", blockStart, StringComparison.Ordinal);
-            if (blockEnd >= 0)
-            {
-                blockEnd += "}).Start();".Length;
-                source = source[..blockStart] + "#if WINDOWS\n" + source[blockStart..blockEnd] + "\n#endif" + source[blockEnd..];
-            }
-        }
-
-        return source;
+        return sb.ToString().Trim();
     }
 
     private void UnloadPreviousScript()

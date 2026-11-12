@@ -38,6 +38,17 @@ public class OptionContainer : ObservableObject, IOptionContainer
         return category == "Options" ? Get<T>(name) : Get<T>(MultipleOptions[category].Find(o => o.Name == name));
     }
 
+    private static string ToEnumText(string value)
+    {
+        if (!value.Contains(','))
+            return value.Replace(' ', '_');
+
+        string[] parts = value.Split(',');
+        for (int i = 0; i < parts.Length; i++)
+            parts[i] = parts[i].Trim().Replace(' ', '_');
+        return string.Join(", ", parts);
+    }
+
     public T? Get<T>(IOption? option) where T : IConvertible
     {
         return option is null
@@ -46,7 +57,7 @@ public class OptionContainer : ObservableObject, IOptionContainer
             ? string.IsNullOrEmpty(value)
                 ? default
                 : typeof(T).IsEnum
-                ? (T)Enum.Parse(typeof(T), value.Replace(' ', '_'))
+                ? (T)Enum.Parse(typeof(T), ToEnumText(value))
                 : (T)Convert.ChangeType(value, typeof(T))
             : default;
     }
@@ -92,7 +103,7 @@ public class OptionContainer : ObservableObject, IOptionContainer
         {
             if (optionViewModel.Type.IsEnum)
             {
-                string enumStr = optionViewModel.SelectedValue?.Replace(' ', '_') ?? string.Empty;
+                string enumStr = ToEnumText(optionViewModel.SelectedValue ?? string.Empty);
                 Set(optionViewModel.Option, enumStr);
             }
             else
@@ -156,7 +167,7 @@ public class OptionContainer : ObservableObject, IOptionContainer
             if (!option.Type.IsEnum
                 || !OptionValues.TryGetValue(option, out string? value)
                 || string.IsNullOrEmpty(value)
-                || Enum.TryParse(option.Type, value.Replace(' ', '_'), out _))
+                || Enum.TryParse(option.Type, ToEnumText(value), out _))
                 continue;
 
             string defaultValue = option.DefaultValue?.ToString() ?? string.Empty;

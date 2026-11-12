@@ -45,6 +45,7 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
     private int _acceptedPlayerPid;
     private StreamWriter? _bridge;
     private int _nextId;
+    private readonly BridgeStats _stats = new();
 
     [DllImport("libc", SetLastError = true)]
     private static extern uint geteuid();
@@ -346,7 +347,7 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             {
                 using StreamReader reader = new(stream, Encoding.UTF8);
                 while (await reader.ReadLineAsync() is { } line)
-                    Receive(JObject.Parse(line));
+                    Receive(JObject.Parse(line), line.Length);
             }
             catch (Exception ex) when (ex is IOException or ObjectDisposedException or JsonException)
             {
@@ -360,7 +361,7 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         }
     }
 
-    private void Receive(JObject msg)
+    private void Receive(JObject msg, int chars)
     {
         if (msg["id"] is { } id)
         {
@@ -370,6 +371,7 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         }
 
         string function = (string)msg["ev"]!;
+        _stats.RecordEvent(function, chars);
         object[] args = msg["args"] is JArray arr ? arr.Select(FromJson).ToArray() : [];
         // Handlers expect calls on the UI thread.
         Dispatcher.UIThread.Post(() =>
@@ -465,6 +467,7 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             return false;
 
         int id = Interlocked.Increment(ref _nextId);
+        long startTimestamp = Stopwatch.GetTimestamp();
         TaskCompletionSource<JObject> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
         _pending[id] = tcs;
         try
@@ -506,6 +509,14 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             JValue v => Convert.ToString(v.Value, CultureInfo.InvariantCulture),
             JToken t => t.ToString(Formatting.None)
         };
+        if (_stats.Enabled)
+        {
+            // getGameObject & co. are generic; the path tells which object was read.
+            string key = function.StartsWith("getGameObject", StringComparison.Ordinal) && args.Length > 0 && args[0] is string path
+                ? $"{function} {path}"
+                : function;
+            _stats.RecordCall(key, startTimestamp, result?.Length ?? 0);
+        }
         try
         {
             value = result is null ? default : Convert.ChangeType(result, type, CultureInfo.InvariantCulture);

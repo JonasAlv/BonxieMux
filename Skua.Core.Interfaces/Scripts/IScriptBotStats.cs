@@ -65,7 +65,7 @@ public interface IScriptBotStats : INotifyPropertyChanged
     int ExperiencePerHour { get; }
 
     /// <summary>Net gold balance change per hour during the current session, including spending.</summary>
-    int GoldPerHour { get; }
+    long GoldPerHour { get; }
 
     /// <summary>Monster kills per minute during the current session.</summary>
     double KillsPerMinute { get; }

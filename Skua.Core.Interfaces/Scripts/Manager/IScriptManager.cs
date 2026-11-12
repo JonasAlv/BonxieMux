@@ -22,6 +22,11 @@ public interface IScriptManager : IScriptStatus, INotifyPropertyChanged
     bool ScriptPaused { get; set; }
 
     /// <summary>
+    /// Asynchronously pauses or resumes the running script.
+    /// </summary>
+    Task<bool> SetPausedAsync(bool paused);
+
+    /// <summary>
     /// Event used to pause and resume the script execution thread.
     /// </summary>
     ManualResetEventSlim ScriptPauseEvent { get; }

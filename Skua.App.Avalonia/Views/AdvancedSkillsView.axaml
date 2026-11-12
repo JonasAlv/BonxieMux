@@ -34,7 +34,7 @@
                                            Minimum="0"
                                            Maximum="5000"
                                            Increment="10"
-                                           Value="{Binding CurrentSkillTimeout}" />
+                                           Value="{Binding CurrentSkillTimeoutMs}" />
                         </StackPanel>
                     </Border>
                     
@@ -151,7 +151,14 @@
                                            Foreground="{DynamicResource SkuaMutedTextBrush}"
                                            VerticalAlignment="Center"
                                            Margin="0,0,10,0" />
-                                <CheckBox Grid.Column="1" Content="Enable Rule" IsChecked="{Binding UseRules.UseRuleBool}" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <CheckBox Content="Any (OR)"
+                                              IsChecked="{Binding UseRules.MatchAnyBool}"
+                                              IsEnabled="{Binding UseRules.UseRuleBool}"
+                                              ToolTip.Tip="Use when any condition holds (OR) instead of requiring all (AND)"
+                                              VerticalAlignment="Center" />
+                                    <CheckBox Content="Enable Rule" IsChecked="{Binding UseRules.UseRuleBool}" VerticalAlignment="Center" />
+                                </StackPanel>
                                 <CheckBox Grid.Column="2" Content="Multi Aura" IsChecked="{Binding UseRules.MultiAuraBool}" Margin="10,0,0,0" VerticalAlignment="Center" />
                                 <Button Grid.Column="3" Classes="skua-button small"
                                         Content="Reset"

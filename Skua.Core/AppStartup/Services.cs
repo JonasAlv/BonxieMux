@@ -111,6 +111,7 @@ public static class Services
                         typeof(System.Text.RegularExpressions.Regex).Assembly.Location,
                         typeof(Newtonsoft.Json.JsonConvert).Assembly.Location,
                         typeof(CommunityToolkit.Mvvm.DependencyInjection.Ioc).Assembly.Location,
+                        typeof(System.IO.Compression.ZipArchive).Assembly.Location,
                     };
 
                     foreach (string path in refPaths)

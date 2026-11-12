@@ -12,6 +12,12 @@ public interface IScriptInventory : ICanEquip
     /// <summary>Whether the game provides separate bag, misc, class and house pools.</summary>
     bool HasCategories { get; }
 
+    /// <summary>
+    /// Only the equipped items. Unlike <see cref="IItemContainer{T}.Items"/> this doesn't serialize the whole
+    /// inventory (which is slow in the game player), so prefer it for anything that only cares about equipment.
+    /// </summary>
+    List<InventoryItem> EquippedItems { get; }
+
     /// <summary>The current misc capacity, including server overrides; zero on older games.</summary>
     int MiscSlots { get; }
     int MiscUsedSlots { get; }

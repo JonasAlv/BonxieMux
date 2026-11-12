@@ -4,7 +4,6 @@ using Skua.Core.Interfaces;
 using Skua.Core.Models;
 using Skua.Core.Models.Skills;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace Skua.Core.Skills;
 
@@ -35,99 +34,6 @@ public class AdvancedSkillContainer : ObservableRecipient, IAdvancedSkillContain
             File.Copy(rootDefaultSkills, _defaultSkillsSetsPath, true);
         }
         LoadSkills();
-
-        // Refresh source skills in the background on startup so users receive new classes without deleting local files.
-        _ = RefreshDefaultSkillsAsync();
-    }
-
-    private static async Task WriteFileAtomicallyAsync(string filePath, string contents)
-    {
-        string fullPath = Path.GetFullPath(filePath);
-        string directory = Path.GetDirectoryName(fullPath)
-            ?? throw new IOException($"Could not determine the directory for '{fullPath}'.");
-        Directory.CreateDirectory(directory);
-
-        string temporaryPath = Path.Combine(directory, $".{Path.GetFileName(fullPath)}.{Guid.NewGuid():N}.tmp");
-        try
-        {
-            await File.WriteAllTextAsync(temporaryPath, contents);
-
-            if (File.Exists(fullPath))
-            {
-                try
-                {
-                    File.Replace(temporaryPath, fullPath, null);
-                }
-                catch
-                {
-                    File.Move(temporaryPath, fullPath, overwrite: true);
-                }
-            }
-            else
-                File.Move(temporaryPath, fullPath);
-        }
-        finally
-        {
-            if (File.Exists(temporaryPath))
-                File.Delete(temporaryPath);
-        }
-    }
-
-    private async Task RefreshDefaultSkillsAsync()
-    {
-        try
-        {
-            ISettingsService settings = Ioc.Default.GetRequiredService<ISettingsService>();
-            if (!settings.Get<bool>("CheckAdvanceSkillSetsUpdates", false) ||
-                !settings.Get<bool>("AutoUpdateAdvanceSkillSetsUpdates", false))
-                return;
-
-            IGetScriptsService getScripts = Ioc.Default.GetRequiredService<IGetScriptsService>();
-            if (!await getScripts.UpdateSkillSetsFile() || !File.Exists(_defaultSkillsSetsPath))
-                return;
-
-            string defaultJson = await File.ReadAllTextAsync(_defaultSkillsSetsPath);
-            if (!File.Exists(_userSkillsSetsPath))
-            {
-                await WriteFileAtomicallyAsync(_userSkillsSetsPath, defaultJson);
-            }
-            else
-            {
-                JsonObject defaults = JsonNode.Parse(defaultJson) as JsonObject
-                    ?? throw new JsonException("AdvancedSkills.json did not contain a JSON object.");
-                string userJson = await File.ReadAllTextAsync(_userSkillsSetsPath);
-                JsonObject user = JsonNode.Parse(userJson) as JsonObject
-                    ?? throw new JsonException("UserAdvancedSkills.json did not contain a JSON object.");
-
-                // Add newly published classes/modes while preserving existing user customizations.
-                foreach (KeyValuePair<string, JsonNode?> classEntry in defaults)
-                {
-                    if (classEntry.Value is not JsonObject defaultModes)
-                        continue;
-
-                    if (user[classEntry.Key] is not JsonObject userModes)
-                    {
-                        user[classEntry.Key] = defaultModes.DeepClone();
-                        continue;
-                    }
-
-                    foreach (KeyValuePair<string, JsonNode?> modeEntry in defaultModes)
-                    {
-                        if (userModes[modeEntry.Key] == null && modeEntry.Value != null)
-                            userModes[modeEntry.Key] = modeEntry.Value.DeepClone();
-                    }
-                }
-
-                string mergedJson = user.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
-                await WriteFileAtomicallyAsync(_userSkillsSetsPath, mergedJson);
-            }
-
-            LoadSkills();
-        }
-        catch
-        {
-            // Keep the last known-good local skills if the source cannot be reached or parsed.
-        }
     }
 
     public void Add(AdvancedSkill skill)
@@ -188,68 +94,63 @@ public class AdvancedSkillContainer : ObservableRecipient, IAdvancedSkillContain
 
     public void LoadSkills()
     {
-        List<AdvancedSkill> loadedSkills = new();
-        AdvancedSkillsConfigJson? jsonConfig = null;
+        LoadedSkills.Clear();
+        _jsonConfig = null;
 
-        IScriptOption? options = Ioc.Default.GetService<IScriptOption>();
-        if (options == null || !options.UseFunctionBasedSkills)
+        _loadedFilePath = _userSkillsSetsPath;
+
+        if (File.Exists(_userSkillsSetsPath))
         {
-            _loadedFilePath = _userSkillsSetsPath;
-
-            if (!File.Exists(_userSkillsSetsPath))
-                _CopyDefaultSkills();
-
+            string fileContent = File.ReadAllText(_userSkillsSetsPath);
+            LoadFromJson(fileContent);
+        }
+        else
+        {
+            _CopyDefaultSkills();
             if (File.Exists(_userSkillsSetsPath))
             {
                 string fileContent = File.ReadAllText(_userSkillsSetsPath);
-                loadedSkills = LoadFromJson(fileContent, out jsonConfig);
+                LoadFromJson(fileContent);
             }
         }
 
-        // Swap in a complete snapshot; consumers holding the old list can finish safely.
-        _jsonConfig = jsonConfig;
-        LoadedSkills = loadedSkills;
+        OnPropertyChanged(nameof(LoadedSkills));
+        Broadcast(new(), _loadedSkills, nameof(LoadedSkills));
     }
 
-    private List<AdvancedSkill> LoadFromJson(string jsonContent, out AdvancedSkillsConfigJson? jsonConfig)
+    private void LoadFromJson(string jsonContent)
     {
-        List<AdvancedSkill> loadedSkills = new();
-        jsonConfig = null;
-
         try
         {
-            jsonConfig = JsonSerializer.Deserialize<AdvancedSkillsConfigJson>(jsonContent);
-            if (jsonConfig == null)
-                return loadedSkills;
+            _jsonConfig = JsonSerializer.Deserialize<AdvancedSkillsConfigJson>(jsonContent);
+            if (_jsonConfig == null)
+                return;
 
-            foreach (KeyValuePair<string, Dictionary<string, SkillModeJson>> classEntry in jsonConfig)
+            foreach (KeyValuePair<string, Dictionary<string, SkillModeJson>> classEntry in _jsonConfig)
             {
                 string className = classEntry.Key;
                 foreach (KeyValuePair<string, SkillModeJson> modeEntry in classEntry.Value)
                 {
                     string classUseMode = modeEntry.Key;
                     SkillModeJson skillMode = modeEntry.Value;
+
                     string skillsStr = ConvertSkillsToString(skillMode.Skills);
 
-                    loadedSkills.Add(new AdvancedSkill(
+                    AdvancedSkill loaded = new(
                         className,
                         skillsStr,
                         skillMode.SkillTimeout,
                         classUseMode,
                         skillMode.SkillUseMode == "UseIfAvailable" ? SkillUseMode.UseIfAvailable : SkillUseMode.WaitForCooldown,
                         skillMode.ResetComboOnTargetChange
-                    ));
+                    );
+                    if (skillMode.SkillTimeoutMs is int timeoutMs)
+                        loaded.SkillTimeoutMs = timeoutMs;
+                    _loadedSkills.Add(loaded);
                 }
             }
         }
-        catch
-        {
-            // Never publish a partially parsed skill set.
-            loadedSkills.Clear();
-            jsonConfig = null;
-        }
-
-        return loadedSkills;
+        catch { /* ignored */ }
     }
 
     private string ConvertSkillsToString(List<AdvancedSkillJson> skills)
@@ -260,7 +161,7 @@ public class AdvancedSkillContainer : ObservableRecipient, IAdvancedSkillContain
             string skillStr = skill.SkillId.ToString();
             if (skill.Rules?.Count > 0)
             {
-                skillStr += " " + ConvertRulesToString(skill.Rules, skill.MultiAura, skill.MultiAuraOperator);
+                skillStr += " " + ConvertRulesToString(skill.Rules, skill.MultiAura, skill.MultiAuraOperator, skill.RuleOperator == "OR");
             }
             if (skill.SkipOnMatch)
             {
@@ -271,7 +172,10 @@ public class AdvancedSkillContainer : ObservableRecipient, IAdvancedSkillContain
         return string.Join(" | ", parts);
     }
 
-    private string ConvertRulesToString(List<SkillRuleJson> rules, bool isMultiAura, string? multiAuraOperator)
+    /// <summary>
+    /// The rule text of one step. With <paramref name="matchAny"/> the conditions are joined by " OR " (a multi-aura group counts as one), otherwise by spaces.
+    /// </summary>
+    private string ConvertRulesToString(List<SkillRuleJson> rules, bool isMultiAura, string? multiAuraOperator, bool matchAny = false)
     {
         List<string> ruleParts = new();
         List<SkillRuleJson> multiAuraRules = new();
@@ -323,21 +227,28 @@ public class AdvancedSkillContainer : ObservableRecipient, IAdvancedSkillContain
                 };
             }
 
+            List<string> group = new();
             for (int i = 0; i < multiAuraRules.Count; i++)
             {
                 SkillRuleJson rule = multiAuraRules[i];
                 string suffix = i < multiAuraRules.Count - 1 ? opChar : "";
-                ruleParts.Add($"MA{(rule.Comparison == "greater" ? ">" : "<")}\"{rule.AuraName}\" {rule.Value}{(rule.AuraTarget == "target" ? " TARGET" : "")}{suffix}");
+                group.Add($"MA{(rule.Comparison == "greater" ? ">" : "<")}\"{rule.AuraName}\" {rule.Value}{(rule.AuraTarget == "target" ? " TARGET" : "")}{suffix}");
             }
+            ruleParts.Add(string.Join(" ", group));
         }
         else if (singleAuraRules.Count > 1)
         {
+            // Separate aura rules become one multi-aura group: joined like the step's other conditions, so with OR
+            // any one of them is enough (":"), otherwise all of them (as before, "&").
+            string opChar = matchAny ? ":" : "&";
+            List<string> group = new();
             for (int i = 0; i < singleAuraRules.Count; i++)
             {
                 SkillRuleJson rule = singleAuraRules[i];
-                string suffix = i < singleAuraRules.Count - 1 ? "&" : "";
-                ruleParts.Add($"MA{(rule.Comparison == "greater" ? ">" : "<")}\"{rule.AuraName}\" {rule.Value}{(rule.AuraTarget == "target" ? " TARGET" : "")}{suffix}");
+                string suffix = i < singleAuraRules.Count - 1 ? opChar : "";
+                group.Add($"MA{(rule.Comparison == "greater" ? ">" : "<")}\"{rule.AuraName}\" {rule.Value}{(rule.AuraTarget == "target" ? " TARGET" : "")}{suffix}");
             }
+            ruleParts.Add(string.Join(" ", group));
         }
         else if (singleAuraRules.Count == 1)
         {
@@ -345,7 +256,7 @@ public class AdvancedSkillContainer : ObservableRecipient, IAdvancedSkillContain
             ruleParts.Add($"A{(rule.Comparison == "greater" ? ">" : "<")}\"{rule.AuraName}\" {rule.Value}{(rule.AuraTarget == "target" ? " TARGET" : "")}");
         }
 
-        return string.Join(" ", ruleParts);
+        return string.Join(matchAny ? " OR " : " ", ruleParts);
     }
 
     public Dictionary<string, List<string>> GetAvailableClassModes()
@@ -421,6 +332,8 @@ public class AdvancedSkillContainer : ObservableRecipient, IAdvancedSkillContain
             {
                 SkillUseMode = skill.SkillUseMode == SkillUseMode.UseIfAvailable ? "UseIfAvailable" : "WaitForCooldown",
                 SkillTimeout = skill.SkillTimeout,
+                // Only when the ticks can't hold it exactly, so files stay as older versions write them.
+                SkillTimeoutMs = skill.SkillTimeoutMs > 0 && skill.SkillTimeoutMs % AdvancedSkill.TickMs != 0 ? skill.SkillTimeoutMs : null,
                 ResetComboOnTargetChange = skill.ResetComboOnTargetChange,
                 Skills = AdvancedSkillsParser.ParseSkillString(skill.Skills)
             };

@@ -584,7 +584,7 @@ public class CosmeticsService : IDisposable
 
         try
         {
-            var equippedItems = _bot.Inventory.Items?.Where(x => x.Equipped).ToList() ?? new List<InventoryItem>();
+            var equippedItems = _bot.Inventory.EquippedItems;
             var activeSlots = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "co", "he", "ba", "Weapon", "pe", "mi" };
 
             CurrentVisualSet.Clear();
@@ -1110,7 +1110,7 @@ public class CosmeticsService : IDisposable
             }
 
             // 3. Fallback to real inventory items equipped for any remaining empty slots
-            var realEquipped = _bot.Inventory.Items?.Where(x => x.Equipped).ToList();
+            var realEquipped = _bot.Inventory.EquippedItems;
             if (realEquipped != null && realEquipped.Count > 0)
             {
                 if (set.Armor == null)

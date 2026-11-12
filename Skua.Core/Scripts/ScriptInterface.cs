@@ -65,7 +65,7 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
     public IScriptHandlers Handlers { get; }
     public ICaptureProxy GameProxy { get; }
     public IScriptAccounts Accounts { get; }
-    public IScriptOptionContainer? Config => Manager.Config;
+    public IScriptOptionContainer? Config => Manager.RunningConfig ?? Manager.Config;
     public Random Random { get; set; } = new Random();
 
     public ScriptInterface(
@@ -309,13 +309,14 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 // Track connected gameplay regardless of whether a script is running.
                 _limit.LimitedRun("gameplayStats", 1000, () =>
                 {
-                    if (!currentInGame)
+                    if (!currentInGame || !Player.Loaded)
                     {
                         Stats.UpdateGameplaySnapshot(0, 0, 0, 0, 0, 0, 0, 0, false);
                         return;
                     }
 
-                    InventoryItem? equippedClass = Inventory.Items?.Find(item => item is { Equipped: true, Category: ItemCategory.Class });
+                    // EquippedItems, not Items: serializing the whole inventory every second would keep the game player busy.
+                    InventoryItem? equippedClass = Inventory.EquippedItems.Find(item => item.Category == ItemCategory.Class);
                     // iCurCP is progress within the current class rank; iCPToRank is that rank's point requirement.
                     int currentClassPoints = Flash.GetGameObject<int>("world.myAvatar.objData.iCurCP", 0);
                     int classPointsToRank = Flash.GetGameObject<int>("world.myAvatar.objData.iCPToRank", 0);
@@ -332,7 +333,7 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                     wasPlaying = true;
                     disconnectedSince = 0;
                     Servers.LastIP = Player.ServerIP ?? Servers.LastIP;
-                    if (Servers.IsIntentionalLogout)
+                    if (Servers.IsIntentionalLogout && !Servers.IsLogoutInProgress)
                         Servers.IsIntentionalLogout = false;
 
                     if (!catching)
@@ -477,7 +478,8 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                         if (Options.AutoRelogin)
                             BeginLogout();
                         else
-                            Servers.DisconnectForRelogin();
+                            if (!Servers.IsReloginInProgress)
+                Servers.DisconnectForRelogin();
                         return;
                     }
                     Map.Join(Map.LastMap);
@@ -488,7 +490,8 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                 if (Options.AutoRelogin)
                     BeginLogout();
                 else
-                    Servers.DisconnectForRelogin();
+                    if (!Servers.IsReloginInProgress)
+                Servers.DisconnectForRelogin();
             }
         }
         if (connDetail == lastConnDetail)

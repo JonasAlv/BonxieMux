@@ -163,7 +163,7 @@ public partial class ScriptPlayer : IScriptPlayer
             }
             catch { }
 
-            return Inventory.Items?.Find(i => i is { Equipped: true, Category: ItemCategory.Class });
+            return Inventory.EquippedItems.Find(i => i.Category == ItemCategory.Class);
         }
     }
 

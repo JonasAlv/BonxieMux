@@ -58,6 +58,8 @@ public partial class ScriptTargetAuras : IScriptTargetAuras
 
     public int GetAuraStacks(string auraName) => GetAuraSnapshot(auraName)?.Stacks ?? 0;
 
+    public float GetAuraRuleStacks(string auraName) => Flash.Call<float>("GetAuraRuleStacks", nameof(SubjectType.Target), auraName);
+
     public Aura? GetAura(string auraName)
     {
         return Auras.FirstOrDefault(a => a.Name.Equals(auraName, StringComparison.OrdinalIgnoreCase));

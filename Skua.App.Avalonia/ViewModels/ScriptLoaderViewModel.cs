@@ -139,11 +139,11 @@ public partial class ScriptLoaderViewModel : BotControlViewModelBase
     }
 
     [RelayCommand]
-    private void TogglePauseScript()
+    private async Task TogglePauseScript()
     {
         if (ScriptManager.ScriptRunning)
         {
-            ScriptManager.ScriptPaused = !ScriptManager.ScriptPaused;
+            await ScriptManager.SetPausedAsync(!ScriptManager.ScriptPaused);
             ScriptStatus = ScriptManager.ScriptPaused ? "[Paused]" : "[Running]";
             OnPropertyChanged(nameof(TogglePauseScriptText));
             OnPropertyChanged(nameof(TogglePauseScriptIcon));

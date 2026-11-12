@@ -38,6 +38,11 @@ public interface IOptionContainer
     List<string> ResetOptions { get; }
 
     /// <summary>
+    /// Saved enum choices that no longer exist and were reset to their defaults by the last <see cref="Load"/>.
+    /// </summary>
+    IReadOnlyList<string> ResetNotices => ResetOptions;
+
+    /// <summary>
     /// Gets the option's value.
     /// </summary>
     /// <typeparam name="T">The type to return the value as.</typeparam>

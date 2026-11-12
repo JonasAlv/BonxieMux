@@ -1,10 +1,10 @@
+﻿using System.Diagnostics;
 using CommunityToolkit.Mvvm.Messaging;
 using Skua.Core.Flash;
 using Skua.Core.Interfaces;
 using Skua.Core.Messaging;
 using Skua.Core.Models.Skills;
 using Skua.Core.Skills;
-using System.Diagnostics;
 
 namespace Skua.Core.Scripts;
 
@@ -66,6 +66,18 @@ public partial class ScriptSkill : IScriptSkill
         return false;
     }
 
+    [MethodCallBinding("skillCooldownRemaining")]
+    private int _skillCooldownRemaining(int index)
+    {
+        return 0;
+    }
+
+    [MethodCallBinding("globalCooldownRemaining")]
+    private int _globalCooldownRemaining()
+    {
+        return 0;
+    }
+
     [MethodCallBinding("useSkill")]
     private bool _useSkill(int index)
     {
@@ -77,18 +89,43 @@ public partial class ScriptSkill : IScriptSkill
     public bool TimerRunning { get; private set; } = false;
     public bool IsPaused { get; private set; } = false;
     public int SkillInterval { get; set; } = 100;
+    
+    private int _skillTimeoutMs = -1;
 
-    public int SkillTimeout { get; set; } = -1;
+    // Set when the timeout was given in intervals (SkillTimeout, StartAdvanced(skills, timeout, mode)): it then stays a
+    // count of intervals and follows SkillInterval at the time of the wait, as it always did.
+    private int? _skillTimeoutIntervals;
+
+    public int SkillTimeoutMs
+    {
+        get => _skillTimeoutIntervals is int intervals
+            ? (intervals <= 0 ? intervals : (int)Math.Min(int.MaxValue, (long)intervals * Math.Max(1, SkillInterval)))
+            : _skillTimeoutMs;
+        set
+        {
+            _skillTimeoutMs = value;
+            _skillTimeoutIntervals = null;
+        }
+    }
+
+    public int SkillTimeout
+    {
+        get => _skillTimeoutIntervals
+            ?? (_skillTimeoutMs <= 0 ? _skillTimeoutMs : (int)(((long)_skillTimeoutMs + Math.Max(1, SkillInterval) - 1) / Math.Max(1, SkillInterval)));
+        set => _skillTimeoutIntervals = value;
+    }
+
+    public bool ResetComboOnTargetChange { get; set; } = false;
 
     public SkillUseMode SkillUseMode { get; set; } = SkillUseMode.UseIfAvailable;
     private ManualResetEvent _pauseEvent = new(true);
 
+
     public void Start()
     {
-        _lastRank = -1;
         if (BaseProvider is null)
         {
-            BaseProvider = new AdvancedSkillProvider(Player, Self, Target, Combat, Flash);
+            BaseProvider = CreateAdvancedSkillProvider();
             BaseProvider.Load(genericSkills);
             _provider = BaseProvider;
         }
@@ -156,11 +193,10 @@ public partial class ScriptSkill : IScriptSkill
 
     public void LoadAdvanced(string className, bool autoEquip, ClassUseMode useMode = ClassUseMode.Base)
     {
-        _lastRank = -1;
-        OverrideProvider = new AdvancedSkillProvider(Player, Self, Target, Combat, Flash);
-
         if (className == "generic")
         {
+            ResetComboOnTargetChange = false;
+            OverrideProvider = CreateAdvancedSkillProvider();
             OverrideProvider.Load(genericSkills);
             SkillUseMode = SkillUseMode.UseIfAvailable;
             return;
@@ -178,21 +214,30 @@ public partial class ScriptSkill : IScriptSkill
             if (string.Equals(s.ClassName, className, StringComparison.CurrentCultureIgnoreCase))
                 skills.Add(s);
         }
+
         if (skills.Count == 0)
         {
+            ResetComboOnTargetChange = false;
+            OverrideProvider = CreateAdvancedSkillProvider();
             OverrideProvider.Load(genericSkills);
             SkillUseMode = SkillUseMode.UseIfAvailable;
             return;
         }
+
         AdvancedSkill skill = skills.Find(s => s.ClassUseMode == useMode) ?? skills.FirstOrDefault()!;
+
+        ResetComboOnTargetChange = skill.ResetComboOnTargetChange;
+
+        OverrideProvider = CreateAdvancedSkillProvider();
         OverrideProvider.Load(skill.Skills);
-        SkillTimeout = skill.SkillTimeout;
+        SkillTimeoutMs = skill.SkillTimeoutMs;
         SkillUseMode = skill.SkillUseMode;
     }
 
     public void LoadAdvanced(string skills, int skillTimeout = -1, SkillUseMode skillMode = SkillUseMode.UseIfAvailable)
     {
-        OverrideProvider = new AdvancedSkillProvider(Player, Self, Target, Combat, Flash);
+        ResetComboOnTargetChange = false;
+        OverrideProvider = CreateAdvancedSkillProvider();
         SkillTimeout = skillTimeout;
         SkillUseMode = skillMode;
         OverrideProvider.Load(skills);
@@ -214,14 +259,18 @@ public partial class ScriptSkill : IScriptSkill
                     Inventory.EquipItem(className);
                     Wait.ForItemEquip(className);
                 }
-                OverrideProvider = new AdvancedSkillProvider(Player, Self, Target, Combat, Flash);
+
+                ResetComboOnTargetChange = skill.ResetComboOnTargetChange;
+
+                OverrideProvider = CreateAdvancedSkillProvider();
                 OverrideProvider.Load(skill.Skills);
-                SkillTimeout = skill.SkillTimeout;
+                SkillTimeoutMs = skill.SkillTimeoutMs;
                 SkillUseMode = skill.SkillUseMode;
             }
             else
             {
-                OverrideProvider = new AdvancedSkillProvider(Player, Self, Target, Combat, Flash);
+                ResetComboOnTargetChange = false;
+                OverrideProvider = CreateAdvancedSkillProvider();
                 OverrideProvider.Load(genericSkills);
                 SkillUseMode = SkillUseMode.UseIfAvailable;
             }
@@ -240,34 +289,57 @@ public partial class ScriptSkill : IScriptSkill
         while (!token.IsCancellationRequested)
         {
             _pauseEvent.WaitOne();
-            if (Combat.StopAttacking)
+            int delay = SkillInterval;
+            try
             {
-                if (WaitForCounterAttack(token))
-                    Combat.StopAttacking = false;
+                if (Combat.StopAttacking)
+                {
+                    if (WaitForCounterAttack(token))
+                        Combat.StopAttacking = false;
+                }
+
+                if (!Player.Alive)
+                {
+                    _provider?.OnPlayerDeath();
+                }
+
+                // target reset if player has no target
+                if (_provider?.OnTargetReset() == true)
+                    continue;
+
+                // if the player has target or bot attack without target option is on
+                // then activate the skills
+                if ((Options.AttackWithoutTarget && Player is { Loaded: true, Playing: true }) || Player is { HasTarget: true, Loaded: true, Playing: true })
+                {
+                    // No skill can be used while the global cooldown runs, and a turn taken then would only skip the
+                    // next skill: take turns only when it is over, and sleep until it ends (at most SkillInterval at a time).
+                    int globalCooldown = GlobalCooldownRemaining();
+                    if (globalCooldown <= 0)
+                    {
+                        delay = _Poll(token);
+                        globalCooldown = GlobalCooldownRemaining();
+                    }
+
+                    if (globalCooldown > 0)
+                        delay = Math.Min(globalCooldown, SkillInterval);
+                }
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                // One failed turn (game data missing for a moment, say) must not end the skill timer for good.
+                Trace.WriteLine($"Skill timer: {e.GetType().Name}: {e.Message}");
             }
 
-            if (!Player.Alive)
-            {
-                _provider?.OnPlayerDeath();
-            }
-
-            // if the player has target or bot attack without target option is on
-            // then activate the skills
-            if ((Options.AttackWithoutTarget && Player is { Loaded: true, Playing: true }) || Player is { HasTarget: true, Loaded: true, Playing: true })
-            {
-                _Poll(token);
-            }
-
-            // target reset if player has no target
-            _provider?.OnTargetReset();
-
-            // wait for skill interval
             if (!token.IsCancellationRequested)
-                await Task.Delay(SkillInterval, token);
+                await Task.Delay(delay, token);
         }
     }
 
-    private void _Poll(CancellationToken token)
+    /// <summary>
+    /// Takes one turn of the rotation.
+    /// </summary>
+    /// <returns>How long to sleep before the next turn, in milliseconds, if no global cooldown is running.</returns>
+    private int _Poll(CancellationToken token)
     {
         // if the current player has skills and the current class rank is different from the last rank
         // then update the skills since classes will enable a certain skill base on the rank
@@ -296,39 +368,58 @@ public partial class ScriptSkill : IScriptSkill
         // Store the last rank if the player is ranking up
         _lastRank = Player.CurrentClassRank;
         if (token.IsCancellationRequested)
-            return;
+            return SkillInterval;
 
-        (int index, int skillS) = _provider!.GetNextSkill();
-
-        if (index == -1 || skillS == -1)
-            return;
-
-        switch (_provider?.ShouldUseSkill(index, CanUseSkill(skillS)))
+        // Use if Available goes through the steps in order and uses the first one that can be used now: a step whose
+        // skill cannot be used is passed over at once rather than costing a whole SkillInterval. After a round with
+        // nothing used the rotation is back where it started, and the timer sleeps until the soonest of them is ready.
+        bool tryEachStep = SkillUseMode == SkillUseMode.UseIfAvailable;
+        int stepCount = Math.Max(1, _provider!.SkillCount);
+        int steps = tryEachStep ? stepCount : 1;
+        int soonest = int.MaxValue;
+        for (int step = 0; step < steps && !token.IsCancellationRequested; step++)
         {
-            case true:
-                if (_playerSkills is not null && skillS < _playerSkills.Length && !_playerSkills[skillS].IsOk)
-                {
-                    break;
-                }
-                UseSkill(skillS);
-                break;
+            // A new target restarts the rotation (when set to): stop here, and the next turn starts from the top.
+            if (step > 0 && _provider?.OnTargetReset() == true)
+                return 1;
 
-            case null:
-                (int indexS, int skill) = _provider!.GetNextSkill();
-                if (indexS == -1 || skill == -1)
-                    break;
-                if (_playerSkills is not null && skill < _playerSkills.Length && !_playerSkills[skill].IsOk)
-                {
-                    break;
-                }
-                UseSkill(skill);
-                break;
+            (int index, int skillS) = _provider!.GetNextSkill();
 
-            default:
-                break;
+            if (index == -1 || skillS == -1)
+                return SkillInterval;
+
+            bool canUse = Usable(skillS);
+            if (tryEachStep && !canUse)
+            {
+                int left = SkillCooldownRemaining(skillS);
+                if (left > 0)
+                    soonest = Math.Min(soonest, left);
+                continue;
+            }
+
+            switch (_provider?.ShouldUseSkill(index, canUse))
+            {
+                case true:
+                    if (_playerSkills is not null && skillS < _playerSkills.Length && !_playerSkills[skillS].IsOk)
+                    {
+                        break;
+                    }
+                    UseSkill(skillS);
+                    return SkillInterval;
+
+                case null:
+                    // Skipped ("Skip if not available"): the next step gets its turn now, with its own rules checked,
+                    // rather than after a SkillInterval. At most one round, so a rotation of skipped steps still sleeps.
+                    if (steps < stepCount)
+                        steps++;
+                    break;
+
+                default:
+                    break;
+            }
         }
 
-        return;
+        return soonest == int.MaxValue ? SkillInterval : Math.Min(soonest, SkillInterval);
 
         // This method will activate a skill
         void UseSkill(int skill)
@@ -337,17 +428,69 @@ public partial class ScriptSkill : IScriptSkill
             {
                 // if SkillUseMode is UseIfAvailable then use skills without waiting for cooldown
                 case SkillUseMode.UseIfAvailable:
-                    if ((Options.AttackWithoutTarget || CanUseSkill(skill)) && !Combat.StopAttacking)
+                    if (Usable(skill) && !Combat.StopAttacking)
                         this.UseSkill(skill);
                     break;
 
                 // if SkillUseMode is WaitForCooldown then use skills with waiting for cooldown
                 case SkillUseMode.WaitForCooldown:
-                    if (Options.AttackWithoutTarget || (skill != -1 && Wait.ForTrue(() => CanUseSkill(skill), null, SkillTimeout, SkillInterval) && !Combat.StopAttacking))
+                    if (skill == -1)
+                        break;
+
+                    bool canUseAfterWait = WaitUntilUsable(skill, token, out bool targetReset);
+
+                    if (targetReset)
+                        return;
+
+                    if (canUseAfterWait && !Combat.StopAttacking)
                         this.UseSkill(skill);
+
                     break;
             }
         }
+    }
+
+    /// <summary>
+    /// Whether the skill can be used now. With <see cref="IScriptOption.AttackWithoutTarget"/> the target is not checked (the game picks one in range
+    /// itself), but everything else the game would refuse is: cooldowns, mana, the potion slot, stuns, locked skills.
+    /// </summary>
+    private bool Usable(int skill) => Options.AttackWithoutTarget ? Flash.Call<bool>("canUseSkill", skill, true) : CanUseSkill(skill);
+
+    /// <summary>
+    /// Waits for the skill's cooldown to end, for up to <see cref="SkillTimeoutMs"/> (no limit when not above 0).
+    /// It sleeps for the time left rather than a whole <see cref="SkillInterval"/>, so the skill is used as soon as it is ready,
+    /// but never longer than <see cref="SkillInterval"/> at a time, so a target change is still noticed.
+    /// A skill held up by anything else (mana, a stun, an empty potion slot, a locked skill, no target) is not waited for: it would
+    /// not clear by waiting, or not reliably, so the rotation moves on, as it did when the game refused the skill.
+    /// </summary>
+    /// <returns><see langword="true"/> if the skill can be used.</returns>
+    private bool WaitUntilUsable(int skill, CancellationToken token, out bool targetReset)
+    {
+        targetReset = false;
+        long deadline = SkillTimeoutMs > 0 ? Environment.TickCount64 + SkillTimeoutMs : long.MaxValue;
+        while (!token.IsCancellationRequested)
+        {
+            if (_provider?.OnTargetReset() == true)
+            {
+                targetReset = true;
+                return false;
+            }
+
+            if (Usable(skill))
+                return true;
+
+            int cooldown = SkillCooldownRemaining(skill);
+            if (cooldown <= 0)
+                return Usable(skill); // its cooldown may have ended between the two reads
+
+            long left = deadline - Environment.TickCount64;
+            if (left <= 0)
+                return false;
+
+            token.WaitHandle.WaitOne((int)Math.Max(1, Math.Min(Math.Min(cooldown, SkillInterval), left)));
+        }
+
+        return false;
     }
 
     // Longest wait when attacks were stopped by something other than a counter attack (a script setting StopAttacking).
@@ -383,4 +526,14 @@ public partial class ScriptSkill : IScriptSkill
         }
         return !_counterAttackActive;
     }
+    private AdvancedSkillProvider CreateAdvancedSkillProvider()
+    {
+        return new AdvancedSkillProvider(Player, Self, Target, Combat, Flash)
+        {
+            ResetOnTarget = ResetComboOnTargetChange
+        };
+    }
+
 }
+
+

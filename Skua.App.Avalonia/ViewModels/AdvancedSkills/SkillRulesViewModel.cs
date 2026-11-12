@@ -31,6 +31,7 @@ public partial class SkillRulesViewModel : ObservableRecipient
         PartyMemberHealthIsPercentage = rules.PartyMemberHealthIsPercentage;
         MultiAuraBool = rules.MultiAuraBool;
         MultiAuraOperatorIndex = rules.MultiAuraOperatorIndex;
+        MatchAnyBool = rules.MatchAnyBool;
         foreach (AuraCheckViewModel check in rules.MultiAuraChecks)
         {
             MultiAuraChecks.Add(new AuraCheckViewModel(check));
@@ -42,6 +43,10 @@ public partial class SkillRulesViewModel : ObservableRecipient
 
     [ObservableProperty]
     private bool _multiAuraBool;
+
+    /// <summary>Use the skill when any of its conditions holds (OR), not only when all of them do.</summary>
+    [ObservableProperty]
+    private bool _matchAnyBool;
 
     [ObservableProperty]
     private bool _healthGreaterThanBool = true;
@@ -203,5 +208,6 @@ public partial class SkillRulesViewModel : ObservableRecipient
         MultiAuraBool = false;
         MultiAuraChecks.Clear();
         MultiAuraOperatorIndex = 0;
+        MatchAnyBool = false;
     }
 }

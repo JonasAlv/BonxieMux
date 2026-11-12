@@ -71,6 +71,16 @@ public interface IScriptServers : INotifyPropertyChanged
     bool IsIntentionalLogout { get; set; }
 
     /// <summary>
+    /// Indicates whether a relogin sequence is currently in progress.
+    /// </summary>
+    bool IsReloginInProgress => false;
+
+    /// <summary>
+    /// Indicates whether an intentional logout is currently in progress.
+    /// </summary>
+    bool IsLogoutInProgress => false;
+
+    /// <summary>
     /// The list of available game servers.
     /// </summary>
     List<Server> ServerList { get; }

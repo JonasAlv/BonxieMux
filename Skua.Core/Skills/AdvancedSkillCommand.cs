@@ -1,4 +1,5 @@
-using Skua.Core.Interfaces;
+﻿using Skua.Core.Interfaces;
+using Skua.Core.Models.Players;
 
 namespace Skua.Core.Skills;
 
@@ -16,6 +17,10 @@ public class AdvancedSkillCommand
 
     public Dictionary<int, int> Skills { get; set; } = new();
     public List<UseRule[]> UseRules { get; set; } = new();
+
+    /// <summary>Per step: <see langword="true"/> when the step is used if any of its conditions holds (OR), not only all of them.</summary>
+    public List<bool> MatchAny { get; set; } = new();
+
     private int _index = 0;
 
     public int SkillCount => Skills.Count;
@@ -27,7 +32,6 @@ public class AdvancedSkillCommand
 
         int skill = Skills[_index];
         int index = _index;
-
         ++_index;
         if (_index >= Skills.Count)
             _index = 0;
@@ -39,63 +43,42 @@ public class AdvancedSkillCommand
         if (skillIndex < 0 || skillIndex >= UseRules.Count)
             return true;
 
-        if (UseRules.Count == 0 || UseRules[skillIndex].First().Rule == SkillRule.None)
+        // "Skip if not available": a step whose skill cannot be used now is passed over at once, rather than waited
+        // for (Wait for Cooldown). The flag is the same on every rule of the step.
+        if (!canUse && UseRules[skillIndex].Any(r => r.ShouldSkip))
+            return null;
+
+        if (UseRules[skillIndex].First().Rule == SkillRule.None)
             return true;
 
+        bool matchAny = skillIndex < MatchAny.Count && MatchAny[skillIndex];
         bool shouldUse = true;
-        
-        // BULK FETCHING: Fetch all combat stats at once to avoid multiple COM calls
-        dynamic? dataLeaf = null;
-        if (_flash != null && UseRules[skillIndex].Any(r => r.Rule == SkillRule.Health || r.Rule == SkillRule.Mana))
-        {
-            try { dataLeaf = _flash.GetGameObject<dynamic>("world.myAvatar.dataLeaf"); } catch { }
-        }
-
+        bool anyCondition = false, anyHeld = false, skipIfNone = false;
         foreach (UseRule useRule in UseRules[skillIndex])
         {
             if (!player.Alive)
                 return false;
 
-            switch (useRule.Rule)
+            if (useRule.Rule == SkillRule.Wait)
             {
-                case SkillRule.Health:
-                    shouldUse = HealthUseRule(player, dataLeaf, useRule.Greater, (int)useRule.Value, useRule.IsPercentage);
-                    break;
-
-                case SkillRule.Mana:
-                    shouldUse = ManaUseRule(player, dataLeaf, useRule.Greater, (int)useRule.Value, useRule.IsPercentage);
-                    break;
-
-                case SkillRule.Aura:
-                    List<AuraCheck> singleCheck = new()
-                    {
-                            new() {
-                                AuraName = useRule.AuraName,
-                                AuraTarget = useRule.AuraTarget,
-                                Greater = useRule.Greater,
-                                StackCount = useRule.Value
-                            }
-                        };
-                    shouldUse = AuraUseRule(player, self, target, singleCheck);
-                    break;
-
-                case SkillRule.MultiAura:
-                    shouldUse = MultiAuraUseRule(player, self, target, useRule.MultiAuraChecks, useRule.MultiAuraOperator);
-                    break;
-
-                case SkillRule.PartyHealth:
-                    shouldUse = PartyHealthUseRule(player, useRule.Greater, (int)useRule.Value, useRule.IsPercentage);
-                    break;
-
-                case SkillRule.Wait:
-                    if (useRule.ShouldSkip && !canUse)
-                        return null;
-                    Task.Delay((int)useRule.Value).Wait();
-                    break;
-
-                case SkillRule.None:
-                    break;
+                Task.Delay((int)useRule.Value).Wait();
+                continue;
             }
+
+            if (useRule.Rule == SkillRule.None)
+                continue;
+
+            if (matchAny)
+            {
+                // OR: one condition that holds is enough; the rest need not be read.
+                anyCondition = true;
+                skipIfNone |= useRule.ShouldSkip;
+                if (!anyHeld)
+                    anyHeld = Holds(useRule, player, self, target);
+                continue;
+            }
+
+            shouldUse = Holds(useRule, player, self, target);
 
             if (useRule.ShouldSkip && !shouldUse)
                 return null;
@@ -103,45 +86,77 @@ public class AdvancedSkillCommand
             if (!shouldUse)
                 break;
         }
+
+        if (matchAny)
+            return !anyCondition || anyHeld ? true : skipIfNone ? null : false;
+
         return shouldUse;
     }
 
-    private bool HealthUseRule(IScriptPlayer player, dynamic? dataLeaf, bool greater, int health, bool isPercentage = true)
+    private bool Holds(UseRule useRule, IScriptPlayer player, IScriptSelfAuras self, IScriptTargetAuras target)
     {
-        int currentHp = dataLeaf != null ? (int)dataLeaf.intHP : player.Health;
-        int maxHp = dataLeaf != null ? (int)dataLeaf.intHPMax : player.MaxHealth;
+        switch (useRule.Rule)
+        {
+            case SkillRule.Health:
+                return HealthUseRule(player, useRule.Greater, (int)useRule.Value, useRule.IsPercentage);
 
-        if (currentHp == 0)
+            case SkillRule.Mana:
+                return ManaUseRule(player, useRule.Greater, (int)useRule.Value, useRule.IsPercentage);
+
+            case SkillRule.Aura:
+                List<AuraCheck> singleCheck = new()
+                {
+                    new()
+                    {
+                        AuraName = useRule.AuraName,
+                        AuraTarget = useRule.AuraTarget,
+                        Greater = useRule.Greater,
+                        StackCount = useRule.Value
+                    }
+                };
+                return AuraUseRule(player, self, target, singleCheck);
+
+            case SkillRule.MultiAura:
+                return MultiAuraUseRule(player, self, target, useRule.MultiAuraChecks, useRule.MultiAuraOperator);
+
+            case SkillRule.PartyHealth:
+                return PartyHealthUseRule(player, useRule.Greater, (int)useRule.Value, useRule.IsPercentage);
+
+            default:
+                return true;
+        }
+    }
+
+    private bool HealthUseRule(IScriptPlayer player, bool greater, int health, bool isPercentage = true)
+    {
+        if (player.Health == 0)
             return false;
 
         if (isPercentage)
         {
-            if (maxHp == 0)
+            if (player.MaxHealth == 0)
                 return false;
-            int ratio = (int)(currentHp / (double)maxHp * 100.0);
+            int ratio = (int)(player.Health / (double)player.MaxHealth * 100.0);
             return greater ? ratio >= health : ratio <= health;
         }
         else
         {
-            return greater ? currentHp >= health : currentHp <= health;
+            return greater ? player.Health >= health : player.Health <= health;
         }
     }
 
-    private bool ManaUseRule(IScriptPlayer player, dynamic? dataLeaf, bool greater, int mana, bool isPercentage = true)
+    private bool ManaUseRule(IScriptPlayer player, bool greater, int mana, bool isPercentage = true)
     {
-        int currentMp = dataLeaf != null ? (int)dataLeaf.intMP : player.Mana;
-        int maxMp = dataLeaf != null ? (int)dataLeaf.intMPMax : player.MaxMana;
-
         if (isPercentage)
         {
-            if (maxMp == 0)
+            if (player.MaxMana == 0)
                 return false;
-            int ratio = (int)(currentMp / (double)maxMp * 100.0);
+            int ratio = (int)(player.Mana / (double)player.MaxMana * 100.0);
             return greater ? ratio >= mana : ratio <= mana;
         }
         else
         {
-            return greater ? currentMp >= mana : currentMp <= mana;
+            return greater ? player.Mana >= mana : player.Mana <= mana;
         }
     }
 
@@ -151,18 +166,19 @@ public class AdvancedSkillCommand
             return false;
         try
         {
-            dynamic[]? players = _flash.GetGameObject<dynamic[]>("world.players");
-            if (players == null || players.Length == 0)
+            // world.uoTree holds every player in the map by name, this one included (the game has no world.players).
+            Dictionary<string, PlayerInfo>? players = _flash.GetGameObject<Dictionary<string, PlayerInfo>>("world.uoTree");
+            if (players == null || players.Count == 0)
                 return false;
 
-            foreach (dynamic targetPlayer in players)
+            string cell = player.Cell;
+            foreach (PlayerInfo? targetPlayer in players.Values)
             {
-                string? targetCell = targetPlayer.strFrame;
-                if (string.IsNullOrEmpty(targetCell) || targetCell != player.Cell)
+                if (targetPlayer is null || string.IsNullOrEmpty(targetPlayer.Cell) || !targetPlayer.Cell.Equals(cell, StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                int targetHealth = targetPlayer.dataLeaf.intHP;
-                int targetMaxHealth = targetPlayer.dataLeaf.intHPMax;
+                int targetHealth = targetPlayer.HP;
+                int targetMaxHealth = targetPlayer.MaxHP;
 
                 if (targetHealth == 0 || (isPercentage && targetMaxHealth == 0))
                     continue;
@@ -230,11 +246,14 @@ public class AdvancedSkillCommand
 
     private float GetAuraStacks(IScriptPlayer player, IScriptSelfAuras self, IScriptTargetAuras target, string auraTarget, string auraName)
     {
+        // The HUD stack count or the summed aura values, whichever is higher: rules were written against the summed
+        // values (Lich's Ex Mortis has value 2 but no HUD stack count, so the HUD shows 1), and auras the server
+        // stacks with a stack count read as the HUD shows them.
         if (auraTarget.Equals("self", StringComparison.OrdinalIgnoreCase))
-            return self.GetAuraStacks(auraName);
+            return self.GetAuraRuleStacks(auraName);
 
         if (auraTarget.Equals("target", StringComparison.OrdinalIgnoreCase) && player.HasTarget)
-            return target.GetAuraStacks(auraName);
+            return target.GetAuraRuleStacks(auraName);
 
         return 0;
     }

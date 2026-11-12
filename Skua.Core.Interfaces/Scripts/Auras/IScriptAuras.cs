@@ -27,6 +27,11 @@ public interface IScriptAuras
     int GetAuraStacks(string auraName);
 
     /// <summary>
+    /// Gets the stack count or summed aura value used by Advanced Skills aura rules (HUD stacks or summed values, whichever is higher).
+    /// </summary>
+    float GetAuraRuleStacks(string auraName);
+
+    /// <summary>
     /// Checks if the subtype has active <paramref name="auraName"/>.
     /// </summary>
     /// <param name="auraName">The aura name.</param>

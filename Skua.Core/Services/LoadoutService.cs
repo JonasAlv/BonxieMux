@@ -203,7 +203,7 @@ public class LoadoutService : ILoadoutService
     {
         EnsureLoaded();
         var profile = new LoadoutProfile { Name = name };
-        var equipped = _bot.Inventory.Items.Where(i => i.Equipped);
+        var equipped = _bot.Inventory.EquippedItems;
         foreach (var item in equipped)
         {
             string cleanName = item.Name.Replace("&amp;", "&");
