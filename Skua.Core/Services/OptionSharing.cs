@@ -137,7 +137,10 @@ public static class OptionSharing
                 object value = p.PropertyType == typeof(bool) ? bool.Parse(text)
                     : p.PropertyType == typeof(int) ? int.Parse(text, System.Globalization.CultureInfo.InvariantCulture) : text;
                 if (!Equals(p.GetValue(options), value))
-                    p.SetValue(options, value);
+                {
+                    using (Skua.Core.Scripts.ScriptOption.BeginTrustedFpsWrite())
+                        p.SetValue(options, value);
+                }
                 break;
         }
     }

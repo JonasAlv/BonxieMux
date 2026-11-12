@@ -464,10 +464,36 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         }
         else
         {
-            recipient.LagKiller = recipient._userLagKiller;
-            recipient.SetFPS = recipient._userSetFPS;
-            recipient.RestoreLiteAnimationState();
+            recipient.RestoreUserStateWithGuard(epoch);
         }
+    }
+
+    private void RestoreUserStateWithGuard(long expectedEpoch)
+    {
+        LagKiller = _userLagKiller;
+        using (BeginTrustedFpsWrite())
+            SetFPS = _userSetFPS;
+        RestoreLiteAnimationState(clearSnapshot: false);
+
+        // CoreBots.StopBotAsync runs a background Task.Run on stop that resets Lite flags and
+        // calls world.toggleMonsters without awaiting. Re-assert user state after a short settle delay.
+        _ = Task.Run(async () =>
+        {
+            int[] delaysMs = [250, 600];
+            for (int i = 0; i < delaysMs.Length; i++)
+            {
+                await Task.Delay(delaysMs[i]).ConfigureAwait(false);
+                lock (_antiLagSyncLock)
+                {
+                    if (_antiLagEpoch != expectedEpoch || _anyAntiLagApplied || _scriptRunning)
+                        return;
+                }
+                LagKiller = _userLagKiller;
+                using (BeginTrustedFpsWrite())
+                    SetFPS = _userSetFPS;
+                RestoreLiteAnimationState(clearSnapshot: i == delaysMs.Length - 1);
+            }
+        });
     }
 
     private void ApplyCrowdMode(bool enabled, string? modeOverride = null)
@@ -759,14 +785,31 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
     private int _setFPS = 24;
     private int _userSetFPS = 24;
+    [ThreadStatic]
+    private static bool _allowTrustedFpsWrite;
+
+    internal static IDisposable BeginTrustedFpsWrite() => new TrustedFpsWriteScope();
+
+    private readonly struct TrustedFpsWriteScope : IDisposable
+    {
+        private readonly bool _previous;
+
+        public TrustedFpsWriteScope()
+        {
+            _previous = _allowTrustedFpsWrite;
+            _allowTrustedFpsWrite = true;
+        }
+
+        public void Dispose() => _allowTrustedFpsWrite = _previous;
+    }
 
     public int SetFPS
     {
         get => _setFPS;
         set
         {
-            // Ignore script-side FPS overrides (e.g. CoreBots setting 30) so the user's Options > Game FPS always wins.
-            if (Thread.CurrentThread.Name == "Script Thread")
+            // Ignore script-side FPS overrides (including CoreBots' Task.Run) so the user's Options > Game FPS always wins.
+            if (!_allowTrustedFpsWrite && (Thread.CurrentThread.Name == "Script Thread" || Thread.CurrentThread.IsThreadPoolThread))
                 return;
 
             if (CommunityToolkit.Mvvm.DependencyInjection.Ioc.Default.GetService<IScriptManager>()?.ScriptRunning != true)
