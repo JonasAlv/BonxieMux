@@ -6,7 +6,7 @@
              x:Class="Skua.App.Avalonia.Views.CBOptionsView"
              x:DataType="vms:CBOptionsViewModel">
   <Grid RowDefinitions="Auto,*" RowSpacing="8">
-    <TextBox Grid.Row="0" Watermark="Filter CoreBots settings, delays, and parameters..." Text="{Binding SearchText, Mode=TwoWay}">
+    <TextBox Grid.Row="0" PlaceholderText="Filter CoreBots settings, delays, and parameters..." Text="{Binding SearchText, Mode=TwoWay}">
       <TextBox.InnerLeftContent>
         <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
       </TextBox.InnerLeftContent>

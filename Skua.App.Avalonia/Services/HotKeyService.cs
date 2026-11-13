@@ -36,8 +36,6 @@ public class HotKeyService : IHotKeyService, IDisposable
     private Window? _mainWindow;
     private volatile bool _isMainWindowActive;
     private volatile bool _disposed;
-    private X11HotKeyGrabber? _x11Grabber;
-    private bool _waitingForMainWindow;
 
     public void Reload()
     {
@@ -92,8 +90,6 @@ public class HotKeyService : IHotKeyService, IDisposable
             _bindings.Clear();
             _bindings.AddRange(bindings);
         }
-
-        UpdateX11Grabs(bindings);
     }
 
     public List<T> GetHotKeys<T>()
@@ -270,43 +266,6 @@ public class HotKeyService : IHotKeyService, IDisposable
             (Key.Divide, Key.OemQuestion) or (Key.OemQuestion, Key.Divide) => true,
             _ => false
         };
-    }
-
-    // The embedded Mugetsu child owns keyboard focus, so grab configured hotkeys on this X11 window.
-    private void UpdateX11Grabs(List<HotKeyBinding> bindings)
-    {
-        if (_mainWindow is null)
-            return;
-
-        IPlatformHandle? handle = _mainWindow.TryGetPlatformHandle();
-        if (handle is null || handle.Handle == IntPtr.Zero)
-        {
-            if (!_waitingForMainWindow)
-            {
-                _waitingForMainWindow = true;
-                _mainWindow.Opened += (_, _) => Reload();
-            }
-            return;
-        }
-
-        if (handle.HandleDescriptor != "XID")
-            return;
-
-        _x11Grabber ??= new X11HotKeyGrabber(OnX11HotKey);
-        _x11Grabber.Update(handle.Handle, bindings.Select(b => new X11HotKeyGrabber.Gesture(b.Key, b.Modifiers)));
-    }
-
-    private void OnX11HotKey(X11HotKeyGrabber.Gesture gesture)
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            HotKeyBinding? binding;
-            lock (_bindingsLock)
-                binding = _bindings.FirstOrDefault(b => b.Key == gesture.Key && b.Modifiers == gesture.Modifiers);
-
-            if (binding is not null)
-                ExecuteBinding(binding);
-        }, DispatcherPriority.Input);
     }
 
     private static KeyGestureBinding? ParseGesture(string gesture)
@@ -533,7 +492,6 @@ public class HotKeyService : IHotKeyService, IDisposable
         }
 
 
-        _x11Grabber?.Dispose();
         lock (_bindingsLock)
             _bindings.Clear();
         GC.SuppressFinalize(this);

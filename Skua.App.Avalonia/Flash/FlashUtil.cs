@@ -61,8 +61,9 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
 
     public event FlashCallHandler? FlashCall;
 
-    /// <summary>Native X11 window the player draws in as a child window; 0 gives it a window of its own.</summary>
-    public nint ParentWindow { get; set; }
+    /// <summary>Shared-memory frame buffer path for offscreen Wayland rendering (<c>--skua-shm</c>).</summary>
+    public string? ShmPath { get; set; }
+    public event Action? FrameReady;
 
     public static void PreloadSwf()
     {
@@ -159,13 +160,10 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         };
         start.ArgumentList.Add("--skua-bridge");
         start.ArgumentList.Add($"127.0.0.1:{((IPEndPoint)_listener.LocalEndpoint).Port}");
-        if (ParentWindow != 0)
+        if (!string.IsNullOrEmpty(ShmPath))
         {
-            start.ArgumentList.Add("--skua-parent");
-            start.ArgumentList.Add(ParentWindow.ToString(CultureInfo.InvariantCulture));
-            // On Linux the parent is an X11 window; the player would otherwise prefer Wayland, where it can't be embedded.
-            start.Environment.Remove("WAYLAND_DISPLAY");
-            start.Environment.Remove("WAYLAND_SOCKET");
+            start.ArgumentList.Add("--skua-shm");
+            start.ArgumentList.Add(ShmPath);
         }
         string? envGraphics = Environment.GetEnvironmentVariable("MUGETSU_GRAPHICS") ??
                               Environment.GetEnvironmentVariable("SKUA_GRAPHICS");
@@ -371,6 +369,11 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         }
 
         string function = (string)msg["ev"]!;
+        if (string.Equals(function, "frame", StringComparison.Ordinal))
+        {
+            FrameReady?.Invoke();
+            return;
+        }
         _stats.RecordEvent(function, chars);
         object[] args = msg["args"] is JArray arr ? arr.Select(FromJson).ToArray() : [];
         // Handlers expect calls on the UI thread.
@@ -385,6 +388,19 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
                 Trace.WriteLine($"Flash call handler for '{function}' failed: {ex}");
             }
         });
+    }
+
+    public void SendInput(object payload)
+    {
+        if (_bridge is not { } writer)
+            return;
+        try
+        {
+            string json = JsonConvert.SerializeObject(payload);
+            lock (_sendLock)
+                writer.WriteLine(json);
+        }
+        catch { }
     }
 
     private void FailPending()
@@ -610,5 +626,15 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         _listener = null;
         _bridge?.Dispose();
         FailPending();
+
+        string shmPath = !string.IsNullOrEmpty(ShmPath)
+            ? ShmPath
+            : Skua.App.Avalonia.Controls.GameHost.GetShmPathForPid(Environment.ProcessId);
+        try
+        {
+            if (File.Exists(shmPath))
+                File.Delete(shmPath);
+        }
+        catch { }
     }
 }

@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Skia;
-using Avalonia.X11;
 using Skua.Core.Models;
 using System;
 using System.Collections.Generic;
@@ -15,9 +14,6 @@ namespace Skua.App.Avalonia;
 
 internal static class Program
 {
-    [DllImport("libX11.so.6")]
-    private static extern int XInitThreads();
-
     [STAThread]
     public static void Main(string[] args)
     {
@@ -31,7 +27,6 @@ internal static class Program
             {
             }
         }
-        XInitThreads();
         InitializeAssemblyResolvers();
         RunApp(args);
     }
@@ -143,13 +138,15 @@ internal static class Program
         }
         catch (Exception ex)
         {
+            Console.Error.WriteLine(ex);
             try
             {
+                Directory.CreateDirectory(ClientFileSources.SkuaDIR);
                 File.WriteAllText(Path.Combine(ClientFileSources.SkuaDIR, "crash_program.txt"), ex.ToString());
             }
             catch
             {
-                Console.Error.WriteLine(ex);
+                // Ignore secondary logging failures on read-only filesystems
             }
         }
     }
@@ -157,13 +154,12 @@ internal static class Program
     public static AppBuilder BuildAvaloniaApp()
     {
         AppBuilder builder = AppBuilder.Configure<App>()
-            .UseX11()
-            .With(new X11PlatformOptions
-            {
-                EnableIme = false,
-                WmClass = "BonxieMux"
-            })
-            .UseSkia();
+            .UseWayland()
+#pragma warning disable AVALONIA_WAYLAND_FORCE_CSD
+            .With(new WaylandPlatformOptions { ForceDrawnDecorations = true })
+#pragma warning restore AVALONIA_WAYLAND_FORCE_CSD
+            .UseSkia()
+            .UseHarfBuzz();
 
 #if DEBUG
         builder = builder.WithDeveloperTools();

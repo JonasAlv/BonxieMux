@@ -1,263 +1,435 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Skua.App.Avalonia.Flash;
 using System;
-using System.Runtime.InteropServices;
+using System.IO;
+using System.IO.MemoryMappedFiles;
+using System.Threading;
 
 namespace Skua.App.Avalonia.Controls;
 
 /// <summary>
-/// Hosts the game player's window on X11 (Linux). The player (another process) is started as a child of
-/// <see cref="WindowHandle"/>, an X11 window created once on BonxieMux's own display connection. Avalonia places that
-/// window in the game area and, when it recreates the native control, parks it instead of destroying it, so the game
-/// keeps running.
+/// Pure Wayland/Avalonia game viewport. Mugetsu renders offscreen into a double-buffered
+/// shared-memory file (<c>--skua-shm</c>) and this control blits frames into a
+/// <see cref="WriteableBitmap"/> while forwarding pointer/keyboard/resize input over the bridge.
 /// </summary>
-public class GameHost : NativeControlHost
+public class GameHost : Control
 {
-    private static nint _display;
-    private nint _holder;
-    private DispatcherTimer? _fitTimer;
-    private DispatcherTimer? _unmapDelayTimer;
-    private nint _player;
-    private bool _playerUnmapped;
+    private const int HeaderSize = 64;
+    private static readonly byte[] MagicBytes = "SKUAFRM1"u8.ToArray();
 
-    public static event Action? GameClicked
+    private static GameHost? _activeInstance;
+
+    private FlashUtil? _flash;
+    private readonly int _remoteChildPid;
+    private readonly string _shmPath;
+    private DispatcherTimer? _pollTimer;
+    private MemoryMappedFile? _mmf;
+    private MemoryMappedViewAccessor? _accessor;
+    private long _mappedSize;
+    private WriteableBitmap? _bitmap;
+    private ulong _lastSeq;
+    private int _frameUpdateQueued;
+    private int _lastSentWidth;
+    private int _lastSentHeight;
+    private readonly byte[] _headerBuf = new byte[HeaderSize];
+
+    public static event Action? GameClicked;
+
+    public static string GetShmPathForPid(int pid) =>
+        Path.Combine(Directory.Exists("/dev/shm") ? "/dev/shm" : Path.GetTempPath(), $"skua-shm-{pid}.bin");
+
+    public GameHost() : this(0)
     {
-        add { }
-        remove { }
     }
-    public static void ForwardKey(bool down, string physical, string logical, bool ctrl, bool shift, bool alt) { }
-    public static void ForwardText(string text) { }
-    public static void ForwardFocus(bool focused) { }
-    public static void ForwardClearKeys() { }
-    public void SetScaleMode(bool isExactFit = false) { }
 
-    public nint WindowHandle
+    public GameHost(int remoteChildPid)
     {
-        get
+        Focusable = true;
+        ClipToBounds = true;
+        _remoteChildPid = remoteChildPid;
+        _shmPath = GetShmPathForPid(remoteChildPid > 0 ? remoteChildPid : Environment.ProcessId);
+        if (remoteChildPid <= 0)
         {
-            if (_holder == 0)
+            _activeInstance = this;
+        }
+        else
+        {
+            _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+            _pollTimer.Tick += (_, _) =>
             {
-                try
-                {
-                    // Kept open for the app's lifetime: the X server destroys a connection's windows when it closes.
-                    if (_display == 0)
-                        _display = XOpenDisplay(0);
-                    if (_display != 0)
-                    {
-                        _holder = XCreateSimpleWindow(_display, XDefaultRootWindow(_display), 0, 0, 1, 1, 0, 0, 0x141414);
-                        XFlush(_display);
-                    }
-                }
-                catch (DllNotFoundException)
-                {
-                    // No libX11: the player opens a window of its own.
-                }
-            }
-            return _holder;
+                if (IsVisible && TopLevel.GetTopLevel(this) is not { IsVisible: false })
+                    UpdateFrameFromShm();
+            };
         }
     }
 
-    protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
-    {
-        if (WindowHandle == 0)
-            return base.CreateNativeControlCore(parent);
+    public string ShmPath => _shmPath;
 
-        _fitTimer ??= new DispatcherTimer(TimeSpan.FromMilliseconds(200), DispatcherPriority.Background, (_, _) => FitPlayer());
-        _fitTimer.Start();
-        return new PlatformHandle(_holder, "XID");
+    public void SetActiveInstance() => _activeInstance = this;
+
+    public void DisposeResources()
+    {
+        _pollTimer?.Stop();
+        if (_activeInstance == this)
+            _activeInstance = null;
+        if (_flash != null)
+            _flash.FrameReady -= OnFrameReady;
+        _accessor?.Dispose();
+        _accessor = null;
+        _mmf?.Dispose();
+        _mmf = null;
+        _bitmap?.Dispose();
+        _bitmap = null;
+        _mappedSize = 0;
     }
 
-    protected override void DestroyNativeControlCore(IPlatformHandle control)
+    private void DispatchInput(object payload)
     {
-        // Avalonia has already parked our window; destroying it would destroy the player's window with it.
-        if (control.Handle != _holder)
-            base.DestroyNativeControlCore(control);
-        _fitTimer?.Stop();
-        _unmapDelayTimer?.Stop();
-    }
-
-    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
-    {
-        base.OnPropertyChanged(change);
-        if (change.Property == IsVisibleProperty)
+        if (_flash != null)
         {
-            UpdatePlayerVisibility(IsVisible);
+            _flash.SendInput(payload);
         }
+        else if (_remoteChildPid > 0)
+        {
+            Skua.App.Avalonia.Services.TabIpc.SendInput(_remoteChildPid, payload);
+        }
+    }
+
+    public void AttachFlash(FlashUtil flash)
+    {
+        if (_flash != null)
+            _flash.FrameReady -= OnFrameReady;
+
+        _flash = flash;
+        flash.ShmPath = _shmPath;
+        flash.FrameReady += OnFrameReady;
+        SendResizeIfNeeded();
+    }
+
+    public static void ForwardKey(bool down, string physical, string logical, bool ctrl, bool shift, bool alt)
+    {
+        _activeInstance?.DispatchInput(new
+        {
+            input = "key",
+            down,
+            code = physical,
+            key = logical,
+            ctrl,
+            shift,
+            alt
+        });
+        if (down && !ctrl && !alt && logical.Length == 1 && !char.IsControl(logical[0]))
+        {
+            _activeInstance?.DispatchInput(new { input = "text", text = logical });
+        }
+    }
+
+    public static void ForwardText(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return;
+        _activeInstance?.DispatchInput(new { input = "text", text });
+    }
+
+    public static void ForwardFocus(bool focused)
+    {
+        _activeInstance?.DispatchInput(new { input = "focus", focused });
+    }
+
+    public static void ForwardClearKeys()
+    {
+        _activeInstance?.DispatchInput(new { input = "clear_keys" });
+    }
+
+    public void SetScaleMode(bool isExactFit = false)
+    {
+    }
+
+    public void RefreshLayout()
+    {
+        SendResizeIfNeeded();
+        InvalidateVisual();
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        if (_remoteChildPid <= 0 || IsVisible)
+            _activeInstance = this;
+        _pollTimer?.Start();
+        SendResizeIfNeeded();
+        if (_remoteChildPid > 0 && IsVisible)
+            UpdateFrameFromShm();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        _pollTimer?.Stop();
+        if (_activeInstance == this)
+            _activeInstance = null;
     }
 
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
-        if (IsVisible)
-            FitPlayer();
+        SendResizeIfNeeded();
     }
 
-    /// <summary>
-    /// Ensures the embedded X11 player is mapped and sized to match the laid-out host bounds when visible.
-    /// </summary>
-    public void RefreshLayout()
+    protected override void OnPointerMoved(PointerEventArgs e)
     {
-        if (!Dispatcher.UIThread.CheckAccess())
-        {
-            Dispatcher.UIThread.Post(RefreshLayout);
+        base.OnPointerMoved(e);
+        if (_flash is null && _remoteChildPid <= 0)
             return;
-        }
-
-        if (!IsVisible || _display == 0 || _holder == 0)
-            return;
-
-        FitPlayer();
-        if (_player == 0 || _playerUnmapped)
-            Dispatcher.UIThread.Post(FitPlayer, DispatcherPriority.Loaded);
+        double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
+        Point p = e.GetPosition(this);
+        DispatchInput(new { input = "mouse_move", x = p.X * scale, y = p.Y * scale });
     }
 
-    private void UpdatePlayerVisibility(bool visible)
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
-        if (_display == 0)
+        base.OnPointerPressed(e);
+        _activeInstance = this;
+        Focus();
+        GameClicked?.Invoke();
+        if (_flash is null && _remoteChildPid <= 0)
             return;
 
-        if (visible)
-        {
-            _unmapDelayTimer?.Stop();
-            _fitTimer?.Start();
-            RefreshLayout();
-        }
-        else
-        {
-            _fitTimer?.Stop();
-            // Debounce XUnmapWindow slightly so rapid tab switching does not repeatedly tear down
-            // and re-acquire OpenGL swapchains inside the player on every click.
-            if (_unmapDelayTimer == null)
-            {
-                _unmapDelayTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-                _unmapDelayTimer.Tick += (_, _) =>
-                {
-                    _unmapDelayTimer.Stop();
-                    if (IsVisible || _display == 0)
-                        return;
+        double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
+        Point p = e.GetPosition(this);
+        DispatchInput(new { input = "mouse_move", x = p.X * scale, y = p.Y * scale });
 
-                    if (_player == 0 && _holder != 0)
-                        _player = FindPlayerWindow();
-                    if (_player != 0 && !_playerUnmapped)
-                    {
-                        XUnmapWindow(_display, _player);
-                        XFlush(_display);
-                        _playerUnmapped = true;
-                    }
-                };
-            }
-            _unmapDelayTimer.Stop();
-            _unmapDelayTimer.Start();
+        PointerUpdateKind kind = e.GetCurrentPoint(this).Properties.PointerUpdateKind;
+        string button = kind switch
+        {
+            PointerUpdateKind.RightButtonPressed => "right",
+            PointerUpdateKind.MiddleButtonPressed => "middle",
+            _ => "left"
+        };
+        DispatchInput(new { input = "mouse_btn", button, down = true });
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+        if (_flash is null && _remoteChildPid <= 0)
+            return;
+        PointerUpdateKind kind = e.GetCurrentPoint(this).Properties.PointerUpdateKind;
+        string button = kind switch
+        {
+            PointerUpdateKind.RightButtonReleased => "right",
+            PointerUpdateKind.MiddleButtonReleased => "middle",
+            _ => "left"
+        };
+        DispatchInput(new { input = "mouse_btn", button, down = false });
+    }
+
+    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
+    {
+        base.OnPointerWheelChanged(e);
+        DispatchInput(new
+        {
+            input = "mouse_wheel",
+            dx = e.Delta.X * 40.0,
+            dy = e.Delta.Y * 40.0
+        });
+    }
+
+    protected override void OnGotFocus(FocusChangedEventArgs e)
+    {
+        base.OnGotFocus(e);
+        _activeInstance = this;
+        DispatchInput(new { input = "focus", focused = true });
+    }
+
+    protected override void OnLostFocus(FocusChangedEventArgs e)
+    {
+        base.OnLostFocus(e);
+        DispatchInput(new { input = "focus", focused = false });
+    }
+
+    public override void Render(DrawingContext context)
+    {
+        Rect bounds = new(Bounds.Size);
+        context.FillRectangle(Brushes.Black, bounds);
+        if (_bitmap != null)
+        {
+            context.DrawImage(_bitmap, new Rect(0, 0, _bitmap.PixelSize.Width, _bitmap.PixelSize.Height), bounds);
         }
     }
 
-    private nint FindPlayerWindow()
+    private void SendResizeIfNeeded()
     {
-        if (_display == 0 || _holder == 0)
-            return 0;
+        if ((_flash is null && _remoteChildPid <= 0) || !IsVisible)
+            return;
+        double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
+        int w = Math.Max(1, (int)Math.Round(Bounds.Width * scale));
+        int h = Math.Max(1, (int)Math.Round(Bounds.Height * scale));
+        if (w <= 2 || h <= 2)
+            return;
+        if (w != _lastSentWidth || h != _lastSentHeight)
+        {
+            _lastSentWidth = w;
+            _lastSentHeight = h;
+            DispatchInput(new { input = "resize", w, h });
+        }
+    }
 
-        if (XQueryTree(_display, _holder, out _, out _, out nint children, out uint count) == 0)
-            return 0;
+    private void OnFrameReady()
+    {
+        if (Interlocked.Exchange(ref _frameUpdateQueued, 1) == 0)
+        {
+            Dispatcher.UIThread.Post(UpdateFrameFromShm, DispatcherPriority.Render);
+        }
+    }
 
-        nint player = 0;
+    private unsafe void UpdateFrameFromShm()
+    {
+        Interlocked.Exchange(ref _frameUpdateQueued, 0);
+        if (!IsVisible || TopLevel.GetTopLevel(this) is { IsVisible: false })
+            return;
+        if (!File.Exists(_shmPath))
+            return;
+
         try
         {
-            // The player normally has one direct child. Keep selecting the first
-            // live child so a restarted player or recreated X11 window is picked
-            // up without requiring a new Avalonia control.
-            if (count > 0 && children != 0)
-                player = Marshal.ReadIntPtr(children);
+            long fileLen = new FileInfo(_shmPath).Length;
+            if (fileLen < HeaderSize)
+                return;
+
+            if (_mmf is null || _mappedSize != fileLen)
+            {
+                _accessor?.Dispose();
+                _mmf?.Dispose();
+                _mmf = MemoryMappedFile.CreateFromFile(_shmPath, FileMode.Open, null, fileLen, MemoryMappedFileAccess.Read);
+                _accessor = _mmf.CreateViewAccessor(0, fileLen, MemoryMappedFileAccess.Read);
+                _mappedSize = fileLen;
+            }
+
+            if (_accessor is null)
+                return;
+
+            _accessor.ReadArray(0, _headerBuf, 0, HeaderSize);
+            if (!TryParseHeader(_headerBuf, out int width, out int height, out ulong seq, out uint slot, out uint slotStride) ||
+                seq == _lastSeq)
+                return;
+
+            long pixelBytes = (long)width * height * 4;
+            long offset = HeaderSize + (long)slot * slotStride;
+            if (offset + pixelBytes > _mappedSize)
+                return;
+
+            if (_bitmap is null || _bitmap.PixelSize.Width != width || _bitmap.PixelSize.Height != height)
+            {
+                _bitmap?.Dispose();
+                _bitmap = new WriteableBitmap(
+                    new PixelSize(width, height),
+                    new Vector(96, 96),
+                    PixelFormat.Bgra8888,
+                    AlphaFormat.Opaque);
+            }
+
+            CopyFrameToBitmap(_accessor, offset, width, height, _bitmap);
+
+            _lastSeq = seq;
+            InvalidateVisual();
+        }
+        catch
+        {
+            // Ignore transient resize/unmap races.
+        }
+    }
+
+    private static bool TryParseHeader(byte[] header, out int width, out int height, out ulong seq, out uint slot, out uint slotStride)
+    {
+        width = 0;
+        height = 0;
+        seq = 0;
+        slot = 0;
+        slotStride = 0;
+
+        for (int i = 0; i < MagicBytes.Length; i++)
+        {
+            if (header[i] != MagicBytes[i])
+                return false;
+        }
+
+        width = BitConverter.ToInt32(header, 8);
+        height = BitConverter.ToInt32(header, 12);
+        seq = BitConverter.ToUInt64(header, 16);
+        slot = BitConverter.ToUInt32(header, 24);
+        slotStride = BitConverter.ToUInt32(header, 28);
+        return width > 0 && height > 0 && slot <= 1;
+    }
+
+    private static unsafe void CopyFrameToBitmap(MemoryMappedViewAccessor accessor, long offset, int width, int height, WriteableBitmap bitmap)
+    {
+        long pixelBytes = (long)width * height * 4;
+        using ILockedFramebuffer fb = bitmap.Lock();
+        byte* srcBase = null;
+        accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref srcBase);
+        try
+        {
+            byte* src = srcBase + accessor.PointerOffset + offset;
+            byte* dst = (byte*)fb.Address;
+            int srcStride = width * 4;
+            if (fb.RowBytes == srcStride)
+            {
+                Buffer.MemoryCopy(src, dst, pixelBytes, pixelBytes);
+            }
+            else
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    Buffer.MemoryCopy(src + (long)y * srcStride, dst + (long)y * fb.RowBytes, fb.RowBytes, srcStride);
+                }
+            }
         }
         finally
         {
-            if (children != 0)
-                XFree(children);
+            accessor.SafeMemoryMappedViewHandle.ReleasePointer();
         }
-
-        return player;
     }
 
-    // Polls the sizes every 200 ms to keep the child window fitted to the holder.
-    private void FitPlayer()
+    public static byte[]? TryCapturePngFromShm(int pid)
     {
-        if (_display == 0 || _holder == 0)
-            return;
+        string shmPath = GetShmPathForPid(pid);
+        if (!File.Exists(shmPath))
+            return null;
 
-        if (!IsVisible)
-        {
-            if (_player != 0 && !_playerUnmapped)
-            {
-                XUnmapWindow(_display, _player);
-                XFlush(_display);
-                _playerUnmapped = true;
-            }
-            return;
-        }
-        if (XGetGeometry(_display, _holder, out _, out _, out _, out uint width, out uint height, out _, out _) == 0)
-            return;
-        if (width <= 2 || height <= 2)
-            return;
+        long fileLen = new FileInfo(shmPath).Length;
+        if (fileLen < HeaderSize)
+            return null;
 
-        nint player = FindPlayerWindow();
-        if (player == 0)
-        {
-            _player = 0;
-            return;
-        }
+        using var mmf = MemoryMappedFile.CreateFromFile(shmPath, FileMode.Open, null, fileLen, MemoryMappedFileAccess.Read);
+        using var accessor = mmf.CreateViewAccessor(0, fileLen, MemoryMappedFileAccess.Read);
 
-        if (XGetGeometry(_display, player, out _, out _, out _, out uint playerWidth, out uint playerHeight, out _, out _) == 0)
-        {
-            _player = 0;
-            return;
-        }
+        byte[] header = new byte[HeaderSize];
+        accessor.ReadArray(0, header, 0, HeaderSize);
+        if (!TryParseHeader(header, out int width, out int height, out _, out uint slot, out uint slotStride))
+            return null;
 
-        bool playerChanged = _player != player;
-        _player = player;
-        bool shouldMap = playerChanged || _playerUnmapped;
-        if (shouldMap)
-        {
-            XMapWindow(_display, player);
-            _playerUnmapped = false;
-        }
+        long pixelBytes = (long)width * height * 4;
+        long offset = HeaderSize + (long)slot * slotStride;
+        if (offset + pixelBytes > fileLen)
+            return null;
 
-        if (shouldMap || playerWidth != width || playerHeight != height)
-        {
-            XMoveResizeWindow(_display, player, 0, 0, width, height);
-            XFlush(_display);
-        }
+        using var wb = new WriteableBitmap(
+            new PixelSize(width, height),
+            new Vector(96, 96),
+            PixelFormat.Bgra8888,
+            AlphaFormat.Opaque);
+
+        CopyFrameToBitmap(accessor, offset, width, height, wb);
+
+        using var ms = new MemoryStream();
+        wb.Save(ms);
+        return ms.ToArray();
     }
-
-    private const string LibX11 = "libX11.so.6";
-
-    [DllImport(LibX11)]
-    private static extern nint XOpenDisplay(nint name);
-
-    [DllImport(LibX11)]
-    private static extern nint XDefaultRootWindow(nint display);
-
-    [DllImport(LibX11)]
-    private static extern nint XCreateSimpleWindow(nint display, nint parent, int x, int y, uint width, uint height, uint borderWidth, nuint border, nuint background);
-
-    [DllImport(LibX11)]
-    private static extern int XGetGeometry(nint display, nint drawable, out nint root, out int x, out int y, out uint width, out uint height, out uint borderWidth, out uint depth);
-
-    [DllImport(LibX11)]
-    private static extern int XQueryTree(nint display, nint window, out nint root, out nint parent, out nint children, out uint count);
-
-    [DllImport(LibX11)]
-    private static extern int XMoveResizeWindow(nint display, nint window, int x, int y, uint width, uint height);
-
-    [DllImport(LibX11)]
-    private static extern int XMapWindow(nint display, nint window);
-
-    [DllImport(LibX11)]
-    private static extern int XUnmapWindow(nint display, nint window);
-
-    [DllImport(LibX11)]
-    private static extern int XFree(nint data);
-
-    [DllImport(LibX11)]
-    private static extern int XFlush(nint display);
 }

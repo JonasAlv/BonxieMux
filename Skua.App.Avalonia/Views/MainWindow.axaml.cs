@@ -404,7 +404,7 @@ public partial class MainWindow : Window
                 FlashHost.Focus();
         }
         if (_flash is Flash.FlashUtil player)
-            player.ParentWindow = FlashHost?.WindowHandle ?? 0;
+            FlashHost?.AttachFlash(player);
         _flash.InitializeFlash();
         TabIpc.StartListener(this, Environment.ProcessId, _ipcCancelCts.Token);
 

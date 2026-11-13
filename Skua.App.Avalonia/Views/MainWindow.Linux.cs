@@ -8,10 +8,12 @@ using CommunityToolkit.Mvvm.Messaging;
 using Skua.App.Avalonia.ViewModels;
 using Skua.Core.AppStartup;
 using Skua.Core.Interfaces;
+using Skua.Core.Interfaces.ViewModels;
 using Skua.Core.Messaging;
 using Skua.Core.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -19,33 +21,6 @@ namespace Skua.App.Avalonia.Views;
 
 public partial class MainWindow : Window
 {
-    [DllImport("libX11.so.6")]
-    private static extern IntPtr XOpenDisplay(IntPtr display);
-
-    [DllImport("libX11.so.6")]
-    private static extern int XCloseDisplay(IntPtr display);
-
-    [DllImport("libX11.so.6")]
-    private static extern int XSetInputFocus(IntPtr display, IntPtr w, int revert_to, IntPtr time);
-
-    [DllImport("libX11.so.6")]
-    private static extern int XFlush(IntPtr display);
-
-    private static IntPtr _xDisplay;
-    private static readonly object _xLock = new();
-
-    private static IntPtr GetDisplay()
-    {
-        lock (_xLock)
-        {
-            if (_xDisplay == IntPtr.Zero)
-            {
-                try { _xDisplay = XOpenDisplay(IntPtr.Zero); } catch { }
-            }
-            return _xDisplay;
-        }
-    }
-
     private const int WM_SKUA_JUMP_MAP = 0x0400 + 449;
     private const int WM_SKUA_SET_OPTION = 0x0400 + 450;
     private const int WM_SKUA_LOAD_SCRIPT = 0x0400 + 453;
@@ -103,13 +78,6 @@ public partial class MainWindow : Window
         Skua.App.Avalonia.Controls.GameHost.GameClicked -= OnLinuxGameClicked;
         Skua.App.Avalonia.Controls.GameHost.GameClicked += OnLinuxGameClicked;
 
-        Skua.Shared.Avalonia.Services.X11WindowPositionTracker.Track(this);
-        if (MainMenuControl != null)
-        {
-            MainMenuControl.AddHandler(InputElement.PointerEnteredEvent, (s, e) => Skua.Shared.Avalonia.Services.X11WindowPositionTracker.SyncPosition(this), RoutingStrategies.Tunnel);
-            MainMenuControl.AddHandler(InputElement.PointerPressedEvent, (s, e) => Skua.Shared.Avalonia.Services.X11WindowPositionTracker.SyncPosition(this), RoutingStrategies.Tunnel);
-        }
-
         PropertyChanged += (s, e) =>
         {
             if ((e.Property == WindowStateProperty && WindowState == WindowState.Minimized) ||
@@ -120,23 +88,6 @@ public partial class MainWindow : Window
         AddHandler(PointerPressedEvent, (s, e) =>
         {
             UpdateBackgroundThrottleState(false);
-            if (IsVisible)
-            {
-                IntPtr handle = this.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
-                if (handle != IntPtr.Zero)
-                {
-                    try
-                    {
-                        IntPtr disp = GetDisplay();
-                        if (disp != IntPtr.Zero)
-                        {
-                            XSetInputFocus(disp, handle, 1 /* RevertToParent */, IntPtr.Zero);
-                            XFlush(disp);
-                        }
-                    }
-                    catch { }
-                }
-            }
         }, RoutingStrategies.Tunnel);
     }
 
@@ -236,7 +187,7 @@ public partial class MainWindow : Window
         ForwardLinuxKeyEvent(false, e);
     }
 
-    private static void ForwardLinuxKeyEvent(bool down, global::Avalonia.Input.KeyEventArgs e)
+    public static void ForwardLinuxKeyEvent(bool down, global::Avalonia.Input.KeyEventArgs e)
     {
         bool ctrl = e.KeyModifiers.HasFlag(global::Avalonia.Input.KeyModifiers.Control);
         bool shift = e.KeyModifiers.HasFlag(global::Avalonia.Input.KeyModifiers.Shift);
@@ -367,6 +318,105 @@ public partial class MainWindow : Window
                 catch { }
             });
         }
+    }
+
+    public void ForwardFlashInputJson(string json)
+    {
+        if (_flash is Skua.App.Avalonia.Flash.FlashUtil flashUtil)
+        {
+            try
+            {
+                var obj = Newtonsoft.Json.Linq.JObject.Parse(json);
+                flashUtil.SendInput(obj);
+            }
+            catch { }
+        }
+    }
+
+    public void HandleHostCommand(string cmd)
+    {
+        try
+        {
+            switch (cmd)
+            {
+                case "BOT_WINDOW":
+                    _mainMenuVm.ShowBotWindow();
+                    return;
+                case "BANK":
+                    Ioc.Default.GetRequiredService<IScriptBank>().Open();
+                    return;
+                case "AUTO_ATTACK":
+                    StrongReferenceMessenger.Default.Send<StartAutoAttackMessage>();
+                    return;
+                case "AUTO_HUNT":
+                    StrongReferenceMessenger.Default.Send<StartAutoHuntMessage>();
+                    return;
+                case "AUTO_STOP":
+                    StrongReferenceMessenger.Default.Send<StopAutoMessage>();
+                    return;
+                case "JUMP_WINDOW":
+                    Ioc.Default.GetRequiredService<IWindowService>().ShowManagedWindow("Fast Travel");
+                    return;
+            }
+
+            if (cmd.StartsWith("MENU|", StringComparison.Ordinal))
+            {
+                string header = cmd["MENU|".Length..];
+                string normalizedHeader = NormalizePluginMenuHeader(header);
+
+                IPluginManager? pluginManager = Ioc.Default.GetService<IPluginManager>();
+                if (pluginManager != null && pluginManager.Containers.Count == 0 && !string.Equals(normalizedHeader, "View Plugins", StringComparison.OrdinalIgnoreCase))
+                {
+                    pluginManager.Initialize();
+                }
+
+                IMainMenuItemViewModel? item = FindMenuItem(_mainMenuVm.MainMenuItems.Cast<IMainMenuItemViewModel>(), header, normalizedHeader)
+                    ?? FindMenuItem(_mainMenuVm.Plugins, header, normalizedHeader)
+                    ?? FindMenuItem(Ioc.Default.GetService<IPluginHelper>()?.MenuButtons ?? Array.Empty<IMainMenuItemViewModel>(), header, normalizedHeader);
+
+                if (item?.Command != null && item.Command.CanExecute(null))
+                {
+                    item.Command.Execute(null);
+                    return;
+                }
+
+                Ioc.Default.GetRequiredService<IWindowService>().ShowManagedWindow(normalizedHeader);
+            }
+        }
+        catch { }
+    }
+
+    private static string NormalizePluginMenuHeader(string header) => header switch
+    {
+        "Butler" => "ButlerV5 Avalonia",
+        "Daily & Weekly Tracker" => "Daily Tracker",
+        "Cosmetics & Outfits" => "Cosmetics",
+        _ => header
+    };
+
+    private static IMainMenuItemViewModel? FindMenuItem(IEnumerable<IMainMenuItemViewModel> items, string header, string normalizedHeader)
+    {
+        foreach (IMainMenuItemViewModel item in items)
+        {
+            if (string.Equals(item.Header, header, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(item.Header, normalizedHeader, StringComparison.OrdinalIgnoreCase))
+                return item;
+            if (item.SubItems != null)
+            {
+                IMainMenuItemViewModel? found = FindMenuItem(item.SubItems, header, normalizedHeader);
+                if (found != null)
+                    return found;
+            }
+        }
+
+        foreach (IMainMenuItemViewModel item in items)
+        {
+            if (!string.IsNullOrEmpty(item.Header) &&
+                (item.Header.StartsWith(normalizedHeader, StringComparison.OrdinalIgnoreCase) ||
+                 item.Header.StartsWith(header, StringComparison.OrdinalIgnoreCase)))
+                return item;
+        }
+        return null;
     }
 
     public IntPtr HandleIpcMessage(uint uMsg, IntPtr wParam, IntPtr lParam)
@@ -772,14 +822,16 @@ public partial class MainWindow : Window
                 if (topNav != null)
                     topNav.IsVisible = true;
 
-                this.SystemDecorations = global::Avalonia.Controls.SystemDecorations.BorderOnly;
+                this.WindowDecorations = global::Avalonia.Controls.WindowDecorations.None;
                 this.ExtendClientAreaToDecorationsHint = true;
-                this.ExtendClientAreaChromeHints = global::Avalonia.Platform.ExtendClientAreaChromeHints.NoChrome;
                 this.ExtendClientAreaTitleBarHeightHint = 32;
                 this.ShowInTaskbar = true;
+                this.Opacity = 1;
                 this.Width = 948;
                 this.Height = 600;
+                this.Show();
                 this.Activate();
+                FlashHost?.RefreshLayout();
             });
             return IntPtr.Zero;
         }
@@ -802,7 +854,8 @@ public partial class MainWindow : Window
                     wtb.CanDock = false;
                 }
                 this.ShowInTaskbar = false;
-                this.SystemDecorations = global::Avalonia.Controls.SystemDecorations.None;
+                this.WindowDecorations = global::Avalonia.Controls.WindowDecorations.None;
+                this.Hide();
             });
             return IntPtr.Zero;
         }

@@ -20,9 +20,8 @@
         Icon="avares://Skua.Shared.Avalonia/Assets/AppIcon.png"
         Background="{DynamicResource SkuaPageBrush}"
 
-        SystemDecorations="BorderOnly"
+        WindowDecorations="None"
         ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="32"
         >
 

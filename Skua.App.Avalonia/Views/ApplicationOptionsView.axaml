@@ -19,7 +19,7 @@
                  Height="34"
                  VerticalContentAlignment="Center"
                  Text="{Binding SearchText, Mode=TwoWay}"
-                 Watermark="Search application options..." />
+                 PlaceholderText="Search application options..." />
 
         <!-- Category Filter Selector -->
         <ComboBox Grid.Column="1"

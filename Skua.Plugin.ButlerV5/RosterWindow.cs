@@ -84,7 +84,7 @@ public sealed class RosterWindow : Window
         };
         _targetPlayerText = new TextBox
         {
-            Watermark = "External player name",
+            PlaceholderText = "External player name",
             VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
             MinHeight = 32,
             Margin = new Thickness(0, 0, 6, 0),
@@ -166,7 +166,7 @@ public sealed class RosterWindow : Window
         Grid.SetRow(footer, 3);
         root.Children.Add(footer);
 
-        Content = root;
+        AvaloniaUi.SetWindowContent(this, root, Title);
         _plugin.SyncFilesChanged += OnSyncFilesChanged;
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _timer.Tick += (_, _) => Refresh();

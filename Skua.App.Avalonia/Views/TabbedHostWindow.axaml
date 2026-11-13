@@ -11,9 +11,8 @@
         CanResize="True"
         WindowStartupLocation="Manual"
         Background="{DynamicResource SkuaPageBrush}"
-        SystemDecorations="BorderOnly"
+        WindowDecorations="None"
         ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="32">
     <Border Classes="window-frame">
         <Grid x:Name="RootGrid" RowDefinitions="32,Auto,*">

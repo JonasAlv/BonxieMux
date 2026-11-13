@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Skua.App.Avalonia.Controls;
 using Skua.Core.Interfaces;
 using System;
 using System.IO;
@@ -17,6 +18,10 @@ public class ScreenshotService : IScreenshotService
         {
             try
             {
+                byte[]? shmPng = GameHost.TryCapturePngFromShm(Environment.ProcessId);
+                if (shmPng != null)
+                    return shmPng;
+
                 if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null)
                     return Array.Empty<byte>();
 

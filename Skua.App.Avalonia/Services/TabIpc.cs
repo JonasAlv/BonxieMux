@@ -40,7 +40,31 @@ public static class TabIpc
         if (childPid <= 0)
             return;
 
-        string payload = $"{msg}:{wParam.ToInt64()}:{lParam.ToInt64()}";
+        SendRaw(childPid, $"{msg}:{wParam.ToInt64()}:{lParam.ToInt64()}");
+    }
+
+    public static void SendInput(int childPid, object payload)
+    {
+        if (childPid <= 0)
+            return;
+
+        string json = Newtonsoft.Json.JsonConvert.SerializeObject(payload);
+        SendRaw(childPid, "INPUT|" + json);
+    }
+
+    public static void SendCommand(int childPid, string command)
+    {
+        if (childPid <= 0 || string.IsNullOrWhiteSpace(command))
+            return;
+
+        SendRaw(childPid, "CMD|" + command);
+    }
+
+    public static void SendRaw(int childPid, string payload)
+    {
+        if (childPid <= 0 || string.IsNullOrEmpty(payload))
+            return;
+
         var channel = _queues.GetOrAdd(childPid, pid =>
         {
             var ch = Channel.CreateUnbounded<string>(new UnboundedChannelOptions
@@ -67,29 +91,36 @@ public static class TabIpc
     private static async Task ProcessQueueAsync(int childPid, ChannelReader<string> reader)
     {
         string pipeName = GetChildPipeName(childPid);
+        NamedPipeClientStream? client = null;
+        StreamWriter? writer = null;
         try
         {
             while (await reader.WaitToReadAsync())
             {
-                NamedPipeClientStream? client = null;
-                StreamWriter? writer = null;
                 try
                 {
-                    // Attempt connection with retries
-                    for (int attempt = 0; attempt < 10; attempt++)
+                    if (client == null || !client.IsConnected || writer == null)
                     {
-                        try
+                        try { writer?.Dispose(); } catch { }
+                        try { client?.Dispose(); } catch { }
+                        writer = null;
+                        client = null;
+
+                        for (int attempt = 0; attempt < 10; attempt++)
                         {
-                            client = new NamedPipeClientStream(".", pipeName, PipeDirection.Out);
-                            await client.ConnectAsync(300);
-                            writer = new StreamWriter(client) { AutoFlush = true };
-                            break;
-                        }
-                        catch
-                        {
-                            try { client?.Dispose(); } catch { }
-                            client = null;
-                            await Task.Delay(50);
+                            try
+                            {
+                                client = new NamedPipeClientStream(".", pipeName, PipeDirection.Out);
+                                await client.ConnectAsync(300);
+                                writer = new StreamWriter(client) { AutoFlush = false };
+                                break;
+                            }
+                            catch
+                            {
+                                try { client?.Dispose(); } catch { }
+                                client = null;
+                                await Task.Delay(50);
+                            }
                         }
                     }
 
@@ -98,24 +129,27 @@ public static class TabIpc
                         while (reader.TryRead(out string? message))
                         {
                             await writer.WriteLineAsync(message);
-                            await writer.FlushAsync();
                         }
+                        await writer.FlushAsync();
                     }
                 }
                 catch
                 {
-                    // Stream failure, will attempt reconnect on next message
-                }
-                finally
-                {
                     try { writer?.Dispose(); } catch { }
                     try { client?.Dispose(); } catch { }
+                    writer = null;
+                    client = null;
                 }
             }
         }
         catch
         {
             // Reader completed or faulted
+        }
+        finally
+        {
+            try { writer?.Dispose(); } catch { }
+            try { client?.Dispose(); } catch { }
         }
     }
 
@@ -151,6 +185,19 @@ public static class TabIpc
                                 string? line = await reader.ReadLineAsync();
                                 if (line == null) break;
                                 if (string.IsNullOrWhiteSpace(line)) continue;
+
+                                if (line.StartsWith("INPUT|", StringComparison.Ordinal))
+                                {
+                                    window.ForwardFlashInputJson(line["INPUT|".Length..]);
+                                    continue;
+                                }
+
+                                if (line.StartsWith("CMD|", StringComparison.Ordinal))
+                                {
+                                    string cmd = line["CMD|".Length..];
+                                    Dispatcher.UIThread.Post(() => window.HandleHostCommand(cmd));
+                                    continue;
+                                }
 
                                 var parts = line.Split(':');
                                 if (parts.Length >= 3 &&

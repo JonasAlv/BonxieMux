@@ -336,7 +336,7 @@ public partial class TabbedHostWindow : Window
         public TearOffGhostWindow()
         {
             WindowStartupLocation = WindowStartupLocation.Manual;
-            SystemDecorations = SystemDecorations.None;
+            WindowDecorations = global::Avalonia.Controls.WindowDecorations.None;
             ShowInTaskbar = false;
             CanResize = false;
             ShowActivated = false;
@@ -417,27 +417,6 @@ public partial class TabbedHostWindow : Window
             };
 
             Content = _rootBorder;
-
-            Opened += (s, e) =>
-            {
-                try
-                {
-                    IntPtr hwnd = this.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
-                    if (hwnd != IntPtr.Zero)
-                    {
-                        IntPtr disp = GetDisplay();
-                        if (disp != IntPtr.Zero)
-                        {
-                            lock (_xLock)
-                            {
-                                XSetWindowAttributes attrs = new XSetWindowAttributes { override_redirect = 1 };
-                                XChangeWindowAttributes(disp, hwnd, (UIntPtr)0x0200, ref attrs);
-                            }
-                        }
-                    }
-                }
-                catch { }
-            };
         }
 
         public void SetMode(bool asWindow)
@@ -470,6 +449,14 @@ public partial class TabbedHostWindow : Window
 
     private void ShowGhostPreview(string title, int screenX, int screenY, bool asWindow)
     {
+        if (OperatingSystem.IsLinux())
+        {
+            Cursor = asWindow
+                ? new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.DragMove)
+                : _horizontalDragCursor;
+            return;
+        }
+
         if (_ghostWindow == null)
         {
             _ghostWindow = new TearOffGhostWindow();
@@ -768,6 +755,8 @@ public partial class TabbedHostWindow : Window
     private void TabbedHostWindow_Opened(object? sender, EventArgs e)
     {
         _hostHwnd = this.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
+        if (_hostHwnd == IntPtr.Zero)
+            _hostHwnd = new IntPtr(Environment.ProcessId);
 
         // F11 is grabbed by the host while an embedded Mugetsu child owns focus.
         // Toggle the host window here; the child process must not be fullscreened.
@@ -1009,9 +998,54 @@ public partial class TabbedHostWindow : Window
         ProcessNextSpawn();
     }
 
+    private static List<int> CollectDescendantPids(int rootPid)
+    {
+        List<int> result = new();
+        HashSet<int> visited = new() { rootPid };
+        Queue<int> queue = new();
+        queue.Enqueue(rootPid);
+
+        while (queue.Count > 0)
+        {
+            int pid = queue.Dequeue();
+            string taskDir = $"/proc/{pid}/task";
+            if (!Directory.Exists(taskDir))
+                continue;
+
+            try
+            {
+                foreach (string tidDir in Directory.EnumerateDirectories(taskDir))
+                {
+                    string childrenFile = Path.Combine(tidDir, "children");
+                    if (!File.Exists(childrenFile))
+                        continue;
+
+                    string content = File.ReadAllText(childrenFile);
+                    foreach (string token in content.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        if (int.TryParse(token, out int childPid) && childPid > 0 && visited.Add(childPid))
+                        {
+                            result.Add(childPid);
+                            queue.Enqueue(childPid);
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        return result;
+    }
+
     private static void KillProcessTree(Process? process)
     {
         if (process == null) return;
+        int rootPid = 0;
+        try { rootPid = process.Id; } catch { }
+        if (rootPid <= 0) return;
+
+        List<int> descendants = CollectDescendantPids(rootPid);
+
         try
         {
             try
@@ -1019,19 +1053,40 @@ public partial class TabbedHostWindow : Window
                 using var pkill = Process.Start(new ProcessStartInfo
                 {
                     FileName = "pkill",
-                    Arguments = $"-9 -P {process.Id}",
+                    Arguments = $"-9 -P {rootPid}",
                     CreateNoWindow = true,
                     UseShellExecute = false
                 });
+                pkill?.WaitForExit(100);
             }
             catch { }
 
             if (!process.HasExited)
             {
                 process.Kill(entireProcessTree: true);
+                process.WaitForExit(200);
             }
         }
         catch { }
+
+        // Kill bottom-up so child helpers like Mugetsu cannot survive wrapper/parent termination.
+        for (int i = descendants.Count - 1; i >= 0; i--)
+        {
+            int descPid = descendants[i];
+            if (!Directory.Exists($"/proc/{descPid}"))
+                continue;
+
+            try
+            {
+                using Process descProc = Process.GetProcessById(descPid);
+                if (!descProc.HasExited)
+                {
+                    descProc.Kill(entireProcessTree: true);
+                    descProc.WaitForExit(100);
+                }
+            }
+            catch { }
+        }
     }
 
     private void OnWindowClosing(object? sender, WindowClosingEventArgs e)
@@ -1041,31 +1096,21 @@ public partial class TabbedHostWindow : Window
         try { _pipeCts.Cancel(); } catch { }
         try { _ghostWindow?.Close(); _ghostWindow = null; } catch { }
 
+        PlatformClearAllViewports();
+
         var tabsToClose = _tabs.Values.ToList();
         _tabs.Clear();
+        _latestClientLocations.Clear();
+        _lastRecordedLocationByPid.Clear();
 
         foreach (var info in tabsToClose)
         {
             try
             {
+                int childPid = info.Process?.Id ?? (int)info.ChildHwnd.ToInt64();
                 KillProcessTree(info.Process);
-                if (info.ChildHwnd != IntPtr.Zero)
-                {
-                    PlatformUnmapChild(info.ChildHwnd);
-                }
-                if (info.Process != null)
-                {
-                    TabIpc.CleanUp(info.Process.Id);
-                    try { File.Delete(Path.Combine(ClientFileSources.TabsDIR, $"{info.Process.Id}.txt")); } catch { }
-                    try { File.Delete(Path.Combine(ClientFileSources.TabsDIR, $"ready_{info.Process.Id}.txt")); } catch { }
-                    try { File.Delete(Path.Combine(ClientFileSources.TabsDIR, $"loaded_{info.Process.Id}.txt")); } catch { }
-                }
-                if (info.Process != null)
-                {
-                    try { File.Delete(Path.Combine(ClientFileSources.TabsDIR, $"{info.Process.Id}.location.json")); } catch { }
-                    _latestClientLocations.Remove(info.Process.Id);
-                    _lastRecordedLocationByPid.Remove(info.Process.Id);
-                }
+                if (childPid > 0)
+                    CleanUpChildResources(childPid);
             }
             catch { }
         }
@@ -1082,15 +1127,6 @@ public partial class TabbedHostWindow : Window
                 System.IO.File.Delete(App.HostPipeName);
         }
         catch { }
-
-        lock (_xLock)
-        {
-            if (_xDisplay != IntPtr.Zero)
-            {
-                try { XCloseDisplay(_xDisplay); } catch { }
-                _xDisplay = IntPtr.Zero;
-            }
-        }
 
         Task.Run(async () =>
         {
@@ -1372,7 +1408,6 @@ public partial class TabbedHostWindow : Window
         {
             _lastGridViewToggleTime = DateTime.UtcNow;
             _isGridViewEnabled = true;
-            _gridFocusedChild = IntPtr.Zero;
             UpdateGridViewBorderColor();
 
             foreach (var info in _tabs.Values)
@@ -1418,7 +1453,6 @@ public partial class TabbedHostWindow : Window
         {
             _lastGridViewToggleTime = DateTime.UtcNow;
             _isGridViewEnabled = false;
-            _gridFocusedChild = IntPtr.Zero;
             UpdateGridViewBorderColor();
 
             foreach (var info in _tabs.Values)
@@ -1938,17 +1972,51 @@ public partial class TabbedHostWindow : Window
         }
     }
 
-    private async void MenuItem_MapTravel_Click(object? sender, RoutedEventArgs e)
+    private Window CreateStyledDialog(string title, double width, double? minHeight = null)
     {
         Window dialog = new Window
         {
-            Title = "Map Travel",
-            Width = 640,
+            Title = title,
+            Width = width,
             SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             CanResize = false,
-            Background = this.Background
+            WindowDecorations = WindowDecorations.None,
+            ExtendClientAreaToDecorationsHint = true,
+            ExtendClientAreaTitleBarHeightHint = 32,
+            Background = this.Background,
         };
+        if (minHeight.HasValue)
+            dialog.MinHeight = minHeight.Value;
+        dialog.Classes.Add("skua");
+        return dialog;
+    }
+
+    private static void SetDialogContent(Window dialog, Control body)
+    {
+        var titleBar = new Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar
+        {
+            TitleText = dialog.Title ?? string.Empty,
+        };
+        Grid.SetRow(titleBar, 0);
+        Grid.SetRow(body, 1);
+
+        var shell = new Grid
+        {
+            RowDefinitions = new RowDefinitions("Auto,*"),
+        };
+        shell.Children.Add(titleBar);
+        shell.Children.Add(body);
+
+        var frame = new Border();
+        frame.Classes.Add("window-frame");
+        frame.Child = shell;
+        dialog.Content = frame;
+    }
+
+    private async void MenuItem_MapTravel_Click(object? sender, RoutedEventArgs e)
+    {
+        Window dialog = CreateStyledDialog("Map Travel", 640);
 
         StackPanel panel = new StackPanel { Spacing = 14, Margin = new Thickness(18) };
         panel.Children.Add(new TextBlock
@@ -2094,7 +2162,7 @@ public partial class TabbedHostWindow : Window
 
         RefreshHistory();
         RefreshPresets();
-        dialog.Content = panel;
+        SetDialogContent(dialog, panel);
         await dialog.ShowDialog(this);
     }
 
@@ -2139,15 +2207,7 @@ public partial class TabbedHostWindow : Window
             return;
         }
 
-        Window dialog = new Window
-        {
-            Title = "Jump to Recent Destination",
-            Width = 440,
-            SizeToContent = SizeToContent.Height,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            CanResize = false,
-            Background = this.Background
-        };
+        Window dialog = CreateStyledDialog("Jump to Recent Destination", 440);
 
         StackPanel panel = new StackPanel { Spacing = 12, Margin = new Thickness(18) };
         panel.Children.Add(new TextBlock { Text = "Select a recent map, room and cell:", TextWrapping = TextWrapping.Wrap });
@@ -2177,7 +2237,7 @@ public partial class TabbedHostWindow : Window
         buttons.Children.Add(cancelButton);
         buttons.Children.Add(jumpButton);
         panel.Children.Add(buttons);
-        dialog.Content = panel;
+        SetDialogContent(dialog, panel);
 
         bool? confirmed = await dialog.ShowDialog<bool?>(this);
         if (confirmed != true || historyPicker.SelectedIndex < 0 || historyPicker.SelectedIndex >= history.Count)
@@ -2193,15 +2253,7 @@ public partial class TabbedHostWindow : Window
 
     private async Task OpenJumpMapPresetEditor(ArmyJumpDestination? existingPreset)
     {
-        Window dialog = new Window
-        {
-            Title = existingPreset == null ? "Create Map Preset" : "Edit Map Preset",
-            Width = 460,
-            SizeToContent = SizeToContent.Height,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            CanResize = false,
-            Background = this.Background
-        };
+        Window dialog = CreateStyledDialog(existingPreset == null ? "Create Map Preset" : "Edit Map Preset", 460);
 
         StackPanel panel = new StackPanel { Spacing = 10, Margin = new Thickness(18) };
         TextBox nameInput = new TextBox { Watermark = "Preset name", Text = existingPreset?.Name ?? "" };
@@ -2292,7 +2344,7 @@ public partial class TabbedHostWindow : Window
         buttons.Children.Add(cancelButton);
         buttons.Children.Add(saveButton);
         panel.Children.Add(buttons);
-        dialog.Content = panel;
+        SetDialogContent(dialog, panel);
 
         await dialog.ShowDialog<bool?>(this);
     }
@@ -2305,15 +2357,7 @@ public partial class TabbedHostWindow : Window
             return;
         }
 
-        Window dialog = new Window
-        {
-            Title = "Jump to Map Preset",
-            Width = 440,
-            SizeToContent = SizeToContent.Height,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            CanResize = false,
-            Background = this.Background
-        };
+        Window dialog = CreateStyledDialog("Jump to Map Preset", 440);
 
         StackPanel panel = new StackPanel { Spacing = 12, Margin = new Thickness(18) };
         panel.Children.Add(new TextBlock { Text = "Select a saved map, room and cell preset:", TextWrapping = TextWrapping.Wrap });
@@ -2335,7 +2379,7 @@ public partial class TabbedHostWindow : Window
         buttons.Children.Add(cancelButton);
         buttons.Children.Add(jumpButton);
         panel.Children.Add(buttons);
-        dialog.Content = panel;
+        SetDialogContent(dialog, panel);
 
         bool? confirmed = await dialog.ShowDialog<bool?>(this);
         if (confirmed != true || presetPicker.SelectedIndex < 0 || presetPicker.SelectedIndex >= presets.Count)
@@ -2346,16 +2390,7 @@ public partial class TabbedHostWindow : Window
 
     private async void MenuItem_ManageJumpMapPresets_Click(object? sender, RoutedEventArgs e)
     {
-        Window dialog = new Window
-        {
-            Title = "Manage Map Presets",
-            Width = 600,
-            MinHeight = 280,
-            SizeToContent = SizeToContent.Height,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            CanResize = false,
-            Background = this.Background
-        };
+        Window dialog = CreateStyledDialog("Manage Map Presets", 600, minHeight: 280);
 
         StackPanel panel = new StackPanel { Spacing = 12, Margin = new Thickness(18) };
         panel.Children.Add(new TextBlock { Text = "Create, inspect, edit, or delete saved map presets.", TextWrapping = TextWrapping.Wrap });
@@ -2432,7 +2467,7 @@ public partial class TabbedHostWindow : Window
         buttons.Children.Add(deleteButton);
         buttons.Children.Add(closeButton);
         panel.Children.Add(buttons);
-        dialog.Content = panel;
+        SetDialogContent(dialog, panel);
 
         await dialog.ShowDialog(this);
     }
@@ -2454,15 +2489,7 @@ public partial class TabbedHostWindow : Window
             return;
         }
 
-        Window dialog = new Window
-        {
-            Title = "Jump Army to Player",
-            Width = 360,
-            SizeToContent = SizeToContent.Height,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            CanResize = false,
-            Background = this.Background
-        };
+        Window dialog = CreateStyledDialog("Jump Army to Player", 360);
         StackPanel panel = new StackPanel { Spacing = 12, Margin = new Thickness(18) };
         panel.Children.Add(new TextBlock { Text = "Select a player from the open client tabs:", TextWrapping = TextWrapping.Wrap });
         string initialPlayer = players.FirstOrDefault(player => player.Equals(_lastJumpPlayer, StringComparison.OrdinalIgnoreCase)) ?? players[0];
@@ -2483,7 +2510,7 @@ public partial class TabbedHostWindow : Window
         buttons.Children.Add(cancelButton);
         buttons.Children.Add(jumpButton);
         panel.Children.Add(buttons);
-        dialog.Content = panel;
+        SetDialogContent(dialog, panel);
 
         bool? confirmed = await dialog.ShowDialog<bool?>(this);
         string targetPlayer = playerPicker.Text?.Trim() ?? "";
@@ -2557,15 +2584,7 @@ public partial class TabbedHostWindow : Window
             return;
         }
 
-        Window dialog = new Window
-        {
-            Title = "Change Server for All",
-            Width = 360,
-            SizeToContent = SizeToContent.Height,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            CanResize = false,
-            Background = this.Background
-        };
+        Window dialog = CreateStyledDialog("Change Server for All", 360);
         StackPanel panel = new StackPanel { Spacing = 12, Margin = new Thickness(18) };
         panel.Children.Add(new TextBlock { Text = "Select the server for all open clients:", TextWrapping = TextWrapping.Wrap });
 
@@ -2586,7 +2605,7 @@ public partial class TabbedHostWindow : Window
         buttons.Children.Add(cancelButton);
         buttons.Children.Add(changeButton);
         panel.Children.Add(buttons);
-        dialog.Content = panel;
+        SetDialogContent(dialog, panel);
 
         bool? confirmed = await dialog.ShowDialog<bool?>(this);
         string targetServer = serverPicker.SelectedItem?.ToString()?.Trim() ?? string.Empty;
@@ -2778,7 +2797,11 @@ public partial class TabbedHostWindow : Window
                 }
             }
 
-            if (!_isGridViewEnabled && selectedTab == null) return;
+            if (!_isGridViewEnabled && selectedTab == null)
+            {
+                PlatformClearAllViewports();
+                return;
+            }
 
             if (WindowState == WindowState.Minimized || !IsVisible)
             {
@@ -2998,8 +3021,7 @@ public partial class TabbedHostWindow : Window
             int visibility;
             if (_isGridViewEnabled)
             {
-                bool isSelectedTile = (_gridFocusedChild != IntPtr.Zero && info.ChildHwnd == _gridFocusedChild)
-                    || (_gridFocusedChild == IntPtr.Zero && i == selectedGridIndex);
+                bool isSelectedTile = i == selectedGridIndex;
                 visibility = isSelectedTile ? 2 : 3;
             }
             else
@@ -3050,10 +3072,15 @@ public partial class TabbedHostWindow : Window
         info.IsDetached = true;
         info.TabItem = tab;
 
-        int screenX = targetScreenPos?.X ?? (this.Position.X + 50);
-        int screenY = targetScreenPos?.Y ?? (this.Position.Y + 50);
-        int clientWidth = 948;
-        int clientHeight = 600;
+        int clientWidth = Math.Max(400, (int)Math.Round(Bounds.Width > 0 ? Bounds.Width : 948));
+        int clientHeight = Math.Max(300, (int)Math.Round(Bounds.Height > 0 ? Bounds.Height : 600));
+        var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary;
+        int screenX = targetScreenPos?.X ?? (screen != null
+            ? screen.WorkingArea.X + Math.Max(0, (screen.WorkingArea.Width - clientWidth) / 2)
+            : this.Position.X);
+        int screenY = targetScreenPos?.Y ?? (screen != null
+            ? screen.WorkingArea.Y + Math.Max(0, (screen.WorkingArea.Height - clientHeight) / 2)
+            : this.Position.Y);
 
         info.DetachedScreenX = screenX;
         info.DetachedScreenY = screenY;
@@ -3071,7 +3098,7 @@ public partial class TabbedHostWindow : Window
         InstancesTabControl.SelectedItem = tab;
         UpdateTabScrollButtons();
 
-        // Reparent X11 window to desktop root window
+        // Detach/reattach uses IPC; Wayland windows cannot be reparented across processes.
         if (info.ChildHwnd != IntPtr.Zero)
         {
             PlatformDetachChild(info.ChildHwnd, screenX, screenY, clientWidth, clientHeight);
@@ -3102,7 +3129,6 @@ public partial class TabbedHostWindow : Window
         }
         tab.Classes.Remove("tab-detached");
 
-        // Reparent X11 window back to host
         if (info.ChildHwnd != IntPtr.Zero)
         {
             PlatformReattachChild(info.ChildHwnd);
@@ -3158,22 +3184,32 @@ public partial class TabbedHostWindow : Window
         if (_tabs.TryGetValue(tab, out TabInfo? info))
         {
             _tabs.Remove(tab);
+
+            int childPid = 0;
+            try { childPid = info.Process?.Id ?? 0; } catch { }
+            if (childPid <= 0 && info.ChildHwnd != IntPtr.Zero)
+                childPid = (int)info.ChildHwnd.ToInt64();
+
+            IntPtr unmapHandle = info.ChildHwnd != IntPtr.Zero
+                ? info.ChildHwnd
+                : (childPid > 0 ? new IntPtr(childPid) : IntPtr.Zero);
+            if (unmapHandle != IntPtr.Zero)
+                PlatformUnmapChild(unmapHandle);
+
+            if (childPid > 0)
+            {
+                _latestClientLocations.Remove(childPid);
+                _lastRecordedLocationByPid.Remove(childPid);
+            }
+
+            Process? procToKill = info.Process;
             Task.Run(() =>
             {
                 try
                 {
-                    KillProcessTree(info.Process);
-                    if (info.ChildHwnd != IntPtr.Zero)
-                    {
-                        PlatformUnmapChild(info.ChildHwnd);
-                    }
-                    if (info.Process != null)
-                    {
-                        TabIpc.CleanUp(info.Process.Id);
-                        try { File.Delete(Path.Combine(ClientFileSources.TabsDIR, $"{info.Process.Id}.txt")); } catch { }
-                        try { File.Delete(Path.Combine(ClientFileSources.TabsDIR, $"ready_{info.Process.Id}.txt")); } catch { }
-                        try { File.Delete(Path.Combine(ClientFileSources.TabsDIR, $"loaded_{info.Process.Id}.txt")); } catch { }
-                    }
+                    KillProcessTree(procToKill);
+                    if (childPid > 0)
+                        CleanUpChildResources(childPid);
                 }
                 catch { }
             });
@@ -3196,6 +3232,7 @@ public partial class TabbedHostWindow : Window
             _lastSelectedTab = null;
             _lastActiveHwnd = IntPtr.Zero;
             _isGridViewEnabled = false;
+            PlatformClearAllViewports();
 
             // Explicitly keep the host alive and visible after the final child exits.
             // The host is the desktop MainWindow, so closing a child tab must not leave
@@ -3224,6 +3261,8 @@ public partial class TabbedHostWindow : Window
         var remaining = InstancesTabControl.Items.OfType<TabItem>().FirstOrDefault();
         if (remaining != null && InstancesTabControl.SelectedItem == null)
             InstancesTabControl.SelectedItem = remaining;
+        else
+            DoReposition();
     }
 
     // ---- Client crash recovery (BonxieMux only: local, no alerts, nothing leaves this machine) -----------

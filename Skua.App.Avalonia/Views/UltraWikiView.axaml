@@ -46,7 +46,7 @@
           <TextBlock Text="{Binding Ultras.Count, StringFormat='{}{0} fights'}" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
         </StackPanel>
         <TextBox Grid.Row="1" Height="32" VerticalContentAlignment="Center"
-                 Watermark="Search ultra..." Text="{Binding SearchText, Mode=TwoWay}" />
+                 PlaceholderText="Search ultra..." Text="{Binding SearchText, Mode=TwoWay}" />
         <ListBox Grid.Row="2" ItemsSource="{Binding FilteredUltras}"
                  SelectedItem="{Binding SelectedUltra, Mode=TwoWay}"
                  Background="Transparent" BorderThickness="0">

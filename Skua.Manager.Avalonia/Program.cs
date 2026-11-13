@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Skia;
 using Avalonia.Threading;
-using Avalonia.X11;
 using CommunityToolkit.Mvvm.Messaging;
 using Skua.Core.Messaging;
 using Skua.Core.Models;
@@ -221,20 +220,28 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "crash_manager.txt"), ex.ToString());
+            Console.Error.WriteLine(ex);
+            try
+            {
+                Directory.CreateDirectory(ClientFileSources.SkuaDIR);
+                File.WriteAllText(Path.Combine(ClientFileSources.SkuaDIR, "crash_manager.txt"), ex.ToString());
+            }
+            catch
+            {
+                // Ignore secondary logging failures on read-only filesystems
+            }
         }
     }
 
     public static AppBuilder BuildAvaloniaApp()
     {
         AppBuilder builder = AppBuilder.Configure<App>()
-            .UseX11()
-            .With(new X11PlatformOptions
-            {
-                EnableIme = false,
-                WmClass = "BonxieMux-Manager"
-            })
-            .UseSkia();
+            .UseWayland()
+#pragma warning disable AVALONIA_WAYLAND_FORCE_CSD
+            .With(new WaylandPlatformOptions { ForceDrawnDecorations = true })
+#pragma warning restore AVALONIA_WAYLAND_FORCE_CSD
+            .UseSkia()
+            .UseHarfBuzz();
 
 #if DEBUG
         builder = builder.WithDeveloperTools();

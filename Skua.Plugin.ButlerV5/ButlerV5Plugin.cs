@@ -734,6 +734,9 @@ public class ButlerV5Plugin : ISkuaPlugin
         try
         {
             Type? mainMenuType = Type.GetType(
+                "Skua.App.Avalonia.ViewModels.MainMenu.MainMenuViewModel, BonxieMux",
+                throwOnError: false)
+                ?? Type.GetType(
                 "Skua.App.Avalonia.ViewModels.MainMenu.MainMenuViewModel, Skua",
                 throwOnError: false);
             object? mainMenu = mainMenuType == null ? null : provider.GetService(mainMenuType);

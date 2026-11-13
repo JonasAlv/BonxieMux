@@ -155,9 +155,8 @@ public class WindowService : IWindowService
         {
             Title = title,
             CanResize = true,
-            SystemDecorations = SystemDecorations.BorderOnly,
+            WindowDecorations = WindowDecorations.None,
             ExtendClientAreaToDecorationsHint = true,
-            ExtendClientAreaChromeHints = global::Avalonia.Platform.ExtendClientAreaChromeHints.NoChrome,
             ExtendClientAreaTitleBarHeightHint = 32,
             WindowStartupLocation = startupLoc,
             SizeToContent = sizeToContent,
@@ -207,8 +206,6 @@ public class WindowService : IWindowService
         Style popupStyle = new(x => x.OfType<Popup>());
         popupStyle.Setters.Add(new Setter(Popup.ShouldUseOverlayLayerProperty, true));
         window.Styles.Add(popupStyle);
-
-        Skua.Shared.Avalonia.Services.X11WindowPositionTracker.Track(window);
 
         return window;
     }
