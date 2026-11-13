@@ -338,11 +338,14 @@ public partial class ScriptServers : ObservableRecipient, IScriptServers
         }
     }
 
-    private void AddReloginCandidates(List<Server> candidates, List<Server> source, bool isNonMemberAccount)
+    private void AddReloginCandidates(List<Server> candidates, List<Server>? source, bool isNonMemberAccount)
     {
+        if (source is null)
+            return;
+
         foreach (Server server in source)
         {
-            if (IsServerBlacklistedForRelogin(server, isNonMemberAccount))
+            if (server is null || IsServerBlacklistedForRelogin(server, isNonMemberAccount))
                 continue;
 
             if (candidates.Exists(x => string.Equals(x.Name, server.Name, StringComparison.OrdinalIgnoreCase)))

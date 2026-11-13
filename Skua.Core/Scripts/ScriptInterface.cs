@@ -664,7 +664,10 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
                                 break;
 
                             case "ct":
-                                dynamic p = data.p?[Player.Username.ToLower()]!;
+                                string? username = Player.Username;
+                                dynamic? p = !string.IsNullOrEmpty(username) && data.p is JObject players
+                                    ? players[username.ToLowerInvariant()]
+                                    : null;
                                 if (p is not null && p.intHP == 0)
                                 {
                                     // Combat-state packets can repeat while the player remains dead.
