@@ -58,6 +58,8 @@ public partial class TabbedHostWindow : Window
         public bool IsThrottled { get; set; } = false;
         public int LastVisibility { get; set; } = -1;
         public bool IsCustomNamed { get; set; } = false;
+        public int ClientNumber { get; set; } = 1;
+        public string LastCharacterName { get; set; } = string.Empty;
         public bool IsLoaded { get; set; } = false;
         public bool IsDetached { get; set; } = false;
         public bool WasDetachedBeforeGrid { get; set; } = false;
@@ -234,6 +236,8 @@ public partial class TabbedHostWindow : Window
         };
         Activated += (s, e) =>
         {
+            _lastActiveHwnd = IntPtr.Zero;
+            _lastGridViewState = false;
             ScheduleReposition();
             UpdateTabScrollButtons();
             if (_isGridViewEnabled)
@@ -247,6 +251,9 @@ public partial class TabbedHostWindow : Window
         Deactivated += (s, e) =>
         {
             CloseHostDropdowns();
+            _lastActiveHwnd = IntPtr.Zero;
+            _lastGridViewState = false;
+            ScheduleReposition();
             foreach (var info in _tabs.Values)
             {
                 if (info.ChildHwnd != IntPtr.Zero)
@@ -259,6 +266,17 @@ public partial class TabbedHostWindow : Window
         StrongReferenceMessenger.Default.Register<TabbedHostWindow, LoadScriptMessage, int>(this, (int)MessageChannels.ScriptStatus, (r, m) => r.BroadcastScriptAction(m.Path, WM_SKUA_LOAD_SCRIPT));
         StrongReferenceMessenger.Default.Register<TabbedHostWindow, ScriptSchedulerViewModel.ArmySchedulerMessage>(this, (r, m) => r.OnArmySchedulerStart(m));
         StrongReferenceMessenger.Default.Register<TabbedHostWindow, ScriptSchedulerViewModel.ArmySchedulerStopMessage>(this, (r, m) => r.OnArmySchedulerStop(m));
+        StrongReferenceMessenger.Default.Register<TabbedHostWindow, Skua.App.Avalonia.AppStartup.AppSettingChangedMessage>(this, (r, m) =>
+        {
+            if (m.Key == "ShowCharNameOnTabs")
+                Dispatcher.UIThread.Post(r.RefreshAllTabTitles);
+            else if (m.Key == "ShowCharNameInDetachedTitle" && m.Value is bool b)
+            {
+                foreach (var info in r._tabs.Values)
+                    if (info.ChildHwnd != IntPtr.Zero)
+                        r.PostChildMessage(info.ChildHwnd, WM_SKUA_SET_OPTION, new IntPtr(11), new IntPtr(b ? 1 : 0));
+            }
+        });
 
         StartPipeServer();
 
@@ -732,23 +750,60 @@ public partial class TabbedHostWindow : Window
 
                     foreach (var (tab, username) in updates)
                     {
-                        if (_tabs.TryGetValue(tab, out TabInfo? tInfo) && tInfo.IsCustomNamed)
+                        if (!_tabs.TryGetValue(tab, out TabInfo? tInfo))
                             continue;
 
-                        if (tab.Header is StackPanel headerPanel)
-                        {
-                            var titleBlock = headerPanel.Children.OfType<TextBlock>().FirstOrDefault(tb => tb.Text != "✕");
-                            var editBox = headerPanel.Children.OfType<TextBox>().FirstOrDefault();
-                            if (titleBlock != null && (titleBlock.Text.StartsWith("User ") || titleBlock.Text.StartsWith("Skua ") || titleBlock.Text != username))
-                            {
-                                titleBlock.Text = username;
-                                if (editBox != null) editBox.Text = username;
-                            }
-                        }
+                        tInfo.LastCharacterName = username;
+                        ApplyTabHeaderTitle(tab, tInfo);
                     }
                 }, DispatcherPriority.Background);
             }
         });
+    }
+
+    private bool ShouldShowCharNameOnTabs()
+    {
+        try
+        {
+            var options = Ioc.Default.GetService<IScriptOption>();
+            if (options?.StreamerMode == true)
+                return false;
+            var settings = Ioc.Default.GetService<ISettingsService>();
+            return settings?.Get("ShowCharNameOnTabs", true) ?? true;
+        }
+        catch
+        {
+            return true;
+        }
+    }
+
+    private void ApplyTabHeaderTitle(TabItem tab, TabInfo info)
+    {
+        if (tab.Header is not StackPanel headerPanel)
+            return;
+
+        bool showCharName = ShouldShowCharNameOnTabs();
+        if (info.IsCustomNamed && showCharName)
+            return;
+
+        string displayName = showCharName && !string.IsNullOrWhiteSpace(info.LastCharacterName)
+            ? info.LastCharacterName
+            : $"Tab {info.ClientNumber}";
+
+        var titleBlock = headerPanel.Children.OfType<TextBlock>().FirstOrDefault(tb => tb.Text != "✕");
+        var editBox = headerPanel.Children.OfType<TextBox>().FirstOrDefault();
+        if (titleBlock != null && titleBlock.Text != displayName)
+        {
+            titleBlock.Text = displayName;
+            if (editBox != null && !editBox.IsVisible)
+                editBox.Text = displayName;
+        }
+    }
+
+    private void RefreshAllTabTitles()
+    {
+        foreach (var kvp in _tabs)
+            ApplyTabHeaderTitle(kvp.Key, kvp.Value);
     }
 
     #region Lifecycle
@@ -1231,6 +1286,59 @@ public partial class TabbedHostWindow : Window
                                     Dispatcher.UIThread.Post(() => DockChildInstance(childPid));
                                 }
                             }
+                            else if (line.StartsWith("AUTO_STATE|", StringComparison.Ordinal))
+                            {
+                                string rest = line.Substring("AUTO_STATE|".Length);
+                                int sep = rest.IndexOf('|');
+                                if (sep > 0 && int.TryParse(rest[..sep], out int childPid))
+                                {
+                                    string json = rest[(sep + 1)..];
+                                    Dispatcher.UIThread.Post(() => ApplyChildAutoState(childPid, json));
+                                }
+                            }
+                            else if (line.StartsWith("JUMP_STATE|", StringComparison.Ordinal))
+                            {
+                                string rest = line.Substring("JUMP_STATE|".Length);
+                                int sep = rest.IndexOf('|');
+                                if (sep > 0 && int.TryParse(rest[..sep], out int childPid))
+                                {
+                                    string json = rest[(sep + 1)..];
+                                    Dispatcher.UIThread.Post(() => ApplyChildJumpState(childPid, json));
+                                }
+                            }
+                            else if (line.StartsWith("HEADLESS_STATE|", StringComparison.Ordinal))
+                            {
+                                string[] parts = line.Split('|');
+                                if (parts.Length >= 5 &&
+                                    int.TryParse(parts[1], out int childPid) &&
+                                    long.TryParse(parts[4], out long seq))
+                                {
+                                    bool manual = parts[2] == "1";
+                                    bool auto = parts[3] == "1";
+                                    Dispatcher.UIThread.Post(() => ApplyChildHeadlessState(childPid, manual, auto, seq));
+                                }
+                            }
+                            else if (line.StartsWith("GLOBAL_OPT|", StringComparison.Ordinal))
+                            {
+                                string rest = line.Substring("GLOBAL_OPT|".Length);
+                                int sep = rest.IndexOf('|');
+                                if (sep > 0)
+                                {
+                                    string name = rest[..sep];
+                                    string val = rest[(sep + 1)..];
+                                    Dispatcher.UIThread.Post(() =>
+                                    {
+                                        try
+                                        {
+                                            var hostOpts = Ioc.Default.GetRequiredService<IScriptOption>();
+                                            Skua.Core.Services.OptionSharing.Apply(hostOpts, new Skua.Core.Services.SharedOptionCommand("set", name, val));
+                                            if (name.StartsWith("AutoHeadless", StringComparison.Ordinal))
+                                                RefreshLinuxHeadlessOverlays();
+                                        }
+                                        catch { }
+                                    });
+                                }
+                            }
                             else
                             {
                                 string[]? parsedArgs = null;
@@ -1410,16 +1518,6 @@ public partial class TabbedHostWindow : Window
             _isGridViewEnabled = true;
             UpdateGridViewBorderColor();
 
-            foreach (var info in _tabs.Values)
-            {
-                if (info.ChildHwnd != IntPtr.Zero && !info.IsDetached)
-                {
-                    info.IsThrottled = false;
-                    PostChildMessage(info.ChildHwnd, WM_SKUA_GRIDVIEW, new IntPtr(1), IntPtr.Zero);
-                    PostChildMessage(info.ChildHwnd, WM_SKUA_THROTTLE, IntPtr.Zero, IntPtr.Zero);
-                }
-            }
-
             if (InstancesTabControl.SelectedItem is TabItem currentTab)
             {
                 if (_tabs.TryGetValue(currentTab, out var cInfo) && !cInfo.IsDetached)
@@ -1437,6 +1535,16 @@ public partial class TabbedHostWindow : Window
             _ignoreSelectionChange = false;
 
             DoReposition();
+
+            foreach (var info in _tabs.Values)
+            {
+                if (info.ChildHwnd != IntPtr.Zero && !info.IsDetached)
+                {
+                    info.IsThrottled = false;
+                    PostChildMessage(info.ChildHwnd, WM_SKUA_GRIDVIEW, new IntPtr(1), IntPtr.Zero);
+                    PostChildMessage(info.ChildHwnd, WM_SKUA_THROTTLE, IntPtr.Zero, IntPtr.Zero);
+                }
+            }
         }
         finally
         {
@@ -1455,14 +1563,6 @@ public partial class TabbedHostWindow : Window
             _isGridViewEnabled = false;
             UpdateGridViewBorderColor();
 
-            foreach (var info in _tabs.Values)
-            {
-                if (info.ChildHwnd != IntPtr.Zero && !info.IsDetached)
-                {
-                    PostChildMessage(info.ChildHwnd, WM_SKUA_GRIDVIEW, IntPtr.Zero, IntPtr.Zero);
-                }
-            }
-
             _ignoreSelectionChange = true;
             if (_lastSelectedTab != null && InstancesTabControl.Items.Contains(_lastSelectedTab))
             {
@@ -1477,6 +1577,14 @@ public partial class TabbedHostWindow : Window
             _ignoreSelectionChange = false;
 
             DoReposition();
+
+            foreach (var info in _tabs.Values)
+            {
+                if (info.ChildHwnd != IntPtr.Zero && !info.IsDetached)
+                {
+                    PostChildMessage(info.ChildHwnd, WM_SKUA_GRIDVIEW, IntPtr.Zero, IntPtr.Zero);
+                }
+            }
         }
         finally
         {
@@ -1559,6 +1667,7 @@ public partial class TabbedHostWindow : Window
     private void GridLayoutBorder_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
         _gridLayout = _gridLayout switch { "auto" => "vertical", "vertical" => "horizontal", _ => "auto" };
+        _lastGridViewState = false;
         Ioc.Default.GetService<ISettingsService>()?.Set("BonxieMuxGridLayout", _gridLayout);
         UpdateGridLayoutButton();
         if (_isGridViewEnabled)
@@ -1711,6 +1820,8 @@ public partial class TabbedHostWindow : Window
 
         DoReposition();
         UpdateTabScrollButtons();
+        if (OperatingSystem.IsLinux())
+            SendActiveChildCommand("GET_AUTO_STATE");
         if (InstancesTabControl.SelectedItem is TabItem scrollTab)
         {
             ScrollTabIntoView(scrollTab);
@@ -1753,7 +1864,11 @@ public partial class TabbedHostWindow : Window
             case "HidePlayers": optionId = 3; val = options.HidePlayers; break;
             case "DisableFX": optionId = 4; val = options.DisableFX; break;
             case "InfiniteRange": optionId = 5; val = options.InfiniteRange; break;
-            case "StreamerMode": optionId = 9; val = options.StreamerMode; break;
+            case "StreamerMode":
+                optionId = 9;
+                val = options.StreamerMode;
+                Dispatcher.UIThread.Post(RefreshAllTabTitles);
+                break;
             case "AggroMonsters": optionId = 10; val = options.AggroMonsters; break;
         }
         
@@ -2896,6 +3011,12 @@ public partial class TabbedHostWindow : Window
             if (_isGridViewEnabled)
             {
                 int n = activeWindows.Count;
+                if (x == _lastX && y == _lastY && w == _lastW && h == _lastH &&
+                    _lastGridViewState && n == _lastTabCount)
+                {
+                    return;
+                }
+
                 (int cols, int rows) = GridShape(_gridLayout, n);
 
                 TabInfo? gridSelected = null;
@@ -2921,8 +3042,12 @@ public partial class TabbedHostWindow : Window
                         activeWindows[i].IsThrottled = false;
                         PostChildMessage(activeWindows[i].ChildHwnd, WM_SKUA_THROTTLE, new IntPtr(0), IntPtr.Zero);
                     }
-                    PostChildMessage(activeWindows[i].ChildHwnd, (uint)HotKeys.WM_SKUA_FOCUS, new IntPtr(1), IntPtr.Zero);
+                    PostChildMessage(activeWindows[i].ChildHwnd, (uint)HotKeys.WM_SKUA_FOCUS, new IntPtr(IsActive ? 1 : 0), IntPtr.Zero);
                 }
+                _lastX = x;
+                _lastY = y;
+                _lastW = w;
+                _lastH = h;
                 _lastGridViewState = true;
                 _lastActiveHwnd = IntPtr.Zero;
                 _lastTabCount = activeWindows.Count;
@@ -2972,7 +3097,7 @@ public partial class TabbedHostWindow : Window
                             activeInfo.IsThrottled = false;
                             PostChildMessage(activeChildHwnd, WM_SKUA_THROTTLE, new IntPtr(0), IntPtr.Zero);
                         }
-                        PostChildMessage(activeChildHwnd, (uint)HotKeys.WM_SKUA_FOCUS, new IntPtr(1), IntPtr.Zero);
+                        PostChildMessage(activeChildHwnd, (uint)HotKeys.WM_SKUA_FOCUS, new IntPtr(IsActive ? 1 : 0), IntPtr.Zero);
                     }
                     else
                     {
@@ -3019,7 +3144,11 @@ public partial class TabbedHostWindow : Window
         {
             TabInfo info = activeWindows[i];
             int visibility;
-            if (_isGridViewEnabled)
+            if (!IsActive)
+            {
+                visibility = 4;
+            }
+            else if (_isGridViewEnabled)
             {
                 bool isSelectedTile = i == selectedGridIndex;
                 visibility = isSelectedTile ? 2 : 3;
@@ -3349,33 +3478,24 @@ public partial class TabbedHostWindow : Window
         clientArgs ??= Array.Empty<string>();
 
         int availableId = 1;
-        var currentTitles = InstancesTabControl.Items.OfType<TabItem>()
-            .Select(t => t.Header as StackPanel)
-            .Where(p => p != null)
-            .Select(p => p!.Children.OfType<TextBlock>().FirstOrDefault(tb => tb.Text != "✕")?.Text)
-            .Where(t => t != null && (t.StartsWith("User ") || t.StartsWith("Skua ")))
-            .Select(t => { 
-                string numStr = t!.StartsWith("User ") ? t.Substring(5) : t.Substring(5);
-                int.TryParse(numStr, out int id); 
-                return id; 
-            })
-            .ToList();
-
-        while (currentTitles.Contains(availableId))
-        {
+        var usedIds = _tabs.Values.Select(t => t.ClientNumber).ToHashSet();
+        while (usedIds.Contains(availableId))
             availableId++;
-        }
-        
-        string tabName = "User " + availableId;
+
+        string userArg = string.Empty;
         for (int i = 0; i < clientArgs.Length; i++)
         {
             if ((clientArgs[i] == "-u" || clientArgs[i] == "--user") && i + 1 < clientArgs.Length)
             {
                 if (!string.IsNullOrWhiteSpace(clientArgs[i + 1]))
-                    tabName = clientArgs[i + 1];
+                    userArg = clientArgs[i + 1];
                 break;
             }
         }
+
+        string tabName = ShouldShowCharNameOnTabs() && !string.IsNullOrWhiteSpace(userArg)
+            ? userArg
+            : $"Tab {availableId}";
 
         #region Tab Header UI
         StackPanel headerPanel = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Background = Brushes.Transparent };
@@ -3478,6 +3598,8 @@ public partial class TabbedHostWindow : Window
         
         TabInfo info = new TabInfo
         {
+            ClientNumber = availableId,
+            LastCharacterName = userArg,
             AccountOrderKey = AccountKey(clientArgs ?? Array.Empty<string>()),
             HeaderPanel = headerPanel,
             Crown = crown,

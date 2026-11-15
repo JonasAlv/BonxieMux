@@ -63,6 +63,7 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
 
     /// <summary>Shared-memory frame buffer path for offscreen Wayland rendering (<c>--skua-shm</c>).</summary>
     public string? ShmPath { get; set; }
+    public bool IsPlayerRunning => _player is { HasExited: false };
     public event Action? FrameReady;
 
     public static void PreloadSwf()

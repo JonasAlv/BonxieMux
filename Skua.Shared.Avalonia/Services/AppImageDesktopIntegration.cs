@@ -50,7 +50,7 @@ public static class AppImageDesktopIntegration
                     comment = "Account manager, script updater, and launcher for BonxieMux";
                     iconName = "bonxiemux-manager";
                     categories = "Game;";
-                    wmClass = "BonxieMux-Manager";
+                    wmClass = "BonxieMux.Manager";
                     break;
 
                 case AppIdentity.BonxieMux:

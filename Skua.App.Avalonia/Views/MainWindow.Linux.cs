@@ -47,17 +47,13 @@ public partial class MainWindow : Window
         try
         {
             var options = Ioc.Default.GetRequiredService<IScriptOption>();
-            bool isShown = _tabVisibility == 0 || _tabVisibility == 2;
-            if (WindowState == WindowState.Minimized || _tabVisibility is 1 or 4)
-                isShown = false;
+            bool isTabFocused = _isWindowFocused &&
+                (_tabVisibility == 0 || (_tabVisibility is 2 or 3 && options.AutoHeadlessGridView));
+            if (WindowState == WindowState.Minimized)
+                isTabFocused = false;
 
-            options.SetTabShown(isShown);
-
-            bool isForeground = isShown && (_isWindowFocused || _tabVisibility == 0);
-            if (_tabVisibility is 1 or 3 or 4)
-                isForeground = false;
-
-            options.SetForegroundFocus(isForeground);
+            options.SetTabShown(isTabFocused);
+            options.SetForegroundFocus(isTabFocused);
         }
         catch { }
     }
@@ -78,17 +74,63 @@ public partial class MainWindow : Window
         Skua.App.Avalonia.Controls.GameHost.GameClicked -= OnLinuxGameClicked;
         Skua.App.Avalonia.Controls.GameHost.GameClicked += OnLinuxGameClicked;
 
+        Activated += (s, e) =>
+        {
+            if (string.IsNullOrEmpty(App.HostPipeName) || HotKeys.IsDetachedMode)
+            {
+                _isWindowFocused = true;
+                EvaluateAutoHeadless();
+                UpdateQualityFocusState();
+            }
+        };
+
+        Deactivated += (s, e) =>
+        {
+            if (string.IsNullOrEmpty(App.HostPipeName) || HotKeys.IsDetachedMode)
+            {
+                _isWindowFocused = false;
+                EvaluateAutoHeadless();
+                UpdateQualityFocusState();
+            }
+        };
+
         PropertyChanged += (s, e) =>
         {
+            if (e.Property != WindowStateProperty && e.Property != IsVisibleProperty)
+                return;
+
             if ((e.Property == WindowStateProperty && WindowState == WindowState.Minimized) ||
                 (e.Property == IsVisibleProperty && !IsVisible))
                 CloseDropdowns();
+
+            if (string.IsNullOrEmpty(App.HostPipeName) || HotKeys.IsDetachedMode)
+            {
+                EvaluateAutoHeadless();
+                UpdateQualityFocusState();
+            }
         };
 
         AddHandler(PointerPressedEvent, (s, e) =>
         {
             UpdateBackgroundThrottleState(false);
         }, RoutingStrategies.Tunnel);
+
+        if (!string.IsNullOrEmpty(App.HostPipeName))
+        {
+            try
+            {
+                var autoVm = Ioc.Default.GetRequiredService<ViewModels.AutoViewModel>();
+                if (autoVm.Auto is System.ComponentModel.INotifyPropertyChanged autoNpc)
+                {
+                    autoNpc.PropertyChanged += (_, args) =>
+                    {
+                        if (string.IsNullOrEmpty(args.PropertyName) || args.PropertyName == nameof(autoVm.Auto.IsRunning))
+                            Dispatcher.UIThread.Post(SendAutoStateToHost, DispatcherPriority.Background);
+                    };
+                }
+            }
+            catch { }
+        }
     }
 
     private void OnLinuxGameClicked()
@@ -347,16 +389,68 @@ public partial class MainWindow : Window
                     return;
                 case "AUTO_ATTACK":
                     StrongReferenceMessenger.Default.Send<StartAutoAttackMessage>();
+                    Dispatcher.UIThread.Post(SendAutoStateToHost, DispatcherPriority.Background);
                     return;
                 case "AUTO_HUNT":
                     StrongReferenceMessenger.Default.Send<StartAutoHuntMessage>();
+                    Dispatcher.UIThread.Post(SendAutoStateToHost, DispatcherPriority.Background);
                     return;
                 case "AUTO_STOP":
                     StrongReferenceMessenger.Default.Send<StopAutoMessage>();
+                    Dispatcher.UIThread.Post(SendAutoStateToHost, DispatcherPriority.Background);
                     return;
+                case "GET_AUTO_STATE":
+                    SendAutoStateToHost();
+                    return;
+                case "GET_JUMP_STATE":
+                    SendJumpStateToHost();
+                    return;
+                case "JUMP_CURRENT":
+                    {
+                        var jumpVm = Ioc.Default.GetRequiredService<ViewModels.JumpViewModel>();
+                        jumpVm.GetCurrentCommand.Execute(null);
+                        SendJumpStateToHost();
+                        return;
+                    }
                 case "JUMP_WINDOW":
                     Ioc.Default.GetRequiredService<IWindowService>().ShowManagedWindow("Fast Travel");
                     return;
+            }
+
+            if (cmd.StartsWith("AUTO_CLASS|", StringComparison.Ordinal))
+            {
+                string cls = cmd["AUTO_CLASS|".Length..];
+                var autoVm = Ioc.Default.GetRequiredService<ViewModels.AutoViewModel>();
+                autoVm.SelectedClass = string.IsNullOrEmpty(cls) ? null : cls;
+                Dispatcher.UIThread.Post(SendAutoStateToHost, DispatcherPriority.Background);
+                return;
+            }
+            if (cmd.StartsWith("AUTO_MODE|", StringComparison.Ordinal))
+            {
+                string mode = cmd["AUTO_MODE|".Length..];
+                var autoVm = Ioc.Default.GetRequiredService<ViewModels.AutoViewModel>();
+                autoVm.SelectedClassModeString = string.IsNullOrEmpty(mode) ? null : mode;
+                return;
+            }
+            if (cmd.StartsWith("AUTO_MAPS|", StringComparison.Ordinal))
+            {
+                string maps = cmd["AUTO_MAPS|".Length..];
+                var autoVm = Ioc.Default.GetRequiredService<ViewModels.AutoViewModel>();
+                autoVm.ManualMapIDs = maps;
+                return;
+            }
+            if (cmd.StartsWith("JUMP_TO|", StringComparison.Ordinal))
+            {
+                string[] parts = cmd["JUMP_TO|".Length..].Split('|', 2);
+                if (parts.Length == 2)
+                {
+                    var jumpVm = Ioc.Default.GetRequiredService<ViewModels.JumpViewModel>();
+                    jumpVm.SelectedPad = parts[1];
+                    jumpVm.SelectedCell = parts[0];
+                    if (jumpVm.JumpToCommand.CanExecute(null))
+                        jumpVm.JumpToCommand.Execute(null);
+                }
+                return;
             }
 
             if (cmd.StartsWith("MENU|", StringComparison.Ordinal))
@@ -454,11 +548,18 @@ public partial class MainWindow : Window
                 {
                     // In Grid View, all windows are foreground visible windows. Restore full FPS and quality.
                     UpdateBackgroundThrottleState(false);
+                    EvaluateAutoHeadless();
                     UpdateQualityFocusState();
+                    SyncHostedVisibility();
+                    SendHeadlessStateToHost();
                 }
                 else
                 {
                     EnsureTopNavVisible();
+                    EvaluateAutoHeadless();
+                    UpdateQualityFocusState();
+                    SyncHostedVisibility();
+                    SendHeadlessStateToHost();
                     if (!_options.IsHeadlessNow())
                         FlashHost?.RefreshLayout();
                 }
@@ -473,17 +574,27 @@ public partial class MainWindow : Window
         else if (uMsg == HotKeys.WM_SKUA_VISIBILITY)
         {
             _tabVisibility = wParam.ToInt32();
-            if (_tabVisibility is not 0 and not 2)
-                CloseDropdowns();
-            if (_tabVisibility is 0 or 2)
+            void ApplyVisibilityState()
             {
-                EnsureTopNavVisible();
-                UpdateBackgroundThrottleState(false);
+                if (_tabVisibility is not 0 and not 2 and not 3)
+                    CloseDropdowns();
+                if (_tabVisibility is 0 or 2 or 3)
+                {
+                    EnsureTopNavVisible();
+                    UpdateBackgroundThrottleState(false);
+                }
+                EvaluateAutoHeadless();
+                UpdateQualityFocusState();
+                SyncHostedVisibility();
+                SendHeadlessStateToHost();
+                if ((_tabVisibility is 0 or 2 or 3) && !_options.IsHeadlessNow() && FlashHost is { IsVisible: true })
+                    FlashHost.RefreshLayout();
             }
-            EvaluateAutoHeadless();
-            UpdateQualityFocusState();
-            if (_tabVisibility is 0 or 2 && !_options.IsHeadlessNow() && FlashHost is { IsVisible: true })
-                FlashHost.RefreshLayout();
+
+            if (Dispatcher.UIThread.CheckAccess())
+                ApplyVisibilityState();
+            else
+                Dispatcher.UIThread.Post(ApplyVisibilityState);
             return IntPtr.Zero;
         }
         else if (uMsg == WM_SKUA_LOGIN)
@@ -622,6 +733,10 @@ public partial class MainWindow : Window
                 case 8: options.UseFunctionBasedSkills = value; break;
                 case 9: options.StreamerMode = value; break;
                 case 10: options.AggroMonsters = value; break;
+                case 11:
+                    Ioc.Default.GetRequiredService<ISettingsService>().Set("ShowCharNameInDetachedTitle", value);
+                    StrongReferenceMessenger.Default.Send(new Skua.App.Avalonia.AppStartup.AppSettingChangedMessage("ShowCharNameInDetachedTitle", value));
+                    break;
                 case 99:
                     var sm = Ioc.Default.GetRequiredService<Skua.App.Avalonia.ViewModels.ScriptLoaderViewModel>();
                     var scheduler = Ioc.Default.GetRequiredService<Skua.Shared.Avalonia.ViewModels.ScriptSchedulerViewModel>();
@@ -776,11 +891,15 @@ public partial class MainWindow : Window
             _isWindowFocused = focused;
             ReleaseAllPressedKeys();
             Skua.App.Avalonia.Controls.GameHost.ForwardFocus(focused);
-            if (focused)
+            Dispatcher.UIThread.Post(() =>
             {
-                UpdateBackgroundThrottleState(false);
-            }
-            UpdateQualityFocusState();
+                if (focused)
+                    UpdateBackgroundThrottleState(false);
+                EvaluateAutoHeadless();
+                UpdateQualityFocusState();
+                SyncHostedVisibility();
+                SendHeadlessStateToHost();
+            });
             return IntPtr.Zero;
         }
         else if (uMsg == HotKeys.WM_SKUA_RELOAD_HOTKEYS)
@@ -797,15 +916,13 @@ public partial class MainWindow : Window
         }
         else if (uMsg == WM_SKUA_DETACH)
         {
-            int posX = wParam.ToInt32();
-            int posY = lParam.ToInt32();
             Dispatcher.UIThread.Post(() =>
             {
+                _tabVisibility = 0;
                 HotKeys.IsDetachedMode = true;
-                if (posX > 0 && posY > 0)
-                {
-                    this.Position = new global::Avalonia.PixelPoint(posX, posY);
-                }
+                UpdateBackgroundThrottleState(false);
+                EvaluateAutoHeadless();
+                UpdateQualityFocusState();
                 _isTitleBarPermanentlyHidden = false;
                 var titleBar = this.FindControl<global::Avalonia.Controls.Control>("TitleBar");
                 if (titleBar is Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar wtb)
@@ -822,16 +939,24 @@ public partial class MainWindow : Window
                 if (topNav != null)
                     topNav.IsVisible = true;
 
-                this.WindowDecorations = global::Avalonia.Controls.WindowDecorations.None;
                 this.ExtendClientAreaToDecorationsHint = true;
                 this.ExtendClientAreaTitleBarHeightHint = 32;
+                this.WindowState = WindowState.Normal;
                 this.ShowInTaskbar = true;
                 this.Opacity = 1;
                 this.Width = 948;
                 this.Height = 600;
                 this.Show();
                 this.Activate();
-                FlashHost?.RefreshLayout();
+                if (FlashHost != null)
+                    FlashHost.IsVisible = !_options.IsHeadlessNow();
+                SyncHostedVisibility();
+                Dispatcher.UIThread.Post(() => FlashHost?.ForceRefreshFrame(), DispatcherPriority.Render);
+                DispatcherTimer.RunOnce(() =>
+                {
+                    if (HotKeys.IsDetachedMode)
+                        FlashHost?.ForceRefreshFrame();
+                }, TimeSpan.FromMilliseconds(100));
             });
             return IntPtr.Zero;
         }
@@ -854,13 +979,33 @@ public partial class MainWindow : Window
                     wtb.CanDock = false;
                 }
                 this.ShowInTaskbar = false;
-                this.WindowDecorations = global::Avalonia.Controls.WindowDecorations.None;
                 this.Hide();
+                SyncHostedVisibility();
             });
             return IntPtr.Zero;
         }
 
         return IntPtr.Zero;
+    }
+
+    private void SyncHostedVisibility()
+    {
+        bool shouldRender = (HotKeys.IsDetachedMode || _tabVisibility is 0 or 2 or 3) && !_options.IsHeadlessNow();
+        FlashHost?.SetHostedVisible(shouldRender);
+    }
+
+    private static long _headlessStateSeq;
+    private static readonly System.Collections.Concurrent.BlockingCollection<string> _hostPipeQueue = new();
+    private static int _hostPipeWorkerStarted;
+
+    private void SendHeadlessStateToHost()
+    {
+        if (string.IsNullOrEmpty(App.HostPipeName))
+            return;
+        bool manual = _options.HeadlessMode;
+        bool auto = _options.IsHeadlessNow() && !manual;
+        long seq = System.Threading.Interlocked.Increment(ref _headlessStateSeq);
+        SendPipeToHost($"HEADLESS_STATE|{Environment.ProcessId}|{(manual ? 1 : 0)}|{(auto ? 1 : 0)}|{seq}");
     }
 
     private void EvaluateAutoHeadless()
@@ -871,17 +1016,24 @@ public partial class MainWindow : Window
         {
             if (options.AutoHeadless)
             {
-                bool shown = _tabVisibility == 0 || (_tabVisibility == 2 && options.AutoHeadlessGridView);
-                want = _tabVisibility switch
+                bool isStandalone = string.IsNullOrEmpty(App.HostPipeName) || HotKeys.IsDetachedMode;
+                int effectiveVisibility = (isStandalone && (WindowState == WindowState.Minimized || !IsVisible || !IsActive)) ? 4 : _tabVisibility;
+                bool isTabFocused = _isWindowFocused &&
+                    (effectiveVisibility == 0 || (effectiveVisibility is 2 or 3 && options.AutoHeadlessGridView));
+                if (isStandalone && (WindowState == WindowState.Minimized || !IsVisible || !IsActive))
+                    isTabFocused = false;
+
+                want = effectiveVisibility switch
                 {
                     1 => options.AutoHeadlessBackgroundTabs,
-                    2 or 3 => !options.AutoHeadlessGridView,
+                    2 or 3 => !options.AutoHeadlessGridView || (!_isWindowFocused && options.AutoHeadlessWhenMinimized),
                     4 => options.AutoHeadlessWhenMinimized,
+                    0 => !_isWindowFocused && options.AutoHeadlessWhenMinimized,
                     _ => false
                 };
                 if (want)
                     _autoHeadlessHeld = true;
-                else if (shown && _autoHeadlessHeld && !options.AutoHeadlessLiftOnFocus)
+                else if (isTabFocused && _autoHeadlessHeld && !options.AutoHeadlessLiftOnFocus)
                     want = true;
                 else
                     _autoHeadlessHeld = false;
@@ -893,6 +1045,69 @@ public partial class MainWindow : Window
         }
         catch { }
         options.SetAutoHeadless(want);
+    }
+
+    private static void SendPipeToHost(string message)
+    {
+        if (string.IsNullOrEmpty(App.HostPipeName))
+            return;
+
+        if (System.Threading.Interlocked.CompareExchange(ref _hostPipeWorkerStarted, 1, 0) == 0)
+        {
+            _ = Task.Factory.StartNew(() =>
+            {
+                foreach (string msg in _hostPipeQueue.GetConsumingEnumerable())
+                {
+                    try
+                    {
+                        using var pipe = new System.IO.Pipes.NamedPipeClientStream(".", App.HostPipeName, System.IO.Pipes.PipeDirection.Out);
+                        pipe.Connect(1000);
+                        using var writer = new System.IO.StreamWriter(pipe) { AutoFlush = true };
+                        writer.WriteLine(msg);
+                    }
+                    catch { }
+                }
+            }, TaskCreationOptions.LongRunning);
+        }
+
+        _hostPipeQueue.Add(message);
+    }
+
+    private void SendAutoStateToHost()
+    {
+        try
+        {
+            var vm = Ioc.Default.GetRequiredService<ViewModels.AutoViewModel>();
+            var payload = new
+            {
+                isRunning = vm.Auto.IsRunning,
+                selectedClass = vm.SelectedClass,
+                selectedMode = vm.SelectedClassModeString,
+                manualMapIds = vm.ManualMapIDs,
+                classes = vm.PlayerClasses ?? new List<string>(),
+                modes = vm.CurrentClassModeStrings ?? new List<string>()
+            };
+            SendPipeToHost($"AUTO_STATE|{Environment.ProcessId}|{Newtonsoft.Json.JsonConvert.SerializeObject(payload)}");
+        }
+        catch { }
+    }
+
+    private void SendJumpStateToHost()
+    {
+        try
+        {
+            var vm = Ioc.Default.GetRequiredService<ViewModels.JumpViewModel>();
+            vm.UpdateCells();
+            var payload = new
+            {
+                cells = vm.Cells.ToList(),
+                pads = vm.Pads.ToList(),
+                selectedCell = vm.SelectedCell,
+                selectedPad = vm.SelectedPad
+            };
+            SendPipeToHost($"JUMP_STATE|{Environment.ProcessId}|{Newtonsoft.Json.JsonConvert.SerializeObject(payload)}");
+        }
+        catch { }
     }
 
 }

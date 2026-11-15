@@ -72,13 +72,13 @@
 
     <Target Name="DownloadSkuaPlayer" Condition="'$(SkuaPlayerLocal)' == '' And !Exists('$(SkuaPlayerDir)\$(SkuaPlayerExe)')">
         <MakeDir Directories="$(SkuaPlayerCache)" />
-        <DownloadFile SourceUrl="https://github.com/retr0gr4d3/skua-mugetsu/releases/download/v$(SkuaPlayerVersion)/linux.tar.gz" DestinationFolder="$(SkuaPlayerCache)" DestinationFileName="player.tar.gz" />
+        <DownloadFile SourceUrl="https://github.com/JonasAlv/skua-mugetsu/releases/download/v$(SkuaPlayerVersion)/linux.tar.gz" DestinationFolder="$(SkuaPlayerCache)" DestinationFileName="player.tar.gz" />
         <Exec Command="tar -xzf player.tar.gz" WorkingDirectory="$(SkuaPlayerCache)" />
     </Target>
 
     <Target Name="DownloadSkuaPlayerV2" Condition="'$(SkuaPlayerLocal)' == '' And '$(SkuaPlayerV2Local)' == '' And '$(SkuaPlayerAvxDir)' == '' And !Exists('$(SkuaPlayerV2Dir)\$(SkuaPlayerExe)')">
         <MakeDir Directories="$(SkuaPlayerV2Cache)" />
-        <DownloadFile SourceUrl="https://github.com/retr0gr4d3/skua-mugetsu/releases/download/v$(SkuaPlayerVersion)/linux-x86-64-v2.tar.gz" DestinationFolder="$(SkuaPlayerV2Cache)" DestinationFileName="player-v2.tar.gz" />
+        <DownloadFile SourceUrl="https://github.com/JonasAlv/skua-mugetsu/releases/download/v$(SkuaPlayerVersion)/linux-x86-64-v2.tar.gz" DestinationFolder="$(SkuaPlayerV2Cache)" DestinationFileName="player-v2.tar.gz" />
         <Exec Command="tar -xzf player-v2.tar.gz" WorkingDirectory="$(SkuaPlayerV2Cache)" />
     </Target>
 

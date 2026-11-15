@@ -29,15 +29,19 @@ public class GameHost : Control
     private readonly int _remoteChildPid;
     private readonly string _shmPath;
     private DispatcherTimer? _pollTimer;
+    private DispatcherTimer? _resizeDebounceTimer;
+    private int _pendingResizeW;
+    private int _pendingResizeH;
     private MemoryMappedFile? _mmf;
     private MemoryMappedViewAccessor? _accessor;
+    private unsafe byte* _shmPtr;
     private long _mappedSize;
     private WriteableBitmap? _bitmap;
     private ulong _lastSeq;
     private int _frameUpdateQueued;
     private int _lastSentWidth;
     private int _lastSentHeight;
-    private readonly byte[] _headerBuf = new byte[HeaderSize];
+    private bool? _lastSentVisible;
 
     public static event Action? GameClicked;
 
@@ -76,16 +80,41 @@ public class GameHost : Control
     public void DisposeResources()
     {
         _pollTimer?.Stop();
+        _resizeDebounceTimer?.Stop();
         if (_activeInstance == this)
             _activeInstance = null;
         if (_flash != null)
             _flash.FrameReady -= OnFrameReady;
-        _accessor?.Dispose();
-        _accessor = null;
-        _mmf?.Dispose();
-        _mmf = null;
+        UnmapShm();
         _bitmap?.Dispose();
         _bitmap = null;
+    }
+
+    private unsafe void MapShm(long fileLen)
+    {
+        UnmapShm();
+        _mmf = MemoryMappedFile.CreateFromFile(_shmPath, FileMode.Open, null, fileLen, MemoryMappedFileAccess.Read);
+        _accessor = _mmf.CreateViewAccessor(0, fileLen, MemoryMappedFileAccess.Read);
+        byte* ptr = null;
+        _accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
+        _shmPtr = ptr + _accessor.PointerOffset;
+        _mappedSize = fileLen;
+    }
+
+    private unsafe void UnmapShm()
+    {
+        if (_accessor != null)
+        {
+            if (_shmPtr != null)
+            {
+                _accessor.SafeMemoryMappedViewHandle.ReleasePointer();
+                _shmPtr = null;
+            }
+            _accessor.Dispose();
+            _accessor = null;
+        }
+        _mmf?.Dispose();
+        _mmf = null;
         _mappedSize = 0;
     }
 
@@ -154,7 +183,43 @@ public class GameHost : Control
     public void RefreshLayout()
     {
         SendResizeIfNeeded();
-        InvalidateVisual();
+    }
+
+    public void ForceRefreshFrame()
+    {
+        _resizeDebounceTimer?.Stop();
+        _lastSentWidth = -1;
+        _lastSentHeight = -1;
+        _lastSeq = 0;
+        SendResizeIfNeeded();
+        UpdateFrameFromShm();
+    }
+
+    public void SetHostedVisible(bool visible)
+    {
+        if (_remoteChildPid > 0)
+            return;
+        if (_lastSentVisible == visible)
+            return;
+        _lastSentVisible = visible;
+        DispatchInput(new { input = "visible", visible });
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == IsVisibleProperty && _remoteChildPid > 0)
+        {
+            if (IsVisible)
+            {
+                _pollTimer?.Start();
+                ForceRefreshFrame();
+            }
+            else
+            {
+                _pollTimer?.Stop();
+            }
+        }
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -162,7 +227,8 @@ public class GameHost : Control
         base.OnAttachedToVisualTree(e);
         if (_remoteChildPid <= 0 || IsVisible)
             _activeInstance = this;
-        _pollTimer?.Start();
+        if (_remoteChildPid > 0 && IsVisible)
+            _pollTimer?.Start();
         SendResizeIfNeeded();
         if (_remoteChildPid > 0 && IsVisible)
             UpdateFrameFromShm();
@@ -172,6 +238,7 @@ public class GameHost : Control
     {
         base.OnDetachedFromVisualTree(e);
         _pollTimer?.Stop();
+        _resizeDebounceTimer?.Stop();
         if (_activeInstance == this)
             _activeInstance = null;
     }
@@ -180,6 +247,7 @@ public class GameHost : Control
     {
         base.OnSizeChanged(e);
         SendResizeIfNeeded();
+        InvalidateVisual();
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
@@ -257,10 +325,13 @@ public class GameHost : Control
     public override void Render(DrawingContext context)
     {
         Rect bounds = new(Bounds.Size);
-        context.FillRectangle(Brushes.Black, bounds);
         if (_bitmap != null)
         {
             context.DrawImage(_bitmap, new Rect(0, 0, _bitmap.PixelSize.Width, _bitmap.PixelSize.Height), bounds);
+        }
+        else
+        {
+            context.FillRectangle(Brushes.Black, bounds);
         }
     }
 
@@ -273,12 +344,38 @@ public class GameHost : Control
         int h = Math.Max(1, (int)Math.Round(Bounds.Height * scale));
         if (w <= 2 || h <= 2)
             return;
-        if (w != _lastSentWidth || h != _lastSentHeight)
+        if (w == _lastSentWidth && h == _lastSentHeight)
+            return;
+
+        if (_lastSentWidth <= 0 || _lastSentHeight <= 0)
         {
             _lastSentWidth = w;
             _lastSentHeight = h;
             DispatchInput(new { input = "resize", w, h });
+            return;
         }
+
+        _pendingResizeW = w;
+        _pendingResizeH = h;
+        _resizeDebounceTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
+        _resizeDebounceTimer.Tick -= OnResizeDebounceTick;
+        _resizeDebounceTimer.Tick += OnResizeDebounceTick;
+        _resizeDebounceTimer.Stop();
+        _resizeDebounceTimer.Start();
+    }
+
+    private void OnResizeDebounceTick(object? sender, EventArgs e)
+    {
+        _resizeDebounceTimer?.Stop();
+        if ((_flash is null && _remoteChildPid <= 0) || !IsVisible)
+            return;
+        int w = _pendingResizeW;
+        int h = _pendingResizeH;
+        if (w <= 2 || h <= 2 || (w == _lastSentWidth && h == _lastSentHeight))
+            return;
+        _lastSentWidth = w;
+        _lastSentHeight = h;
+        DispatchInput(new { input = "resize", w, h });
     }
 
     private void OnFrameReady()
@@ -294,36 +391,50 @@ public class GameHost : Control
         Interlocked.Exchange(ref _frameUpdateQueued, 0);
         if (!IsVisible || TopLevel.GetTopLevel(this) is { IsVisible: false })
             return;
-        if (!File.Exists(_shmPath))
-            return;
 
         try
         {
-            long fileLen = new FileInfo(_shmPath).Length;
-            if (fileLen < HeaderSize)
-                return;
-
-            if (_mmf is null || _mappedSize != fileLen)
+            if (_shmPtr == null)
             {
-                _accessor?.Dispose();
-                _mmf?.Dispose();
-                _mmf = MemoryMappedFile.CreateFromFile(_shmPath, FileMode.Open, null, fileLen, MemoryMappedFileAccess.Read);
-                _accessor = _mmf.CreateViewAccessor(0, fileLen, MemoryMappedFileAccess.Read);
-                _mappedSize = fileLen;
+                if (!File.Exists(_shmPath))
+                    return;
+                long fileLen = new FileInfo(_shmPath).Length;
+                if (fileLen < HeaderSize)
+                    return;
+                MapShm(fileLen);
             }
 
-            if (_accessor is null)
+            byte* hdr = _shmPtr;
+            if (hdr == null)
                 return;
 
-            _accessor.ReadArray(0, _headerBuf, 0, HeaderSize);
-            if (!TryParseHeader(_headerBuf, out int width, out int height, out ulong seq, out uint slot, out uint slotStride) ||
-                seq == _lastSeq)
+            ulong seq = Volatile.Read(ref *(ulong*)(hdr + 16));
+            if (seq == _lastSeq || seq == 0)
+                return;
+
+            // Validate magic "SKUAFRM1"
+            if (*(ulong*)hdr != 0x314D524641554B53UL)
+                return;
+
+            int width = *(int*)(hdr + 8);
+            int height = *(int*)(hdr + 12);
+            uint slot = *(uint*)(hdr + 24);
+            uint slotStride = *(uint*)(hdr + 28);
+            if (width <= 0 || height <= 0 || slot > 1)
                 return;
 
             long pixelBytes = (long)width * height * 4;
             long offset = HeaderSize + (long)slot * slotStride;
             if (offset + pixelBytes > _mappedSize)
-                return;
+            {
+                long fileLen = new FileInfo(_shmPath).Length;
+                if (offset + pixelBytes > fileLen)
+                    return;
+                MapShm(fileLen);
+                hdr = _shmPtr;
+                if (hdr == null)
+                    return;
+            }
 
             if (_bitmap is null || _bitmap.PixelSize.Width != width || _bitmap.PixelSize.Height != height)
             {
@@ -335,7 +446,23 @@ public class GameHost : Control
                     AlphaFormat.Opaque);
             }
 
-            CopyFrameToBitmap(_accessor, offset, width, height, _bitmap);
+            using (ILockedFramebuffer fb = _bitmap.Lock())
+            {
+                byte* src = hdr + offset;
+                byte* dst = (byte*)fb.Address;
+                int srcStride = width * 4;
+                if (fb.RowBytes == srcStride)
+                {
+                    Buffer.MemoryCopy(src, dst, pixelBytes, pixelBytes);
+                }
+                else
+                {
+                    for (int y = 0; y < height; y++)
+                    {
+                        Buffer.MemoryCopy(src + (long)y * srcStride, dst + (long)y * fb.RowBytes, fb.RowBytes, srcStride);
+                    }
+                }
+            }
 
             _lastSeq = seq;
             InvalidateVisual();

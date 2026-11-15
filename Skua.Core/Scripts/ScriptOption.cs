@@ -38,6 +38,16 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         {
             if (!_isInitializing && e.PropertyName == nameof(SetFPS) && (IsHeadlessNow() || _isBackgroundThrottled))
                 RequestRenderStateSync(flushGamePref: false);
+
+            if (!_isInitializing && !_isApplyingSharedOption && e.PropertyName is { } propName && GlobalSyncedOptions.Contains(propName))
+            {
+                PropertyInfo? prop = GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance);
+                if (prop is not null)
+                {
+                    string valStr = Convert.ToString(prop.GetValue(this), System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
+                    BroadcastSharedCommandToOtherClients("set", propName, valStr);
+                }
+            }
         };
         StrongReferenceMessenger.Default.Register<ScriptOption, ScriptStartedMessage, int>(this, (int)MessageChannels.ScriptStatus, ScriptStarted);
         StrongReferenceMessenger.Default.Register<ScriptOption, ScriptStoppedMessage, int>(this, (int)MessageChannels.ScriptStatus, ScriptStopped);
@@ -47,6 +57,15 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         _rescueSettings = WatchDog.Shared.SharedRescueSettings.Instance;
         _rescueSettings.Changed += NotifyRescueSettingsChanged;
     }
+
+    private readonly record struct PreScriptOptionsSnapshot(
+        bool InfiniteRange,
+        bool DisableFX,
+        bool DisableCollisions,
+        bool Magnetise,
+        bool HidePlayers);
+
+    private PreScriptOptionsSnapshot? _preScriptOptions;
 
     private readonly record struct LiteAnimationSnapshot(
         bool LagKiller,
@@ -103,7 +122,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     }
 
     [ObservableProperty]
-    private bool _autoAntiLag = false;
+    private bool _autoAntiLag = true;
 
     [ObservableProperty]
     private bool _autoAntiLagLiftOnFocus = true;
@@ -183,7 +202,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         }
         else
         {
-            _ = Task.Run(() => RestoreLiteAnimationState(forceRestoreCrowd: true, clearSnapshot: !_scriptRunning));
+            _ = Task.Run(() => DisableAntiLagBundle(clearSnapshot: !_scriptRunning));
         }
     }
 
@@ -257,6 +276,13 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
                 recipient._userLagKiller = recipient._lagKiller;
         }
 
+        recipient._preScriptOptions = new PreScriptOptionsSnapshot(
+            recipient.InfiniteRange,
+            recipient.DisableFX,
+            recipient.DisableCollisions,
+            recipient.Magnetise,
+            recipient.HidePlayers);
+
         if (recipient._priorLiteAnimations == null)
             recipient.CaptureLiteAnimationState();
 
@@ -266,6 +292,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
     internal void OnLiteAntiLagTriggered()
     {
+        long epoch;
         lock (_antiLagSyncLock)
         {
             if (!_scriptRunning || _scriptAntiLagActive)
@@ -273,10 +300,21 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
             _scriptAntiLagActive = true;
             _anyAntiLagApplied = true;
-            _antiLagEpoch++;
+            epoch = ++_antiLagEpoch;
         }
 
-        ApplyCrowdMode(true);
+        if (_priorLiteAnimations == null)
+            CaptureLiteAnimationState();
+
+        _ = Task.Run(() =>
+        {
+            lock (_antiLagSyncLock)
+            {
+                if (_antiLagEpoch != epoch || !_anyAntiLagApplied)
+                    return;
+            }
+            ApplyFullAntiLagBundle();
+        });
     }
 
     private void CaptureLiteAnimationState()
@@ -308,30 +346,20 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         }
     }
 
-    private void RestoreLiteAnimationState(bool forceRestoreCrowd = false, bool clearSnapshot = true)
+    private void DisableAntiLagBundle(bool clearSnapshot = true)
     {
-        var snapshot = _priorLiteAnimations;
         if (clearSnapshot)
+        {
             _priorLiteAnimations = null;
-
-        bool wasAntiLagActive = _scriptAntiLagActive || forceRestoreCrowd;
-        if (clearSnapshot)
             _scriptAntiLagActive = false;
+        }
 
-        if (snapshot is not { } s)
-            return;
-
-        ApplySnapshotValues(s, wasAntiLagActive);
-    }
-
-    private void ApplySnapshotValues(LiteAnimationSnapshot s, bool restoreCrowd)
-    {
         try
         {
             _suppressUserLagKillerSave = true;
             try
             {
-                LagKiller = s.LagKiller;
+                LagKiller = false;
             }
             finally
             {
@@ -342,23 +370,18 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             if (flash == null || !flash.IsWorldLoaded)
                 return;
 
-            flash.SetGameObject("litePreference.data.bFreezeMons", s.FreezeMonsterPosition);
-            flash.SetGameObject("litePreference.data.bDisMonAnim", s.DisableMonsterAnimation);
-            flash.SetGameObject("litePreference.data.bDisDmgStrobe", s.DisableDamageStrobe);
-            flash.SetGameObject("litePreference.data.bDisSelfMAnim", s.DisableSelfAnimation);
-            flash.SetGameObject("litePreference.data.bDisWepAnim", s.DisableWeaponAnimation);
-            flash.SetGameObject("litePreference.data.bDisSkillAnim", s.DisableSkillAnimation);
-            flash.SetGameObject("litePreference.data.bDisAuraAnim", s.DisableAuraAnimations);
+            flash.SetGameObject("litePreference.data.bFreezeMons", false);
+            flash.SetGameObject("litePreference.data.bDisMonAnim", false);
+            flash.SetGameObject("litePreference.data.bDisDmgStrobe", false);
+            flash.SetGameObject("litePreference.data.bDisSelfMAnim", false);
+            flash.SetGameObject("litePreference.data.bDisWepAnim", false);
+            flash.SetGameObject("litePreference.data.bDisSkillAnim", false);
+            flash.SetGameObject("litePreference.data.bDisAuraAnim", false);
 
-            bool hidden = flash.GetGameObject<bool>("ui.monsterIcon.redX.visible");
-            if (hidden != s.MonstersHidden)
+            if (flash.GetGameObject<bool>("ui.monsterIcon.redX.visible"))
                 flash.CallGameFunction("world.toggleMonsters");
 
-            if (restoreCrowd)
-            {
-                string restore = !string.IsNullOrEmpty(s.CrowdMode) ? s.CrowdMode : "off";
-                ApplyCrowdMode(restore == "on", restore);
-            }
+            ApplyCrowdMode(false, "off");
         }
         catch { }
     }
@@ -447,6 +470,16 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         recipient.AggroMonsters = false;
         recipient.SkipCutscenes = false;
 
+        if (recipient._preScriptOptions is { } pre)
+        {
+            recipient._preScriptOptions = null;
+            if (recipient.InfiniteRange != pre.InfiniteRange) recipient.InfiniteRange = pre.InfiniteRange;
+            if (recipient.DisableFX != pre.DisableFX) recipient.DisableFX = pre.DisableFX;
+            if (recipient.DisableCollisions != pre.DisableCollisions) recipient.DisableCollisions = pre.DisableCollisions;
+            if (recipient.Magnetise != pre.Magnetise) recipient.Magnetise = pre.Magnetise;
+            if (recipient.HidePlayers != pre.HidePlayers) recipient.HidePlayers = pre.HidePlayers;
+        }
+
         bool keepAntiLag;
         long epoch;
         lock (recipient._antiLagSyncLock)
@@ -464,19 +497,20 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         }
         else
         {
+            recipient._scriptAntiLagActive = false;
             recipient.RestoreUserStateWithGuard(epoch);
         }
     }
 
     private void RestoreUserStateWithGuard(long expectedEpoch)
     {
-        LagKiller = _userLagKiller;
+        _userLagKiller = false;
         using (BeginTrustedFpsWrite())
             SetFPS = _userSetFPS;
-        RestoreLiteAnimationState(clearSnapshot: false);
+        DisableAntiLagBundle(clearSnapshot: false);
 
         // CoreBots.StopBotAsync runs a background Task.Run on stop that resets Lite flags and
-        // calls world.toggleMonsters without awaiting. Re-assert user state after a short settle delay.
+        // calls world.toggleMonsters without awaiting. Re-assert clean state after a short settle delay.
         _ = Task.Run(async () =>
         {
             int[] delaysMs = [250, 600];
@@ -488,10 +522,9 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
                     if (_antiLagEpoch != expectedEpoch || _anyAntiLagApplied || _scriptRunning)
                         return;
                 }
-                LagKiller = _userLagKiller;
                 using (BeginTrustedFpsWrite())
                     SetFPS = _userSetFPS;
-                RestoreLiteAnimationState(clearSnapshot: i == delaysMs.Length - 1);
+                DisableAntiLagBundle(clearSnapshot: i == delaysMs.Length - 1);
             }
         });
     }
@@ -766,7 +799,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
                 _userLagKiller = value;
                 _settingsService.Set("UserLagKiller", value);
             }
-            else if (_scriptRunning && value)
+            else if (_scriptRunning && value && !_suppressUserLagKillerSave)
             {
                 OnLiteAntiLagTriggered();
             }
@@ -787,6 +820,50 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     private int _userSetFPS = 24;
     [ThreadStatic]
     private static bool _allowTrustedFpsWrite;
+
+    [ThreadStatic]
+    private static bool _isApplyingSharedOption;
+
+    private static readonly HashSet<string> GlobalSyncedOptions = new(StringComparer.Ordinal)
+    {
+        nameof(AutoHeadless),
+        nameof(AutoHeadlessBackgroundTabs),
+        nameof(AutoHeadlessGridView),
+        nameof(AutoHeadlessWhenMinimized),
+        nameof(AutoHeadlessLiftOnFocus),
+        nameof(AutoAntiLag),
+        nameof(AutoAntiLagLiftOnFocus),
+        nameof(DamageNumbers),
+        nameof(CompactNumbers),
+        nameof(UnitFrameHealth),
+        nameof(MovableTargetFrame),
+        nameof(CustomName),
+        nameof(CustomGuild),
+        nameof(AutoRelogin),
+        nameof(AutoReloginAny),
+        nameof(ReloginFallback),
+        nameof(RetryRelogin),
+        nameof(SafeRelogin),
+        nameof(ReloginServer)
+    };
+
+    public static bool IsGlobalSyncedOption(string? propertyName) =>
+        propertyName is not null && GlobalSyncedOptions.Contains(propertyName);
+
+    internal static IDisposable BeginSharedOptionApply() => new SharedOptionApplyScope();
+
+    private readonly struct SharedOptionApplyScope : IDisposable
+    {
+        private readonly bool _previous;
+
+        public SharedOptionApplyScope()
+        {
+            _previous = _isApplyingSharedOption;
+            _isApplyingSharedOption = true;
+        }
+
+        public void Dispose() => _isApplyingSharedOption = _previous;
+    }
 
     internal static IDisposable BeginTrustedFpsWrite() => new TrustedFpsWriteScope();
 
@@ -1051,7 +1128,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     private bool _headlessMode;
 
     [ObservableProperty]
-    private bool _autoHeadless;
+    private bool _autoHeadless = true;
     [ObservableProperty]
     private bool _autoHeadlessBackgroundTabs = true;
     [ObservableProperty]
@@ -1340,13 +1417,9 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         }
     }
 
-    private string _originalName = string.Empty;
-    private string _originalGuild = string.Empty;
     private bool _originalHidePlayers = false;
-    private CancellationTokenSource? _streamerModeCts;
 
-    // Retained for compatibility with BonxieMux's settings interface; Streamer Mode
-    // uses BonxieMux's fixed anonymized display name.
+    // Retained for compatibility with BonxieMux's settings interface.
     [ObservableProperty]
     private string _streamerName = string.Empty;
 
@@ -1354,95 +1427,30 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     {
         if (enabled)
         {
-            if (CustomName != "Hidden" && CustomName != "BonxieMuxUser")
-                _originalName = CustomName;
-            if (CustomGuild != "Hidden")
-                _originalGuild = CustomGuild;
-
             _originalHidePlayers = HidePlayers;
             HidePlayers = true;
-            CustomName = "BonxieMuxUser";
-            CustomGuild = "Hidden";
-
-            _streamerModeCts?.Cancel();
-            _streamerModeCts?.Dispose();
-            _streamerModeCts = new CancellationTokenSource();
-            var token = _streamerModeCts.Token;
-
-            Task.Run(async () =>
-            {
-                while (!token.IsCancellationRequested)
-                {
-                    try
-                    {
-                        var flash = _lazyFlash.Value;
-                        if (flash == null) return;
-                        // Override visuals only, NEVER overwrite objData as it breaks shops/inventory
-                        flash.Call("setGameObject", "world.myAvatar.pMC.pname.ti.text", "BonxieMuxUser");
-                        flash.Call("setGameObject", "world.myAvatar.pMC.pname.tg.text", "Hidden");
-                        flash.Call("setGameObject", "world.rootClass.ui.mcPortrait.strName.text", "BonxieMuxUser");
-                        flash.Call("setGameObject", "world.rootClass.ui.mcPortraitTarget.strName.text", "Hidden");
-
-                        // Hide Gold/Coins visually instead of wiping the client's cached integer amounts
-                        flash.Call("setGameObject", "world.rootClass.ui.mcInterface.teGold.visible", false);
-                        flash.Call("setGameObject", "world.rootClass.ui.mcInterface.teCoins.visible", false);
-                        flash.Call("setGameObject", "world.rootClass.ui.mcInterface.strGold.visible", false);
-                        flash.Call("setGameObject", "world.rootClass.ui.mcInterface.strCoins.visible", false);
-                        flash.Call("setGameObject", "world.rootClass.ui.mcInterface.txtGold.visible", false);
-                        flash.Call("setGameObject", "world.rootClass.ui.mcInterface.txtCoins.visible", false);
-
-                        flash.Call("setGameObject", "world.rootClass.ui.mcInterface.t1.visible", false);
-                        flash.Call("setGameObject", "world.rootClass.ui.mcInterface.te.visible", false);
-
-                        var rawMapName = flash.GetGameObject("world.strMapName") ?? "";
-                        if (!string.IsNullOrEmpty(rawMapName) && rawMapName != "null")
-                        {
-                            string cleanMapName = rawMapName.Length > 1
-                                ? char.ToUpper(rawMapName[0]) + rawMapName.Substring(1).ToLower()
-                                : rawMapName.ToUpper();
-                            flash.Call("setGameObject", "ui.mcInterface.areaList.title.t1.text", cleanMapName);
-                        }
-                    }
-                    catch { }
-                    try
-                    {
-                        await Task.Delay(500, token);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        break;
-                    }
-                }
-            }, token);
-        }
-        else
-        {
-            _streamerModeCts?.Cancel();
-            _streamerModeCts?.Dispose();
-            _streamerModeCts = null;
-
-            CustomName = (_originalName == "BonxieMuxUser" || _originalName == "Hidden") ? string.Empty : _originalName;
-            CustomGuild = (_originalGuild == "Hidden") ? string.Empty : _originalGuild;
-            HidePlayers = _originalHidePlayers;
 
             try
             {
                 var flash = _lazyFlash.Value;
                 if (flash != null)
                 {
-                    flash.Call("setGameObject", "world.rootClass.ui.mcInterface.t1.visible", true);
-                    flash.Call("setGameObject", "world.rootClass.ui.mcInterface.te.visible", true);
-                    flash.Call("setGameObject", "world.rootClass.ui.mcInterface.teGold.visible", true);
-                    flash.Call("setGameObject", "world.rootClass.ui.mcInterface.teCoins.visible", true);
-                    flash.Call("setGameObject", "world.rootClass.ui.mcInterface.strGold.visible", true);
-                    flash.Call("setGameObject", "world.rootClass.ui.mcInterface.strCoins.visible", true);
-                    flash.Call("setGameObject", "world.rootClass.ui.mcInterface.txtGold.visible", true);
-                    flash.Call("setGameObject", "world.rootClass.ui.mcInterface.txtCoins.visible", true);
-                    flash.CallGameFunction("world.setUserData");
+                    flash.Call("setStreamerCustomName", CustomName ?? string.Empty);
+                    flash.Call("setStreamerCustomGuild", CustomGuild ?? string.Empty);
+                    flash.Call("setStreamerMode", true);
                 }
             }
             catch { }
+        }
+        else
+        {
+            try
+            {
+                _lazyFlash.Value?.Call("setStreamerMode", false);
+            }
+            catch { }
 
+            HidePlayers = _originalHidePlayers;
         }
     }
 
@@ -1478,14 +1486,36 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         set => SetProperty(ref _reloginServer, value, true);
     }
 
-    [ObjectBinding("world.myAvatar.objData.strUsername", "world.rootClass.ui.mcPortrait.strName.text", "world.myAvatar.pMC.pname.ti.text", Get = false, HasSetter = true, Default = "string.Empty")]
+    [ObservableProperty]
     private string _customName = string.Empty;
+
+    partial void OnCustomNameChanged(string value)
+    {
+        try
+        {
+            _lazyFlash.Value?.Call("setStreamerCustomName", value ?? string.Empty);
+        }
+        catch { }
+        if (!_isInitializing)
+            Save();
+    }
 
     [ObjectBinding("world.myAvatar.pMC.pname.ti.textColor", Get = false, HasSetter = true, Default = "0xFFFFFF")]
     private int _nameColor = 0xFFFFFF;
 
-    [ObjectBinding("world.myAvatar.pMC.pname.tg.text", Get = false, HasSetter = true, Default = "string.Empty")]
+    [ObservableProperty]
     private string _customGuild = string.Empty;
+
+    partial void OnCustomGuildChanged(string value)
+    {
+        try
+        {
+            _lazyFlash.Value?.Call("setStreamerCustomGuild", value ?? string.Empty);
+        }
+        catch { }
+        if (!_isInitializing)
+            Save();
+    }
 
     [ObjectBinding("world.myAvatar.pMC.pname.tg.textColor", Get = false, HasSetter = true, Default = "0xFFFFFF")]
     private int _guildColor = 0xFFFFFF;
@@ -1545,6 +1575,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
 
     public void Reset()
     {
+        using var _ = BeginSharedOptionApply();
         if (!_isInitializing && _settingsService is not null)
         {
             _settingsService.ReloadSettings();

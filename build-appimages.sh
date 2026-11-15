@@ -130,7 +130,7 @@ Exec=AppRun %U
 Icon=bonxiemux-manager
 Terminal=false
 Categories=Game;
-StartupWMClass=BonxieMux-Manager
+StartupWMClass=BonxieMux.Manager
 EOF
 cp "$mgr_appdir/bonxiemux-manager.desktop" "$mgr_appdir/usr/share/applications/bonxiemux-manager.desktop"
 cp "$mgr_appdir/bonxiemux-manager.desktop" "$mgr_appdir/BonxieMux-Manager.desktop"

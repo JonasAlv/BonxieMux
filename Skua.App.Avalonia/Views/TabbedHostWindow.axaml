@@ -194,7 +194,7 @@
                             VerticalAlignment="Center"
                             PointerPressed="GlobeBorder_PointerPressed">
                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon Kind="Earth" Width="14" Height="14" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+                            <materialIcons:MaterialIcon Kind="Earth" Width="14" Height="14" Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
                             <TextBlock Text="Army Control" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
                             <materialIcons:MaterialIcon Kind="ChevronDown" Width="12" Height="12" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
                         </StackPanel>
@@ -332,7 +332,7 @@
                             VerticalAlignment="Center"
                             PointerPressed="GridViewBorder_PointerPressed">
                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon x:Name="GridViewIcon" Kind="ViewGridOutline" Width="14" Height="14" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+                            <materialIcons:MaterialIcon x:Name="GridViewIcon" Kind="ViewGridOutline" Width="14" Height="14" Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
                             <TextBlock x:Name="GridViewText" Text="Grid View" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Border>
@@ -350,7 +350,7 @@
                             VerticalAlignment="Center"
                             PointerPressed="GameSizeBorder_PointerPressed">
                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon Kind="ResizeBottomRight" Width="14" Height="14" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+                            <materialIcons:MaterialIcon Kind="ResizeBottomRight" Width="14" Height="14" Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
                             <TextBlock x:Name="GameSizeText" Text="Size: Auto" FontSize="12" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Border>
@@ -368,7 +368,7 @@
                             VerticalAlignment="Center"
                             PointerPressed="GridLayoutBorder_PointerPressed">
                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon x:Name="GridLayoutIcon" Kind="ViewDashboardOutline" Width="14" Height="14" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+                            <materialIcons:MaterialIcon x:Name="GridLayoutIcon" Kind="ViewDashboardOutline" Width="14" Height="14" Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
                             <TextBlock x:Name="GridLayoutText" Text="Auto" FontSize="12" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Border>

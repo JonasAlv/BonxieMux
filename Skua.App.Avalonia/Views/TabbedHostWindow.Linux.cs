@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -8,6 +9,8 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Material.Icons;
 using Material.Icons.Avalonia;
+using Newtonsoft.Json.Linq;
+using Skua.Shared.Avalonia.Controls.Shell;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -28,10 +31,28 @@ public partial class TabbedHostWindow : Window
     private const double DockedNavHeight = 34.0;
 
     private readonly Dictionary<IntPtr, GameHost> _linuxViewports = new();
+    private readonly Dictionary<IntPtr, Border> _linuxHeadlessOverlays = new();
+    private readonly Dictionary<IntPtr, bool> _linuxManualHeadlessStates = new();
+    private readonly Dictionary<IntPtr, bool> _linuxAutoHeadlessStates = new();
+    private readonly Dictionary<IntPtr, long> _linuxHeadlessSeq = new();
     private Grid? _linuxHostGrid;
     private Border? _dockedTopNavBorder;
     private Canvas? _viewportCanvas;
     private bool _linuxHostInitialized;
+
+    private ToggleButton? _linuxAutoToggle;
+    private ToggleButton? _linuxJumpToggle;
+    private Border? _linuxAutoActiveDot;
+    private Border? _linuxAutoRunningBadge;
+    private Button? _linuxAutoAttackBtn;
+    private Button? _linuxAutoHuntBtn;
+    private Button? _linuxAutoStopBtn;
+    private ComboBox? _linuxAutoClassBox;
+    private ComboBox? _linuxAutoModeBox;
+    private TextBox? _linuxAutoMapIdsBox;
+    private ComboBox? _linuxJumpCellBox;
+    private ComboBox? _linuxJumpPadBox;
+    private bool _suppressLinuxPopupSync;
 
     private void StartGridFocusTracking()
     {
@@ -107,17 +128,8 @@ public partial class TabbedHostWindow : Window
         };
         DockPanel.SetDock(rightTools, Dock.Right);
 
-        Button autoBtn = CreateNavButton(MaterialIconKind.RobotOutline, "Auto", "Automated Combat & Hunting Controls");
-        MenuFlyout autoFlyout = new();
-        autoFlyout.Items.Add(CreateFlyoutItem("Auto Attack", () => SendActiveChildCommand("AUTO_ATTACK")));
-        autoFlyout.Items.Add(CreateFlyoutItem("Auto Hunt", () => SendActiveChildCommand("AUTO_HUNT")));
-        autoFlyout.Items.Add(CreateFlyoutItem("Stop Automation", () => SendActiveChildCommand("AUTO_STOP")));
-        autoFlyout.Items.Add(new Separator());
-        autoFlyout.Items.Add(CreateFlyoutItem("Class / Skills", () => SendActiveChildCommand("MENU|Skills")));
-        autoBtn.Flyout = autoFlyout;
-
-        Button jumpBtn = CreateNavButton(MaterialIconKind.RunFast, "Jump", "Map & Cell Fast Jump Controls");
-        jumpBtn.Click += (_, _) => SendActiveChildCommand("JUMP_WINDOW");
+        var (autoToggle, autoPopup) = BuildLinuxAutoControls();
+        var (jumpToggle, jumpPopup) = BuildLinuxJumpControls();
 
         Border sep = new()
         {
@@ -133,14 +145,16 @@ public partial class TabbedHostWindow : Window
             Width = 28,
             Height = 28,
             Padding = new Thickness(0),
-            Content = CreateNavIcon(MaterialIconKind.Plus, 15, "SkuaTextBrush")
+            Content = CreateNavIcon(MaterialIconKind.Plus, 15, "SkuaAccentBrush")
         };
         botWinBtn.Classes.Add("top-nav-item");
         ToolTip.SetTip(botWinBtn, "Show All Bot Windows & Tools");
         botWinBtn.Click += (_, _) => SendActiveChildCommand("BOT_WINDOW");
 
-        rightTools.Children.Add(autoBtn);
-        rightTools.Children.Add(jumpBtn);
+        rightTools.Children.Add(autoToggle);
+        rightTools.Children.Add(autoPopup);
+        rightTools.Children.Add(jumpToggle);
+        rightTools.Children.Add(jumpPopup);
         rightTools.Children.Add(sep);
         rightTools.Children.Add(botWinBtn);
 
@@ -200,7 +214,7 @@ public partial class TabbedHostWindow : Window
                 VerticalAlignment = VerticalAlignment.Center,
                 Children =
                 {
-                    CreateNavIcon(kind, 13, "SkuaTextBrush"),
+                    CreateNavIcon(kind, 13, "SkuaAccentBrush"),
                     new TextBlock
                     {
                         Text = label,
@@ -239,7 +253,7 @@ public partial class TabbedHostWindow : Window
                 Spacing = 6,
                 Children =
                 {
-                    CreateNavIcon(kind, 14, "SkuaTextBrush"),
+                    CreateNavIcon(kind, 14, "SkuaAccentBrush"),
                     new TextBlock
                     {
                         Text = header,
@@ -281,7 +295,7 @@ public partial class TabbedHostWindow : Window
                 MenuItem extra = new()
                 {
                     Header = targetHeader,
-                    Icon = CreateNavIcon(MaterialIconKind.PuzzleOutline, 14, "SkuaMutedTextBrush")
+                    Icon = CreateNavIcon(MaterialIconKind.PuzzleOutline, 14, "SkuaAccentBrush")
                 };
                 extra.Click += (_, _) => SendActiveChildCommand("MENU|" + targetHeader);
                 parent.Items.Add(extra);
@@ -299,7 +313,7 @@ public partial class TabbedHostWindow : Window
             MenuItem sub = new()
             {
                 Header = label,
-                Icon = CreateNavIcon(subKind, 14, "SkuaMutedTextBrush")
+                Icon = CreateNavIcon(subKind, 14, "SkuaAccentBrush")
             };
             sub.Click += (_, _) => SendActiveChildCommand("MENU|" + label);
             parent.Items.Add(sub);
@@ -381,12 +395,155 @@ public partial class TabbedHostWindow : Window
         }, RoutingStrategies.Tunnel, handledEventsToo: true);
         _linuxViewports[childHwnd] = viewport;
         _viewportCanvas.Children.Add(viewport);
+
+        Border headlessOverlay = CreateHeadlessOverlay();
+        _linuxHeadlessOverlays[childHwnd] = headlessOverlay;
+        _viewportCanvas.Children.Add(headlessOverlay);
+    }
+
+    private static Border CreateHeadlessOverlay()
+    {
+        var icon = new MaterialIcon
+        {
+            Kind = MaterialIconKind.MonitorOff,
+            Width = 36,
+            Height = 36,
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
+        icon[!MaterialIcon.ForegroundProperty] = new DynamicResourceExtension("SkuaMutedTextBrush");
+
+        var title = new TextBlock
+        {
+            Text = "Headless Mode Active",
+            FontSize = 18,
+            FontWeight = FontWeight.SemiBold,
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
+        title[!TextBlock.ForegroundProperty] = new DynamicResourceExtension("SkuaTextBrush");
+
+        var subtitle = new TextBlock
+        {
+            Text = "Viewport suspended to minimize CPU and GPU usage",
+            FontSize = 12,
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
+        subtitle[!TextBlock.ForegroundProperty] = new DynamicResourceExtension("SkuaMutedTextBrush");
+
+        var stack = new StackPanel
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Spacing = 8
+        };
+        stack.Children.Add(icon);
+        stack.Children.Add(title);
+        stack.Children.Add(subtitle);
+
+        var overlay = new Border
+        {
+            Child = stack,
+            IsVisible = false,
+            IsHitTestVisible = true
+        };
+        overlay[!Border.BackgroundProperty] = new DynamicResourceExtension("SkuaPageBrush");
+        return overlay;
+    }
+
+    private void ApplyChildHeadlessState(int childPid, bool manual, bool auto, long seq)
+    {
+        TabInfo? tab = _tabs.Values.FirstOrDefault(t => t.Process != null && t.Process.Id == childPid);
+        if (tab == null || tab.ChildHwnd == IntPtr.Zero)
+            return;
+
+        IntPtr childHwnd = tab.ChildHwnd;
+        if (_linuxHeadlessSeq.TryGetValue(childHwnd, out long prevSeq) && seq < prevSeq)
+            return;
+
+        _linuxHeadlessSeq[childHwnd] = seq;
+        _linuxManualHeadlessStates[childHwnd] = manual;
+        _linuxAutoHeadlessStates[childHwnd] = auto;
+
+        if (tab.IsDetached)
+            return;
+
+        if (_linuxViewports.TryGetValue(childHwnd, out GameHost? viewport) &&
+            _linuxHeadlessOverlays.TryGetValue(childHwnd, out Border? overlay))
+        {
+            bool shownInHost = viewport.IsVisible || overlay.IsVisible;
+            if (shownInHost)
+            {
+                // Host state (active tab, Grid Mode, window focus) is authoritative for AutoHeadless;
+                // prevents stale in-flight child HEADLESS_STATE messages from sticking the overlay on.
+                bool isHeadless = PredictEffectiveHeadless(childHwnd, _isGridViewEnabled, isShownTile: true);
+                viewport.IsVisible = !isHeadless;
+                overlay.IsVisible = isHeadless;
+                if (!isHeadless)
+                    viewport.ForceRefreshFrame();
+            }
+        }
+    }
+
+    private bool PredictEffectiveHeadless(IntPtr childHwnd, bool isGrid, bool isShownTile)
+    {
+        bool manual = _linuxManualHeadlessStates.TryGetValue(childHwnd, out bool m) && m;
+        bool auto = _linuxAutoHeadlessStates.TryGetValue(childHwnd, out bool a) && a;
+        try
+        {
+            IScriptOption options = Ioc.Default.GetRequiredService<IScriptOption>();
+            if (options.AutoHeadless)
+            {
+                if (!IsActive)
+                {
+                    if (options.AutoHeadlessWhenMinimized)
+                        auto = true;
+                }
+                else if (isGrid)
+                {
+                    if (!options.AutoHeadlessGridView)
+                        auto = true;
+                    else if (options.AutoHeadlessLiftOnFocus)
+                        auto = false;
+                }
+                else if (isShownTile && options.AutoHeadlessLiftOnFocus)
+                {
+                    auto = false;
+                }
+            }
+            else
+            {
+                auto = false;
+            }
+        }
+        catch { }
+        _linuxAutoHeadlessStates[childHwnd] = auto;
+        return manual || auto;
+    }
+
+    private void RefreshLinuxHeadlessOverlays()
+    {
+        foreach (KeyValuePair<IntPtr, GameHost> kvp in _linuxViewports)
+        {
+            IntPtr childHwnd = kvp.Key;
+            GameHost viewport = kvp.Value;
+            if (!_linuxHeadlessOverlays.TryGetValue(childHwnd, out Border? overlay))
+                continue;
+            if (!viewport.IsVisible && !overlay.IsVisible)
+                continue;
+
+            bool isHeadless = PredictEffectiveHeadless(childHwnd, _isGridViewEnabled, true);
+            viewport.IsVisible = !isHeadless;
+            overlay.IsVisible = isHeadless;
+            if (!isHeadless)
+                viewport.ForceRefreshFrame();
+        }
     }
 
     private void PlatformDetachChild(IntPtr childHwnd, int screenX, int screenY, int width, int height)
     {
         if (_linuxViewports.TryGetValue(childHwnd, out GameHost? viewport))
             viewport.IsVisible = false;
+        if (_linuxHeadlessOverlays.TryGetValue(childHwnd, out Border? overlay))
+            overlay.IsVisible = false;
 
         if (_dockedTopNavBorder != null &&
             InstancesTabControl.SelectedItem is TabItem selected &&
@@ -472,16 +629,34 @@ public partial class TabbedHostWindow : Window
                 if (kvp.Key != childHwnd)
                     kvp.Value.IsVisible = false;
             }
+            foreach (KeyValuePair<IntPtr, Border> kvp in _linuxHeadlessOverlays)
+            {
+                if (kvp.Key != childHwnd)
+                    kvp.Value.IsVisible = false;
+            }
         }
+
+        bool isHeadless = PredictEffectiveHeadless(childHwnd, _isGridViewEnabled, true);
 
         Canvas.SetLeft(viewport, left);
         Canvas.SetTop(viewport, top);
         viewport.Width = targetW;
         viewport.Height = targetH;
-        viewport.IsVisible = true;
-        if (focus)
+        viewport.IsVisible = !isHeadless;
+
+        if (_linuxHeadlessOverlays.TryGetValue(childHwnd, out Border? overlay))
+        {
+            Canvas.SetLeft(overlay, left);
+            Canvas.SetTop(overlay, top);
+            overlay.Width = targetW;
+            overlay.Height = targetH;
+            overlay.IsVisible = isHeadless;
+        }
+
+        if (focus && !isHeadless)
             viewport.SetActiveInstance();
-        viewport.RefreshLayout();
+        if (!isHeadless)
+            viewport.RefreshLayout();
     }
 
     private void PlatformHideChild(IntPtr childHwnd)
@@ -494,6 +669,8 @@ public partial class TabbedHostWindow : Window
 
         if (_linuxViewports.TryGetValue(childHwnd, out GameHost? viewport))
             viewport.IsVisible = false;
+        if (_linuxHeadlessOverlays.TryGetValue(childHwnd, out Border? overlay))
+            overlay.IsVisible = false;
     }
 
     private void PlatformUnmapChild(IntPtr childHwnd)
@@ -510,6 +687,14 @@ public partial class TabbedHostWindow : Window
             _viewportCanvas?.Children.Remove(viewport);
             viewport.DisposeResources();
         }
+        if (_linuxHeadlessOverlays.Remove(childHwnd, out Border? overlay))
+        {
+            overlay.IsVisible = false;
+            _viewportCanvas?.Children.Remove(overlay);
+        }
+        _linuxManualHeadlessStates.Remove(childHwnd);
+        _linuxAutoHeadlessStates.Remove(childHwnd);
+        _linuxHeadlessSeq.Remove(childHwnd);
     }
 
     private void PlatformClearAllViewports()
@@ -534,6 +719,15 @@ public partial class TabbedHostWindow : Window
             viewport.DisposeResources();
         }
         _linuxViewports.Clear();
+        foreach (Border overlay in _linuxHeadlessOverlays.Values)
+        {
+            overlay.IsVisible = false;
+            _viewportCanvas?.Children.Remove(overlay);
+        }
+        _linuxHeadlessOverlays.Clear();
+        _linuxManualHeadlessStates.Clear();
+        _linuxAutoHeadlessStates.Clear();
+        _linuxHeadlessSeq.Clear();
         HotKeys.ActiveChildHwnd = IntPtr.Zero;
     }
 
@@ -634,5 +828,367 @@ public partial class TabbedHostWindow : Window
         }
         catch { }
     }
+    private (ToggleButton, Popup) BuildLinuxAutoControls()
+    {
+        _linuxAutoActiveDot = new Border
+        {
+            Width = 6,
+            Height = 6,
+            CornerRadius = new CornerRadius(3),
+            Background = Brush.Parse("#10B981"),
+            Margin = new Thickness(2, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            IsVisible = false
+        };
+        StackPanel autoContent = CreateNavContent(MaterialIconKind.RobotOutline, "Auto");
+        autoContent.Children.Add(_linuxAutoActiveDot);
+        ToggleButton toggle = new()
+        {
+            Content = autoContent
+        };
+        toggle.Classes.Add("top-nav-item");
+        ToolTip.SetTip(toggle, "Automated Combat & Hunting Controls");
+        _linuxAutoToggle = toggle;
+
+        _linuxAutoRunningBadge = new Border
+        {
+            CornerRadius = new CornerRadius(10),
+            Padding = new Thickness(8, 2),
+            Background = Brush.Parse("#064E3B"),
+            BorderBrush = Brush.Parse("#059669"),
+            BorderThickness = new Thickness(1),
+            IsVisible = false,
+            Child = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 4,
+                VerticalAlignment = VerticalAlignment.Center,
+                Children =
+                {
+                    new MaterialIcon { Kind = MaterialIconKind.ProgressCheck, Width = 12, Height = 12, Foreground = Brush.Parse("#34D399") },
+                    new TextBlock { Text = "RUNNING", FontSize = 10, FontWeight = FontWeight.Bold, Foreground = Brush.Parse("#34D399") }
+                }
+            }
+        };
+        Grid.SetColumn(_linuxAutoRunningBadge, 1);
+
+        Grid headerGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,Auto"), VerticalAlignment = VerticalAlignment.Center };
+        headerGrid.Children.Add(new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children =
+            {
+                CreateNavIcon(MaterialIconKind.RobotOutline, 16, "SkuaAccentBrush"),
+                CreateNavTitle("Combat Automation")
+            }
+        });
+        headerGrid.Children.Add(_linuxAutoRunningBadge);
+
+        _linuxAutoAttackBtn = new Button { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, Content = CreatePopupButtonContent(MaterialIconKind.PlayCircleOutline, "Auto Attack", true) };
+        _linuxAutoAttackBtn.Classes.Add("skua-button");
+        _linuxAutoAttackBtn.Classes.Add("skua-primary");
+        _linuxAutoAttackBtn.Click += (_, _) =>
+        {
+            SendActiveChildCommand("AUTO_ATTACK");
+            if (_linuxAutoToggle != null) _linuxAutoToggle.IsChecked = false;
+        };
+
+        _linuxAutoHuntBtn = new Button { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, Content = CreatePopupButtonContent(MaterialIconKind.CrosshairsGps, "Auto Hunt", true) };
+        _linuxAutoHuntBtn.Classes.Add("skua-button");
+        _linuxAutoHuntBtn.Click += (_, _) =>
+        {
+            SendActiveChildCommand("AUTO_HUNT");
+            if (_linuxAutoToggle != null) _linuxAutoToggle.IsChecked = false;
+        };
+        Grid.SetColumn(_linuxAutoHuntBtn, 1);
+
+        _linuxAutoStopBtn = new Button { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, IsVisible = false, Content = CreatePopupButtonContent(MaterialIconKind.StopCircleOutline, "Stop Automation", true) };
+        _linuxAutoStopBtn.Classes.Add("skua-button");
+        _linuxAutoStopBtn.Classes.Add("skua-danger");
+        Grid.SetColumnSpan(_linuxAutoStopBtn, 2);
+        _linuxAutoStopBtn.Click += (_, _) =>
+        {
+            SendActiveChildCommand("AUTO_STOP");
+            if (_linuxAutoToggle != null) _linuxAutoToggle.IsChecked = false;
+        };
+
+        Grid actionsGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
+        actionsGrid.Children.Add(_linuxAutoAttackBtn);
+        actionsGrid.Children.Add(_linuxAutoHuntBtn);
+        actionsGrid.Children.Add(_linuxAutoStopBtn);
+
+        _linuxAutoClassBox = new ComboBox { Height = 34, MinWidth = 160, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Class..." };
+        _linuxAutoClassBox.SelectionChanged += (_, _) =>
+        {
+            if (!_suppressLinuxPopupSync && _linuxAutoClassBox.SelectedItem is string cls)
+                SendActiveChildCommand("AUTO_CLASS|" + cls);
+        };
+
+        _linuxAutoModeBox = new ComboBox { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Mode..." };
+        Grid.SetColumn(_linuxAutoModeBox, 1);
+        _linuxAutoModeBox.SelectionChanged += (_, _) =>
+        {
+            if (!_suppressLinuxPopupSync && _linuxAutoModeBox.SelectedItem is string mode)
+                SendActiveChildCommand("AUTO_MODE|" + mode);
+        };
+
+        Grid classModeGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
+        classModeGrid.Children.Add(_linuxAutoClassBox);
+        classModeGrid.Children.Add(_linuxAutoModeBox);
+
+        _linuxAutoMapIdsBox = new TextBox { Height = 32, FontSize = 12, Watermark = "Manual MapIDs (optional, e.g. 1, 2)" };
+        _linuxAutoMapIdsBox.LostFocus += (_, _) =>
+        {
+            if (!_suppressLinuxPopupSync)
+                SendActiveChildCommand("AUTO_MAPS|" + (_linuxAutoMapIdsBox.Text ?? string.Empty));
+        };
+
+        Border sep = new() { Height = 1 };
+        sep[!Border.BackgroundProperty] = new DynamicResourceExtension("SkuaBorderBrush");
+
+        Border card = new()
+        {
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(12),
+            CornerRadius = new CornerRadius(8),
+            MinWidth = 360,
+            Width = 360,
+            Child = new StackPanel
+            {
+                Spacing = 10,
+                Children = { headerGrid, sep, actionsGrid, classModeGrid, _linuxAutoMapIdsBox }
+            }
+        };
+        card[!Border.BackgroundProperty] = new DynamicResourceExtension("SkuaSurfaceBrush");
+        card[!Border.BorderBrushProperty] = new DynamicResourceExtension("SkuaBorderBrush");
+
+        Popup popup = new()
+        {
+            Placement = PlacementMode.Bottom,
+            IsLightDismissEnabled = true,
+            PlacementTarget = toggle,
+            Child = new TopbarPopupPanel { Content = card }
+        };
+
+        toggle.IsCheckedChanged += (_, _) =>
+        {
+            bool open = toggle.IsChecked == true;
+            if (open && _linuxJumpToggle != null)
+                _linuxJumpToggle.IsChecked = false;
+            popup.IsOpen = open;
+            if (open)
+                SendActiveChildCommand("GET_AUTO_STATE");
+        };
+        popup.Closed += (_, _) => toggle.IsChecked = false;
+
+        return (toggle, popup);
+    }
+
+    private (ToggleButton, Popup) BuildLinuxJumpControls()
+    {
+        ToggleButton toggle = new()
+        {
+            Content = CreateNavContent(MaterialIconKind.RunFast, "Jump")
+        };
+        toggle.Classes.Add("top-nav-item");
+        ToolTip.SetTip(toggle, "Map & Cell Fast Jump Controls");
+        _linuxJumpToggle = toggle;
+
+        StackPanel header = new()
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children =
+            {
+                CreateNavIcon(MaterialIconKind.RunFast, 16, "SkuaAccentBrush"),
+                CreateNavTitle("Fast Map Jump")
+            }
+        };
+
+        _linuxJumpCellBox = new ComboBox { Height = 34, MinWidth = 140, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Cell..." };
+        _linuxJumpPadBox = new ComboBox { Height = 34, MinWidth = 140, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Pad..." };
+        Grid.SetColumn(_linuxJumpPadBox, 1);
+
+        _linuxJumpCellBox.SelectionChanged += (_, _) =>
+        {
+            if (_suppressLinuxPopupSync || _linuxJumpCellBox.SelectedItem is not string cell || string.IsNullOrEmpty(cell))
+                return;
+            if (cell == "Enter")
+                _linuxJumpPadBox.SelectedItem = "Spawn";
+            else if (_linuxJumpPadBox.SelectedItem is not string p || string.IsNullOrEmpty(p))
+                _linuxJumpPadBox.SelectedItem = "Left";
+            string pad = _linuxJumpPadBox.SelectedItem as string ?? "Spawn";
+            SendActiveChildCommand($"JUMP_TO|{cell}|{pad}");
+        };
+
+        Grid selectGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
+        selectGrid.Children.Add(_linuxJumpCellBox);
+        selectGrid.Children.Add(_linuxJumpPadBox);
+
+        Button currentBtn = new() { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, Content = CreatePopupButtonContent(MaterialIconKind.MapMarkerOutline, "Current", false) };
+        currentBtn.Classes.Add("skua-button");
+        currentBtn.Click += (_, _) => SendActiveChildCommand("JUMP_CURRENT");
+
+        Button jumpBtn = new() { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, Content = CreatePopupButtonContent(MaterialIconKind.RunFast, "Jump", true) };
+        jumpBtn.Classes.Add("skua-button");
+        jumpBtn.Classes.Add("skua-primary");
+        Grid.SetColumn(jumpBtn, 1);
+        jumpBtn.Click += (_, _) =>
+        {
+            string cell = _linuxJumpCellBox?.SelectedItem as string ?? string.Empty;
+            string pad = _linuxJumpPadBox?.SelectedItem as string ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(cell) && !string.IsNullOrWhiteSpace(pad))
+                SendActiveChildCommand($"JUMP_TO|{cell}|{pad}");
+        };
+
+        Grid actionsGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
+        actionsGrid.Children.Add(currentBtn);
+        actionsGrid.Children.Add(jumpBtn);
+
+        Border sep = new() { Height = 1 };
+        sep[!Border.BackgroundProperty] = new DynamicResourceExtension("SkuaBorderBrush");
+
+        Border card = new()
+        {
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(12),
+            CornerRadius = new CornerRadius(8),
+            MinWidth = 320,
+            Width = 320,
+            Child = new StackPanel
+            {
+                Spacing = 10,
+                Children = { header, sep, selectGrid, actionsGrid }
+            }
+        };
+        card[!Border.BackgroundProperty] = new DynamicResourceExtension("SkuaSurfaceBrush");
+        card[!Border.BorderBrushProperty] = new DynamicResourceExtension("SkuaBorderBrush");
+
+        Popup popup = new()
+        {
+            Placement = PlacementMode.Bottom,
+            IsLightDismissEnabled = true,
+            PlacementTarget = toggle,
+            Child = new TopbarPopupPanel { Content = card }
+        };
+
+        toggle.IsCheckedChanged += (_, _) =>
+        {
+            bool open = toggle.IsChecked == true;
+            if (open && _linuxAutoToggle != null)
+                _linuxAutoToggle.IsChecked = false;
+            popup.IsOpen = open;
+            if (open)
+                SendActiveChildCommand("GET_JUMP_STATE");
+        };
+        popup.Closed += (_, _) => toggle.IsChecked = false;
+
+        return (toggle, popup);
+    }
+
+    private static StackPanel CreateNavContent(MaterialIconKind kind, string text) => new()
+    {
+        Orientation = Orientation.Horizontal,
+        Spacing = 5,
+        VerticalAlignment = VerticalAlignment.Center,
+        Children =
+        {
+            CreateNavIcon(kind, 13, "SkuaAccentBrush"),
+            new TextBlock { Text = text, FontWeight = FontWeight.SemiBold, FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        }
+    };
+
+    private static TextBlock CreateNavTitle(string text)
+    {
+        TextBlock tb = new() { Text = text, FontWeight = FontWeight.Bold, FontSize = 13, VerticalAlignment = VerticalAlignment.Center };
+        tb[!TextBlock.ForegroundProperty] = new DynamicResourceExtension("SkuaTextBrush");
+        return tb;
+    }
+
+    private static StackPanel CreatePopupButtonContent(MaterialIconKind kind, string text, bool bold) => new()
+    {
+        Orientation = Orientation.Horizontal,
+        HorizontalAlignment = HorizontalAlignment.Center,
+        Spacing = 6,
+        VerticalAlignment = VerticalAlignment.Center,
+        Children =
+        {
+            new MaterialIcon { Kind = kind, Width = 15, Height = 15, VerticalAlignment = VerticalAlignment.Center },
+            new TextBlock { Text = text, FontWeight = bold ? FontWeight.Bold : FontWeight.SemiBold, FontSize = 11, VerticalAlignment = VerticalAlignment.Center }
+        }
+    };
+
+    private void ApplyChildAutoState(int childPid, string json)
+    {
+        if (InstancesTabControl.SelectedItem is TabItem sel &&
+            _tabs.TryGetValue(sel, out TabInfo? info) &&
+            info.Process?.Id != childPid)
+            return;
+
+        try
+        {
+            JObject obj = JObject.Parse(json);
+            _suppressLinuxPopupSync = true;
+            bool isRunning = obj.Value<bool>("isRunning");
+            if (_linuxAutoActiveDot != null) _linuxAutoActiveDot.IsVisible = isRunning;
+            if (_linuxAutoRunningBadge != null) _linuxAutoRunningBadge.IsVisible = isRunning;
+            if (_linuxAutoAttackBtn != null) _linuxAutoAttackBtn.IsVisible = !isRunning;
+            if (_linuxAutoHuntBtn != null) _linuxAutoHuntBtn.IsVisible = !isRunning;
+            if (_linuxAutoStopBtn != null) _linuxAutoStopBtn.IsVisible = isRunning;
+
+            if (_linuxAutoClassBox != null)
+            {
+                _linuxAutoClassBox.ItemsSource = obj["classes"]?.ToObject<List<string>>() ?? new List<string>();
+                _linuxAutoClassBox.SelectedItem = obj.Value<string?>("selectedClass");
+            }
+            if (_linuxAutoModeBox != null)
+            {
+                _linuxAutoModeBox.ItemsSource = obj["modes"]?.ToObject<List<string>>() ?? new List<string>();
+                _linuxAutoModeBox.SelectedItem = obj.Value<string?>("selectedMode");
+            }
+            if (_linuxAutoMapIdsBox != null)
+            {
+                _linuxAutoMapIdsBox.Text = obj.Value<string?>("manualMapIds") ?? string.Empty;
+            }
+        }
+        catch { }
+        finally
+        {
+            _suppressLinuxPopupSync = false;
+        }
+    }
+
+    private void ApplyChildJumpState(int childPid, string json)
+    {
+        if (InstancesTabControl.SelectedItem is TabItem sel &&
+            _tabs.TryGetValue(sel, out TabInfo? info) &&
+            info.Process?.Id != childPid)
+            return;
+
+        try
+        {
+            JObject obj = JObject.Parse(json);
+            _suppressLinuxPopupSync = true;
+            if (_linuxJumpCellBox != null)
+            {
+                _linuxJumpCellBox.ItemsSource = obj["cells"]?.ToObject<List<string>>() ?? new List<string>();
+                _linuxJumpCellBox.SelectedItem = obj.Value<string?>("selectedCell");
+            }
+            if (_linuxJumpPadBox != null)
+            {
+                _linuxJumpPadBox.ItemsSource = obj["pads"]?.ToObject<List<string>>() ?? new List<string>();
+                _linuxJumpPadBox.SelectedItem = obj.Value<string?>("selectedPad");
+            }
+        }
+        catch { }
+        finally
+        {
+            _suppressLinuxPopupSync = false;
+        }
+    }
+
     #endregion
 }
