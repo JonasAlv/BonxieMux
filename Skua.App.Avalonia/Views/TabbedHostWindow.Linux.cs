@@ -274,7 +274,8 @@ public partial class TabbedHostWindow : Window
             ("View Plugins", MaterialIconKind.PuzzleOutline),
             ("ButlerV5 Avalonia", MaterialIconKind.RobotOutline),
             ("Daily Tracker", MaterialIconKind.CalendarCheckOutline),
-            ("Cosmetics", MaterialIconKind.PaletteOutline));
+            ("Cosmetics", MaterialIconKind.PaletteOutline),
+            ("Perf Recorder", MaterialIconKind.ChartTimelineVariant));
 
         parent.SubmenuOpened += (_, _) =>
         {
@@ -486,32 +487,18 @@ public partial class TabbedHostWindow : Window
     private bool PredictEffectiveHeadless(IntPtr childHwnd, bool isGrid, bool isShownTile)
     {
         bool manual = _linuxManualHeadlessStates.TryGetValue(childHwnd, out bool m) && m;
-        bool auto = _linuxAutoHeadlessStates.TryGetValue(childHwnd, out bool a) && a;
+        bool auto = false;
         try
         {
             IScriptOption options = Ioc.Default.GetRequiredService<IScriptOption>();
             if (options.AutoHeadless)
             {
-                if (!IsActive)
-                {
-                    if (options.AutoHeadlessWhenMinimized)
-                        auto = true;
-                }
-                else if (isGrid)
-                {
-                    if (!options.AutoHeadlessGridView)
-                        auto = true;
-                    else if (options.AutoHeadlessLiftOnFocus)
-                        auto = false;
-                }
-                else if (isShownTile && options.AutoHeadlessLiftOnFocus)
-                {
-                    auto = false;
-                }
-            }
-            else
-            {
-                auto = false;
+                bool isWindowFocused = IsActive && WindowState != WindowState.Minimized && IsVisible;
+                bool isFocusedGridTile = isWindowFocused && isGrid;
+                bool isFocusedTab = isWindowFocused && (isGrid ? childHwnd == HotKeys.ActiveChildHwnd : isShownTile);
+                bool excluded = (options.AutoHeadlessExcludeFocused && isFocusedTab)
+                    || (options.AutoHeadlessExcludeGridView && isFocusedGridTile);
+                auto = !excluded;
             }
         }
         catch { }
@@ -738,14 +725,6 @@ public partial class TabbedHostWindow : Window
 
         TabIpc.CleanUp(pid);
 
-        try
-        {
-            string shmPath = GameHost.GetShmPathForPid(pid);
-            if (File.Exists(shmPath))
-                File.Delete(shmPath);
-        }
-        catch { }
-
         string dir = ClientFileSources.TabsDIR;
         string[] perPidFiles =
         {
@@ -774,22 +753,6 @@ public partial class TabbedHostWindow : Window
     private static void SweepStaleProcessFiles()
     {
         static bool IsProcessAlive(int pid) => pid > 0 && Directory.Exists($"/proc/{pid}");
-
-        try
-        {
-            string shmDir = Directory.Exists("/dev/shm") ? "/dev/shm" : Path.GetTempPath();
-            foreach (string path in Directory.EnumerateFiles(shmDir, "skua-shm-*.bin"))
-            {
-                string name = Path.GetFileNameWithoutExtension(path);
-                if (name.StartsWith("skua-shm-", StringComparison.Ordinal) &&
-                    int.TryParse(name["skua-shm-".Length..], out int pid) &&
-                    !IsProcessAlive(pid))
-                {
-                    try { File.Delete(path); } catch { }
-                }
-            }
-        }
-        catch { }
 
         try
         {

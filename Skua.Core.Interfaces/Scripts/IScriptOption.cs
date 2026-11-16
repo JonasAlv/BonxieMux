@@ -169,10 +169,8 @@ public interface IScriptOption : INotifyPropertyChanged
     bool HeadlessMode { get; set; }
 
     bool AutoHeadless { get; set; }
-    bool AutoHeadlessBackgroundTabs { get; set; }
-    bool AutoHeadlessGridView { get; set; }
-    bool AutoHeadlessWhenMinimized { get; set; }
-    bool AutoHeadlessLiftOnFocus { get; set; }
+    bool AutoHeadlessExcludeFocused { get; set; }
+    bool AutoHeadlessExcludeGridView { get; set; }
     bool IsHeadlessNow();
     void SetAutoHeadless(bool active);
 
@@ -198,16 +196,20 @@ public interface IScriptOption : INotifyPropertyChanged
     void ApplySharedAntiLag(bool value);
 
     /// <summary>
-    /// Master switch for automatic Anti-Lag when tabs are not showing.
+    /// Master switch for focus-based automatic Anti-Lag across all tabs.
     /// </summary>
     bool AutoAntiLag { get; set; }
 
     /// <summary>
-    /// When enabled (default), selecting/showing a tab takes it out of automatic Anti-Lag.
-    /// When disabled, a tab stays in automatic Anti-Lag even when focused until AutoAntiLag or AntiLag is turned off.
+    /// When enabled, focusing a tab disables automatic Anti-Lag for that tab.
     /// </summary>
-    bool AutoAntiLagLiftOnFocus { get; set; }
-    void SetTabShown(bool shown);
+    bool AutoAntiLagExcludeFocused { get; set; }
+
+    /// <summary>
+    /// When enabled, Grid View tiles are excluded from automatic Anti-Lag while the window is visible.
+    /// </summary>
+    bool AutoAntiLagExcludeGridView { get; set; }
+    void SetAutoAntiLagContext(bool isFocusedTab, bool isGridTile);
 
     /// <summary>
     /// When enabled, automatically turns in-game Crowd Mode on when a script runs, and restores it when the script stops.

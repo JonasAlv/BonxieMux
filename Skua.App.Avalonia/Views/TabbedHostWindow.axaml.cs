@@ -240,6 +240,7 @@ public partial class TabbedHostWindow : Window
             _lastGridViewState = false;
             ScheduleReposition();
             UpdateTabScrollButtons();
+            RefreshLinuxHeadlessOverlays();
             if (_isGridViewEnabled)
                 foreach (var info in _tabs.Values)
                     if (info.ChildHwnd != IntPtr.Zero)
@@ -251,9 +252,7 @@ public partial class TabbedHostWindow : Window
         Deactivated += (s, e) =>
         {
             CloseHostDropdowns();
-            _lastActiveHwnd = IntPtr.Zero;
-            _lastGridViewState = false;
-            ScheduleReposition();
+            RefreshLinuxHeadlessOverlays();
             foreach (var info in _tabs.Values)
             {
                 if (info.ChildHwnd != IntPtr.Zero)
@@ -3144,11 +3143,7 @@ public partial class TabbedHostWindow : Window
         {
             TabInfo info = activeWindows[i];
             int visibility;
-            if (!IsActive)
-            {
-                visibility = 4;
-            }
-            else if (_isGridViewEnabled)
+            if (_isGridViewEnabled)
             {
                 bool isSelectedTile = i == selectedGridIndex;
                 visibility = isSelectedTile ? 2 : 3;
@@ -3758,12 +3753,19 @@ public partial class TabbedHostWindow : Window
                 });
             };
 
+            var (wlHandle, wlSocket) = Skua.App.Avalonia.Controls.GameHost.CreateWaylandHostForChild(1280, 720);
+            if (!string.IsNullOrEmpty(wlSocket))
+                p.StartInfo.EnvironmentVariables["BONXIE_WL_DISPLAY"] = wlSocket;
+            else
+                p.StartInfo.EnvironmentVariables.Remove("BONXIE_WL_DISPLAY");
+
             try
             {
                 p.Start();
             }
             catch (Exception ex)
             {
+                Skua.App.Avalonia.Controls.GameHost.ReleasePendingWaylandHost(wlHandle);
                 p.Dispose();
                 _isSpawning = false;
                 Trace.WriteLine($"BonxieMux failed to start child process for tab '{tabName}': {ex}");
@@ -3775,6 +3777,7 @@ public partial class TabbedHostWindow : Window
                 }, DispatcherPriority.Background);
                 return;
             }
+            Skua.App.Avalonia.Controls.GameHost.RegisterPendingWaylandHost(p.Id, wlHandle, wlSocket);
             info.Process = p;
             HotKeys.RegisterSkuaPid((uint)p.Id);
 

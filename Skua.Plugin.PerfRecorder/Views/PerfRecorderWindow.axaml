@@ -1,0 +1,307 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        xmlns:shell="clr-namespace:Skua.Shared.Avalonia.Controls.Shell;assembly=Skua.Shared.Avalonia"
+        x:Class="Skua.Plugin.PerfRecorder.Views.PerfRecorderWindow"
+        Classes="skua"
+        Title="Performance Stats &amp; Recorder"
+        Width="900" Height="680"
+        MinWidth="760" MinHeight="560"
+        WindowDecorations="None"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="32"
+        WindowStartupLocation="Manual">
+
+    <Window.Styles>
+        <Style Selector="Border.perf-card">
+            <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12,10" />
+        </Style>
+        <Style Selector="TextBlock.card-title">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+        <Style Selector="TextBlock.stat-label">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.stat-value">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.primary-action">
+            <Setter Property="Background" Value="{DynamicResource SkuaAccentBrush}" />
+            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.primary-action /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SkuaAccentBrush}" />
+            <Setter Property="TextBlock.Foreground" Value="Black" />
+        </Style>
+        <Style Selector="Button.danger-action">
+            <Setter Property="Background" Value="#E53935" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.danger-action /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#E53935" />
+            <Setter Property="TextBlock.Foreground" Value="White" />
+        </Style>
+    </Window.Styles>
+
+    <Border Classes="window-frame">
+        <Grid RowDefinitions="Auto,Auto,*,Auto">
+            <!-- 1. Title Bar -->
+            <shell:WindowTitleBar Grid.Row="0" TitleText="Performance Stats &amp; Recorder" />
+
+            <!-- 2. Recorder Toolbar -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource SkuaSurfaceAltBrush}"
+                    BorderBrush="{DynamicResource SkuaBorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="12,8">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+                    <TextBox Grid.Column="0"
+                             x:Name="TestLabelBox"
+                             Height="32"
+                             VerticalContentAlignment="Center"
+                             PlaceholderText="Optional test label (e.g. Battleon crowded, Void Highlord solo)..."
+                             Margin="0,0,8,0" />
+
+                    <Border Grid.Column="1"
+                            x:Name="RecordingBadge"
+                            Background="{DynamicResource SkuaSurfaceBrush}"
+                            BorderBrush="{DynamicResource SkuaBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="10,0"
+                            Height="32"
+                            Margin="0,0,8,0">
+                        <TextBlock x:Name="RecordingStatusText"
+                                   Text="IDLE"
+                                   FontSize="11"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                   VerticalAlignment="Center" />
+                    </Border>
+
+                    <Button Grid.Column="2"
+                            x:Name="BtnToggleRecord"
+                            Classes="primary-action"
+                            Padding="12,0"
+                            Margin="0,0,8,0"
+                            Click="BtnToggleRecord_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <materialIcons:MaterialIcon x:Name="RecordBtnIcon" Kind="RecordCircleOutline" Width="16" Height="16" />
+                            <TextBlock x:Name="RecordBtnText" Text="Start Recording" VerticalAlignment="Center" FontSize="12" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Grid.Column="3"
+                            Height="32"
+                            Padding="10,0"
+                            Margin="0,0,8,0"
+                            ToolTip.Tip="Save an immediate 1-sample .txt snapshot with current Mugetsu &amp; Host metrics"
+                            Click="BtnSnapshot_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <materialIcons:MaterialIcon Kind="ContentSaveOutline" Width="15" Height="15" Foreground="{DynamicResource SkuaAccentBrush}" />
+                            <TextBlock Text="Snapshot .txt" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Grid.Column="4"
+                            Height="32"
+                            Padding="10,0"
+                            ToolTip.Tip="Open saved reports directory"
+                            Click="BtnOpenFolder_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="15" Height="15" />
+                            <TextBlock Text="Reports" VerticalAlignment="Center" FontSize="11" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- 3. Main Content -->
+            <ScrollViewer Grid.Row="2" Padding="12,10">
+                <StackPanel Spacing="10">
+                    <!-- Top Summary Cards -->
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto">
+                        <!-- Pipeline & GPU Card -->
+                        <Border Grid.Column="0" Classes="perf-card" Margin="0,0,5,0">
+                            <StackPanel Spacing="5">
+                                <TextBlock Classes="card-title" Text="PIPELINE &amp; GRAPHICS BACKEND" />
+                                <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Classes="stat-label" Text="Transport Mode" />
+                                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtTransportMode" Classes="stat-value" Text="--" Foreground="{DynamicResource SkuaAccentBrush}" />
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Classes="stat-label" Text="Graphics API" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtGraphicsApi" Classes="stat-value" Text="--" />
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Classes="stat-label" Text="GPU Adapter" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtGpuAdapter" Classes="stat-value" Text="--" TextTrimming="CharacterEllipsis" />
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Classes="stat-label" Text="Surface Format" />
+                                    <TextBlock Grid.Row="3" Grid.Column="1" x:Name="TxtSurfaceFormat" Classes="stat-value" Text="--" />
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Classes="stat-label" Text="Interpolation" />
+                                    <TextBlock Grid.Row="4" Grid.Column="1" x:Name="TxtInterpolation" Classes="stat-value" Text="--" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Process Resource Usage Card -->
+                        <Border Grid.Column="1" Classes="perf-card" Margin="5,0,0,0">
+                            <StackPanel Spacing="5">
+                                <TextBlock Classes="card-title" Text="PROCESS CPU &amp; MEMORY" />
+                                <Grid ColumnDefinitions="120,*,*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Classes="stat-label" Text="Process" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Classes="stat-label" Text="PID" />
+                                    <TextBlock Grid.Row="0" Grid.Column="2" Classes="stat-label" Text="CPU %" />
+                                    <TextBlock Grid.Row="0" Grid.Column="3" Classes="stat-label" Text="RSS MB" />
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Classes="stat-value" Text="Mugetsu" FontSize="11" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtMugPid" Classes="stat-value" Text="--" FontSize="11" />
+                                    <TextBlock Grid.Row="1" Grid.Column="2" x:Name="TxtMugCpu" Classes="stat-value" Text="--" FontSize="11" />
+                                    <TextBlock Grid.Row="1" Grid.Column="3" x:Name="TxtMugRam" Classes="stat-value" Text="--" FontSize="11" />
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Classes="stat-value" Text="BonxieMux Host" FontSize="11" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtHostPid" Classes="stat-value" Text="--" FontSize="11" />
+                                    <TextBlock Grid.Row="2" Grid.Column="2" x:Name="TxtHostCpu" Classes="stat-value" Text="--" FontSize="11" />
+                                    <TextBlock Grid.Row="2" Grid.Column="3" x:Name="TxtHostRam" Classes="stat-value" Text="--" FontSize="11" />
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Classes="stat-value" Text="BonxieMux Tab" FontSize="11" />
+                                    <TextBlock Grid.Row="3" Grid.Column="1" x:Name="TxtTabPid" Classes="stat-value" Text="--" FontSize="11" />
+                                    <TextBlock Grid.Row="3" Grid.Column="2" x:Name="TxtTabCpu" Classes="stat-value" Text="--" FontSize="11" />
+                                    <TextBlock Grid.Row="3" Grid.Column="3" x:Name="TxtTabRam" Classes="stat-value" Text="--" FontSize="11" />
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Classes="stat-label" Text="Total Combined" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Row="4" Grid.Column="1" x:Name="TxtRustMem" Classes="stat-label" Text="Rust: --" />
+                                    <TextBlock Grid.Row="4" Grid.Column="2" x:Name="TxtTotalCpu" Classes="stat-value" Text="--" Foreground="{DynamicResource SkuaAccentBrush}" FontSize="11" />
+                                    <TextBlock Grid.Row="4" Grid.Column="3" x:Name="TxtTotalRam" Classes="stat-value" Text="--" Foreground="{DynamicResource SkuaAccentBrush}" FontSize="11" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Frame Rates & Timings Row -->
+                    <Grid ColumnDefinitions="*,*">
+                        <!-- Host Viewport Card -->
+                        <Border Grid.Column="0" Classes="perf-card" Margin="0,0,5,0">
+                            <StackPanel Spacing="5">
+                                <TextBlock Classes="card-title" Text="HOST VIEWPORT PRESENTATION (AVALONIA)" />
+                                <Grid ColumnDefinitions="145,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="4">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Classes="stat-label" Text="Host Presented FPS" />
+                                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtHostFps" Classes="stat-value" Text="--" FontSize="14" Foreground="{DynamicResource SkuaAccentBrush}" />
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Classes="stat-label" Text="1% Low FPS" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtHostOnePctLow" Classes="stat-value" Text="--" />
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Classes="stat-label" Text="Frame Interval (avg / max)" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtHostFrameMs" Classes="stat-value" Text="--" />
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Classes="stat-label" Text="Total Presented Frames" />
+                                    <TextBlock Grid.Row="3" Grid.Column="1" x:Name="TxtHostTotalFrames" Classes="stat-value" Text="--" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Mugetsu Internal Card -->
+                        <Border Grid.Column="1" Classes="perf-card" Margin="5,0,0,0">
+                            <StackPanel Spacing="5">
+                                <TextBlock Classes="card-title" Text="MUGETSU ENGINE TELEMETRY (5s WINDOW)" />
+                                <Grid ColumnDefinitions="155,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="4">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Classes="stat-label" Text="Game / Drawn / Presented" />
+                                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtMugFpsTriple" Classes="stat-value" Text="--" FontSize="13" />
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Classes="stat-label" Text="Frame Time (avg / max)" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtMugFrameMs" Classes="stat-value" Text="--" />
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Classes="stat-label" Text="Render Time (avg / max)" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtMugRenderMs" Classes="stat-value" Text="--" />
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Classes="stat-label" Text="Pacing (Gap / Hitch / Slow)" />
+                                    <TextBlock Grid.Row="3" Grid.Column="1" x:Name="TxtMugHitches" Classes="stat-value" Text="--" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Mugetsu Detailed Render Breakdown Card -->
+                    <Border Classes="perf-card">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="card-title" Text="MUGETSU RENDER &amp; MEMORY DETAILS" />
+                            <TextBlock x:Name="TxtRenderBreakdown" FontFamily="Monospace" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource SkuaTextBrush}" Text="render time per drawn frame: waiting for first 5s summary..." />
+                            <TextBlock x:Name="TxtPerDrawn" FontFamily="Monospace" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource SkuaMutedTextBrush}" Text="per drawn frame: --" />
+                            <TextBlock x:Name="TxtMemoryObjects" FontFamily="Monospace" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource SkuaMutedTextBrush}" Text="memory / objects: reported ~every 60s by Mugetsu" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Live ruffle_aqw_perf Stream -->
+                    <Border Classes="perf-card">
+                        <StackPanel Spacing="6">
+                            <TextBlock Classes="card-title" Text="LIVE MUGETSU PERF LOG STREAM (ruffle_aqw_perf)" Margin="0" />
+                            <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
+                                    BorderBrush="{DynamicResource SkuaBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Padding="8"
+                                    Height="155">
+                                <ScrollViewer x:Name="LogScrollViewer">
+                                    <TextBlock x:Name="TxtPerfLogStream"
+                                               FontFamily="Monospace"
+                                               FontSize="10.5"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource SkuaTextBrush}"
+                                               Text="Waiting for Mugetsu ruffle_aqw_perf log output (logged every 5 seconds)..." />
+                                </ScrollViewer>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- 4. Bottom Status / Saved File Bar -->
+            <Border Grid.Row="3"
+                    Background="{DynamicResource SkuaSurfaceAltBrush}"
+                    BorderBrush="{DynamicResource SkuaBorderBrush}"
+                    BorderThickness="0,1,0,0"
+                    Padding="12,6">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                               x:Name="TxtSavedStatus"
+                               FontSize="11"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}"
+                               Text="Reports saved to ~/.config/BonxieMux/perf-reports/*.txt" />
+                    <Button Grid.Column="1"
+                            x:Name="BtnCopyPath"
+                            Height="26"
+                            Padding="10,0"
+                            IsVisible="False"
+                            Click="BtnCopyPath_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <materialIcons:MaterialIcon Kind="ContentCopy" Width="13" Height="13" />
+                            <TextBlock Text="Copy Path" VerticalAlignment="Center" FontSize="11" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

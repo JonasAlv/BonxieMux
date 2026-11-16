@@ -1,0 +1,17 @@
+[package]
+name = "bonxie-wayland"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[lib]
+name = "bonxie_wayland"
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = "1"
+libc = "0.2"
+uuid = { version = "1", features = ["v4"] }
+wayland-client = "0.31"
+wayland-protocols = { version = "0.32", features = ["server"] }
+wayland-server = "0.31"

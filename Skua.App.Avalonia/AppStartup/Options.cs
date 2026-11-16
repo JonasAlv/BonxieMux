@@ -25,14 +25,13 @@ internal class Options
     private static readonly Dictionary<string, (string Label, string Description)> HeadlessTexts = new()
     {
         [nameof(IScriptOption.HeadlessMode)] = ("Headless Mode", "Manual. Hides this client's game and drops it to 2 fps until you turn it off. Automatic headless never turns it off."),
-        [nameof(IScriptOption.AutoHeadless)] = ("Auto Headless", "Master switch. Puts this client in headless by itself while its tab is not focused, following the switches below. Off, nothing below does anything."),
-        [nameof(IScriptOption.AutoHeadlessBackgroundTabs)] = ("Headless for background tabs", "Needs Auto Headless. A tab that is not the selected one goes headless."),
-        [nameof(IScriptOption.AutoHeadlessGridView)] = ("Grid Mode counts as focus", "Global rule for Auto Headless, Auto Anti-Lag, and Quality. When on, all Grid View tiles count as focused while the window has focus. When off, Grid View tiles are treated as unfocused."),
-        [nameof(IScriptOption.AutoHeadlessWhenMinimized)] = ("Headless when unfocused or minimized", "Needs Auto Headless. All tabs go headless while the window is unfocused, minimized, or hidden in the tray."),
-        [nameof(IScriptOption.AutoHeadlessLiftOnFocus)] = ("Focusing a tab ends headless", "Needs Auto Headless. Focusing a tab takes it out of automatic headless. Off, it stays headless until Auto Headless is turned off or you switch Headless Mode off."),
+        [nameof(IScriptOption.AutoHeadless)] = ("Auto Headless", "Master switch. Puts all tabs in headless automatically based on focus, using the exclusions below."),
+        [nameof(IScriptOption.AutoHeadlessExcludeFocused)] = ("Exclude focused tab", "Needs Auto Headless. Focusing a tab disables Auto Headless for that tab."),
+        [nameof(IScriptOption.AutoHeadlessExcludeGridView)] = ("Exclude Grid View", "Needs Auto Headless. Keeps Grid View tiles out of Auto Headless while the window is focused."),
         [nameof(IScriptOption.AntiLag)] = ("Anti-Lag", "Manual. Applies the full Anti-Lag bundle (Lag Killer, disabled animations, hidden monsters, Crowd Mode) across all tabs until you turn it off."),
-        [nameof(IScriptOption.AutoAntiLag)] = ("Auto Anti-Lag", "Master switch. Automatically turns on Anti-Lag for tabs while they are not focused."),
-        [nameof(IScriptOption.AutoAntiLagLiftOnFocus)] = ("Focusing a tab ends Auto Anti-Lag", "Needs Auto Anti-Lag. Focusing a tab restores its normal visuals and animations. Off, it stays in Anti-Lag even when focused until Auto Anti-Lag or Anti-Lag is turned off.")
+        [nameof(IScriptOption.AutoAntiLag)] = ("Auto Anti-Lag", "Master switch. Applies Anti-Lag to all tabs automatically based on focus, using the exclusions below."),
+        [nameof(IScriptOption.AutoAntiLagExcludeFocused)] = ("Exclude focused tab", "Needs Auto Anti-Lag. Focusing a tab disables Auto Anti-Lag for that tab."),
+        [nameof(IScriptOption.AutoAntiLagExcludeGridView)] = ("Exclude Grid View", "Needs Auto Anti-Lag. Keeps Grid View tiles out of Auto Anti-Lag while the window is focused.")
     };
 
     internal static GameOptionsViewModel CreateGameOptions(IServiceProvider s)

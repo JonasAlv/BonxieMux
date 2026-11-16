@@ -51,6 +51,9 @@
         <None Include="..\Skua.AS3\skua\bin\skua.swf" Link="skua.swf" Condition="Exists('..\Skua.AS3\skua\bin\skua.swf')">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Include="..\Skua.WaylandHost\target\release\libbonxie_wayland.so" Link="libbonxie_wayland.so" Condition="'$(BundleWaylandHost)' != 'false' And Exists('..\Skua.WaylandHost\target\release\libbonxie_wayland.so')">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <!--

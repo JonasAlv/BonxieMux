@@ -69,9 +69,26 @@ assemble_payload() {
         exit 1
     fi
 
+    # Build embedded Wayland DMA-BUF host (libbonxie_wayland.so)
+    local wayland_host_so="$SCRIPT_DIR/Skua.WaylandHost/target/release/libbonxie_wayland.so"
+    if command -v cargo &>/dev/null; then
+        if [[ ! -s "$wayland_host_so" ]] || [[ -n "$(find "$SCRIPT_DIR/Skua.WaylandHost/src" "$SCRIPT_DIR/Skua.WaylandHost/Cargo.toml" -type f -newer "$wayland_host_so" -print -quit 2>/dev/null)" ]]; then
+            echo "--- Building embedded Wayland DMA-BUF host (libbonxie_wayland.so) ---"
+            cargo build --release --manifest-path "$SCRIPT_DIR/Skua.WaylandHost/Cargo.toml"
+        else
+            echo "--- Embedded Wayland DMA-BUF host (libbonxie_wayland.so) is up-to-date ---"
+        fi
+    elif [[ -s "$wayland_host_so" ]]; then
+        echo "--- Using existing libbonxie_wayland.so (install cargo to build from source) ---"
+    else
+        echo "Error: libbonxie_wayland.so not found and cargo is missing." >&2
+        exit 1
+    fi
+
     echo "--- Building .NET solution (Release) ---"
     rm -rf "$APP_BIN/player" "$APP_BIN/player-x86-64-v2"
     local dotnet_args=("$SCRIPT_DIR/Skua.sln" -c Release)
+    local publish_args=()
     if [[ -n "$local_player" ]]; then
         if [[ -f "$local_player" ]]; then
             local_player="$(cd -- "$(dirname "$local_player")" && pwd -P)"
@@ -105,8 +122,8 @@ assemble_payload() {
     rm -rf "$pub_app" "$pub_mgr"
     mkdir -p "$pub_app" "$pub_mgr"
 
-    dotnet publish "$SCRIPT_DIR/Skua.App.Avalonia/Skua.App.Avalonia.csproj" -c Release -r linux-x64 --self-contained -o "$pub_app"
-    dotnet publish "$SCRIPT_DIR/Skua.Manager.Avalonia/Skua.Manager.Avalonia.csproj" -c Release -r linux-x64 --self-contained -o "$pub_mgr"
+    dotnet publish "$SCRIPT_DIR/Skua.App.Avalonia/Skua.App.Avalonia.csproj" -c Release -r linux-x64 --self-contained -o "$pub_app" "${publish_args[@]}"
+    dotnet publish "$SCRIPT_DIR/Skua.Manager.Avalonia/Skua.Manager.Avalonia.csproj" -c Release -r linux-x64 --self-contained -o "$pub_mgr" "${publish_args[@]}"
 
     echo "--- Assembling application payload in $CURRENT_DIR ---"
     rm -rf "$CURRENT_DIR"
@@ -132,6 +149,7 @@ assemble_payload() {
         "$SCRIPT_DIR/Skua.Plugin.DailyTracker/bin/Release/net10.0/Skua.Plugin.DailyTracker.dll"
         "$SCRIPT_DIR/Skua.Plugin.ButlerV5/bin/Release/net10.0/ButlerV5.dll"
         "$SCRIPT_DIR/Skua.Plugin.Cosmetics/bin/Release/net10.0/Skua.Plugin.Cosmetics.dll"
+        "$SCRIPT_DIR/Skua.Plugin.PerfRecorder/bin/Release/net10.0/Skua.Plugin.PerfRecorder.dll"
     )
     for req in "${required_outputs[@]}"; do
         if [[ ! -s "$req" ]]; then
@@ -158,9 +176,13 @@ assemble_payload() {
     cp -f "$SCRIPT_DIR/Skua.Plugin.DailyTracker/bin/Release/net10.0"/Skua.Plugin.*.dll "$CURRENT_DIR/plugins/"
     cp -f "$SCRIPT_DIR/Skua.Plugin.ButlerV5/bin/Release/net10.0"/ButlerV5.dll "$CURRENT_DIR/plugins/"
     cp -f "$SCRIPT_DIR/Skua.Plugin.Cosmetics/bin/Release/net10.0"/Skua.Plugin.Cosmetics.dll "$CURRENT_DIR/plugins/"
+    cp -f "$SCRIPT_DIR/Skua.Plugin.PerfRecorder/bin/Release/net10.0"/Skua.Plugin.PerfRecorder.dll "$CURRENT_DIR/plugins/"
 
     # Copy skua.swf
     cp -f "$SWF_SOURCE" "$CURRENT_DIR/skua.swf"
+
+    # Copy embedded Wayland DMA-BUF host library
+    cp -f "$wayland_host_so" "$CURRENT_DIR/libbonxie_wayland.so"
 
     # Copy FFDec
     if [[ ! -s "$SCRIPT_DIR/FFDec/ffdec.jar" || ! -x "$SCRIPT_DIR/FFDec/ffdec.sh" || ! -d "$SCRIPT_DIR/FFDec/lib" ]]; then

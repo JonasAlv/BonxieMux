@@ -450,16 +450,17 @@ public class DamageNumbers extends Module {
         if ("iRes" in act && act.iRes != null && int(act.iRes) != 1) return;
 
         var isDot:Boolean = (act.typ != null && String(act.typ) == "d");
-        // Matches World.handleSAR: typ == "d" is queued for aura ticks and displayed via showAuraResult.
-        if (isDot) return;
+        var isHot:Boolean = (act.typ != null && String(act.typ) == "h");
 
         var cInf:String = (act.cInf != null) ? String(act.cInf) : "";
         var tInf:String = (act.tInf != null) ? String(act.tInf) : "";
         var hp:int = (act.hp != null) ? int(act.hp) : 0;
         var type:String = (act.type != null) ? String(act.type).toLowerCase() : "hit";
-        var isHot:Boolean = (act.typ != null && String(act.typ) == "h");
+        if (isDot && (type == "none" || type == "")) {
+            type = "dot";
+        }
 
-        spawnCombatNumber(game, cInf, tInf, hp, type, false, isHot);
+        spawnCombatNumber(game, cInf, tInf, hp, type, isDot, isHot);
     }
 
     private static function processMultiResult(game:*, m:*):void {
@@ -480,6 +481,9 @@ public class DamageNumbers extends Module {
                 var type:String = (hit.type != null) ? String(hit.type).toLowerCase() : "hit";
                 var isDot:Boolean = (hit.typ != null && String(hit.typ) == "d");
                 var isHot:Boolean = (hit.typ != null && String(hit.typ) == "h");
+                if (isDot && (type == "none" || type == "")) {
+                    type = "dot";
+                }
                 spawnCombatNumber(game, cInf, tInf, hp, type, isDot, isHot);
             }
         }
@@ -557,7 +561,7 @@ public class DamageNumbers extends Module {
     }
 
     private static function spawnCombatNumber(game:*, cInf:String, tInf:String, hp:int, type:String, isDot:Boolean, isHot:Boolean = false):void {
-        if (tInf == "" || _container == null || type == "none") return;
+        if (tInf == "" || _container == null || (!isDot && !isHot && type == "none")) return;
 
         var myUid:* = (game != null && game.sfc != null) ? game.sfc.myUserId : null;
         var myTag:String = (myUid != null) ? ("p:" + myUid) : "";
@@ -932,7 +936,7 @@ class DamageParticle extends Sprite {
             vx = (Math.random() - 0.5) * 0.6;
             vy = -4.8;
         } else if (isDot) {
-            baseScale = 1.0;
+            baseScale = 0.95;
             scaleX = baseScale;
             scaleY = baseScale;
             vx = (Math.random() - 0.5) * 0.3;

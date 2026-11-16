@@ -271,18 +271,24 @@ public partial class MainWindow : Window
 
         Deactivated += (s, e) =>
         {
-            _isWindowFocused = false;
             CloseDropdowns();
-            ReleaseAllPressedKeys();
-            Skua.App.Avalonia.Controls.GameHost.ForwardFocus(false);
-            Dispatcher.UIThread.Post(UpdateQualityFocusState);
+            if (string.IsNullOrEmpty(App.HostPipeName) || HotKeys.IsDetachedMode)
+            {
+                _isWindowFocused = false;
+                ReleaseAllPressedKeys();
+                Skua.App.Avalonia.Controls.GameHost.ForwardFocus(false);
+                Dispatcher.UIThread.Post(UpdateQualityFocusState);
+            }
         };
         Activated += (s, e) =>
         {
-            _isWindowFocused = true;
-            ReleaseAllPressedKeys();
-            Skua.App.Avalonia.Controls.GameHost.ForwardFocus(true);
-            Dispatcher.UIThread.Post(UpdateQualityFocusState);
+            if (string.IsNullOrEmpty(App.HostPipeName) || HotKeys.IsDetachedMode)
+            {
+                _isWindowFocused = true;
+                ReleaseAllPressedKeys();
+                Skua.App.Avalonia.Controls.GameHost.ForwardFocus(true);
+                Dispatcher.UIThread.Post(UpdateQualityFocusState);
+            }
         };
 
         PropertyChanged += (s, e) =>
@@ -298,25 +304,21 @@ public partial class MainWindow : Window
             notifyOptions.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName is nameof(IScriptOption.AutoHeadless)
-                    or nameof(IScriptOption.AutoHeadlessBackgroundTabs)
-                    or nameof(IScriptOption.AutoHeadlessGridView)
-                    or nameof(IScriptOption.AutoHeadlessWhenMinimized)
-                    or nameof(IScriptOption.AutoHeadlessLiftOnFocus))
+                    or nameof(IScriptOption.AutoHeadlessExcludeFocused)
+                    or nameof(IScriptOption.AutoHeadlessExcludeGridView))
                 {
                     Dispatcher.UIThread.Post(() =>
                     {
                         EvaluateAutoHeadless();
-                        if (e.PropertyName == nameof(IScriptOption.AutoHeadlessGridView))
-                            UpdateQualityFocusState();
+                        UpdateQualityFocusState();
                     });
                 }
                 else if (e.PropertyName is nameof(IScriptOption.HeadlessMode) or Skua.Core.Scripts.ScriptOption.AutoHeadlessActiveChanged)
                 {
-                    bool resetHeld = e.PropertyName == nameof(IScriptOption.HeadlessMode) && !_options.HeadlessMode;
                     if (Dispatcher.UIThread.CheckAccess())
-                        UpdateHeadlessHostVisibility(resetHeld);
+                        UpdateHeadlessHostVisibility();
                     else
-                        Dispatcher.UIThread.Post(() => UpdateHeadlessHostVisibility(resetHeld));
+                        Dispatcher.UIThread.Post(UpdateHeadlessHostVisibility);
                 }
 
                 if (!string.IsNullOrEmpty(App.HostPipeName) && Skua.Core.Scripts.ScriptOption.IsGlobalSyncedOption(e.PropertyName))
@@ -336,15 +338,8 @@ public partial class MainWindow : Window
         }
     }
 
-    private void UpdateHeadlessHostVisibility(bool resetHeld)
+    private void UpdateHeadlessHostVisibility()
     {
-        // Turning manual headless off also releases an automatic headless hold.
-        // Otherwise a tab can remain hidden after it becomes visible again.
-        if (resetHeld)
-        {
-            _autoHeadlessHeld = false;
-            EvaluateAutoHeadless();
-        }
         bool isHeadless = _options.IsHeadlessNow();
         if (HeadlessOverlay != null) HeadlessOverlay.IsVisible = isHeadless;
         if (FlashHost != null)

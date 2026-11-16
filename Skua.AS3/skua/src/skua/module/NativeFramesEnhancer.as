@@ -305,7 +305,7 @@ public class NativeFramesEnhancer extends Module {
         }
 
         var fieldH:Number = (strIntHP.height > 0) ? strIntHP.height : 16.0;
-        var shieldReserve:Number = (shield > 0) ? 42.0 : 0.0;
+        var shieldReserve:Number = (shield > 0) ? 54.0 : 0.0;
 
         txtEnhancedHP.visible = true;
         txtEnhancedHP.x = 3.0;
@@ -315,11 +315,13 @@ public class NativeFramesEnhancer extends Module {
 
         if (shield > 0) {
             txtEnhancedShield.visible = true;
-            txtEnhancedShield.x = Math.max(43.0, barW - rightReserve - shieldReserve - 1.0);
+            var centeredShieldX:Number = (barW - shieldReserve) * 0.5;
+            var maxShieldX:Number = barW - rightReserve - shieldReserve - 1.0;
+            txtEnhancedShield.x = Math.max(46.0, Math.min(centeredShieldX, maxShieldX));
             txtEnhancedShield.y = strIntHP.y;
             txtEnhancedShield.width = shieldReserve;
             txtEnhancedShield.height = fieldH;
-            var shieldText:String = "+" + formatNumber(shield);
+            var shieldText:String = "+" + formatNumber(shield, 1000);
             if (txtEnhancedShield.text != shieldText) {
                 txtEnhancedShield.text = shieldText;
             }
@@ -333,9 +335,7 @@ public class NativeFramesEnhancer extends Module {
         txtEnhancedPct.width = 33.0;
         txtEnhancedPct.height = fieldH;
 
-        var hpStr:String = (hp <= 0)
-            ? ("0 / " + formatNumber(maxHp))
-            : (formatNumber(hp) + " / " + formatNumber(maxHp));
+        var hpStr:String = (hp <= 0) ? "0" : formatNumber(hp, 10000);
         if (txtEnhancedHP.text != hpStr) {
             txtEnhancedHP.text = hpStr;
         }
@@ -399,12 +399,12 @@ public class NativeFramesEnhancer extends Module {
         } catch (err:Error) {}
     }
 
-    private static function formatNumber(n:int):String {
+    private static function formatNumber(n:int, kThreshold:int = 10000):String {
         if (n < 0) return "0";
         if (n >= 1000000) {
             return (n / 1000000.0).toFixed(2) + "M";
         }
-        if (n >= 100000) {
+        if (n >= kThreshold) {
             return (n / 1000.0).toFixed(2) + "k";
         }
         var s:String = String(n);

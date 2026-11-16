@@ -82,8 +82,8 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     private readonly object _antiLagSyncLock = new();
     private LiteAnimationSnapshot? _priorLiteAnimations;
     private bool _scriptAntiLagActive;
-    private bool _tabIsShown = true;
-    private bool _autoAntiLagHeld;
+    private bool _isTabFocused = true;
+    private bool _isGridTile;
     private bool _manualOrAutoAntiLagDesired;
     private bool _anyAntiLagApplied;
     private bool _suppressUserLagKillerSave;
@@ -97,9 +97,6 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         {
             if (!SetProperty(ref _antiLag, value, true))
                 return;
-
-            if (!value)
-                _autoAntiLagHeld = false;
 
             if (!_isInitializing)
             {
@@ -115,9 +112,6 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             return;
 
         SetProperty(ref _antiLag, value, true);
-        if (!value)
-            _autoAntiLagHeld = false;
-
         EvaluateAntiLagState();
     }
 
@@ -125,23 +119,22 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     private bool _autoAntiLag = true;
 
     [ObservableProperty]
-    private bool _autoAntiLagLiftOnFocus = true;
+    private bool _autoAntiLagExcludeFocused = true;
 
-    partial void OnAutoAntiLagChanged(bool value)
+    [ObservableProperty]
+    private bool _autoAntiLagExcludeGridView = true;
+
+    partial void OnAutoAntiLagChanged(bool value) => EvaluateAntiLagState();
+    partial void OnAutoAntiLagExcludeFocusedChanged(bool value) => EvaluateAntiLagState();
+    partial void OnAutoAntiLagExcludeGridViewChanged(bool value) => EvaluateAntiLagState();
+
+    public void SetAutoAntiLagContext(bool isFocusedTab, bool isGridTile)
     {
-        if (!value)
-            _autoAntiLagHeld = false;
-        EvaluateAntiLagState();
-    }
-
-    partial void OnAutoAntiLagLiftOnFocusChanged(bool value) => EvaluateAntiLagState();
-
-    public void SetTabShown(bool shown)
-    {
-        if (_tabIsShown == shown)
+        if (_isTabFocused == isFocusedTab && _isGridTile == isGridTile)
             return;
 
-        _tabIsShown = shown;
+        _isTabFocused = isFocusedTab;
+        _isGridTile = isGridTile;
         EvaluateAntiLagState();
     }
 
@@ -150,23 +143,9 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         bool wantAuto = false;
         if (_autoAntiLag)
         {
-            if (!_tabIsShown)
-            {
-                wantAuto = true;
-                _autoAntiLagHeld = true;
-            }
-            else if (_autoAntiLagHeld && !_autoAntiLagLiftOnFocus)
-            {
-                wantAuto = true;
-            }
-            else
-            {
-                _autoAntiLagHeld = false;
-            }
-        }
-        else
-        {
-            _autoAntiLagHeld = false;
+            bool excluded = (_autoAntiLagExcludeFocused && _isTabFocused)
+                || (_autoAntiLagExcludeGridView && _isGridTile);
+            wantAuto = !excluded;
         }
 
         _manualOrAutoAntiLagDesired = _antiLag || wantAuto;
@@ -827,12 +806,11 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     private static readonly HashSet<string> GlobalSyncedOptions = new(StringComparer.Ordinal)
     {
         nameof(AutoHeadless),
-        nameof(AutoHeadlessBackgroundTabs),
-        nameof(AutoHeadlessGridView),
-        nameof(AutoHeadlessWhenMinimized),
-        nameof(AutoHeadlessLiftOnFocus),
+        nameof(AutoHeadlessExcludeFocused),
+        nameof(AutoHeadlessExcludeGridView),
         nameof(AutoAntiLag),
-        nameof(AutoAntiLagLiftOnFocus),
+        nameof(AutoAntiLagExcludeFocused),
+        nameof(AutoAntiLagExcludeGridView),
         nameof(DamageNumbers),
         nameof(CompactNumbers),
         nameof(UnitFrameHealth),
@@ -1130,13 +1108,9 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     [ObservableProperty]
     private bool _autoHeadless = true;
     [ObservableProperty]
-    private bool _autoHeadlessBackgroundTabs = true;
+    private bool _autoHeadlessExcludeFocused = true;
     [ObservableProperty]
-    private bool _autoHeadlessGridView = true;
-    [ObservableProperty]
-    private bool _autoHeadlessWhenMinimized = true;
-    [ObservableProperty]
-    private bool _autoHeadlessLiftOnFocus = true;
+    private bool _autoHeadlessExcludeGridView = true;
 
     public const string AutoHeadlessActiveChanged = "AutoHeadlessActive";
     private bool _autoHeadlessActive;
@@ -1564,7 +1538,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         StringCollection saveOptions = new();
         foreach (PropertyInfo pi in GetType().GetProperties())
         {
-            if (pi.Name is nameof(OptionDictionary) or nameof(StageQuality) or nameof(AcceptACDrops) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
+            if (pi.Name is nameof(IsActive) or nameof(CanRenderFullQuality) or nameof(OptionDictionary) or nameof(StageQuality) or nameof(AcceptACDrops) or nameof(CustomName) or nameof(CustomGuild) or nameof(NameColor) or nameof(GuildColor) or nameof(RescueAllies) or nameof(AllowThisAccountToRescue) or nameof(RescueDelayMinutes) or nameof(RescueDeathsBeforeCalling) or nameof(RescueCooldownEnabled) or nameof(RescueCooldownMinutes) or nameof(RescueHelperDeathLimit) or nameof(RescueHoldLimitMinutes) or nameof(RescueUseBossLoadout))
                 continue;
             string key = pi.Name;
             object? value = pi.GetValue(this);
@@ -1579,6 +1553,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         if (!_isInitializing && _settingsService is not null)
         {
             _settingsService.ReloadSettings();
+            LoadUserOptionsFromSettings();
             ApplySharedAcceptACDrops(ReadGlobalAcceptACDrops());
             ApplySharedStageQuality(ReadGlobalStageQuality());
         }
@@ -1617,20 +1592,31 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         }
     }
 
-    private void GetOptions()
+    private void LoadUserOptionsFromSettings()
     {
-        StringCollection? userOptions = _settingsService.Get<StringCollection>("UserOptions");
+        StringCollection? userOptions = _settingsService?.Get<StringCollection>("UserOptions");
         if (userOptions is null)
             return;
-        _userOptions = new();
+        Dictionary<string, string> parsed = new();
         foreach (string? option in userOptions)
         {
             if (string.IsNullOrEmpty(option))
                 continue;
-            string[] optionKeyValue = option.Split('=', StringSplitOptions.TrimEntries);
-            _userOptions.Add(optionKeyValue[0], optionKeyValue[1]);
+            int eq = option.IndexOf('=');
+            if (eq <= 0)
+                continue;
+            string key = option[..eq].Trim();
+            string value = option[(eq + 1)..].Trim();
+            parsed[key] = value;
         }
-        Reset();
+        _userOptions = parsed;
+    }
+
+    private void GetOptions()
+    {
+        LoadUserOptionsFromSettings();
+        if (_userOptions is not null)
+            Reset();
     }
 
     private Dictionary<string, Func<object>> GenerateDictionary()

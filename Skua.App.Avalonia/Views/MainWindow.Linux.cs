@@ -40,20 +40,20 @@ public partial class MainWindow : Window
     private bool _isInGridView = false;
     private int _tabVisibility;
     private bool _isWindowFocused = true;
-    private bool _autoHeadlessHeld;
 
     private void UpdateQualityFocusState()
     {
         try
         {
             var options = Ioc.Default.GetRequiredService<IScriptOption>();
-            bool isTabFocused = _isWindowFocused &&
-                (_tabVisibility == 0 || (_tabVisibility is 2 or 3 && options.AutoHeadlessGridView));
-            if (WindowState == WindowState.Minimized)
-                isTabFocused = false;
+            bool isStandalone = string.IsNullOrEmpty(App.HostPipeName) || HotKeys.IsDetachedMode;
+            bool isVisibleWindow = WindowState != WindowState.Minimized && (!isStandalone || IsVisible);
+            bool isShown = isVisibleWindow && (isStandalone || _tabVisibility is 0 or 2 or 3);
+            bool isFocusedTab = isShown && _isWindowFocused && (isStandalone || _tabVisibility is 0 or 2);
+            bool isFocusedGridTile = isShown && _isWindowFocused && !isStandalone && _tabVisibility is 2 or 3;
 
-            options.SetTabShown(isTabFocused);
-            options.SetForegroundFocus(isTabFocused);
+            options.SetAutoAntiLagContext(isFocusedTab, isFocusedGridTile);
+            options.SetForegroundFocus(isShown && _isWindowFocused);
         }
         catch { }
     }
@@ -358,6 +358,7 @@ public partial class MainWindow : Window
                     _options.EnforceRenderState(flushGamePref: false);
                 }
                 catch { }
+                SyncHostedVisibility();
             });
         }
     }
@@ -1017,30 +1018,14 @@ public partial class MainWindow : Window
             if (options.AutoHeadless)
             {
                 bool isStandalone = string.IsNullOrEmpty(App.HostPipeName) || HotKeys.IsDetachedMode;
-                int effectiveVisibility = (isStandalone && (WindowState == WindowState.Minimized || !IsVisible || !IsActive)) ? 4 : _tabVisibility;
-                bool isTabFocused = _isWindowFocused &&
-                    (effectiveVisibility == 0 || (effectiveVisibility is 2 or 3 && options.AutoHeadlessGridView));
-                if (isStandalone && (WindowState == WindowState.Minimized || !IsVisible || !IsActive))
-                    isTabFocused = false;
+                bool isVisibleWindow = WindowState != WindowState.Minimized && (!isStandalone || IsVisible);
+                int effectiveVisibility = isVisibleWindow ? (isStandalone ? 0 : _tabVisibility) : 4;
+                bool isFocusedTab = _isWindowFocused && effectiveVisibility is 0 or 2;
+                bool isFocusedGridTile = _isWindowFocused && !isStandalone && effectiveVisibility is 2 or 3;
 
-                want = effectiveVisibility switch
-                {
-                    1 => options.AutoHeadlessBackgroundTabs,
-                    2 or 3 => !options.AutoHeadlessGridView || (!_isWindowFocused && options.AutoHeadlessWhenMinimized),
-                    4 => options.AutoHeadlessWhenMinimized,
-                    0 => !_isWindowFocused && options.AutoHeadlessWhenMinimized,
-                    _ => false
-                };
-                if (want)
-                    _autoHeadlessHeld = true;
-                else if (isTabFocused && _autoHeadlessHeld && !options.AutoHeadlessLiftOnFocus)
-                    want = true;
-                else
-                    _autoHeadlessHeld = false;
-            }
-            else
-            {
-                _autoHeadlessHeld = false;
+                bool excluded = (options.AutoHeadlessExcludeFocused && isFocusedTab)
+                    || (options.AutoHeadlessExcludeGridView && isFocusedGridTile);
+                want = !excluded;
             }
         }
         catch { }

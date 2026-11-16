@@ -26,10 +26,10 @@ public class GameOptionsViewModel : BotControlViewModelBase
 
     // Sections by IScriptOption property name; options not listed go to Gameplay.
     private static readonly string[] VisualsOptions = { "LagKiller", "HidePlayers", "OptimizePlayers", "DisableFX", "DisableCollisions", "ShowFPS", "SetFPS" };
-    private static readonly string[] TweaksOptions = { "AntiLag", "AutoAntiLag", "AutoAntiLagLiftOnFocus", "AutoHeadlessGridView", "DamageNumbers", "CompactNumbers", "UnitFrameHealth", "MovableTargetFrame" };
+    private static readonly string[] TweaksOptions = { "AntiLag", "AutoAntiLag", "AutoAntiLagExcludeFocused", "AutoAntiLagExcludeGridView", "DamageNumbers", "CompactNumbers", "UnitFrameHealth", "MovableTargetFrame" };
     private static readonly string[] HeadlessOptions =
     {
-        "HeadlessMode", "AutoHeadless", "AutoHeadlessBackgroundTabs", "AutoHeadlessWhenMinimized", "AutoHeadlessLiftOnFocus"
+        "HeadlessMode", "AutoHeadless", "AutoHeadlessExcludeFocused", "AutoHeadlessExcludeGridView"
     };
     private static readonly string[] CombatOptions = { "AggroMonsters", "AggroAllMonsters", "AttackWithoutTarget", "InfiniteRange", "Magnetise", "HuntDelay", "HuntBuffer", "RestPackets", "SafeTimings" };
     private static readonly string[] DropsOptions = { "AcceptACDrops", "AcceptAllDrops", "RejectAllDrops", "RejectNonACDrops", "PickupACDropsAndSendToBank" };

@@ -3,50 +3,157 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.OpenGL;
+using Avalonia.OpenGL.Controls;
 using Avalonia.Platform;
+using Avalonia.Rendering;
 using Avalonia.Threading;
 using Skua.App.Avalonia.Flash;
 using System;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Skua.App.Avalonia.Controls;
 
 /// <summary>
-/// Pure Wayland/Avalonia game viewport. Mugetsu renders offscreen into a double-buffered
-/// shared-memory file (<c>--skua-shm</c>) and this control blits frames into a
-/// <see cref="WriteableBitmap"/> while forwarding pointer/keyboard/resize input over the bridge.
+/// Pure Wayland/Avalonia game viewport. Hosts an embedded Wayland compositor
+/// (<c>libbonxie_wayland.so</c>) for zero-copy <c>DMA-BUF</c> presentation inside
+/// Avalonia's OpenGL context via <see cref="OpenGlControlBase"/>.
 /// </summary>
-public class GameHost : Control
+public class GameHost : Control, ICustomHitTest
 {
-    private const int HeaderSize = 64;
-    private static readonly byte[] MagicBytes = "SKUAFRM1"u8.ToArray();
+    public bool HitTest(Point point) => new Rect(Bounds.Size).Contains(point);
+
+    private const uint BtnLeft = 0x110;
+    private const uint BtnRight = 0x111;
+    private const uint BtnMiddle = 0x112;
 
     private static GameHost? _activeInstance;
+    private static readonly ConcurrentDictionary<int, (IntPtr Handle, string Socket)> _pendingWaylandHosts = new();
+    private static (PixelRect Bounds, uint RefreshMhz)[] _cachedOutputs = Array.Empty<(PixelRect, uint)>();
 
     private FlashUtil? _flash;
     private readonly int _remoteChildPid;
-    private readonly string _shmPath;
-    private DispatcherTimer? _pollTimer;
+    private IntPtr _waylandHost;
+    private string _waylandSocket = string.Empty;
+    private uint _lastSentRefreshMhz;
+    private Control? _glViewport;
+    private Func<bool>? _hasPendingFrame;
+    private Action? _requestNextFrame;
+    private volatile bool _isVisibleCached;
     private DispatcherTimer? _resizeDebounceTimer;
     private int _pendingResizeW;
     private int _pendingResizeH;
-    private MemoryMappedFile? _mmf;
-    private MemoryMappedViewAccessor? _accessor;
-    private unsafe byte* _shmPtr;
-    private long _mappedSize;
-    private WriteableBitmap? _bitmap;
     private ulong _lastSeq;
-    private int _frameUpdateQueued;
     private int _lastSentWidth;
     private int _lastSentHeight;
     private bool? _lastSentVisible;
+    private readonly double[] _frameIntervalsMs = new double[512];
+    private int _intervalWriteIdx;
+    private int _intervalCount;
+    private long _lastFrameTimestamp;
+    private long _windowStartTimestamp;
+    private int _windowFrames;
+    private long _totalPresentedFrames;
+    private int _statsWriteInFlight;
 
     public static event Action? GameClicked;
 
-    public static string GetShmPathForPid(int pid) =>
-        Path.Combine(Directory.Exists("/dev/shm") ? "/dev/shm" : Path.GetTempPath(), $"skua-shm-{pid}.bin");
+    public static uint DetectDisplayRefreshMhz(Window? window = null)
+    {
+        (PixelRect Bounds, uint RefreshMhz)[] outputs = GetDisplayOutputs();
+        if (outputs.Length == 0)
+            return 60_000;
+
+        if (window != null)
+        {
+            Screen? screen = window.Screens?.ScreenFromWindow(window) ?? window.Screens?.Primary;
+            if (screen != null)
+            {
+                PixelRect sb = screen.Bounds;
+                for (int i = 0; i < outputs.Length; i++)
+                {
+                    if (outputs[i].Bounds == sb)
+                        return outputs[i].RefreshMhz;
+                }
+                PixelPoint center = sb.Center;
+                for (int i = 0; i < outputs.Length; i++)
+                {
+                    if (outputs[i].Bounds.Contains(center))
+                        return outputs[i].RefreshMhz;
+                }
+                for (int i = 0; i < outputs.Length; i++)
+                {
+                    if (outputs[i].Bounds.Intersects(sb))
+                        return outputs[i].RefreshMhz;
+                }
+            }
+        }
+
+        return outputs[0].RefreshMhz;
+    }
+
+    private static unsafe (PixelRect Bounds, uint RefreshMhz)[] GetDisplayOutputs()
+    {
+        if (_cachedOutputs.Length > 0)
+            return _cachedOutputs;
+
+        var list = new System.Collections.Generic.List<(PixelRect Bounds, uint RefreshMhz)>();
+        try
+        {
+            const int MaxOutputs = 16;
+            BonxieOutputInfo* buf = stackalloc BonxieOutputInfo[MaxOutputs];
+            int count = BonxieWaylandNative.QueryOutputs(buf, MaxOutputs);
+            for (int i = 0; i < count; i++)
+            {
+                uint mhz = Math.Clamp(buf[i].RefreshMhz, 24_000u, 360_000u);
+                list.Add((new PixelRect(buf[i].X, buf[i].Y, buf[i].Width, buf[i].Height), mhz));
+            }
+        }
+        catch { }
+
+        if (list.Count > 0)
+        {
+            _cachedOutputs = list.ToArray();
+        }
+        return _cachedOutputs;
+    }
+
+    public static (IntPtr Handle, string Socket) CreateWaylandHostForChild(uint width = 1280, uint height = 720)
+    {
+        try
+        {
+            var (handle, socket) = BonxieWaylandNative.StartHost(width, height, true);
+            if (handle != IntPtr.Zero)
+                BonxieWaylandNative.SetRefreshMhz(handle, DetectDisplayRefreshMhz());
+            return (handle, socket);
+        }
+        catch
+        {
+            return (IntPtr.Zero, string.Empty);
+        }
+    }
+
+    public static void RegisterPendingWaylandHost(int childPid, IntPtr handle, string socket)
+    {
+        if (handle != IntPtr.Zero && childPid > 0)
+            _pendingWaylandHosts[childPid] = (handle, socket);
+    }
+
+    public static void ReleasePendingWaylandHost(IntPtr handle)
+    {
+        if (handle != IntPtr.Zero)
+        {
+            try { BonxieWaylandNative.Stop(handle); } catch { }
+        }
+    }
 
     public GameHost() : this(0)
     {
@@ -57,65 +164,93 @@ public class GameHost : Control
         Focusable = true;
         ClipToBounds = true;
         _remoteChildPid = remoteChildPid;
-        _shmPath = GetShmPathForPid(remoteChildPid > 0 ? remoteChildPid : Environment.ProcessId);
+        _isVisibleCached = IsVisible;
+
         if (remoteChildPid <= 0)
         {
             _activeInstance = this;
+            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BONXIE_WL_DISPLAY")))
+            {
+                try
+                {
+                    (_waylandHost, _waylandSocket) = BonxieWaylandNative.StartHost(1280, 720, true);
+                    if (_waylandHost != IntPtr.Zero)
+                        BonxieWaylandNative.SetRefreshMhz(_waylandHost, DetectDisplayRefreshMhz());
+                    if (!string.IsNullOrEmpty(_waylandSocket))
+                    {
+                        Environment.SetEnvironmentVariable("BONXIE_WL_DISPLAY", _waylandSocket);
+                    }
+                }
+                catch
+                {
+                    _waylandHost = IntPtr.Zero;
+                    _waylandSocket = string.Empty;
+                }
+            }
         }
         else
         {
-            _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
-            _pollTimer.Tick += (_, _) =>
+            if (_pendingWaylandHosts.TryRemove(remoteChildPid, out var pending))
             {
-                if (IsVisible && TopLevel.GetTopLevel(this) is not { IsVisible: false })
-                    UpdateFrameFromShm();
-            };
+                _waylandHost = pending.Handle;
+                _waylandSocket = pending.Socket;
+            }
+        }
+
+        if (_waylandHost != IntPtr.Zero)
+        {
+            var dmaVp = new WaylandDmabufViewport(
+                _waylandHost,
+                static () => { },
+                seq => OnWaylandViewportRendered(seq, "Wayland DMA-BUF"));
+            _glViewport = dmaVp;
+            _hasPendingFrame = dmaVp.HasPendingFrame;
+            _requestNextFrame = dmaVp.RequestNextFrameRendering;
+            LogicalChildren.Add(_glViewport);
+            VisualChildren.Add(_glViewport);
         }
     }
 
-    public string ShmPath => _shmPath;
+    private void OnWaylandViewportRendered(ulong seq, string mode)
+    {
+        if (_waylandHost == IntPtr.Zero)
+            return;
+
+        BonxieWaylandNative.NotifyPresented(_waylandHost);
+
+        if (seq != 0 && seq != _lastSeq)
+        {
+            _lastSeq = seq;
+            RecordHostPresentedFrame(mode);
+        }
+    }
+
+    private void SyncPollTimerState()
+    {
+        bool shouldRun = IsVisible && TopLevel.GetTopLevel(this) is { IsVisible: true };
+        _isVisibleCached = shouldRun;
+    }
 
     public void SetActiveInstance() => _activeInstance = this;
 
     public void DisposeResources()
     {
-        _pollTimer?.Stop();
         _resizeDebounceTimer?.Stop();
+        _isVisibleCached = false;
         if (_activeInstance == this)
             _activeInstance = null;
-        if (_flash != null)
-            _flash.FrameReady -= OnFrameReady;
-        UnmapShm();
-        _bitmap?.Dispose();
-        _bitmap = null;
-    }
-
-    private unsafe void MapShm(long fileLen)
-    {
-        UnmapShm();
-        _mmf = MemoryMappedFile.CreateFromFile(_shmPath, FileMode.Open, null, fileLen, MemoryMappedFileAccess.Read);
-        _accessor = _mmf.CreateViewAccessor(0, fileLen, MemoryMappedFileAccess.Read);
-        byte* ptr = null;
-        _accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
-        _shmPtr = ptr + _accessor.PointerOffset;
-        _mappedSize = fileLen;
-    }
-
-    private unsafe void UnmapShm()
-    {
-        if (_accessor != null)
+        _flash = null;
+        if (_waylandHost != IntPtr.Zero)
         {
-            if (_shmPtr != null)
+            IntPtr h = _waylandHost;
+            _waylandHost = IntPtr.Zero;
+            try
             {
-                _accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-                _shmPtr = null;
+                BonxieWaylandNative.Stop(h);
             }
-            _accessor.Dispose();
-            _accessor = null;
+            catch { }
         }
-        _mmf?.Dispose();
-        _mmf = null;
-        _mappedSize = 0;
+        TryDeleteHostPerfFile();
     }
 
     private void DispatchInput(object payload)
@@ -132,12 +267,9 @@ public class GameHost : Control
 
     public void AttachFlash(FlashUtil flash)
     {
-        if (_flash != null)
-            _flash.FrameReady -= OnFrameReady;
-
         _flash = flash;
-        flash.ShmPath = _shmPath;
-        flash.FrameReady += OnFrameReady;
+        if (!string.IsNullOrEmpty(_waylandSocket))
+            flash.WaylandDisplay = _waylandSocket;
         SendResizeIfNeeded();
     }
 
@@ -182,24 +314,26 @@ public class GameHost : Control
 
     public void RefreshLayout()
     {
+        SyncPollTimerState();
         SendResizeIfNeeded();
+        if (_hasPendingFrame != null && _hasPendingFrame() && _requestNextFrame != null)
+            _requestNextFrame();
     }
 
     public void ForceRefreshFrame()
     {
+        SyncPollTimerState();
         _resizeDebounceTimer?.Stop();
         _lastSentWidth = -1;
         _lastSentHeight = -1;
         _lastSeq = 0;
         SendResizeIfNeeded();
-        UpdateFrameFromShm();
+        _requestNextFrame?.Invoke();
     }
 
     public void SetHostedVisible(bool visible)
     {
         if (_remoteChildPid > 0)
-            return;
-        if (_lastSentVisible == visible)
             return;
         _lastSentVisible = visible;
         DispatchInput(new { input = "visible", visible });
@@ -208,16 +342,13 @@ public class GameHost : Control
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == IsVisibleProperty && _remoteChildPid > 0)
+        if (change.Property == IsVisibleProperty)
         {
+            SyncPollTimerState();
             if (IsVisible)
             {
-                _pollTimer?.Start();
+                _requestNextFrame?.Invoke();
                 ForceRefreshFrame();
-            }
-            else
-            {
-                _pollTimer?.Stop();
             }
         }
     }
@@ -227,17 +358,30 @@ public class GameHost : Control
         base.OnAttachedToVisualTree(e);
         if (_remoteChildPid <= 0 || IsVisible)
             _activeInstance = this;
-        if (_remoteChildPid > 0 && IsVisible)
-            _pollTimer?.Start();
+        SyncPollTimerState();
+        UpdateRefreshRateForWindow();
+        if (IsVisible)
+            _requestNextFrame?.Invoke();
         SendResizeIfNeeded();
-        if (_remoteChildPid > 0 && IsVisible)
-            UpdateFrameFromShm();
+    }
+
+    private void UpdateRefreshRateForWindow()
+    {
+        if (_waylandHost == IntPtr.Zero)
+            return;
+        Window? win = TopLevel.GetTopLevel(this) as Window;
+        uint mhz = DetectDisplayRefreshMhz(win);
+        if (mhz != _lastSentRefreshMhz)
+        {
+            _lastSentRefreshMhz = mhz;
+            BonxieWaylandNative.SetRefreshMhz(_waylandHost, mhz);
+        }
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
-        _pollTimer?.Stop();
+        _isVisibleCached = false;
         _resizeDebounceTimer?.Stop();
         if (_activeInstance == this)
             _activeInstance = null;
@@ -247,17 +391,23 @@ public class GameHost : Control
     {
         base.OnSizeChanged(e);
         SendResizeIfNeeded();
-        InvalidateVisual();
+        if (_requestNextFrame != null)
+            _requestNextFrame();
+        else
+            InvalidateVisual();
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
-        if (_flash is null && _remoteChildPid <= 0)
+        if (_flash is null && _remoteChildPid <= 0 && _waylandHost == IntPtr.Zero)
             return;
         double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
         Point p = e.GetPosition(this);
-        DispatchInput(new { input = "mouse_move", x = p.X * scale, y = p.Y * scale });
+        if (_waylandHost != IntPtr.Zero)
+            BonxieWaylandNative.PointerMotion(_waylandHost, p.X * scale, p.Y * scale);
+        else
+            DispatchInput(new { input = "mouse_move", x = p.X * scale, y = p.Y * scale });
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
@@ -266,14 +416,27 @@ public class GameHost : Control
         _activeInstance = this;
         Focus();
         GameClicked?.Invoke();
-        if (_flash is null && _remoteChildPid <= 0)
+        if (_flash is null && _remoteChildPid <= 0 && _waylandHost == IntPtr.Zero)
             return;
 
         double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
         Point p = e.GetPosition(this);
-        DispatchInput(new { input = "mouse_move", x = p.X * scale, y = p.Y * scale });
-
         PointerUpdateKind kind = e.GetCurrentPoint(this).Properties.PointerUpdateKind;
+
+        if (_waylandHost != IntPtr.Zero)
+        {
+            BonxieWaylandNative.PointerMotion(_waylandHost, p.X * scale, p.Y * scale);
+            uint wlBtn = kind switch
+            {
+                PointerUpdateKind.RightButtonPressed => BtnRight,
+                PointerUpdateKind.MiddleButtonPressed => BtnMiddle,
+                _ => BtnLeft
+            };
+            BonxieWaylandNative.PointerButton(_waylandHost, wlBtn, 1);
+            return;
+        }
+
+        DispatchInput(new { input = "mouse_move", x = p.X * scale, y = p.Y * scale });
         string button = kind switch
         {
             PointerUpdateKind.RightButtonPressed => "right",
@@ -286,9 +449,20 @@ public class GameHost : Control
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
-        if (_flash is null && _remoteChildPid <= 0)
+        if (_flash is null && _remoteChildPid <= 0 && _waylandHost == IntPtr.Zero)
             return;
         PointerUpdateKind kind = e.GetCurrentPoint(this).Properties.PointerUpdateKind;
+        if (_waylandHost != IntPtr.Zero)
+        {
+            uint wlBtn = kind switch
+            {
+                PointerUpdateKind.RightButtonReleased => BtnRight,
+                PointerUpdateKind.MiddleButtonReleased => BtnMiddle,
+                _ => BtnLeft
+            };
+            BonxieWaylandNative.PointerButton(_waylandHost, wlBtn, 0);
+            return;
+        }
         string button = kind switch
         {
             PointerUpdateKind.RightButtonReleased => "right",
@@ -301,6 +475,11 @@ public class GameHost : Control
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
         base.OnPointerWheelChanged(e);
+        if (_waylandHost != IntPtr.Zero)
+        {
+            BonxieWaylandNative.PointerScroll(_waylandHost, e.Delta.X * 15.0, e.Delta.Y * 15.0);
+            return;
+        }
         DispatchInput(new
         {
             input = "mouse_wheel",
@@ -322,22 +501,20 @@ public class GameHost : Control
         DispatchInput(new { input = "focus", focused = false });
     }
 
+    protected override Size ArrangeOverride(Size finalSize)
+    {
+        _glViewport?.Arrange(new Rect(finalSize));
+        return base.ArrangeOverride(finalSize);
+    }
+
     public override void Render(DrawingContext context)
     {
-        Rect bounds = new(Bounds.Size);
-        if (_bitmap != null)
-        {
-            context.DrawImage(_bitmap, new Rect(0, 0, _bitmap.PixelSize.Width, _bitmap.PixelSize.Height), bounds);
-        }
-        else
-        {
-            context.FillRectangle(Brushes.Black, bounds);
-        }
+        base.Render(context);
     }
 
     private void SendResizeIfNeeded()
     {
-        if ((_flash is null && _remoteChildPid <= 0) || !IsVisible)
+        if ((_flash is null && _remoteChildPid <= 0 && _waylandHost == IntPtr.Zero) || !IsVisible)
             return;
         double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
         int w = Math.Max(1, (int)Math.Round(Bounds.Width * scale));
@@ -351,7 +528,10 @@ public class GameHost : Control
         {
             _lastSentWidth = w;
             _lastSentHeight = h;
-            DispatchInput(new { input = "resize", w, h });
+            if (_waylandHost != IntPtr.Zero)
+                BonxieWaylandNative.Resize(_waylandHost, (uint)w, (uint)h);
+            else
+                DispatchInput(new { input = "resize", w, h });
             return;
         }
 
@@ -367,7 +547,7 @@ public class GameHost : Control
     private void OnResizeDebounceTick(object? sender, EventArgs e)
     {
         _resizeDebounceTimer?.Stop();
-        if ((_flash is null && _remoteChildPid <= 0) || !IsVisible)
+        if ((_flash is null && _remoteChildPid <= 0 && _waylandHost == IntPtr.Zero) || !IsVisible)
             return;
         int w = _pendingResizeW;
         int h = _pendingResizeH;
@@ -375,188 +555,118 @@ public class GameHost : Control
             return;
         _lastSentWidth = w;
         _lastSentHeight = h;
-        DispatchInput(new { input = "resize", w, h });
+        if (_waylandHost != IntPtr.Zero)
+            BonxieWaylandNative.Resize(_waylandHost, (uint)w, (uint)h);
+        else
+            DispatchInput(new { input = "resize", w, h });
     }
 
-    private void OnFrameReady()
+    private static string GetHostPerfPath(int targetPid) =>
+        Path.Combine(Directory.Exists("/dev/shm") ? "/dev/shm" : Path.GetTempPath(), $"skua-host-perf-{targetPid}.json");
+
+    private void RecordHostPresentedFrame(string mode)
     {
-        if (Interlocked.Exchange(ref _frameUpdateQueued, 1) == 0)
+        long now = Stopwatch.GetTimestamp();
+        if (_windowStartTimestamp == 0)
+            _windowStartTimestamp = now;
+
+        if (_lastFrameTimestamp != 0)
         {
-            Dispatcher.UIThread.Post(UpdateFrameFromShm, DispatcherPriority.Render);
+            double dtMs = (double)(now - _lastFrameTimestamp) * 1000.0 / Stopwatch.Frequency;
+            if (dtMs > 0.0 && dtMs < 5000.0)
+            {
+                _frameIntervalsMs[_intervalWriteIdx] = dtMs;
+                _intervalWriteIdx = (_intervalWriteIdx + 1) % _frameIntervalsMs.Length;
+                if (_intervalCount < _frameIntervalsMs.Length)
+                    _intervalCount++;
+            }
         }
-    }
 
-    private unsafe void UpdateFrameFromShm()
-    {
-        Interlocked.Exchange(ref _frameUpdateQueued, 0);
-        if (!IsVisible || TopLevel.GetTopLevel(this) is { IsVisible: false })
+        _lastFrameTimestamp = now;
+        _windowFrames++;
+        _totalPresentedFrames++;
+
+        double elapsedSec = (double)(now - _windowStartTimestamp) / Stopwatch.Frequency;
+        if (elapsedSec < 1.0 || _windowFrames <= 0)
             return;
 
+        double hostFps = _windowFrames / elapsedSec;
+        double avgMs = elapsedSec * 1000.0 / _windowFrames;
+        double maxMs = avgMs;
+        double onePercentLowFps = hostFps;
+
+        int n = _intervalCount;
+        if (n > 0)
+        {
+            Span<double> scratch = stackalloc double[n];
+            _frameIntervalsMs.AsSpan(0, n).CopyTo(scratch);
+            scratch.Sort();
+
+            double sum = 0;
+            for (int i = 0; i < n; i++)
+                sum += scratch[i];
+            avgMs = sum / n;
+            maxMs = scratch[n - 1];
+
+            int worstCount = Math.Max(1, (n + 99) / 100);
+            double worstSum = 0;
+            for (int i = n - worstCount; i < n; i++)
+                worstSum += scratch[i];
+            double onePercentLowMs = worstSum / worstCount;
+            if (onePercentLowMs > 0.0)
+                onePercentLowFps = 1000.0 / onePercentLowMs;
+        }
+
+        _windowFrames = 0;
+        _windowStartTimestamp = now;
+        _intervalCount = 0;
+        _intervalWriteIdx = 0;
+
+        if (Interlocked.CompareExchange(ref _statsWriteInFlight, 1, 0) != 0)
+            return;
+
+        int targetPid = _remoteChildPid > 0 ? _remoteChildPid : Environment.ProcessId;
+        int hostPid = Environment.ProcessId;
+        long totalFrames = _totalPresentedFrames;
+
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                string path = GetHostPerfPath(targetPid);
+                string tmp = path + ".tmp";
+                string json = JsonSerializer.Serialize(new
+                {
+                    HostPid = hostPid,
+                    ChildPid = targetPid,
+                    Mode = mode,
+                    HostPresentedFps = Math.Round(hostFps, 2),
+                    AvgFrameMs = Math.Round(avgMs, 2),
+                    MaxFrameMs = Math.Round(maxMs, 2),
+                    OnePercentLowFps = Math.Round(onePercentLowFps, 2),
+                    TotalPresentedFrames = totalFrames,
+                    UpdatedAtUtc = DateTime.UtcNow
+                });
+                File.WriteAllText(tmp, json);
+                File.Move(tmp, path, overwrite: true);
+            }
+            catch { }
+            finally
+            {
+                Volatile.Write(ref _statsWriteInFlight, 0);
+            }
+        });
+    }
+
+    private void TryDeleteHostPerfFile()
+    {
         try
         {
-            if (_shmPtr == null)
-            {
-                if (!File.Exists(_shmPath))
-                    return;
-                long fileLen = new FileInfo(_shmPath).Length;
-                if (fileLen < HeaderSize)
-                    return;
-                MapShm(fileLen);
-            }
-
-            byte* hdr = _shmPtr;
-            if (hdr == null)
-                return;
-
-            ulong seq = Volatile.Read(ref *(ulong*)(hdr + 16));
-            if (seq == _lastSeq || seq == 0)
-                return;
-
-            // Validate magic "SKUAFRM1"
-            if (*(ulong*)hdr != 0x314D524641554B53UL)
-                return;
-
-            int width = *(int*)(hdr + 8);
-            int height = *(int*)(hdr + 12);
-            uint slot = *(uint*)(hdr + 24);
-            uint slotStride = *(uint*)(hdr + 28);
-            if (width <= 0 || height <= 0 || slot > 1)
-                return;
-
-            long pixelBytes = (long)width * height * 4;
-            long offset = HeaderSize + (long)slot * slotStride;
-            if (offset + pixelBytes > _mappedSize)
-            {
-                long fileLen = new FileInfo(_shmPath).Length;
-                if (offset + pixelBytes > fileLen)
-                    return;
-                MapShm(fileLen);
-                hdr = _shmPtr;
-                if (hdr == null)
-                    return;
-            }
-
-            if (_bitmap is null || _bitmap.PixelSize.Width != width || _bitmap.PixelSize.Height != height)
-            {
-                _bitmap?.Dispose();
-                _bitmap = new WriteableBitmap(
-                    new PixelSize(width, height),
-                    new Vector(96, 96),
-                    PixelFormat.Bgra8888,
-                    AlphaFormat.Opaque);
-            }
-
-            using (ILockedFramebuffer fb = _bitmap.Lock())
-            {
-                byte* src = hdr + offset;
-                byte* dst = (byte*)fb.Address;
-                int srcStride = width * 4;
-                if (fb.RowBytes == srcStride)
-                {
-                    Buffer.MemoryCopy(src, dst, pixelBytes, pixelBytes);
-                }
-                else
-                {
-                    for (int y = 0; y < height; y++)
-                    {
-                        Buffer.MemoryCopy(src + (long)y * srcStride, dst + (long)y * fb.RowBytes, fb.RowBytes, srcStride);
-                    }
-                }
-            }
-
-            _lastSeq = seq;
-            InvalidateVisual();
+            int targetPid = _remoteChildPid > 0 ? _remoteChildPid : Environment.ProcessId;
+            string path = GetHostPerfPath(targetPid);
+            if (File.Exists(path))
+                File.Delete(path);
         }
-        catch
-        {
-            // Ignore transient resize/unmap races.
-        }
-    }
-
-    private static bool TryParseHeader(byte[] header, out int width, out int height, out ulong seq, out uint slot, out uint slotStride)
-    {
-        width = 0;
-        height = 0;
-        seq = 0;
-        slot = 0;
-        slotStride = 0;
-
-        for (int i = 0; i < MagicBytes.Length; i++)
-        {
-            if (header[i] != MagicBytes[i])
-                return false;
-        }
-
-        width = BitConverter.ToInt32(header, 8);
-        height = BitConverter.ToInt32(header, 12);
-        seq = BitConverter.ToUInt64(header, 16);
-        slot = BitConverter.ToUInt32(header, 24);
-        slotStride = BitConverter.ToUInt32(header, 28);
-        return width > 0 && height > 0 && slot <= 1;
-    }
-
-    private static unsafe void CopyFrameToBitmap(MemoryMappedViewAccessor accessor, long offset, int width, int height, WriteableBitmap bitmap)
-    {
-        long pixelBytes = (long)width * height * 4;
-        using ILockedFramebuffer fb = bitmap.Lock();
-        byte* srcBase = null;
-        accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref srcBase);
-        try
-        {
-            byte* src = srcBase + accessor.PointerOffset + offset;
-            byte* dst = (byte*)fb.Address;
-            int srcStride = width * 4;
-            if (fb.RowBytes == srcStride)
-            {
-                Buffer.MemoryCopy(src, dst, pixelBytes, pixelBytes);
-            }
-            else
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    Buffer.MemoryCopy(src + (long)y * srcStride, dst + (long)y * fb.RowBytes, fb.RowBytes, srcStride);
-                }
-            }
-        }
-        finally
-        {
-            accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-        }
-    }
-
-    public static byte[]? TryCapturePngFromShm(int pid)
-    {
-        string shmPath = GetShmPathForPid(pid);
-        if (!File.Exists(shmPath))
-            return null;
-
-        long fileLen = new FileInfo(shmPath).Length;
-        if (fileLen < HeaderSize)
-            return null;
-
-        using var mmf = MemoryMappedFile.CreateFromFile(shmPath, FileMode.Open, null, fileLen, MemoryMappedFileAccess.Read);
-        using var accessor = mmf.CreateViewAccessor(0, fileLen, MemoryMappedFileAccess.Read);
-
-        byte[] header = new byte[HeaderSize];
-        accessor.ReadArray(0, header, 0, HeaderSize);
-        if (!TryParseHeader(header, out int width, out int height, out _, out uint slot, out uint slotStride))
-            return null;
-
-        long pixelBytes = (long)width * height * 4;
-        long offset = HeaderSize + (long)slot * slotStride;
-        if (offset + pixelBytes > fileLen)
-            return null;
-
-        using var wb = new WriteableBitmap(
-            new PixelSize(width, height),
-            new Vector(96, 96),
-            PixelFormat.Bgra8888,
-            AlphaFormat.Opaque);
-
-        CopyFrameToBitmap(accessor, offset, width, height, wb);
-
-        using var ms = new MemoryStream();
-        wb.Save(ms);
-        return ms.ToArray();
+        catch { }
     }
 }

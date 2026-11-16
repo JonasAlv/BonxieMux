@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Skua.Plugin.PerfRecorder</AssemblyName>
+    <RootNamespace>Skua.Plugin.PerfRecorder</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Material.Icons.Avalonia" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Skua.Core.Interfaces\Skua.Core.Interfaces.csproj" />
+    <ProjectReference Include="..\Skua.Core.Models\Skua.Core.Models.csproj" />
+    <ProjectReference Include="..\Skua.Core.Utils\Skua.Core.Utils.csproj" />
+    <ProjectReference Include="..\Skua.Core\Skua.Core.csproj" />
+    <ProjectReference Include="..\Skua.Shared.Avalonia\Skua.Shared.Avalonia.csproj" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <MakeDir Directories="..\Build\plugins" Condition="'$(Configuration)' == 'Release'" />
+    <Copy SourceFiles="$(TargetDir)Skua.Plugin.PerfRecorder.dll" DestinationFolder="..\Build\plugins" Condition="'$(Configuration)' == 'Release'" ContinueOnError="true" />
+    <MakeDir Directories="..\Skua.App.Avalonia\bin\$(Configuration)\$(TargetFramework)\plugins" />
+    <Copy SourceFiles="$(TargetDir)Skua.Plugin.PerfRecorder.dll" DestinationFolder="..\Skua.App.Avalonia\bin\$(Configuration)\$(TargetFramework)\plugins" ContinueOnError="true" />
+  </Target>
+
+</Project>
