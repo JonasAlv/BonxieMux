@@ -415,3 +415,7 @@ skua_global_*.txt
 !Skua.AS3/skua/bin/skua.swf
 !Skua.App.Avalonia/skua.swf
 
+# Rust native host build artifacts
+Skua.X11Host/target/
+Skua.WaylandHost/target/
+
