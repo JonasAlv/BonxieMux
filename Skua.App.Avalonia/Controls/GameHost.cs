@@ -152,8 +152,10 @@ public class GameHost : Control, ICustomHitTest
         StopX11Host();
 
         double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
-        uint w = (uint)Math.Max(320, Math.Round(Bounds.Width * scale));
-        uint h = (uint)Math.Max(240, Math.Round(Bounds.Height * scale));
+        int bw = (int)Math.Round(Bounds.Width * scale);
+        int bh = (int)Math.Round(Bounds.Height * scale);
+        uint w = (uint)Math.Max(320, bw > 2 ? bw : _lastSentWidth);
+        uint h = (uint)Math.Max(240, bh > 2 ? bh : _lastSentHeight);
 
         try
         {
@@ -167,6 +169,8 @@ public class GameHost : Control, ICustomHitTest
         if (_x11Host != IntPtr.Zero)
         {
             _attachedPid = pid;
+            _lastSentWidth = -1;
+            _lastSentHeight = -1;
             _glViewport = new X11DmabufViewport(_x11Host);
             LogicalChildren.Add(_glViewport);
             VisualChildren.Add(_glViewport);
@@ -277,13 +281,15 @@ public class GameHost : Control, ICustomHitTest
     protected override Size MeasureOverride(Size availableSize)
     {
         _glViewport?.Measure(availableSize);
-        return base.MeasureOverride(availableSize);
+        double w = double.IsInfinity(availableSize.Width) ? (_glViewport?.DesiredSize.Width ?? 0) : availableSize.Width;
+        double h = double.IsInfinity(availableSize.Height) ? (_glViewport?.DesiredSize.Height ?? 0) : availableSize.Height;
+        return new Size(w, h);
     }
 
     protected override Size ArrangeOverride(Size finalSize)
     {
         _glViewport?.Arrange(new Rect(finalSize));
-        return base.ArrangeOverride(finalSize);
+        return finalSize;
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)

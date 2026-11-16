@@ -940,6 +940,8 @@ public partial class MainWindow : Window
                 if (topNav != null)
                     topNav.IsVisible = true;
 
+                int targetX = wParam.ToInt32();
+                int targetY = lParam.ToInt32();
                 this.ExtendClientAreaToDecorationsHint = true;
                 this.ExtendClientAreaTitleBarHeightHint = 32;
                 this.WindowState = WindowState.Normal;
@@ -947,7 +949,9 @@ public partial class MainWindow : Window
                 this.Opacity = 1;
                 this.Width = 948;
                 this.Height = 600;
+                this.Position = new global::Avalonia.PixelPoint(targetX, targetY);
                 this.Show();
+                this.Position = new global::Avalonia.PixelPoint(targetX, targetY);
                 this.Activate();
                 if (_flash is Flash.FlashUtil detachPlayer && detachPlayer.PlayerPid > 0)
                     FlashHost?.AttachFlash(detachPlayer);

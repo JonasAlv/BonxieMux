@@ -164,7 +164,8 @@ internal static class Program
                 WmClass = "BonxieMux",
                 RenderingMode = new[] { X11RenderingMode.Egl, X11RenderingMode.Glx, X11RenderingMode.Software }
             })
-            .UseSkia();
+            .UseSkia()
+            .UseHarfBuzz();
 
 #if DEBUG
         builder = builder.WithDeveloperTools();

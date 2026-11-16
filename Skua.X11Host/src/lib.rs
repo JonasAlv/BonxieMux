@@ -5,6 +5,7 @@ use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
 use x11rb::connection::Connection;
+use x11rb::wrapper::ConnectionExt as _;
 use x11rb::protocol::composite::{ConnectionExt as CompositeExt, Redirect};
 use x11rb::protocol::damage::{ConnectionExt as DamageExt, ReportLevel};
 use x11rb::protocol::dri3::ConnectionExt as Dri3Ext;
@@ -330,6 +331,7 @@ fn run_x11_host(child_pid: u32, init_w: u32, init_h: u32, shared: Arc<SharedStat
     }
 
     let Some(target_win) = target_win else {
+        eprintln!("[bonxie_x11] timed out waiting for X11 window of pid {child_pid}");
         return;
     };
 
@@ -368,6 +370,7 @@ fn run_x11_host(child_pid: u32, init_w: u32, init_h: u32, shared: Arc<SharedStat
             .width(init_w)
             .height(init_h),
     );
+    let _ = conn.map_window(target_win);
     let _ = conn.composite_redirect_window(target_win, Redirect::MANUAL);
     let _ = conn.change_window_attributes(
         target_win,
@@ -445,6 +448,13 @@ fn run_x11_host(child_pid: u32, init_w: u32, init_h: u32, shared: Arc<SharedStat
 
     let _ = conn.damage_destroy(damage_id);
     let _ = conn.composite_unredirect_window(target_win, Redirect::MANUAL);
+    let _ = conn.unmap_window(holder_win);
+    let _ = conn.change_window_attributes(
+        target_win,
+        &ChangeWindowAttributesAux::new().override_redirect(1),
+    );
+    let _ = conn.reparent_window(target_win, root, -32000, -32000);
+    let _ = conn.sync();
     let _ = conn.destroy_window(holder_win);
     let _ = conn.flush();
 }
@@ -486,27 +496,37 @@ fn capture_and_publish(conn: &RustConnection, target_win: Window, shared: &Share
                 planes,
             ))
         }
-        _ => match conn.dri3_buffer_from_pixmap(pixmap).and_then(|c| Ok(c.reply())) {
-            Ok(Ok(reply)) => {
-                let fourcc = if reply.depth == 32 {
-                    DRM_FORMAT_ARGB8888
-                } else {
-                    DRM_FORMAT_XRGB8888
-                };
-                Some((
-                    reply.width as u32,
-                    reply.height as u32,
-                    fourcc,
-                    DRM_FORMAT_MOD_INVALID,
-                    vec![CapturedPlane {
-                        fd: reply.pixmap_fd,
-                        offset: 0,
-                        stride: reply.stride as u32,
-                    }],
-                ))
+        err1 => {
+            if shared.frame_seq.load(Ordering::Relaxed) == 0 {
+                eprintln!("[bonxie_x11] dri3_buffers_from_pixmap failed: {err1:?}");
             }
-            _ => None,
-        },
+            match conn.dri3_buffer_from_pixmap(pixmap).and_then(|c| Ok(c.reply())) {
+                Ok(Ok(reply)) => {
+                    let fourcc = if reply.depth == 32 {
+                        DRM_FORMAT_ARGB8888
+                    } else {
+                        DRM_FORMAT_XRGB8888
+                    };
+                    Some((
+                        reply.width as u32,
+                        reply.height as u32,
+                        fourcc,
+                        DRM_FORMAT_MOD_INVALID,
+                        vec![CapturedPlane {
+                            fd: reply.pixmap_fd,
+                            offset: 0,
+                            stride: reply.stride as u32,
+                        }],
+                    ))
+                }
+                err2 => {
+                    if shared.frame_seq.load(Ordering::Relaxed) == 0 {
+                        eprintln!("[bonxie_x11] dri3_buffer_from_pixmap failed: {err2:?}");
+                    }
+                    None
+                }
+            }
+        }
     };
 
     let _ = conn.free_pixmap(pixmap);

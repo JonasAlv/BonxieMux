@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
+using Avalonia.Threading;
 
 namespace Skua.App.Avalonia.Controls;
 
@@ -126,6 +127,7 @@ internal sealed unsafe class DmabufGlRenderer
     private delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int> _eglDestroyImageKhr;
     private delegate* unmanaged[Cdecl]<int, IntPtr, void> _glEglImageTargetTexture2DOes;
     private delegate* unmanaged[Cdecl]<int, float, float, void> _glUniform2f;
+    private delegate* unmanaged[Cdecl]<int, void> _glDisable;
 
     private IntPtr _eglDisplay;
     private IntPtr _currentEglImage;
@@ -147,6 +149,8 @@ internal sealed unsafe class DmabufGlRenderer
             return;
 
         _eglDisplay = BonxieX11Native.EglGetCurrentDisplay();
+        if (_eglDisplay == IntPtr.Zero)
+            Console.Error.WriteLine("[X11Dmabuf] WARNING: eglGetCurrentDisplay() returned 0 (Avalonia may be using GLX instead of EGL)");
         _eglCreateImageKhr = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int, IntPtr, int*, IntPtr>)
             BonxieX11Native.EglGetProcAddress("eglCreateImageKHR");
         _eglDestroyImageKhr = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int>)
@@ -157,6 +161,9 @@ internal sealed unsafe class DmabufGlRenderer
         IntPtr uniform2fPtr = gl.GetProcAddress("glUniform2f");
         if (uniform2fPtr != IntPtr.Zero)
             _glUniform2f = (delegate* unmanaged[Cdecl]<int, float, float, void>)uniform2fPtr;
+        IntPtr disablePtr = gl.GetProcAddress("glDisable");
+        if (disablePtr != IntPtr.Zero)
+            _glDisable = (delegate* unmanaged[Cdecl]<int, void>)disablePtr;
 
         _texture = gl.GenTexture();
         gl.BindTexture(GL_TEXTURE_2D, _texture);
@@ -165,27 +172,52 @@ internal sealed unsafe class DmabufGlRenderer
         gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        const string vsSrc = """
-            #version 330 core
-            layout(location = 0) in vec2 a_pos;
-            layout(location = 1) in vec2 a_uv;
-            uniform vec2 u_uv_scale;
-            out vec2 v_uv;
-            void main() {
-                v_uv = a_uv * u_uv_scale;
-                gl_Position = vec4(a_pos, 0.0, 1.0);
-            }
-            """;
+        bool isGles = gl.ContextInfo.Version.Type == GlProfileType.OpenGLES;
+        string vsSrc = isGles
+            ? """
+              #version 300 es
+              precision mediump float;
+              layout(location = 0) in vec2 a_pos;
+              layout(location = 1) in vec2 a_uv;
+              uniform vec2 u_uv_scale;
+              out vec2 v_uv;
+              void main() {
+                  v_uv = a_uv * u_uv_scale;
+                  gl_Position = vec4(a_pos, 0.0, 1.0);
+              }
+              """
+            : """
+              #version 330 core
+              layout(location = 0) in vec2 a_pos;
+              layout(location = 1) in vec2 a_uv;
+              uniform vec2 u_uv_scale;
+              out vec2 v_uv;
+              void main() {
+                  v_uv = a_uv * u_uv_scale;
+                  gl_Position = vec4(a_pos, 0.0, 1.0);
+              }
+              """;
 
-        const string fsSrc = """
-            #version 330 core
-            uniform sampler2D u_tex;
-            in vec2 v_uv;
-            out vec4 o_color;
-            void main() {
-                o_color = vec4(texture(u_tex, v_uv).rgb, 1.0);
-            }
-            """;
+        string fsSrc = isGles
+            ? """
+              #version 300 es
+              precision mediump float;
+              uniform sampler2D u_tex;
+              in vec2 v_uv;
+              out vec4 o_color;
+              void main() {
+                  o_color = vec4(texture(u_tex, v_uv).rgb, 1.0);
+              }
+              """
+            : """
+              #version 330 core
+              uniform sampler2D u_tex;
+              in vec2 v_uv;
+              out vec4 o_color;
+              void main() {
+                  o_color = vec4(texture(u_tex, v_uv).rgb, 1.0);
+              }
+              """;
 
         int vs = CompileShader(gl, GL_VERTEX_SHADER, vsSrc);
         int fs = CompileShader(gl, GL_FRAGMENT_SHADER, fsSrc);
@@ -250,6 +282,15 @@ internal sealed unsafe class DmabufGlRenderer
             gl.ClearColor(0f, 0f, 0f, 1f);
             gl.Clear(GL_COLOR_BUFFER_BIT);
             return;
+        }
+
+        if (_glDisable != null)
+        {
+            _glDisable(0x0B71); // GL_DEPTH_TEST
+            _glDisable(0x0B90); // GL_STENCIL_TEST
+            _glDisable(0x0B44); // GL_CULL_FACE
+            _glDisable(0x0C11); // GL_SCISSOR_TEST
+            _glDisable(0x0BE2); // GL_BLEND
         }
 
         gl.UseProgram(_program);
@@ -359,10 +400,16 @@ internal sealed unsafe class DmabufGlRenderer
 
             IntPtr img = _eglCreateImageKhr(_eglDisplay, IntPtr.Zero, EGL_LINUX_DMA_BUF_EXT, IntPtr.Zero, attribs);
             if (img == IntPtr.Zero)
+            {
+                Console.Error.WriteLine($"[X11Dmabuf] eglCreateImageKHR failed for {dmabuf.Width}x{dmabuf.Height} fourcc=0x{dmabuf.Fourcc:X8} mod=0x{dmabuf.Modifier:X16} planes={dmabuf.NumPlanes}");
                 return;
+            }
 
             gl.BindTexture(GL_TEXTURE_2D, _texture);
             _glEglImageTargetTexture2DOes(GL_TEXTURE_2D, img);
+            int glErr = gl.GetError();
+            if (glErr != 0 && _lastSeq == 0)
+                Console.Error.WriteLine($"[X11Dmabuf] glEGLImageTargetTexture2DOES GL error=0x{glErr:X}");
             gl.BindTexture(GL_TEXTURE_2D, 0);
 
             if (_currentEglImage != IntPtr.Zero && _eglDestroyImageKhr != null)
@@ -409,62 +456,86 @@ internal sealed unsafe class DmabufGlRenderer
     }
 }
 
-internal sealed unsafe class X11DmabufViewport : OpenGlControlBase
+internal sealed class X11DmabufViewport : OpenGlControlBase
 {
     private readonly IntPtr _x11Host;
     private readonly DmabufGlRenderer _renderer = new();
     private readonly Action<ulong>? _onPresentedFrame;
-    private GCHandle _selfHandle;
-    private bool _callbackRegistered;
-
-    [UnmanagedCallersOnly(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
-    private static void OnNativeFrameReady(nuint userData)
-    {
-        try
-        {
-            GCHandle handle = GCHandle.FromIntPtr((IntPtr)userData);
-            if (handle.Target is X11DmabufViewport vp)
-                vp.RequestNextFrameRendering();
-        }
-        catch { }
-    }
+    private readonly Action<TimeSpan> _animCallback;
+    private TopLevel? _topLevel;
+    private bool _attached;
+    private bool _animLoopRunning;
 
     public X11DmabufViewport(IntPtr x11Host, Action<ulong>? onPresentedFrame = null)
     {
         _x11Host = x11Host;
         _onPresentedFrame = onPresentedFrame;
+        _animCallback = OnAnimationFrame;
         IsHitTestVisible = false;
     }
 
     public bool HasPendingFrame() =>
         _x11Host != IntPtr.Zero && BonxieX11Native.FrameSeq(_x11Host) != _renderer.LastSeq;
 
+    private void EnsureAnimationLoop()
+    {
+        if (_animLoopRunning || !_attached || !IsVisible)
+            return;
+
+        _topLevel ??= TopLevel.GetTopLevel(this);
+        if (_topLevel is not { IsVisible: true })
+            return;
+
+        _animLoopRunning = true;
+        _topLevel.RequestAnimationFrame(_animCallback);
+    }
+
+    private void OnAnimationFrame(TimeSpan _)
+    {
+        if (!_attached || !IsVisible || _topLevel is not { IsVisible: true })
+        {
+            _animLoopRunning = false;
+            return;
+        }
+
+        if (HasPendingFrame())
+            RequestNextFrameRendering();
+
+        _topLevel.RequestAnimationFrame(_animCallback);
+    }
+
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        if (!_callbackRegistered && _x11Host != IntPtr.Zero)
-        {
-            _selfHandle = GCHandle.Alloc(this, GCHandleType.Weak);
-            delegate* unmanaged[Cdecl]<nuint, void> fn = &OnNativeFrameReady;
-            BonxieX11Native.SetFrameCallback(_x11Host, (IntPtr)fn, (nuint)(IntPtr)_selfHandle);
-            _callbackRegistered = true;
-        }
-        RequestNextFrameRendering();
+        _attached = true;
+        _topLevel = TopLevel.GetTopLevel(this);
+        EnsureAnimationLoop();
+        if (IsVisible)
+            RequestNextFrameRendering();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
+        _attached = false;
+        _animLoopRunning = false;
+        _topLevel = null;
         base.OnDetachedFromVisualTree(e);
-        if (_callbackRegistered && _x11Host != IntPtr.Zero)
-        {
-            BonxieX11Native.SetFrameCallback(_x11Host, IntPtr.Zero, 0);
-            _callbackRegistered = false;
-        }
-        if (_selfHandle.IsAllocated)
-            _selfHandle.Free();
     }
 
-    protected override void OnOpenGlInit(GlInterface gl) => _renderer.Init(gl);
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == IsVisibleProperty && IsVisible)
+            EnsureAnimationLoop();
+    }
+
+    protected override void OnOpenGlInit(GlInterface gl)
+    {
+        base.OnOpenGlInit(gl);
+        _renderer.Init(gl);
+        if (IsVisible)
+            RequestNextFrameRendering();
+    }
 
     protected override void OnOpenGlDeinit(GlInterface gl) => _renderer.Deinit(gl);
 

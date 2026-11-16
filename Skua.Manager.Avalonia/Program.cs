@@ -244,7 +244,8 @@ internal static class Program
                 EnableIme = false,
                 WmClass = "BonxieMux-Manager"
             })
-            .UseSkia();
+            .UseSkia()
+            .UseHarfBuzz();
 
 #if DEBUG
         builder = builder.WithDeveloperTools();
