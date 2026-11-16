@@ -1305,6 +1305,16 @@ public partial class TabbedHostWindow : Window
                                     Dispatcher.UIThread.Post(() => ApplyChildJumpState(childPid, json));
                                 }
                             }
+                            else if (line.StartsWith("MUGETSU_PID|", StringComparison.Ordinal))
+                            {
+                                string[] parts = line.Split('|');
+                                if (parts.Length >= 3 &&
+                                    int.TryParse(parts[1], out int childPid) &&
+                                    int.TryParse(parts[2], out int mugetsuPid))
+                                {
+                                    Dispatcher.UIThread.Post(() => AttachRemotePlayerPid(childPid, mugetsuPid));
+                                }
+                            }
                             else if (line.StartsWith("HEADLESS_STATE|", StringComparison.Ordinal))
                             {
                                 string[] parts = line.Split('|');
@@ -3222,9 +3232,9 @@ public partial class TabbedHostWindow : Window
         InstancesTabControl.SelectedItem = tab;
         UpdateTabScrollButtons();
 
-        // Detach/reattach uses IPC; Wayland windows cannot be reparented across processes.
         if (info.ChildHwnd != IntPtr.Zero)
         {
+            SuspendRemoteViewport(info.ChildHwnd);
             PlatformDetachChild(info.ChildHwnd, screenX, screenY, clientWidth, clientHeight);
             PostChildMessage(info.ChildHwnd, WM_SKUA_DETACH, new IntPtr(screenX), new IntPtr(screenY));
         }
@@ -3753,19 +3763,12 @@ public partial class TabbedHostWindow : Window
                 });
             };
 
-            var (wlHandle, wlSocket) = Skua.App.Avalonia.Controls.GameHost.CreateWaylandHostForChild(1280, 720);
-            if (!string.IsNullOrEmpty(wlSocket))
-                p.StartInfo.EnvironmentVariables["BONXIE_WL_DISPLAY"] = wlSocket;
-            else
-                p.StartInfo.EnvironmentVariables.Remove("BONXIE_WL_DISPLAY");
-
             try
             {
                 p.Start();
             }
             catch (Exception ex)
             {
-                Skua.App.Avalonia.Controls.GameHost.ReleasePendingWaylandHost(wlHandle);
                 p.Dispose();
                 _isSpawning = false;
                 Trace.WriteLine($"BonxieMux failed to start child process for tab '{tabName}': {ex}");
@@ -3777,7 +3780,6 @@ public partial class TabbedHostWindow : Window
                 }, DispatcherPriority.Background);
                 return;
             }
-            Skua.App.Avalonia.Controls.GameHost.RegisterPendingWaylandHost(p.Id, wlHandle, wlSocket);
             info.Process = p;
             HotKeys.RegisterSkuaPid((uint)p.Id);
 

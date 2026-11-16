@@ -44,6 +44,9 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
     private Process? _player;
     private int _acceptedPlayerPid;
     private StreamWriter? _bridge;
+    private string? _lastVisiblePayloadJson;
+    private string? _lastFocusPayloadJson;
+    private string? _lastResizePayloadJson;
     private int _nextId;
     private readonly BridgeStats _stats = new();
 
@@ -61,8 +64,11 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
 
     public event FlashCallHandler? FlashCall;
 
-    /// <summary>Native X11 window the player draws in as a child window; 0 gives it a window of its own.</summary>
+    /// <summary>Native X11 window handle (kept for compatibility; X11 DMA-BUF host uses <see cref="PlayerPid"/>).</summary>
     public nint ParentWindow { get; set; }
+
+    public int PlayerPid => _player is { HasExited: false } proc ? proc.Id : 0;
+    public bool IsPlayerRunning => _player is { HasExited: false };
 
     public static void PreloadSwf()
     {
@@ -159,14 +165,10 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         };
         start.ArgumentList.Add("--skua-bridge");
         start.ArgumentList.Add($"127.0.0.1:{((IPEndPoint)_listener.LocalEndpoint).Port}");
-        if (ParentWindow != 0)
-        {
-            start.ArgumentList.Add("--skua-parent");
-            start.ArgumentList.Add(ParentWindow.ToString(CultureInfo.InvariantCulture));
-            // On Linux the parent is an X11 window; the player would otherwise prefer Wayland, where it can't be embedded.
-            start.Environment.Remove("WAYLAND_DISPLAY");
-            start.Environment.Remove("WAYLAND_SOCKET");
-        }
+        start.Environment["SKUA_EMBEDDED"] = "1";
+        // Force the X11 backend on Linux so XComposite + DRI3 DMA-BUF can capture the player offscreen.
+        start.Environment.Remove("WAYLAND_DISPLAY");
+        start.Environment.Remove("WAYLAND_SOCKET");
         string? envGraphics = Environment.GetEnvironmentVariable("MUGETSU_GRAPHICS") ??
                               Environment.GetEnvironmentVariable("SKUA_GRAPHICS");
         if (!string.IsNullOrWhiteSpace(envGraphics))
@@ -340,7 +342,20 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             NetworkStream stream = client.GetStream();
             StreamWriter writer = new(stream, new UTF8Encoding(false)) { AutoFlush = true, NewLine = "\n" };
             // A restarted player connects anew; whatever the old one still owed will never come.
-            Interlocked.Exchange(ref _bridge, writer)?.Dispose();
+            lock (_sendLock)
+            {
+                Interlocked.Exchange(ref _bridge, writer)?.Dispose();
+                try
+                {
+                    if (_lastResizePayloadJson != null)
+                        writer.WriteLine(_lastResizePayloadJson);
+                    if (_lastVisiblePayloadJson != null)
+                        writer.WriteLine(_lastVisiblePayloadJson);
+                    if (_lastFocusPayloadJson != null)
+                        writer.WriteLine(_lastFocusPayloadJson);
+                }
+                catch { }
+            }
             FailPending();
 
             try
@@ -385,6 +400,27 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
                 Trace.WriteLine($"Flash call handler for '{function}' failed: {ex}");
             }
         });
+    }
+
+    public void SendInput(object payload)
+    {
+        try
+        {
+            string json = JsonConvert.SerializeObject(payload);
+            lock (_sendLock)
+            {
+                if (json.Contains("\"input\":\"visible\"", StringComparison.Ordinal))
+                    _lastVisiblePayloadJson = json;
+                else if (json.Contains("\"input\":\"focus\"", StringComparison.Ordinal))
+                    _lastFocusPayloadJson = json;
+                else if (json.Contains("\"input\":\"resize\"", StringComparison.Ordinal))
+                    _lastResizePayloadJson = json;
+
+                if (_bridge is { } writer)
+                    writer.WriteLine(json);
+            }
+        }
+        catch { }
     }
 
     private void FailPending()

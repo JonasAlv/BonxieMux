@@ -161,7 +161,8 @@ internal static class Program
             .With(new X11PlatformOptions
             {
                 EnableIme = false,
-                WmClass = "BonxieMux"
+                WmClass = "BonxieMux",
+                RenderingMode = new[] { X11RenderingMode.Egl, X11RenderingMode.Glx, X11RenderingMode.Software }
             })
             .UseSkia();
 

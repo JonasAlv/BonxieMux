@@ -660,6 +660,27 @@ public partial class TabbedHostWindow : Window
             overlay.IsVisible = false;
     }
 
+    private void AttachRemotePlayerPid(int childPid, int mugetsuPid)
+    {
+        if (childPid <= 0 || mugetsuPid <= 0)
+            return;
+
+        TabInfo? info = _tabs.Values.FirstOrDefault(t => t.Process?.Id == childPid);
+        if (info != null && _linuxViewports.TryGetValue(info.ChildHwnd, out GameHost? viewport))
+        {
+            viewport.AttachRemotePlayerPid(mugetsuPid);
+            return;
+        }
+
+        GameHost.RegisterPendingRemotePlayerPid(childPid, mugetsuPid);
+    }
+
+    private void SuspendRemoteViewport(IntPtr childHwnd)
+    {
+        if (_linuxViewports.TryGetValue(childHwnd, out GameHost? viewport))
+            viewport.SuspendCapture();
+    }
+
     private void PlatformUnmapChild(IntPtr childHwnd)
     {
         if (!Dispatcher.UIThread.CheckAccess())

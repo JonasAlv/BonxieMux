@@ -949,6 +949,8 @@ public partial class MainWindow : Window
                 this.Height = 600;
                 this.Show();
                 this.Activate();
+                if (_flash is Flash.FlashUtil detachPlayer && detachPlayer.PlayerPid > 0)
+                    FlashHost?.AttachFlash(detachPlayer);
                 if (FlashHost != null)
                     FlashHost.IsVisible = !_options.IsHeadlessNow();
                 SyncHostedVisibility();
@@ -980,6 +982,9 @@ public partial class MainWindow : Window
                     wtb.CanDock = false;
                 }
                 this.ShowInTaskbar = false;
+                FlashHost?.SuspendCapture();
+                if (_flash is Flash.FlashUtil dockPlayer && dockPlayer.PlayerPid > 0)
+                    SendMugetsuPidToHost(dockPlayer.PlayerPid);
                 this.Hide();
                 SyncHostedVisibility();
             });
@@ -998,6 +1003,12 @@ public partial class MainWindow : Window
     private static long _headlessStateSeq;
     private static readonly System.Collections.Concurrent.BlockingCollection<string> _hostPipeQueue = new();
     private static int _hostPipeWorkerStarted;
+
+    private void SendMugetsuPidToHost(int mugetsuPid)
+    {
+        if (!string.IsNullOrEmpty(App.HostPipeName) && mugetsuPid > 0)
+            SendPipeToHost($"MUGETSU_PID|{Environment.ProcessId}|{mugetsuPid}");
+    }
 
     private void SendHeadlessStateToHost()
     {

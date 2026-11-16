@@ -426,9 +426,12 @@ public partial class MainWindow : Window
         }
         if (_flash is Flash.FlashUtil player)
         {
-            FlashHost?.AttachFlash(player);
             if (!player.IsPlayerRunning)
                 _flash.InitializeFlash();
+            if (string.IsNullOrEmpty(App.HostPipeName) || HotKeys.IsDetachedMode)
+                FlashHost?.AttachFlash(player);
+            else if (player.PlayerPid > 0)
+                SendMugetsuPidToHost(player.PlayerPid);
         }
         else
         {

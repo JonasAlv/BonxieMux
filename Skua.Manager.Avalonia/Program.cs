@@ -221,7 +221,17 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "crash_manager.txt"), ex.ToString());
+            Console.Error.WriteLine(ex);
+            try
+            {
+                string crashDir = Directory.Exists(Skua.Core.Models.ClientFileSources.SkuaDIR)
+                    ? Skua.Core.Models.ClientFileSources.SkuaDIR
+                    : Path.GetTempPath();
+                File.WriteAllText(Path.Combine(crashDir, "crash_manager.txt"), ex.ToString());
+            }
+            catch
+            {
+            }
         }
     }
 
