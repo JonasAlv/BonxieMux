@@ -53,6 +53,10 @@ assemble_payload() {
     local local_player="${SKUA_PLAYER_LOCAL:-}"
     local local_player_v2="${SKUA_PLAYER_V2_LOCAL:-}"
 
+    echo "--- Cleaning Build directory ($BUILD_DIR) ---"
+    rm -rf "$BUILD_DIR"
+    mkdir -p "$BUILD_DIR"
+
     # Compile AS3 game client if Apache Flex SDK is available and sources changed
     if command -v mxmlc &>/dev/null || [[ -n "${FLEX_HOME:-}" ]] || [[ -d "/opt/apache-flex-sdk" ]]; then
         if [[ ! -s "$SWF_SOURCE" ]] || [[ -n "$(find "$SCRIPT_DIR/Skua.AS3/skua/src" -type f -newer "$SWF_SOURCE" -print -quit 2>/dev/null)" ]]; then
