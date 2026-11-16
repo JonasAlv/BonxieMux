@@ -38,50 +38,6 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
-    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-    public struct XSetWindowAttributes
-    {
-        public IntPtr background_pixmap;
-        public UIntPtr background_pixel;
-        public IntPtr border_pixmap;
-        public UIntPtr border_pixel;
-        public int bit_gravity;
-        public int win_gravity;
-        public int backing_store;
-        public UIntPtr backing_planes;
-        public UIntPtr backing_pixel;
-        public int save_under;
-        public IntPtr event_mask;
-        public IntPtr do_not_propagate_mask;
-        public int override_redirect;
-        public IntPtr colormap;
-        public IntPtr cursor;
-    }
-
-    [System.Runtime.InteropServices.DllImport("libX11.so.6")]
-    public static extern IntPtr XOpenDisplay(IntPtr display);
-
-    [System.Runtime.InteropServices.DllImport("libX11.so.6")]
-    public static extern int XCloseDisplay(IntPtr display);
-
-    [System.Runtime.InteropServices.DllImport("libX11.so.6")]
-    public static extern int XUnmapWindow(IntPtr display, IntPtr w);
-
-    [System.Runtime.InteropServices.DllImport("libX11.so.6")]
-    public static extern int XMapWindow(IntPtr display, IntPtr w);
-
-    [System.Runtime.InteropServices.DllImport("libX11.so.6")]
-    public static extern int XReparentWindow(IntPtr display, IntPtr w, IntPtr parent, int x, int y);
-
-    [System.Runtime.InteropServices.DllImport("libX11.so.6")]
-    public static extern int XChangeWindowAttributes(IntPtr display, IntPtr w, UIntPtr valuemask, ref XSetWindowAttributes attributes);
-
-    [System.Runtime.InteropServices.DllImport("libX11.so.6")]
-    public static extern int XSync(IntPtr display, int discard);
-
-    [System.Runtime.InteropServices.DllImport("libX11.so.6")]
-    public static extern int XFlush(IntPtr display);
-
     public static System.IO.FileStream? HostLockStream;
     public static string? HostInstanceId { get; private set; }
     public static string HostPipeName { get; private set; } = System.IO.Path.Combine(ClientFileSources.TabsDIR, "host.pipe");
@@ -265,6 +221,8 @@ public partial class App : Application
 
             if (hasEmbedFlag)
             {
+                desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
                 // Child instance
                 Views.MainWindow mainChild = new()
                 {
@@ -276,46 +234,36 @@ public partial class App : Application
                     Height = 1,
                     Opacity = 0,
                     Position = new global::Avalonia.PixelPoint(-32000, -32000),
-                    SystemDecorations = global::Avalonia.Controls.SystemDecorations.None,
+                    WindowDecorations = global::Avalonia.Controls.WindowDecorations.None,
                     ShowInTaskbar = false,
                     ShowActivated = false
                 };
+                mainChild.Closed += (_, _) => desktop.Shutdown();
                 desktop.MainWindow = mainChild;
                 mainChild.HideTitleBar();
 
-                mainChild.Opened += (s, ev) => 
+                mainChild.Opened += (s, ev) =>
                 {
                     IntPtr childHwnd = mainChild.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
-                    if (childHwnd != IntPtr.Zero)
+                    if (childHwnd == IntPtr.Zero)
+                        childHwnd = new IntPtr(Environment.ProcessId);
+
+                    mainChild.Opacity = 1;
+
+                    try
                     {
-                        if (embedHwnd != 0)
-                        {
-                            try
-                            {
-                                IntPtr disp = XOpenDisplay(IntPtr.Zero);
-                                if (disp != IntPtr.Zero)
-                                {
-                                    XUnmapWindow(disp, childHwnd);
-                                    XSync(disp, 0);
-                                    XReparentWindow(disp, childHwnd, new IntPtr(embedHwnd), -32000, -32000);
-                                    XSync(disp, 0);
-                                    XCloseDisplay(disp);
-                                }
-                            }
-                            catch { }
-                        }
-
-                        // Restore Opacity once reparented into the host window
-                        mainChild.Opacity = 1;
-
-                        try
-                        {
-                            string dir = ClientFileSources.TabsDIR;
-                            string file = System.IO.Path.Combine(dir, $"ready_{Environment.ProcessId}.txt");
-                            System.IO.File.WriteAllText(file, childHwnd.ToInt64().ToString());
-                        }
-                        catch { }
+                        string dir = ClientFileSources.TabsDIR;
+                        System.IO.Directory.CreateDirectory(dir);
+                        string file = System.IO.Path.Combine(dir, $"ready_{Environment.ProcessId}.txt");
+                        System.IO.File.WriteAllText(file, childHwnd.ToInt64().ToString());
                     }
+                    catch { }
+
+                    global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        if (!Skua.Core.AppStartup.HotKeys.IsDetachedMode)
+                            mainChild.Hide();
+                    }, global::Avalonia.Threading.DispatcherPriority.Background);
                 };
 
                 if (hostPid != 0)

@@ -27,6 +27,32 @@ internal static class AvaloniaUi
     {
         window.Background = Background;
         window.Classes.Add("skua");
+        window.WindowDecorations = WindowDecorations.None;
+        window.ExtendClientAreaToDecorationsHint = true;
+        window.ExtendClientAreaTitleBarHeightHint = 32;
+        Skua.Shared.Avalonia.Services.WindowResizeHelper.Attach(window);
+    }
+
+    public static void SetWindowContent(Window window, Control body, string title)
+    {
+        var titleBar = new Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar
+        {
+            TitleText = title,
+        };
+        Grid.SetRow(titleBar, 0);
+        Grid.SetRow(body, 1);
+
+        var shell = new Grid
+        {
+            RowDefinitions = new RowDefinitions("Auto,*"),
+        };
+        shell.Children.Add(titleBar);
+        shell.Children.Add(body);
+
+        var frame = new Border();
+        frame.Classes.Add("window-frame");
+        frame.Child = shell;
+        window.Content = frame;
     }
 
     public static TextBlock TextBlock(double size, IBrush? foreground = null) => new()

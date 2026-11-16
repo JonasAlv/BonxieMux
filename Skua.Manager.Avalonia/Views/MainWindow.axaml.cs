@@ -42,7 +42,6 @@ public partial class MainWindow : Window
         StrongReferenceMessenger.Default.Register<MainWindow, ExitManagerMessage>(this, AllowClose);
 
         Skua.Shared.Avalonia.Services.WindowPlacementHelper.CenterOnActiveScreen(this);
-        Skua.Shared.Avalonia.Services.X11WindowPositionTracker.Track(this);
 
         Opened += (s, e) =>
         {

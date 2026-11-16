@@ -41,6 +41,7 @@ public partial class MainWindow : Window
     private DateTime _lastScriptRunning = DateTime.MinValue;
     private bool _isFlashLoaded;
     private bool _isTitleBarPermanentlyHidden = false;
+    private bool _openedInitialized;
 
     public void HideTitleBar()
     {
@@ -179,7 +180,7 @@ public partial class MainWindow : Window
                     Height = 14,
                     VerticalAlignment = VerticalAlignment.Center
                 };
-                icon[!MaterialIcon.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaTextBrush");
+                icon[!MaterialIcon.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaAccentBrush");
 
                 var text = new TextBlock
                 {
@@ -270,18 +271,24 @@ public partial class MainWindow : Window
 
         Deactivated += (s, e) =>
         {
-            _isWindowFocused = false;
             CloseDropdowns();
-            ReleaseAllPressedKeys();
-            Skua.App.Avalonia.Controls.GameHost.ForwardFocus(false);
-            Dispatcher.UIThread.Post(UpdateQualityFocusState);
+            if (string.IsNullOrEmpty(App.HostPipeName) || HotKeys.IsDetachedMode)
+            {
+                _isWindowFocused = false;
+                ReleaseAllPressedKeys();
+                Skua.App.Avalonia.Controls.GameHost.ForwardFocus(false);
+                Dispatcher.UIThread.Post(UpdateQualityFocusState);
+            }
         };
         Activated += (s, e) =>
         {
-            _isWindowFocused = true;
-            ReleaseAllPressedKeys();
-            Skua.App.Avalonia.Controls.GameHost.ForwardFocus(true);
-            Dispatcher.UIThread.Post(UpdateQualityFocusState);
+            if (string.IsNullOrEmpty(App.HostPipeName) || HotKeys.IsDetachedMode)
+            {
+                _isWindowFocused = true;
+                ReleaseAllPressedKeys();
+                Skua.App.Avalonia.Controls.GameHost.ForwardFocus(true);
+                Dispatcher.UIThread.Post(UpdateQualityFocusState);
+            }
         };
 
         PropertyChanged += (s, e) =>
@@ -297,34 +304,42 @@ public partial class MainWindow : Window
             notifyOptions.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName is nameof(IScriptOption.AutoHeadless)
-                    or nameof(IScriptOption.AutoHeadlessBackgroundTabs)
-                    or nameof(IScriptOption.AutoHeadlessGridView)
-                    or nameof(IScriptOption.AutoHeadlessWhenMinimized)
-                    or nameof(IScriptOption.AutoHeadlessLiftOnFocus))
+                    or nameof(IScriptOption.AutoHeadlessExcludeFocused)
+                    or nameof(IScriptOption.AutoHeadlessExcludeGridView))
                 {
-                    Dispatcher.UIThread.Post(EvaluateAutoHeadless);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        EvaluateAutoHeadless();
+                        UpdateQualityFocusState();
+                    });
                 }
                 else if (e.PropertyName is nameof(IScriptOption.HeadlessMode) or Skua.Core.Scripts.ScriptOption.AutoHeadlessActiveChanged)
                 {
-                    bool resetHeld = e.PropertyName == nameof(IScriptOption.HeadlessMode) && !_options.HeadlessMode;
                     if (Dispatcher.UIThread.CheckAccess())
-                        UpdateHeadlessHostVisibility(resetHeld);
+                        UpdateHeadlessHostVisibility();
                     else
-                        Dispatcher.UIThread.Post(() => UpdateHeadlessHostVisibility(resetHeld));
+                        Dispatcher.UIThread.Post(UpdateHeadlessHostVisibility);
+                }
+
+                if (!string.IsNullOrEmpty(App.HostPipeName) && Skua.Core.Scripts.ScriptOption.IsGlobalSyncedOption(e.PropertyName))
+                {
+                    try
+                    {
+                        var prop = _options.GetType().GetProperty(e.PropertyName!);
+                        if (prop is not null)
+                        {
+                            string valStr = Convert.ToString(prop.GetValue(_options), System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
+                            SendPipeToHost($"GLOBAL_OPT|{e.PropertyName}|{valStr}");
+                        }
+                    }
+                    catch { }
                 }
             };
         }
     }
 
-    private void UpdateHeadlessHostVisibility(bool resetHeld)
+    private void UpdateHeadlessHostVisibility()
     {
-        // Turning manual headless off also releases an automatic headless hold.
-        // Otherwise a tab can remain hidden after it becomes visible again.
-        if (resetHeld)
-        {
-            _autoHeadlessHeld = false;
-            EvaluateAutoHeadless();
-        }
         bool isHeadless = _options.IsHeadlessNow();
         if (HeadlessOverlay != null) HeadlessOverlay.IsVisible = isHeadless;
         if (FlashHost != null)
@@ -339,10 +354,16 @@ public partial class MainWindow : Window
                 _options.EnforceRenderState(flushGamePref: false);
             }
         }
+        SyncHostedVisibility();
+        SendHeadlessStateToHost();
     }
 
     private void MainWindow_Opened(object? sender, EventArgs e)
     {
+        if (_openedInitialized)
+            return;
+        _openedInitialized = true;
+
         _startup.Execute();
         HotKeys.OpenCommandPaletteRequested = () => Dispatcher.UIThread.Post(() =>
         {
@@ -404,8 +425,15 @@ public partial class MainWindow : Window
                 FlashHost.Focus();
         }
         if (_flash is Flash.FlashUtil player)
-            player.ParentWindow = FlashHost?.WindowHandle ?? 0;
-        _flash.InitializeFlash();
+        {
+            FlashHost?.AttachFlash(player);
+            if (!player.IsPlayerRunning)
+                _flash.InitializeFlash();
+        }
+        else
+        {
+            _flash.InitializeFlash();
+        }
         TabIpc.StartListener(this, Environment.ProcessId, _ipcCancelCts.Token);
 
         _ = Task.Run(() => RunBackgroundTabSyncLoopAsync(_ipcCancelCts.Token));
@@ -481,7 +509,7 @@ public partial class MainWindow : Window
         {
             while (!ct.IsCancellationRequested)
             {
-                await Task.Delay(700, ct).ConfigureAwait(false);
+                await Task.Delay(200, ct).ConfigureAwait(false);
                 ApplySharedOptionCommands();
             }
         }
@@ -536,12 +564,15 @@ public partial class MainWindow : Window
             var commands = Skua.Core.Services.OptionSharing.Take(Environment.ProcessId);
             if (commands.Count == 0)
                 return;
-            foreach (var command in commands)
+            Dispatcher.UIThread.Post(() =>
             {
-                try { Skua.Core.Services.OptionSharing.Apply(_options, command); }
-                catch { }
-            }
-            PublishSharedOptions();
+                foreach (var command in commands)
+                {
+                    try { Skua.Core.Services.OptionSharing.Apply(_options, command); }
+                    catch { }
+                }
+                PublishSharedOptions();
+            });
         }
         catch { }
     }

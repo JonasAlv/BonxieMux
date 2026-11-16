@@ -18,7 +18,7 @@
                     <TextBox Grid.Column="0"
                              Height="34"
                              VerticalContentAlignment="Center"
-                             Watermark="Filter logged packets..."
+                             PlaceholderText="Filter logged packets..."
                              Text="{Binding PacketSearchText}" />
                     <Border Grid.Column="1"
                             Background="{DynamicResource SkuaSurfaceAltBrush}"
@@ -125,7 +125,7 @@
                                 Foreground="{DynamicResource SkuaMutedTextBrush}" />
                     <TextBox Height="34"
                              VerticalContentAlignment="Center"
-                             Watermark="Search filter tags..."
+                             PlaceholderText="Search filter tags..."
                              Text="{Binding FilterSearchText}" />
                 </StackPanel>
             

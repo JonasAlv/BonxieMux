@@ -64,7 +64,7 @@
 
             <!-- Row 1: Search Packets -->
             <TextBox Grid.Row="1"
-                     Watermark="Search packets..."
+                     PlaceholderText="Search packets..."
                      Text="{Binding PacketSearchText, UpdateSourceTrigger=PropertyChanged}" />
 
             <!-- Row 2: Log Packets Toggle, Visual Legend, & Clear -->
@@ -173,7 +173,7 @@
             
             <!-- Row 0: Search Filters -->
             <TextBox Grid.Row="0"
-                     Watermark="Search filters..."
+                     PlaceholderText="Search filters..."
                      Text="{Binding FilterSearchText, UpdateSourceTrigger=PropertyChanged}" />
 
             <!-- Row 1: Filters List -->

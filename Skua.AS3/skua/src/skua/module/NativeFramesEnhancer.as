@@ -292,6 +292,12 @@ public class NativeFramesEnhancer extends Module {
             hpClip.addChild(txtEnhancedHP);
         }
 
+        var txtEnhancedShield:TextField = hpClip.getChildByName("_txtEnhancedShield") as TextField;
+        if (txtEnhancedShield == null) {
+            txtEnhancedShield = createOverlayField("_txtEnhancedShield", strIntHP, TextFormatAlign.CENTER, 0x7DD3FC);
+            hpClip.addChild(txtEnhancedShield);
+        }
+
         var txtEnhancedPct:TextField = hpClip.getChildByName("_txtEnhancedPct") as TextField;
         if (txtEnhancedPct == null) {
             txtEnhancedPct = createOverlayField("_txtEnhancedPct", strIntHP, TextFormatAlign.RIGHT);
@@ -299,12 +305,29 @@ public class NativeFramesEnhancer extends Module {
         }
 
         var fieldH:Number = (strIntHP.height > 0) ? strIntHP.height : 16.0;
+        var shieldReserve:Number = (shield > 0) ? 54.0 : 0.0;
 
         txtEnhancedHP.visible = true;
         txtEnhancedHP.x = 3.0;
         txtEnhancedHP.y = strIntHP.y;
-        txtEnhancedHP.width = barW - rightReserve - 5.0;
+        txtEnhancedHP.width = Math.max(40.0, barW - rightReserve - shieldReserve - 5.0);
         txtEnhancedHP.height = fieldH;
+
+        if (shield > 0) {
+            txtEnhancedShield.visible = true;
+            var centeredShieldX:Number = (barW - shieldReserve) * 0.5;
+            var maxShieldX:Number = barW - rightReserve - shieldReserve - 1.0;
+            txtEnhancedShield.x = Math.max(46.0, Math.min(centeredShieldX, maxShieldX));
+            txtEnhancedShield.y = strIntHP.y;
+            txtEnhancedShield.width = shieldReserve;
+            txtEnhancedShield.height = fieldH;
+            var shieldText:String = "+" + formatNumber(shield, 1000);
+            if (txtEnhancedShield.text != shieldText) {
+                txtEnhancedShield.text = shieldText;
+            }
+        } else {
+            txtEnhancedShield.visible = false;
+        }
 
         txtEnhancedPct.visible = true;
         txtEnhancedPct.x = barW - 35.0;
@@ -312,13 +335,7 @@ public class NativeFramesEnhancer extends Module {
         txtEnhancedPct.width = 33.0;
         txtEnhancedPct.height = fieldH;
 
-        var hpStr:String;
-        if (hp <= 0) {
-            hpStr = "0 / " + formatNumber(maxHp);
-        } else {
-            var shieldStr:String = (shield > 0) ? (" +" + formatNumber(shield)) : "";
-            hpStr = formatNumber(hp) + " / " + formatNumber(maxHp) + shieldStr;
-        }
+        var hpStr:String = (hp <= 0) ? "0" : formatNumber(hp, 10000);
         if (txtEnhancedHP.text != hpStr) {
             txtEnhancedHP.text = hpStr;
         }
@@ -331,7 +348,7 @@ public class NativeFramesEnhancer extends Module {
         }
     }
 
-    private static function createOverlayField(name:String, template:TextField, align:String):TextField {
+    private static function createOverlayField(name:String, template:TextField, align:String, color:uint = 0xFFFFFF):TextField {
         var field:TextField = new TextField();
         field.name = name;
         field.selectable = false;
@@ -342,7 +359,7 @@ public class NativeFramesEnhancer extends Module {
         var fontName:String = (srcFmt != null && srcFmt.font != null && srcFmt.font != "") ? srcFmt.font : "_sans";
         var fontSize:* = (srcFmt != null && srcFmt.size != null) ? srcFmt.size : 10;
 
-        var fmt:TextFormat = new TextFormat(fontName, fontSize, 0xFFFFFF, true);
+        var fmt:TextFormat = new TextFormat(fontName, fontSize, color, true);
         fmt.align = align;
         field.defaultTextFormat = fmt;
         field.setTextFormat(fmt);
@@ -372,6 +389,8 @@ public class NativeFramesEnhancer extends Module {
             }
             var oldHP:* = hpClip.getChildByName("_txtEnhancedHP");
             if (oldHP != null) oldHP.visible = false;
+            var oldShield:* = hpClip.getChildByName("_txtEnhancedShield");
+            if (oldShield != null) oldShield.visible = false;
             var oldPct:* = hpClip.getChildByName("_txtEnhancedPct");
             if (oldPct != null) oldPct.visible = false;
             if (hpClip.intHPbar != null && hpClip.intHPbar.transform != null) {
@@ -380,18 +399,13 @@ public class NativeFramesEnhancer extends Module {
         } catch (err:Error) {}
     }
 
-    private static function formatNumber(n:int):String {
+    private static function formatNumber(n:int, kThreshold:int = 10000):String {
         if (n < 0) return "0";
-        if (n >= 10000000) {
-            return String(Math.round(n / 1000000)) + "M";
-        }
         if (n >= 1000000) {
-            var m:Number = Math.round(n / 100000) / 10.0;
-            return m + "M";
+            return (n / 1000000.0).toFixed(2) + "M";
         }
-        if (n >= 100000) {
-            var k:Number = Math.round(n / 1000);
-            return k + "k";
+        if (n >= kThreshold) {
+            return (n / 1000.0).toFixed(2) + "k";
         }
         var s:String = String(n);
         var len:int = s.length;

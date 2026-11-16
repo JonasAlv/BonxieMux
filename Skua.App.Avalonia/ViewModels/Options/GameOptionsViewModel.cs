@@ -26,10 +26,10 @@ public class GameOptionsViewModel : BotControlViewModelBase
 
     // Sections by IScriptOption property name; options not listed go to Gameplay.
     private static readonly string[] VisualsOptions = { "LagKiller", "HidePlayers", "OptimizePlayers", "DisableFX", "DisableCollisions", "ShowFPS", "SetFPS" };
-    private static readonly string[] TweaksOptions = { "AntiLag", "AutoAntiLag", "AutoAntiLagLiftOnFocus", "DamageNumbers", "CompactNumbers", "UnitFrameHealth", "MovableTargetFrame" };
+    private static readonly string[] TweaksOptions = { "AntiLag", "AutoAntiLag", "AutoAntiLagExcludeFocused", "AutoAntiLagExcludeGridView", "DamageNumbers", "CompactNumbers", "UnitFrameHealth", "MovableTargetFrame" };
     private static readonly string[] HeadlessOptions =
     {
-        "HeadlessMode", "AutoHeadless", "AutoHeadlessBackgroundTabs", "AutoHeadlessGridView", "AutoHeadlessWhenMinimized", "AutoHeadlessLiftOnFocus"
+        "HeadlessMode", "AutoHeadless", "AutoHeadlessExcludeFocused", "AutoHeadlessExcludeGridView"
     };
     private static readonly string[] CombatOptions = { "AggroMonsters", "AggroAllMonsters", "AttackWithoutTarget", "InfiniteRange", "Magnetise", "HuntDelay", "HuntBuffer", "RestPackets", "SafeTimings" };
     private static readonly string[] DropsOptions = { "AcceptACDrops", "AcceptAllDrops", "RejectAllDrops", "RejectNonACDrops", "PickupACDropsAndSendToBank" };
@@ -241,7 +241,7 @@ public class GameOptionsViewModel : BotControlViewModelBase
 
         _stageQualityItem = new CBOChoiceOptionItemViewModel(
             "Flash Stage Quality",
-            "Flash rendering quality (LOW, MEDIUM, HIGH, AUTO). Synced with in-game Visuals and applied globally across clients.",
+            "Flash rendering quality (LOW, MEDIUM, HIGH, AUTO). Enforces your chosen quality on the focused tab, forces unfocused tabs to LOW, and stays synced globally with in-game Visuals.",
             nameof(IScriptOption.StageQuality),
             QualityOptions,
             index);

@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Skua.App.Avalonia.ViewModels.Options;
 using Skua.Core.Interfaces;
@@ -15,6 +16,8 @@ using System.Reflection;
 
 namespace Skua.App.Avalonia.AppStartup;
 
+public sealed record AppSettingChangedMessage(string Key, object? Value);
+
 internal class Options
 {
     // The Headless tab of the Game options. Headless Mode is the manual switch; the others are automatic headless, which
@@ -22,14 +25,13 @@ internal class Options
     private static readonly Dictionary<string, (string Label, string Description)> HeadlessTexts = new()
     {
         [nameof(IScriptOption.HeadlessMode)] = ("Headless Mode", "Manual. Hides this client's game and drops it to 2 fps until you turn it off. Automatic headless never turns it off."),
-        [nameof(IScriptOption.AutoHeadless)] = ("Auto Headless", "Master switch. Puts this client in headless by itself while its tab is not showing, following the switches below. Off, nothing below does anything."),
-        [nameof(IScriptOption.AutoHeadlessBackgroundTabs)] = ("Headless for background tabs", "Needs Auto Headless. A tab that is not the selected one goes headless."),
-        [nameof(IScriptOption.AutoHeadlessGridView)] = ("Grid View counts as showing", "Needs Auto Headless. While Grid View is on, every tile stays live. Off, Grid View does not count as showing and forces headless mode during Grid View."),
-        [nameof(IScriptOption.AutoHeadlessWhenMinimized)] = ("Headless when minimized or in the tray", "Needs Auto Headless. All tabs go headless while the tab window is minimized or hidden in the tray."),
-        [nameof(IScriptOption.AutoHeadlessLiftOnFocus)] = ("Showing a tab ends headless", "Needs Auto Headless. Selecting a tab takes it out of automatic headless. Off, it stays headless until Auto Headless is turned off or you switch Headless Mode off."),
+        [nameof(IScriptOption.AutoHeadless)] = ("Auto Headless", "Master switch. Puts all tabs in headless automatically based on focus, using the exclusions below."),
+        [nameof(IScriptOption.AutoHeadlessExcludeFocused)] = ("Exclude focused tab", "Needs Auto Headless. Focusing a tab disables Auto Headless for that tab."),
+        [nameof(IScriptOption.AutoHeadlessExcludeGridView)] = ("Exclude Grid View", "Needs Auto Headless. Keeps Grid View tiles out of Auto Headless while the window is focused."),
         [nameof(IScriptOption.AntiLag)] = ("Anti-Lag", "Manual. Applies the full Anti-Lag bundle (Lag Killer, disabled animations, hidden monsters, Crowd Mode) across all tabs until you turn it off."),
-        [nameof(IScriptOption.AutoAntiLag)] = ("Auto Anti-Lag", "Master switch. Automatically turns on Anti-Lag for tabs while they are not showing."),
-        [nameof(IScriptOption.AutoAntiLagLiftOnFocus)] = ("Showing a tab ends Auto Anti-Lag", "Needs Auto Anti-Lag. Selecting a tab restores its normal visuals and animations. Off, it stays in Anti-Lag even when focused until Auto Anti-Lag or Anti-Lag is turned off.")
+        [nameof(IScriptOption.AutoAntiLag)] = ("Auto Anti-Lag", "Master switch. Applies Anti-Lag to all tabs automatically based on focus, using the exclusions below."),
+        [nameof(IScriptOption.AutoAntiLagExcludeFocused)] = ("Exclude focused tab", "Needs Auto Anti-Lag. Focusing a tab disables Auto Anti-Lag for that tab."),
+        [nameof(IScriptOption.AutoAntiLagExcludeGridView)] = ("Exclude Grid View", "Needs Auto Anti-Lag. Keeps Grid View tiles out of Auto Anti-Lag while the window is focused.")
     };
 
     internal static GameOptionsViewModel CreateGameOptions(IServiceProvider s)
@@ -87,7 +89,8 @@ internal class Options
     {
         List<DisplayOptionItemViewModelBase> appOptions = new()
         {
-            CreateSettingOptionItem<bool>("Show Username in Title", "Whether to display logged-in character name in window title", "ShowUsernameInTitle"),
+            CreateSettingOptionItem<bool>("Show Character Name on Tabs", "Display each tab's logged-in character name instead of Tab 1, Tab 2, ... (hidden automatically when Streamer Mode is on)", "ShowCharNameOnTabs", true),
+            CreateSettingOptionItem<bool>("Show Character Name in Detached Title", "Display the logged-in character name next to BonxieMux in detached client window title bars (hidden automatically when Streamer Mode is on)", "ShowCharNameInDetachedTitle"),
             CreateSettingOptionItem<bool>("Save Logs to File", "Append Script and Debug logs to BonxieMux's logs folder in the background", "SaveLogsToFile"),
             CreateSettingOptionItem<bool>("Auto Update Scripts", "Whether to auto update scripts when launching the Manager or the game client (the client asks first when this is off), needs \"Check for Scripts Updates\" to be true", "AutoUpdateBotScripts"),
             CreateSettingOptionItem<bool>("Check for Script Updates", "Whether to check for scripts updates when launching the Manager or the game client", "CheckBotScriptsUpdates"),
@@ -168,7 +171,11 @@ internal class Options
 
         return new ApplicationOptionsViewModel(appOptions);
 
-        static RelayCommand<T> CreateSettingCommand<T>(string key) => new(b => Ioc.Default.GetRequiredService<ISettingsService>().Set(key, b));
-        static CommandOptionItemViewModel<T> CreateSettingOptionItem<T>(string content, string description, string key) => new(content, description, key, (IRelayCommand)CreateSettingCommand<T>(key), Ioc.Default.GetRequiredService<ISettingsService>().Get<T>(key));
+        static RelayCommand<T> CreateSettingCommand<T>(string key) => new(b =>
+        {
+            Ioc.Default.GetRequiredService<ISettingsService>().Set(key, b);
+            StrongReferenceMessenger.Default.Send(new AppSettingChangedMessage(key, b));
+        });
+        static CommandOptionItemViewModel<T> CreateSettingOptionItem<T>(string content, string description, string key, T defaultValue = default!) => new(content, description, key, (IRelayCommand)CreateSettingCommand<T>(key), Ioc.Default.GetRequiredService<ISettingsService>().Get(key, defaultValue));
     }
 }

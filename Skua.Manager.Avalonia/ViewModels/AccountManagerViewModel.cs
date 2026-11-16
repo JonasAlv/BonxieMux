@@ -1151,7 +1151,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
         if (services != null)
         {
             windowService.RegisterManagedWindow("Script Repo", services.GetRequiredService<ScriptRepoViewModel>());
-            windowService.RegisterManagedWindow("Application Themes", services.GetRequiredService<ApplicationThemesViewModel>());
         }
 
         windowService?.ShowManagedWindow("Script Repo");

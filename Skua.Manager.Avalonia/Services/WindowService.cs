@@ -104,9 +104,8 @@ public class WindowService : IWindowService
         {
             Title = title,
             CanResize = true,
-            SystemDecorations = SystemDecorations.BorderOnly,
+            WindowDecorations = WindowDecorations.None,
             ExtendClientAreaToDecorationsHint = true,
-            ExtendClientAreaChromeHints = global::Avalonia.Platform.ExtendClientAreaChromeHints.NoChrome,
             ExtendClientAreaTitleBarHeightHint = 32,
             Width = width,
             Height = height,

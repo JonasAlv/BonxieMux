@@ -105,7 +105,7 @@
       <!-- Renames on Enter or when the field loses focus, not on every keystroke -->
       <TextBox Grid.Row="1"
                Text="{Binding SelectedLoadoutName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-               Watermark="Select a loadout to inspect"
+               PlaceholderText="Select a loadout to inspect"
                IsEnabled="{Binding SelectedLoadout, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
       <Border Grid.Row="2"

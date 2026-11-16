@@ -45,7 +45,7 @@ public class DamageNumbers extends Module {
     // Colors
     private static const COLOR_HIT:uint           = 0xFFFFFF; // Crisp white (native AQW: 16777215)
     private static const COLOR_CRIT:uint          = 0xFF9944; // Native AQW radiant orange (16750916)
-    private static const COLOR_HEAL:uint          = 0x00FF8A; // Native AQW vibrant green (65450)
+    private static const COLOR_HEAL:uint          = 0x00FFAA; // Native AQW vibrant green (65450)
     private static const COLOR_DOT:uint           = 0xEE9900; // Native AQW DoT amber/orange (15636736)
     private static const COLOR_AVOID:uint         = 0xEF4444; // Native AQW red (Dodge/Miss/Parry/Block)
     private static const COLOR_AVOID_OUT:uint     = COLOR_AVOID;
@@ -439,6 +439,9 @@ public class DamageNumbers extends Module {
         }
     }
 
+    private static var _lastSelfHealKey:String = "";
+    private static var _lastSelfHealTime:int = 0;
+
     private static function processSingleResult(game:*, r:*):void {
         if (r == null) return;
         var act:* = ("actionResult" in r && r.actionResult != null) ? r.actionResult : r;
@@ -446,12 +449,16 @@ public class DamageNumbers extends Module {
         if ("iRes" in r && r.iRes != null && int(r.iRes) != 1) return;
         if ("iRes" in act && act.iRes != null && int(act.iRes) != 1) return;
 
+        var isDot:Boolean = (act.typ != null && String(act.typ) == "d");
+        var isHot:Boolean = (act.typ != null && String(act.typ) == "h");
+
         var cInf:String = (act.cInf != null) ? String(act.cInf) : "";
         var tInf:String = (act.tInf != null) ? String(act.tInf) : "";
         var hp:int = (act.hp != null) ? int(act.hp) : 0;
         var type:String = (act.type != null) ? String(act.type).toLowerCase() : "hit";
-        var isDot:Boolean = (act.typ != null && String(act.typ) == "d");
-        var isHot:Boolean = (act.typ != null && String(act.typ) == "h");
+        if (isDot && (type == "none" || type == "")) {
+            type = "dot";
+        }
 
         spawnCombatNumber(game, cInf, tInf, hp, type, isDot, isHot);
     }
@@ -474,6 +481,9 @@ public class DamageNumbers extends Module {
                 var type:String = (hit.type != null) ? String(hit.type).toLowerCase() : "hit";
                 var isDot:Boolean = (hit.typ != null && String(hit.typ) == "d");
                 var isHot:Boolean = (hit.typ != null && String(hit.typ) == "h");
+                if (isDot && (type == "none" || type == "")) {
+                    type = "dot";
+                }
                 spawnCombatNumber(game, cInf, tInf, hp, type, isDot, isHot);
             }
         }
@@ -551,7 +561,7 @@ public class DamageNumbers extends Module {
     }
 
     private static function spawnCombatNumber(game:*, cInf:String, tInf:String, hp:int, type:String, isDot:Boolean, isHot:Boolean = false):void {
-        if (tInf == "" || _container == null) return;
+        if (tInf == "" || _container == null || (!isDot && !isHot && type == "none")) return;
 
         var myUid:* = (game != null && game.sfc != null) ? game.sfc.myUserId : null;
         var myTag:String = (myUid != null) ? ("p:" + myUid) : "";
@@ -576,6 +586,16 @@ public class DamageNumbers extends Module {
         var isDecayed:Boolean = isHealAction && hasDecayAura(game, tInf);
         var isInvertedHeal:Boolean = isHealAction && (hp > 0 || isDecayed);
         var isNormalHeal:Boolean = isHealAction && !isInvertedHeal;
+
+        if (isNormalHeal && isTargetingMe) {
+            var nowMs:int = getTimer();
+            var healKey:String = cInf + "|" + tInf + "|" + hp;
+            if (healKey == _lastSelfHealKey && (nowMs - _lastSelfHealTime) < 80) {
+                return;
+            }
+            _lastSelfHealKey = healKey;
+            _lastSelfHealTime = nowMs;
+        }
 
         var targetMC:* = getTargetMC(game, tInf);
         if (targetMC == null || targetMC.stage == null) return;

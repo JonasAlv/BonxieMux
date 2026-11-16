@@ -232,7 +232,7 @@
     <Style Selector="MenuItem materialIcons|MaterialIcon,
                    ContextMenu materialIcons|MaterialIcon,
                    MenuFlyoutPresenter materialIcons|MaterialIcon">
-        <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
     </Style>
 
     <Style Selector="MenuItem MenuItem:pointerover, ContextMenu MenuItem:pointerover, MenuFlyoutPresenter MenuItem:pointerover">
@@ -243,7 +243,7 @@
     <Style Selector="MenuItem MenuItem:pointerover materialIcons|MaterialIcon,
                    ContextMenu MenuItem:pointerover materialIcons|MaterialIcon,
                    MenuFlyoutPresenter MenuItem:pointerover materialIcons|MaterialIcon">
-        <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
     </Style>
 
     <Style Selector="MenuItem MenuItem:selected, ContextMenu MenuItem:selected, MenuFlyoutPresenter MenuItem:selected">
@@ -254,7 +254,7 @@
     <Style Selector="MenuItem MenuItem:selected materialIcons|MaterialIcon,
                    ContextMenu MenuItem:selected materialIcons|MaterialIcon,
                    MenuFlyoutPresenter MenuItem:selected materialIcons|MaterialIcon">
-        <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
     </Style>
 
     <!-- Checkbox / radio items (e.g. Misc Options submenu) -->

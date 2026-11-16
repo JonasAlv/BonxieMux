@@ -31,7 +31,7 @@ public sealed class CommandPaletteWindow : Window
         CanResize = false;
         ShowInTaskbar = false;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        SystemDecorations = SystemDecorations.BorderOnly;
+        WindowDecorations = global::Avalonia.Controls.WindowDecorations.None;
         this[!BackgroundProperty] = new DynamicResourceExtension("SkuaPageBrush");
 
         var panel = new StackPanel { Orientation = Orientation.Vertical };
