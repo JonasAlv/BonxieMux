@@ -1305,6 +1305,19 @@ public partial class TabbedHostWindow : Window
                                     Dispatcher.UIThread.Post(() => ApplyChildJumpState(childPid, json));
                                 }
                             }
+                            else if (line.StartsWith("MUGETSU_SETTING|", StringComparison.Ordinal))
+                            {
+                                string[] parts = line.Split('|', 3);
+                                if (parts.Length == 3)
+                                {
+                                    var payload = new { input = "mugetsu_setting", name = parts[1], value = parts[2] };
+                                    foreach (TabInfo tab in _tabs.Values)
+                                    {
+                                        if (tab.Process is { HasExited: false } proc)
+                                            TabIpc.SendInput(proc.Id, payload);
+                                    }
+                                }
+                            }
                             else if (line.StartsWith("HEADLESS_STATE|", StringComparison.Ordinal))
                             {
                                 string[] parts = line.Split('|');
