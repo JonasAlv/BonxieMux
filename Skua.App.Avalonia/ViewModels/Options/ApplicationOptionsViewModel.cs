@@ -46,7 +46,18 @@ public class OptionGroupViewModel
 
 public partial class ApplicationOptionsViewModel : BotControlViewModelBase
 {
-    private static readonly string[] GeneralKeys = { "ShowCharNameOnTabs", "ShowCharNameInDetachedTitle", "SaveLogsToFile", "ClientAnim", "ReloginTryDelay", "ReloginWatchdog", "ClearFlashCache", "GraphicsApi" };
+    private static readonly string[] GeneralKeys = { "ShowCharNameOnTabs", "ShowCharNameInDetachedTitle", "SaveLogsToFile", "ClientAnim", "ReloginTryDelay", "ReloginWatchdog", "ClearFlashCache" };
+    private static readonly string[] MugetsuKeys =
+    {
+        "GraphicsApi",
+        "MugetsuPerformanceMode",
+        "MugetsuFrameInterpolation",
+        "MugetsuFramePacing",
+        "MugetsuFpsLimit",
+        "MugetsuMemoryLimitMb",
+        "MugetsuFreeMemoryNow",
+        "MugetsuShowFps"
+    };
     private static readonly string[] UpdateKeys =
     {
         "CheckBotScriptsUpdates", "AutoUpdateBotScripts", "CheckAdvanceSkillSetsUpdates", "AutoUpdateAdvanceSkillSetsUpdates",
@@ -103,7 +114,8 @@ public partial class ApplicationOptionsViewModel : BotControlViewModelBase
         List<DisplayOptionItemViewModelBase> InSection(string[] keys) =>
             keys.Select(k => ApplicationOptions.FirstOrDefault(i => i.Tag == k)).OfType<DisplayOptionItemViewModelBase>().ToList();
         List<DisplayOptionItemViewModelBase> updateItems = InSection(UpdateKeys);
-        List<DisplayOptionItemViewModelBase> generalItems = ApplicationOptions.Except(updateItems).ToList();
+        List<DisplayOptionItemViewModelBase> mugetsuItems = InSection(MugetsuKeys);
+        List<DisplayOptionItemViewModelBase> generalItems = ApplicationOptions.Except(updateItems).Except(mugetsuItems).ToList();
 
         OptionGroups = new List<OptionGroupViewModel>
         {
@@ -114,15 +126,28 @@ public partial class ApplicationOptionsViewModel : BotControlViewModelBase
                 Description = "Client interface, animation frame rates, relogin timings, and cache",
                 ShortTitle = "General",
                 Items = generalItems
-            },
-            new()
-            {
-                Title = "Auto Updates & Sync",
-                Icon = "CloudSyncOutline",
-                Description = "Automatic synchronization for bot scripts, skill sets, and item database",
-                ShortTitle = "Updates",
-                Items = updateItems
             }
         };
+
+        if (mugetsuItems.Count > 0)
+        {
+            OptionGroups.Add(new OptionGroupViewModel
+            {
+                Title = "Mugetsu Player",
+                Icon = "FlashOutline",
+                Description = "Graphics API, performance scaling, frame interpolation/pacing, memory limit, and FPS overlay (synced with Mugetsu)",
+                ShortTitle = "Mugetsu",
+                Items = mugetsuItems
+            });
+        }
+
+        OptionGroups.Add(new OptionGroupViewModel
+        {
+            Title = "Auto Updates & Sync",
+            Icon = "CloudSyncOutline",
+            Description = "Automatic synchronization for bot scripts, skill sets, and item database",
+            ShortTitle = "Updates",
+            Items = updateItems
+        });
     }
 }

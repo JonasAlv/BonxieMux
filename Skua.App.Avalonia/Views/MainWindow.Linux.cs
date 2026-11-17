@@ -1008,6 +1008,18 @@ public partial class MainWindow : Window
     private static readonly System.Collections.Concurrent.BlockingCollection<string> _hostPipeQueue = new();
     private static int _hostPipeWorkerStarted;
 
+    internal static void BroadcastMugetsuSetting(string name, string value)
+    {
+        if (!string.IsNullOrEmpty(App.HostPipeName))
+        {
+            SendPipeToHost($"MUGETSU_SETTING|{name}|{value}");
+        }
+        else if (Ioc.Default.GetService<IFlashUtil>() is Flash.FlashUtil player)
+        {
+            player.SendInput(new { input = "mugetsu_setting", name, value });
+        }
+    }
+
     private void SendMugetsuPidToHost(int mugetsuPid)
     {
         if (!string.IsNullOrEmpty(App.HostPipeName) && mugetsuPid > 0)
