@@ -27,7 +27,7 @@ use wayland_server::{
         wl_compositor::{self, WlCompositor},
         wl_keyboard::{self, KeyState, KeymapFormat, WlKeyboard},
         wl_output::{self, Mode, Subpixel, WlOutput},
-        wl_pointer::{self, Axis, ButtonState, WlPointer},
+        wl_pointer::{self, Axis, AxisSource, ButtonState, WlPointer},
         wl_region::{self, WlRegion},
         wl_seat::{self, Capability, WlSeat},
         wl_shm::{self, Format, WlShm},
@@ -430,11 +430,43 @@ fn handle_input(state: &mut DmabufState, ev: DmabufInput) {
             }
         }
         DmabufInput::PointerScroll { dx, dy } => {
+            if !state.pointer_entered {
+                if let Some(surface) = state.main_surface.clone() {
+                    let serial = state.next_serial();
+                    for ptr in &state.pointers {
+                        ptr.enter(serial, &surface, 0.0, 0.0);
+                        ptr.frame();
+                    }
+                    state.pointer_entered = true;
+                }
+            }
+            let discrete_y = if dy.abs() > f64::EPSILON {
+                let steps = (-dy / 15.0).round() as i32;
+                if steps != 0 { steps } else if dy > 0.0 { -1 } else { 1 }
+            } else {
+                0
+            };
+            let discrete_x = if dx.abs() > f64::EPSILON {
+                let steps = (dx / 15.0).round() as i32;
+                if steps != 0 { steps } else if dx > 0.0 { 1 } else { -1 }
+            } else {
+                0
+            };
             for ptr in &state.pointers {
+                let has_v5 = ptr.version() >= 5;
+                if has_v5 {
+                    ptr.axis_source(AxisSource::Wheel);
+                }
                 if dy.abs() > f64::EPSILON {
+                    if has_v5 {
+                        ptr.axis_discrete(Axis::VerticalScroll, discrete_y);
+                    }
                     ptr.axis(time, Axis::VerticalScroll, -dy);
                 }
                 if dx.abs() > f64::EPSILON {
+                    if has_v5 {
+                        ptr.axis_discrete(Axis::HorizontalScroll, discrete_x);
+                    }
                     ptr.axis(time, Axis::HorizontalScroll, dx);
                 }
                 ptr.frame();

@@ -11,6 +11,7 @@ using Avalonia.Threading;
 using Skua.App.Avalonia.Flash;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.MemoryMappedFiles;
@@ -55,6 +56,7 @@ public class GameHost : Control, ICustomHitTest
     private int _lastSentWidth;
     private int _lastSentHeight;
     private bool? _lastSentVisible;
+    private readonly HashSet<uint> _pressedEvdevKeys = new();
     private readonly double[] _frameIntervalsMs = new double[512];
     private int _intervalWriteIdx;
     private int _intervalCount;
@@ -275,6 +277,20 @@ public class GameHost : Control, ICustomHitTest
 
     public static void ForwardKey(bool down, string physical, string logical, bool ctrl, bool shift, bool alt)
     {
+        if (_activeInstance is { _waylandHost: nint wlHost } && wlHost != IntPtr.Zero)
+        {
+            uint evdev = MapKeyToEvdev(physical, logical);
+            if (evdev != 0)
+            {
+                if (down)
+                    _activeInstance._pressedEvdevKeys.Add(evdev);
+                else
+                    _activeInstance._pressedEvdevKeys.Remove(evdev);
+                BonxieWaylandNative.Key(wlHost, evdev, down ? (byte)1 : (byte)0);
+            }
+            return;
+        }
+
         _activeInstance?.DispatchInput(new
         {
             input = "key",
@@ -293,6 +309,8 @@ public class GameHost : Control, ICustomHitTest
 
     public static void ForwardText(string text)
     {
+        if (_activeInstance is { _waylandHost: nint wlHost } && wlHost != IntPtr.Zero)
+            return;
         if (string.IsNullOrEmpty(text))
             return;
         _activeInstance?.DispatchInput(new { input = "text", text });
@@ -300,12 +318,103 @@ public class GameHost : Control, ICustomHitTest
 
     public static void ForwardFocus(bool focused)
     {
+        if (_activeInstance is { _waylandHost: nint wlHost } && wlHost != IntPtr.Zero)
+            return;
         _activeInstance?.DispatchInput(new { input = "focus", focused });
     }
 
     public static void ForwardClearKeys()
     {
+        if (_activeInstance is { _waylandHost: nint wlHost } && wlHost != IntPtr.Zero)
+        {
+            foreach (uint code in _activeInstance._pressedEvdevKeys)
+                BonxieWaylandNative.Key(wlHost, code, 0);
+            _activeInstance._pressedEvdevKeys.Clear();
+            return;
+        }
         _activeInstance?.DispatchInput(new { input = "clear_keys" });
+    }
+
+    private static readonly Dictionary<string, uint> EvdevKeyMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Escape"] = 1,
+        ["Digit1"] = 2, ["D1"] = 2, ["1"] = 2,
+        ["Digit2"] = 3, ["D2"] = 3, ["2"] = 3,
+        ["Digit3"] = 4, ["D3"] = 4, ["3"] = 4,
+        ["Digit4"] = 5, ["D4"] = 5, ["4"] = 5,
+        ["Digit5"] = 6, ["D5"] = 6, ["5"] = 6,
+        ["Digit6"] = 7, ["D6"] = 7, ["6"] = 7,
+        ["Digit7"] = 8, ["D7"] = 8, ["7"] = 8,
+        ["Digit8"] = 9, ["D8"] = 9, ["8"] = 9,
+        ["Digit9"] = 10, ["D9"] = 10, ["9"] = 10,
+        ["Digit0"] = 11, ["D0"] = 11, ["0"] = 11,
+        ["Minus"] = 12, ["OemMinus"] = 12, ["-"] = 12,
+        ["Equal"] = 13, ["OemPlus"] = 13, ["="] = 13,
+        ["Backspace"] = 14, ["Back"] = 14,
+        ["Tab"] = 15,
+        ["Q"] = 16, ["W"] = 17, ["E"] = 18, ["R"] = 19, ["T"] = 20, ["Y"] = 21, ["U"] = 22, ["I"] = 23, ["O"] = 24, ["P"] = 25,
+        ["BracketLeft"] = 26, ["OemOpenBrackets"] = 26, ["["] = 26,
+        ["BracketRight"] = 27, ["OemCloseBrackets"] = 27, ["]"] = 27,
+        ["Enter"] = 28, ["Return"] = 28,
+        ["ControlLeft"] = 29, ["LeftCtrl"] = 29,
+        ["A"] = 30, ["S"] = 31, ["D"] = 32, ["F"] = 33, ["G"] = 34, ["H"] = 35, ["J"] = 36, ["K"] = 37, ["L"] = 38,
+        ["Semicolon"] = 39, ["OemSemicolon"] = 39, [";"] = 39,
+        ["Quote"] = 40, ["OemQuotes"] = 40, ["'"] = 40,
+        ["Backquote"] = 41, ["OemTilde"] = 41, ["`"] = 41,
+        ["ShiftLeft"] = 42, ["LeftShift"] = 42,
+        ["Backslash"] = 43, ["OemPipe"] = 43, ["\\"] = 43,
+        ["Z"] = 44, ["X"] = 45, ["C"] = 46, ["V"] = 47, ["B"] = 48, ["N"] = 49, ["M"] = 50,
+        ["Comma"] = 51, ["OemComma"] = 51, [","] = 51,
+        ["Period"] = 52, ["OemPeriod"] = 52, ["."] = 52,
+        ["Slash"] = 53, ["OemQuestion"] = 53, ["/"] = 53,
+        ["ShiftRight"] = 54, ["RightShift"] = 54,
+        ["NumpadMultiply"] = 55, ["Multiply"] = 55,
+        ["AltLeft"] = 56, ["LeftAlt"] = 56,
+        ["Space"] = 57, [" "] = 57,
+        ["CapsLock"] = 58, ["Capital"] = 58,
+        ["F1"] = 59, ["F2"] = 60, ["F3"] = 61, ["F4"] = 62, ["F5"] = 63, ["F6"] = 64, ["F7"] = 65, ["F8"] = 66, ["F9"] = 67, ["F10"] = 68,
+        ["NumLock"] = 69,
+        ["ScrollLock"] = 70, ["Scroll"] = 70,
+        ["Numpad7"] = 71, ["NumPad7"] = 71,
+        ["Numpad8"] = 72, ["NumPad8"] = 72,
+        ["Numpad9"] = 73, ["NumPad9"] = 73,
+        ["NumpadSubtract"] = 74, ["Subtract"] = 74,
+        ["Numpad4"] = 75, ["NumPad4"] = 75,
+        ["Numpad5"] = 76, ["NumPad5"] = 76,
+        ["Numpad6"] = 77, ["NumPad6"] = 77,
+        ["NumpadAdd"] = 78, ["Add"] = 78,
+        ["Numpad1"] = 79, ["NumPad1"] = 79,
+        ["Numpad2"] = 80, ["NumPad2"] = 80,
+        ["Numpad3"] = 81, ["NumPad3"] = 81,
+        ["Numpad0"] = 82, ["NumPad0"] = 82,
+        ["NumpadDecimal"] = 83, ["Decimal"] = 83,
+        ["F11"] = 87, ["F12"] = 88,
+        ["NumpadEnter"] = 96,
+        ["ControlRight"] = 97, ["RightCtrl"] = 97,
+        ["NumpadDivide"] = 98, ["Divide"] = 98,
+        ["PrintScreen"] = 99, ["Snapshot"] = 99,
+        ["AltRight"] = 100, ["RightAlt"] = 100,
+        ["Home"] = 102,
+        ["ArrowUp"] = 103, ["Up"] = 103,
+        ["PageUp"] = 104,
+        ["ArrowLeft"] = 105, ["Left"] = 105,
+        ["ArrowRight"] = 106, ["Right"] = 106,
+        ["End"] = 107,
+        ["ArrowDown"] = 108, ["Down"] = 108,
+        ["PageDown"] = 109, ["Next"] = 109,
+        ["Insert"] = 110,
+        ["Delete"] = 111,
+        ["MetaLeft"] = 125, ["LWin"] = 125,
+        ["MetaRight"] = 126, ["RWin"] = 126,
+    };
+
+    private static uint MapKeyToEvdev(string physical, string logical)
+    {
+        if (!string.IsNullOrEmpty(physical) && EvdevKeyMap.TryGetValue(physical, out uint code))
+            return code;
+        if (!string.IsNullOrEmpty(logical) && EvdevKeyMap.TryGetValue(logical, out code))
+            return code;
+        return 0;
     }
 
     public void SetScaleMode(bool isExactFit = false)
