@@ -276,7 +276,6 @@ public partial class MainWindow : Window
             {
                 _isWindowFocused = false;
                 ReleaseAllPressedKeys();
-                Skua.App.Avalonia.Controls.GameHost.ForwardFocus(false);
                 Dispatcher.UIThread.Post(UpdateQualityFocusState);
             }
         };
@@ -286,7 +285,6 @@ public partial class MainWindow : Window
             {
                 _isWindowFocused = true;
                 ReleaseAllPressedKeys();
-                Skua.App.Avalonia.Controls.GameHost.ForwardFocus(true);
                 Dispatcher.UIThread.Post(UpdateQualityFocusState);
             }
         };

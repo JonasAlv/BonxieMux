@@ -1,46 +1,67 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Platform;
-using Avalonia.Rendering;
 using Avalonia.Threading;
 using Skua.App.Avalonia.Flash;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace Skua.App.Avalonia.Controls;
 
-/// <summary>
-/// X11/Avalonia game viewport. Captures Mugetsu's offscreen X11 window via
-/// <c>libbonxie_x11.so</c> (XComposite + DRI3 DMA-BUF) and presents frames
-/// inside Avalonia's OpenGL context via <see cref="OpenGlControlBase"/>,
-/// forwarding all input through <see cref="FlashUtil.SendInput"/> or <see cref="Services.TabIpc.SendInput"/>.
-/// </summary>
-public class GameHost : Control, ICustomHitTest
+internal static partial class BonxieX11Native
 {
-    public bool HitTest(Point point) => new Rect(Bounds.Size).Contains(point);
+    private const string Lib = "bonxie_x11";
 
+    [LibraryImport(Lib, EntryPoint = "bonxie_x11_start")]
+    public static partial IntPtr Start(uint childPid, uint parentXid, uint width, uint height);
+
+    [LibraryImport(Lib, EntryPoint = "bonxie_x11_stop")]
+    public static partial void Stop(IntPtr host);
+
+    [LibraryImport(Lib, EntryPoint = "bonxie_x11_resize")]
+    public static partial void Resize(IntPtr host, uint width, uint height);
+
+    [LibraryImport(Lib, EntryPoint = "bonxie_x11_set_click_callback")]
+    public static partial void SetClickCallback(IntPtr host, IntPtr cb, nuint userData);
+
+    [LibraryImport(Lib, EntryPoint = "bonxie_x11_focus")]
+    public static partial void FocusWindow(uint xid);
+
+    [LibraryImport(Lib, EntryPoint = "bonxie_x11_state")]
+    public static partial int GetState(IntPtr host);
+}
+
+/// <summary>
+/// X11 NativeControlHost on Linux. Creates a child X11 window positioned strictly inside
+/// <see cref="GameHost"/>'s layout bounds and reparents Mugetsu's X11 window directly into it
+/// via <c>libbonxie_x11.so</c> (supports both standalone and tabbed remote-client viewports).
+/// </summary>
+public class GameHost : NativeControlHost
+{
     private static GameHost? _activeInstance;
     private static readonly ConcurrentDictionary<int, int> _pendingRemotePlayerPids = new();
-    private static (PixelRect Bounds, uint RefreshMhz)[] _cachedOutputs = Array.Empty<(PixelRect, uint)>();
 
     private FlashUtil? _flash;
     private readonly int _remoteChildPid;
     private int _remotePlayerPid;
     private IntPtr _x11Host;
+    private uint _childXid;
     private int _attachedPid;
-    private X11DmabufViewport? _glViewport;
+    private Window? _ownerWindow;
+    private GCHandle _selfHandle;
     private DispatcherTimer? _resizeDebounceTimer;
+    private DispatcherTimer? _attachMonitorTimer;
+    private int _attachRetryCount;
     private int _pendingResizeW;
     private int _pendingResizeH;
     private int _lastSentWidth;
     private int _lastSentHeight;
-    private bool? _lastSentVisible;
 
     public static event Action? GameClicked;
+    public event Action? Clicked;
 
-    public nint WindowHandle => 0;
+    public nint WindowHandle => (nint)_childXid;
 
     public GameHost() : this(0)
     {
@@ -49,7 +70,6 @@ public class GameHost : Control, ICustomHitTest
     public GameHost(int remoteChildPid)
     {
         Focusable = true;
-        ClipToBounds = true;
         _remoteChildPid = remoteChildPid;
         if (remoteChildPid <= 0)
         {
@@ -67,71 +87,32 @@ public class GameHost : Control, ICustomHitTest
             _pendingRemotePlayerPids[childPid] = mugetsuPid;
     }
 
-    public static unsafe uint DetectDisplayRefreshMhz(Window? window = null)
-    {
-        (PixelRect Bounds, uint RefreshMhz)[] outputs = GetDisplayOutputs();
-        if (outputs.Length == 0)
-            return 60_000;
-
-        if (window != null)
-        {
-            Screen? screen = window.Screens?.ScreenFromWindow(window) ?? window.Screens?.Primary;
-            if (screen != null)
-            {
-                PixelRect sb = screen.Bounds;
-                for (int i = 0; i < outputs.Length; i++)
-                {
-                    if (outputs[i].Bounds == sb)
-                        return outputs[i].RefreshMhz;
-                }
-                PixelPoint center = sb.Center;
-                for (int i = 0; i < outputs.Length; i++)
-                {
-                    if (outputs[i].Bounds.Contains(center))
-                        return outputs[i].RefreshMhz;
-                }
-                for (int i = 0; i < outputs.Length; i++)
-                {
-                    if (outputs[i].Bounds.Intersects(sb))
-                        return outputs[i].RefreshMhz;
-                }
-            }
-        }
-
-        return outputs[0].RefreshMhz;
-    }
-
-    private static unsafe (PixelRect Bounds, uint RefreshMhz)[] GetDisplayOutputs()
-    {
-        if (_cachedOutputs.Length > 0)
-            return _cachedOutputs;
-
-        var list = new List<(PixelRect Bounds, uint RefreshMhz)>();
-        try
-        {
-            BonxieOutputInfo* buf = stackalloc BonxieOutputInfo[16];
-            int count = BonxieX11Native.QueryOutputs(buf, 16);
-            for (int i = 0; i < count; i++)
-            {
-                list.Add((
-                    new PixelRect(buf[i].X, buf[i].Y, (int)buf[i].Width, (int)buf[i].Height),
-                    buf[i].RefreshMhz > 0 ? buf[i].RefreshMhz : 60_000));
-            }
-        }
-        catch { }
-
-        if (list.Count > 0)
-            _cachedOutputs = list.ToArray();
-        return _cachedOutputs;
-    }
-
     public void SetActiveInstance() => _activeInstance = this;
+
+    protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
+    {
+        IPlatformHandle handle = base.CreateNativeControlCore(parent);
+        if (OperatingSystem.IsLinux())
+        {
+            _childXid = (uint)handle.Handle;
+            EnsureX11HostStarted();
+            SendResizeIfNeeded();
+        }
+        return handle;
+    }
+
+    protected override void DestroyNativeControlCore(IPlatformHandle control)
+    {
+        StopX11Host();
+        _childXid = 0;
+        base.DestroyNativeControlCore(control);
+    }
 
     public void AttachFlash(FlashUtil flash)
     {
         _flash = flash;
         EnsureX11HostStarted();
-        SendResizeIfNeeded();
+        UpdateHostedVisibility();
     }
 
     public void AttachRemotePlayerPid(int mugetsuPid)
@@ -140,30 +121,57 @@ public class GameHost : Control, ICustomHitTest
             return;
         _remotePlayerPid = mugetsuPid;
         EnsureX11HostStarted();
-        SendResizeIfNeeded();
+        UpdateHostedVisibility();
     }
+
+    private int TargetPid => _remoteChildPid > 0 ? _remotePlayerPid : (_flash?.PlayerPid ?? 0);
 
     private void EnsureX11HostStarted()
     {
-        int pid = _remoteChildPid > 0 ? _remotePlayerPid : (_flash?.PlayerPid ?? 0);
-        if (pid <= 0 || pid == _attachedPid)
+        if (!OperatingSystem.IsLinux())
             return;
+
+        int pid = TargetPid;
+        if (_childXid == 0 || pid <= 0)
+            return;
+
+        if (pid == _attachedPid && _x11Host != IntPtr.Zero)
+        {
+            try
+            {
+                if (BonxieX11Native.GetState(_x11Host) >= 0)
+                    return;
+            }
+            catch
+            {
+                return;
+            }
+        }
 
         StopX11Host();
 
         double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
         int bw = (int)Math.Round(Bounds.Width * scale);
         int bh = (int)Math.Round(Bounds.Height * scale);
+        if (bw <= 2 && _ownerWindow != null)
+        {
+            bw = (int)Math.Round(_ownerWindow.ClientSize.Width * scale);
+            bh = (int)Math.Round(Math.Max(240, (_ownerWindow.ClientSize.Height - 64) * scale));
+        }
         uint w = (uint)Math.Max(320, bw > 2 ? bw : _lastSentWidth);
         uint h = (uint)Math.Max(240, bh > 2 ? bh : _lastSentHeight);
 
+        bool startThrew = false;
         try
         {
-            _x11Host = BonxieX11Native.Start((uint)pid, w, h);
+            _x11Host = BonxieX11Native.Start((uint)pid, _childXid, w, h);
         }
-        catch
+        catch (Exception ex)
         {
+            startThrew = true;
+            System.Diagnostics.Trace.WriteLine($"Skua.X11Host failed to start: {ex}");
             _x11Host = IntPtr.Zero;
+            ShowEmbedErrorDialog();
         }
 
         if (_x11Host != IntPtr.Zero)
@@ -171,29 +179,107 @@ public class GameHost : Control, ICustomHitTest
             _attachedPid = pid;
             _lastSentWidth = -1;
             _lastSentHeight = -1;
-            _glViewport = new X11DmabufViewport(_x11Host);
-            LogicalChildren.Add(_glViewport);
-            VisualChildren.Add(_glViewport);
-            InvalidateMeasure();
-            InvalidateArrange();
+            if (!_selfHandle.IsAllocated)
+                _selfHandle = GCHandle.Alloc(this);
+            unsafe
+            {
+                delegate* unmanaged[Cdecl]<nuint, void> cb = &OnX11Clicked;
+                BonxieX11Native.SetClickCallback(_x11Host, (IntPtr)cb, (nuint)(IntPtr)_selfHandle);
+            }
+            StartAttachMonitor();
+        }
+        else if (!startThrew)
+        {
+            System.Diagnostics.Trace.WriteLine($"Skua.X11Host failed to start for pid {pid}: BonxieX11Native.Start returned null.");
+            if (_attachRetryCount < 3)
+            {
+                _attachRetryCount++;
+                StartAttachMonitor();
+            }
+            else
+            {
+                _attachRetryCount = 0;
+                ShowEmbedErrorDialog();
+            }
+        }
+    }
+
+    private static void ShowEmbedErrorDialog()
+    {
+        CommunityToolkit.Mvvm.DependencyInjection.Ioc.Default
+            .GetService<Skua.Core.Interfaces.IDialogService>()?
+            .ShowMessageBox("Failed to embed the Mugetsu game window into BonxieMux.", "Game Host Error");
+    }
+
+    private void StartAttachMonitor()
+    {
+        _attachMonitorTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        _attachMonitorTimer.Tick -= OnAttachMonitorTick;
+        _attachMonitorTimer.Tick += OnAttachMonitorTick;
+        _attachMonitorTimer.Start();
+    }
+
+    private void OnAttachMonitorTick(object? sender, EventArgs e)
+    {
+        if (_x11Host == IntPtr.Zero)
+        {
+            _attachMonitorTimer?.Stop();
+            EnsureX11HostStarted();
+            return;
+        }
+        int state;
+        try { state = BonxieX11Native.GetState(_x11Host); }
+        catch { _attachMonitorTimer?.Stop(); return; }
+
+        if (state == 1)
+        {
+            _attachRetryCount = 0;
+            _attachMonitorTimer?.Stop();
+        }
+        else if (state < 0)
+        {
+            _attachMonitorTimer?.Stop();
+            if (_attachRetryCount < 3)
+            {
+                _attachRetryCount++;
+                EnsureX11HostStarted();
+            }
+            else
+            {
+                _attachRetryCount = 0;
+                ShowEmbedErrorDialog();
+            }
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void OnX11Clicked(nuint userData)
+    {
+        if (userData == 0)
+            return;
+        if (GCHandle.FromIntPtr((IntPtr)userData).Target is GameHost host)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                host.Focus();
+                host.Clicked?.Invoke();
+                GameClicked?.Invoke();
+            });
         }
     }
 
     private void StopX11Host()
     {
-        if (_glViewport != null)
-        {
-            VisualChildren.Remove(_glViewport);
-            LogicalChildren.Remove(_glViewport);
-            _glViewport = null;
-        }
-
+        _attachMonitorTimer?.Stop();
         if (_x11Host != IntPtr.Zero)
         {
             IntPtr h = _x11Host;
             _x11Host = IntPtr.Zero;
+            try { BonxieX11Native.SetClickCallback(h, IntPtr.Zero, 0); } catch { }
             try { BonxieX11Native.Stop(h); } catch { }
         }
+        if (_selfHandle.IsAllocated)
+            _selfHandle.Free();
         _attachedPid = 0;
     }
 
@@ -208,193 +294,89 @@ public class GameHost : Control, ICustomHitTest
         StopX11Host();
     }
 
-    private void DispatchInput(object payload)
-    {
-        if (_flash != null)
-            _flash.SendInput(payload);
-        else if (_remoteChildPid > 0)
-            Skua.App.Avalonia.Services.TabIpc.SendInput(_remoteChildPid, payload);
-    }
+    public void RefreshLayout() => SendResizeIfNeeded();
 
-    public static void ForwardKey(bool down, string physical, string logical, bool ctrl, bool shift, bool alt)
-    {
-        _activeInstance?.DispatchInput(new
-        {
-            input = "key",
-            down,
-            code = physical,
-            key = logical,
-            ctrl,
-            shift,
-            alt
-        });
-        if (down && !ctrl && !alt && logical.Length == 1 && !char.IsControl(logical[0]))
-        {
-            _activeInstance?.DispatchInput(new { input = "text", text = logical });
-        }
-    }
-
-    public static void ForwardText(string text)
-    {
-        if (!string.IsNullOrEmpty(text))
-            _activeInstance?.DispatchInput(new { input = "text", text });
-    }
-
-    public static void ForwardFocus(bool focused) =>
-        _activeInstance?.DispatchInput(new { input = "focus", focused });
-
-    public static void ForwardClearKeys() =>
-        _activeInstance?.DispatchInput(new { input = "clear_keys" });
+    public void ForceRefreshFrame() => SendResizeIfNeeded();
 
     public void SetScaleMode(bool isExactFit = false)
     {
     }
 
-    public void SetHostedVisible(bool visible)
+    public void SetHostedVisible(bool visible) => UpdateHostedVisibility();
+
+    public void FocusHostWindow()
     {
-        if (_remoteChildPid > 0)
+        if (!OperatingSystem.IsLinux())
             return;
-        if (_lastSentVisible == visible)
-            return;
-        _lastSentVisible = visible;
-        DispatchInput(new { input = "visible", visible });
-    }
-
-    public void RefreshLayout()
-    {
-        EnsureX11HostStarted();
-        SendResizeIfNeeded();
-        if (_glViewport != null && _glViewport.HasPendingFrame())
-            _glViewport.RequestNextFrameRendering();
-    }
-
-    public void ForceRefreshFrame()
-    {
-        EnsureX11HostStarted();
-        _resizeDebounceTimer?.Stop();
-        _lastSentWidth = -1;
-        _lastSentHeight = -1;
-        SendResizeIfNeeded();
-        _glViewport?.RequestNextFrameRendering();
-    }
-
-    protected override Size MeasureOverride(Size availableSize)
-    {
-        _glViewport?.Measure(availableSize);
-        double w = double.IsInfinity(availableSize.Width) ? (_glViewport?.DesiredSize.Width ?? 0) : availableSize.Width;
-        double h = double.IsInfinity(availableSize.Height) ? (_glViewport?.DesiredSize.Height ?? 0) : availableSize.Height;
-        return new Size(w, h);
-    }
-
-    protected override Size ArrangeOverride(Size finalSize)
-    {
-        _glViewport?.Arrange(new Rect(finalSize));
-        return finalSize;
+        try
+        {
+            if (TopLevel.GetTopLevel(this)?.TryGetPlatformHandle()?.Handle is nint h && h != 0)
+                BonxieX11Native.FocusWindow((uint)h);
+        }
+        catch { }
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == IsVisibleProperty && IsVisible)
-        {
-            _glViewport?.RequestNextFrameRendering();
-            ForceRefreshFrame();
-        }
+        if (change.Property == IsVisibleProperty)
+            UpdateHostedVisibility();
+    }
+
+    private void OnOwnerWindowPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == Window.WindowStateProperty || e.Property == IsVisibleProperty)
+            UpdateHostedVisibility();
+    }
+
+    private bool IsHostEffectivelyVisible =>
+        IsVisible && (_ownerWindow is null || (_ownerWindow.IsVisible && _ownerWindow.WindowState != WindowState.Minimized));
+
+    private void UpdateHostedVisibility()
+    {
+        if (IsHostEffectivelyVisible)
+            SendResizeIfNeeded();
+        else
+            _resizeDebounceTimer?.Stop();
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        if (_remoteChildPid <= 0 || IsVisible)
-            _activeInstance = this;
+        DetachOwnerWindow();
+        _ownerWindow = TopLevel.GetTopLevel(this) as Window;
+        if (_ownerWindow != null)
+            _ownerWindow.PropertyChanged += OnOwnerWindowPropertyChanged;
         EnsureX11HostStarted();
-        if (IsVisible)
-            _glViewport?.RequestNextFrameRendering();
-        SendResizeIfNeeded();
+        UpdateHostedVisibility();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
+        DetachOwnerWindow();
         _resizeDebounceTimer?.Stop();
-        if (_activeInstance == this)
-            _activeInstance = null;
+        StopX11Host();
+    }
+
+    private void DetachOwnerWindow()
+    {
+        if (_ownerWindow != null)
+        {
+            _ownerWindow.PropertyChanged -= OnOwnerWindowPropertyChanged;
+            _ownerWindow = null;
+        }
     }
 
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
         SendResizeIfNeeded();
-        if (_glViewport != null)
-            _glViewport.RequestNextFrameRendering();
-        else
-            InvalidateVisual();
-    }
-
-    protected override void OnPointerMoved(PointerEventArgs e)
-    {
-        base.OnPointerMoved(e);
-        if (_flash is null && _remoteChildPid <= 0)
-            return;
-        double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
-        Point p = e.GetPosition(this);
-        DispatchInput(new { input = "mouse_move", x = p.X * scale, y = p.Y * scale });
-    }
-
-    protected override void OnPointerPressed(PointerPressedEventArgs e)
-    {
-        base.OnPointerPressed(e);
-        _activeInstance = this;
-        Focus();
-        GameClicked?.Invoke();
-        if (_flash is null && _remoteChildPid <= 0)
-            return;
-
-        double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
-        Point p = e.GetPosition(this);
-        PointerUpdateKind kind = e.GetCurrentPoint(this).Properties.PointerUpdateKind;
-
-        DispatchInput(new { input = "mouse_move", x = p.X * scale, y = p.Y * scale });
-        string button = kind switch
-        {
-            PointerUpdateKind.RightButtonPressed => "right",
-            PointerUpdateKind.MiddleButtonPressed => "middle",
-            _ => "left"
-        };
-        DispatchInput(new { input = "mouse_btn", button, down = true });
-    }
-
-    protected override void OnPointerReleased(PointerReleasedEventArgs e)
-    {
-        base.OnPointerReleased(e);
-        if (_flash is null && _remoteChildPid <= 0)
-            return;
-        PointerUpdateKind kind = e.GetCurrentPoint(this).Properties.PointerUpdateKind;
-        string button = kind switch
-        {
-            PointerUpdateKind.RightButtonReleased => "right",
-            PointerUpdateKind.MiddleButtonReleased => "middle",
-            _ => "left"
-        };
-        DispatchInput(new { input = "mouse_btn", button, down = false });
-    }
-
-    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
-    {
-        base.OnPointerWheelChanged(e);
-        if (_flash is null && _remoteChildPid <= 0)
-            return;
-        DispatchInput(new
-        {
-            input = "mouse_wheel",
-            dx = e.Delta.X * 40.0,
-            dy = e.Delta.Y * 40.0
-        });
     }
 
     private void SendResizeIfNeeded()
     {
-        if ((_flash is null && _remoteChildPid <= 0) || !IsVisible)
+        if (!OperatingSystem.IsLinux() || TargetPid <= 0 || !IsHostEffectivelyVisible)
             return;
         double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
         int w = (int)Math.Round(Bounds.Width * scale);
@@ -408,13 +390,12 @@ public class GameHost : Control, ICustomHitTest
             _lastSentHeight = h;
             if (_x11Host != IntPtr.Zero)
                 BonxieX11Native.Resize(_x11Host, (uint)w, (uint)h);
-            DispatchInput(new { input = "resize", w, h });
             return;
         }
 
         _pendingResizeW = w;
         _pendingResizeH = h;
-        _resizeDebounceTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
+        _resizeDebounceTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
         _resizeDebounceTimer.Tick -= OnResizeDebounceTick;
         _resizeDebounceTimer.Tick += OnResizeDebounceTick;
         _resizeDebounceTimer.Stop();
@@ -424,7 +405,7 @@ public class GameHost : Control, ICustomHitTest
     private void OnResizeDebounceTick(object? sender, EventArgs e)
     {
         _resizeDebounceTimer?.Stop();
-        if ((_flash is null && _remoteChildPid <= 0) || !IsVisible)
+        if (!OperatingSystem.IsLinux() || TargetPid <= 0 || !IsHostEffectivelyVisible)
             return;
         int w = _pendingResizeW;
         int h = _pendingResizeH;
@@ -434,6 +415,5 @@ public class GameHost : Control, ICustomHitTest
         _lastSentHeight = h;
         if (_x11Host != IntPtr.Zero)
             BonxieX11Native.Resize(_x11Host, (uint)w, (uint)h);
-        DispatchInput(new { input = "resize", w, h });
     }
 }

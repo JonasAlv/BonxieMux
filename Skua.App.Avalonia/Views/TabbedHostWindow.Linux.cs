@@ -84,26 +84,7 @@ public partial class TabbedHostWindow : Window
 
         HostContainer.Child = _linuxHostGrid;
 
-        AddHandler(InputElement.KeyDownEvent, OnHostKeyDown, RoutingStrategies.Tunnel);
-        AddHandler(InputElement.KeyUpEvent, OnHostKeyUp, RoutingStrategies.Tunnel);
-
         Task.Run(SweepStaleProcessFiles);
-    }
-
-    private void OnHostKeyDown(object? sender, KeyEventArgs e)
-    {
-        if (FocusManager?.GetFocusedElement() is TextBox)
-            return;
-        if (e.Key == Key.Escape && (_gameOnly || WindowState == WindowState.FullScreen))
-            return;
-        MainWindow.ForwardLinuxKeyEvent(true, e);
-    }
-
-    private void OnHostKeyUp(object? sender, KeyEventArgs e)
-    {
-        if (FocusManager?.GetFocusedElement() is TextBox)
-            return;
-        MainWindow.ForwardLinuxKeyEvent(false, e);
     }
 
     private Border BuildDockedTopNavBar()
@@ -375,7 +356,7 @@ public partial class TabbedHostWindow : Window
         {
             IsVisible = false
         };
-        viewport.AddHandler(InputElement.PointerPressedEvent, (_, _) =>
+        void OnViewportActivated()
         {
             HotKeys.ActiveChildHwnd = childHwnd;
             viewport.SetActiveInstance();
@@ -393,7 +374,9 @@ public partial class TabbedHostWindow : Window
                     PublishChildVisibility(match.Key, activeGrid);
                 }
             }
-        }, RoutingStrategies.Tunnel, handledEventsToo: true);
+        }
+        viewport.Clicked += OnViewportActivated;
+        viewport.AddHandler(InputElement.PointerPressedEvent, (_, _) => OnViewportActivated(), RoutingStrategies.Tunnel, handledEventsToo: true);
         _linuxViewports[childHwnd] = viewport;
         _viewportCanvas.Children.Add(viewport);
 

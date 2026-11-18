@@ -70,7 +70,6 @@ public partial class MainWindow : Window
     private void InitializeLinuxInput()
     {
         AddHandler(InputElement.KeyDownEvent, OnLinuxKeyDown, RoutingStrategies.Tunnel);
-        AddHandler(InputElement.KeyUpEvent, OnLinuxKeyUp, RoutingStrategies.Tunnel);
         Skua.App.Avalonia.Controls.GameHost.GameClicked -= OnLinuxGameClicked;
         Skua.App.Avalonia.Controls.GameHost.GameClicked += OnLinuxGameClicked;
 
@@ -189,15 +188,7 @@ public partial class MainWindow : Window
 
     private void ReleaseAllPressedKeys()
     {
-        foreach (var key in _pressedKeys)
-        {
-            string keyStr = key.ToString();
-            string? symbol = TryMapSpecialKeyToSymbol(key);
-            string logical = !string.IsNullOrEmpty(symbol) ? symbol : (keyStr.Length == 1 && char.IsLetter(keyStr[0]) ? keyStr.ToLowerInvariant() : keyStr);
-            Skua.App.Avalonia.Controls.GameHost.ForwardKey(false, keyStr, logical, false, false, false);
-        }
         _pressedKeys.Clear();
-        Skua.App.Avalonia.Controls.GameHost.ForwardClearKeys();
     }
 
     private void OnLinuxKeyDown(object? sender, global::Avalonia.Input.KeyEventArgs e)
@@ -205,59 +196,11 @@ public partial class MainWindow : Window
         if (FocusManager?.GetFocusedElement() is TextBox)
             return;
 
-        if (FocusManager?.GetFocusedElement() is Button)
-            FlashHost?.Focus();
-
         if (e.Key == Key.Escape && HotKeys.IsDetachedMode && _gameOnly)
         {
             ToggleDetachedGameOnly();
             e.Handled = true;
-            return;
         }
-
-        _pressedKeys.Add(e.Key);
-        ForwardLinuxKeyEvent(true, e);
-    }
-
-    private void OnLinuxKeyUp(object? sender, global::Avalonia.Input.KeyEventArgs e)
-    {
-        _pressedKeys.Remove(e.Key);
-
-        if (FocusManager?.GetFocusedElement() is TextBox)
-            return;
-
-        ForwardLinuxKeyEvent(false, e);
-    }
-
-    public static void ForwardLinuxKeyEvent(bool down, global::Avalonia.Input.KeyEventArgs e)
-    {
-        bool ctrl = e.KeyModifiers.HasFlag(global::Avalonia.Input.KeyModifiers.Control);
-        bool shift = e.KeyModifiers.HasFlag(global::Avalonia.Input.KeyModifiers.Shift);
-        bool alt = e.KeyModifiers.HasFlag(global::Avalonia.Input.KeyModifiers.Alt);
-
-        string physical = e.PhysicalKey != global::Avalonia.Input.PhysicalKey.None
-            ? e.PhysicalKey.ToString()
-            : e.Key.ToString();
-
-        bool isNumPadDigit = e.Key is >= global::Avalonia.Input.Key.NumPad0 and <= global::Avalonia.Input.Key.NumPad9;
-        string? symbol = (!string.IsNullOrEmpty(e.KeySymbol) && e.KeySymbol.Length == 1 && !char.IsControl(e.KeySymbol[0]))
-            ? e.KeySymbol
-            : TryMapSpecialKeyToSymbol(e.Key);
-
-        string logical;
-        if (!string.IsNullOrEmpty(symbol))
-        {
-            logical = (shift && !isNumPadDigit) ? ApplyShiftToSymbol(symbol) : symbol;
-        }
-        else
-        {
-            string keyStr = e.Key.ToString();
-            logical = (keyStr.Length == 1 && char.IsLetter(keyStr[0]))
-                ? (shift ? keyStr.ToUpperInvariant() : keyStr.ToLowerInvariant())
-                : keyStr;
-        }
-
-        Skua.App.Avalonia.Controls.GameHost.ForwardKey(down, physical, logical, ctrl, shift, alt);
     }
 
     private static string? TryMapSpecialKeyToSymbol(global::Avalonia.Input.Key key) => key switch
@@ -891,7 +834,6 @@ public partial class MainWindow : Window
             bool focused = wParam != IntPtr.Zero;
             _isWindowFocused = focused;
             ReleaseAllPressedKeys();
-            Skua.App.Avalonia.Controls.GameHost.ForwardFocus(focused);
             Dispatcher.UIThread.Post(() =>
             {
                 if (focused)

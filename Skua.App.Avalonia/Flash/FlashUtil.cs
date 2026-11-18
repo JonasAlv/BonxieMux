@@ -44,9 +44,8 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
     private Process? _player;
     private int _acceptedPlayerPid;
     private StreamWriter? _bridge;
-    private string? _lastVisiblePayloadJson;
-    private string? _lastFocusPayloadJson;
-    private string? _lastResizePayloadJson;
+    private string? _pendingFreeMemoryPayloadJson;
+    private readonly Dictionary<string, string> _lastMugetsuSettings = new(StringComparer.Ordinal);
     private int _nextId;
     private readonly BridgeStats _stats = new();
 
@@ -347,12 +346,13 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
                 Interlocked.Exchange(ref _bridge, writer)?.Dispose();
                 try
                 {
-                    if (_lastResizePayloadJson != null)
-                        writer.WriteLine(_lastResizePayloadJson);
-                    if (_lastVisiblePayloadJson != null)
-                        writer.WriteLine(_lastVisiblePayloadJson);
-                    if (_lastFocusPayloadJson != null)
-                        writer.WriteLine(_lastFocusPayloadJson);
+                    foreach (string settingJson in _lastMugetsuSettings.Values)
+                        writer.WriteLine(settingJson);
+                    if (_pendingFreeMemoryPayloadJson != null)
+                    {
+                        writer.WriteLine(_pendingFreeMemoryPayloadJson);
+                        _pendingFreeMemoryPayloadJson = null;
+                    }
                 }
                 catch { }
             }
@@ -406,15 +406,22 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
     {
         try
         {
-            string json = JsonConvert.SerializeObject(payload);
+            JObject obj = JObject.FromObject(payload);
+            string? input = obj["input"]?.Value<string>();
+            string json = obj.ToString(Formatting.None);
             lock (_sendLock)
             {
-                if (json.Contains("\"input\":\"visible\"", StringComparison.Ordinal))
-                    _lastVisiblePayloadJson = json;
-                else if (json.Contains("\"input\":\"focus\"", StringComparison.Ordinal))
-                    _lastFocusPayloadJson = json;
-                else if (json.Contains("\"input\":\"resize\"", StringComparison.Ordinal))
-                    _lastResizePayloadJson = json;
+                if (input == "mugetsu_setting")
+                {
+                    string? settingName = obj["name"]?.Value<string>();
+                    if (!string.IsNullOrEmpty(settingName))
+                        _lastMugetsuSettings[settingName] = json;
+                }
+                else if (input == "free_memory")
+                {
+                    if (_bridge is null)
+                        _pendingFreeMemoryPayloadJson = json;
+                }
 
                 if (_bridge is { } writer)
                     writer.WriteLine(json);
