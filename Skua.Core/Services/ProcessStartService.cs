@@ -1,8 +1,6 @@
-using Skua.Core.Interfaces;
+﻿using Skua.Core.Interfaces;
 using Skua.Core.Models;
-using System;
 using System.Diagnostics;
-using System.IO;
 
 namespace Skua.Core.Services;
 
@@ -21,23 +19,40 @@ public class ProcessStartService : IProcessService
 
     public void OpenLink(string link)
     {
-        if (string.IsNullOrWhiteSpace(link))
-            return;
+        if (OperatingSystem.IsLinux())
+        {
+            if (string.IsNullOrWhiteSpace(link)
+                || !Uri.TryCreate(link, UriKind.Absolute, out Uri? uri)
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+                return;
 
-        try
-        {
-            ProcessStartInfo ps = new("xdg-open")
+            _ = System.Threading.Tasks.Task.Run(() =>
             {
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            ps.ArgumentList.Add(link);
-            Process.Start(ps);
+                try
+                {
+                    ProcessStartInfo psi = new("xdg-open")
+                    {
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    psi.ArgumentList.Add(uri.AbsoluteUri);
+                    if (Process.Start(psi) is { } proc && proc.WaitForExit(1500) && proc.ExitCode != 0)
+                        _dialogService.ShowMessageBox($"Could not open link (xdg-open exited with code {proc.ExitCode}).", "Open Link Error");
+                }
+                catch (Exception ex)
+                {
+                    _dialogService.ShowMessageBox($"Could not open link:\r\n{ex.Message}", "Open Link Error");
+                }
+            });
+            return;
         }
-        catch (Exception ex)
+
+        ProcessStartInfo ps = new(link)
         {
-            _dialogService.ShowMessageBox($"Could not open link:\r\n{ex.Message}", "Open Link Error");
-        }
+            UseShellExecute = true,
+            Verb = "open"
+        };
+        Process.Start(ps);
     }
 
     public void OpenFolder(string path)
@@ -87,8 +102,73 @@ public class ProcessStartService : IProcessService
 
     public void OpenVSC()
     {
-        if (!Directory.Exists(_scriptsPath))
-            Directory.CreateDirectory(_scriptsPath);
+        if (OperatingSystem.IsLinux())
+        {
+            _ = System.Threading.Tasks.Task.Run(OpenVSCLinux);
+            return;
+        }
+
+        if (_settingsService.Get("UseLocalVSC", false))
+        {
+            Process.Start(_vscPath, _scriptsPath);
+            return;
+        }
+        try
+        {
+            VSCode(string.Empty);
+        }
+        catch
+        {
+            _dialogService.ShowMessageBox("VSCode was not found. If you have VSCode, reinstall it and be sure to check it to install in you PATH folder.", "VSCode not found");
+        }
+    }
+
+    public void OpenVSC(string path)
+    {
+        if (OperatingSystem.IsLinux())
+        {
+            _ = System.Threading.Tasks.Task.Run(() => OpenVSCLinux(path));
+            return;
+        }
+
+        if (_settingsService.Get("UseLocalVSC", false))
+        {
+            Process.Start(_vscPath, new[] { _scriptsPath, path, "--reuse-window" });
+            return;
+        }
+        try
+        {
+            VSCode(path);
+        }
+        catch
+        {
+            Process.Start("notepad", path);
+        }
+    }
+
+    private void VSCode(string path)
+    {
+        ProcessStartInfo psi = new("code", $"{_scriptsPath} {path}")
+        {
+            UseShellExecute = true,
+            CreateNoWindow = true
+        };
+
+        Process.Start(psi);
+    }
+
+    private void OpenVSCLinux()
+    {
+        try
+        {
+            if (!Directory.Exists(_scriptsPath))
+                Directory.CreateDirectory(_scriptsPath);
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowMessageBox($"Could not create scripts directory:\r\n{ex.Message}", "Directory Error");
+            return;
+        }
 
         if (_settingsService.Get("UseLocalVSC", false) && File.Exists(_vscPath))
         {
@@ -135,7 +215,7 @@ public class ProcessStartService : IProcessService
         }
     }
 
-    public void OpenVSC(string path)
+    private void OpenVSCLinux(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
             return;
@@ -178,7 +258,6 @@ public class ProcessStartService : IProcessService
             catch { }
         }
 
-        // VSCode not found or failed to launch: fallback to any system text editor
         OpenFileInTextEditor(path);
     }
 
@@ -192,8 +271,8 @@ public class ProcessStartService : IProcessService
                 CreateNoWindow = true
             };
             psi.ArgumentList.Add(path);
-            Process.Start(psi);
-            return;
+            if (Process.Start(psi) is { } proc && (!proc.WaitForExit(1500) || proc.ExitCode == 0))
+                return;
         }
         catch { }
 
@@ -260,9 +339,14 @@ public class ProcessStartService : IProcessService
                     RedirectStandardError = true,
                     CreateNoWindow = true
                 })!;
-                p.WaitForExit();
-                if (p.ExitCode == 0)
+                if (!p.WaitForExit(1500))
+                {
+                    try { p.Kill(); } catch { }
+                }
+                else if (p.ExitCode == 0)
+                {
                     return ("flatpak", new[] { "run", "com.visualstudio.code" });
+                }
             }
             catch { }
         }
