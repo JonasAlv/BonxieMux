@@ -43,7 +43,7 @@ fi
 
 # Remote URLs & Cache Paths based strictly on property values
 SKUA_PLAYER_CACHE="$SCRIPT_DIR/player/${SKUA_PLAYER_VERSION}-${SKUA_PLAYER_OS}"
-SKUA_PLAYER_URL="https://github.com/JonasAlv/skua-mugetsu/releases/download/v${SKUA_PLAYER_VERSION}/linux.tar.gz"
+SKUA_PLAYER_URL="https://github.com/JonasAlv/skua-mugetsu/releases/download/v${SKUA_PLAYER_VERSION}/linux-x86-64-v3.tar.gz"
 
 SKUA_PLAYER_V2_CACHE="$SCRIPT_DIR/player/${SKUA_PLAYER_VERSION}-${SKUA_PLAYER_OS}-x86-64-v2"
 SKUA_PLAYER_V2_URL="https://github.com/JonasAlv/skua-mugetsu/releases/download/v${SKUA_PLAYER_VERSION}/linux-x86-64-v2.tar.gz"
