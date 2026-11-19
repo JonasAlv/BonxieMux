@@ -39,6 +39,35 @@ public class GameHost : Control, ICustomHitTest
     private static GameHost? _activeInstance;
     private static readonly ConcurrentDictionary<int, (IntPtr Handle, string Socket)> _pendingWaylandHosts = new();
     private static (PixelRect Bounds, uint RefreshMhz)[] _cachedOutputs = Array.Empty<(PixelRect, uint)>();
+    private static readonly ConcurrentDictionary<IntPtr, byte> _liveWaylandHosts = new();
+    private static volatile bool _uncapped = ReadInitialUncapped();
+
+    private static bool ReadInitialUncapped()
+    {
+        try
+        {
+            string? xdg = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
+            string configRoot = !string.IsNullOrEmpty(xdg)
+                ? xdg
+                : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config");
+            string path = Path.Combine(configRoot, "ruffle", "mugetsu-uncapped.txt");
+            return File.Exists(path) && File.ReadAllText(path).Trim().Equals("on", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static void SetAllUncapped(bool uncapped)
+    {
+        _uncapped = uncapped;
+        byte flag = uncapped ? (byte)1 : (byte)0;
+        foreach (IntPtr handle in _liveWaylandHosts.Keys)
+        {
+            try { BonxieWaylandNative.SetUncapped(handle, flag); } catch { }
+        }
+    }
 
     private FlashUtil? _flash;
     private readonly int _remoteChildPid;
@@ -134,7 +163,11 @@ public class GameHost : Control, ICustomHitTest
         {
             var (handle, socket) = BonxieWaylandNative.StartHost(width, height, true);
             if (handle != IntPtr.Zero)
+            {
+                _liveWaylandHosts[handle] = 0;
                 BonxieWaylandNative.SetRefreshMhz(handle, DetectDisplayRefreshMhz());
+                BonxieWaylandNative.SetUncapped(handle, _uncapped ? (byte)1 : (byte)0);
+            }
             return (handle, socket);
         }
         catch
@@ -153,6 +186,7 @@ public class GameHost : Control, ICustomHitTest
     {
         if (handle != IntPtr.Zero)
         {
+            _liveWaylandHosts.TryRemove(handle, out _);
             try { BonxieWaylandNative.Stop(handle); } catch { }
         }
     }
@@ -177,7 +211,11 @@ public class GameHost : Control, ICustomHitTest
                 {
                     (_waylandHost, _waylandSocket) = BonxieWaylandNative.StartHost(1280, 720, true);
                     if (_waylandHost != IntPtr.Zero)
+                    {
+                        _liveWaylandHosts[_waylandHost] = 0;
                         BonxieWaylandNative.SetRefreshMhz(_waylandHost, DetectDisplayRefreshMhz());
+                        BonxieWaylandNative.SetUncapped(_waylandHost, _uncapped ? (byte)1 : (byte)0);
+                    }
                     if (!string.IsNullOrEmpty(_waylandSocket))
                     {
                         Environment.SetEnvironmentVariable("BONXIE_WL_DISPLAY", _waylandSocket);
@@ -231,6 +269,11 @@ public class GameHost : Control, ICustomHitTest
     {
         bool shouldRun = IsVisible && TopLevel.GetTopLevel(this) is { IsVisible: true };
         _isVisibleCached = shouldRun;
+        if (_waylandHost != IntPtr.Zero && _lastSentVisible != shouldRun)
+        {
+            _lastSentVisible = shouldRun;
+            BonxieWaylandNative.SetVisible(_waylandHost, shouldRun ? (byte)1 : (byte)0);
+        }
     }
 
     public void SetActiveInstance() => _activeInstance = this;
@@ -246,6 +289,7 @@ public class GameHost : Control, ICustomHitTest
         {
             IntPtr h = _waylandHost;
             _waylandHost = IntPtr.Zero;
+            _liveWaylandHosts.TryRemove(h, out _);
             try
             {
                 BonxieWaylandNative.Stop(h);
@@ -388,7 +432,9 @@ public class GameHost : Control, ICustomHitTest
         ["Numpad3"] = 81, ["NumPad3"] = 81,
         ["Numpad0"] = 82, ["NumPad0"] = 82,
         ["NumpadDecimal"] = 83, ["Decimal"] = 83,
+        ["IntlBackslash"] = 86, ["Oem102"] = 86,
         ["F11"] = 87, ["F12"] = 88,
+        ["IntlRo"] = 89, ["AbntC1"] = 89,
         ["NumpadEnter"] = 96,
         ["ControlRight"] = 97, ["RightCtrl"] = 97,
         ["NumpadDivide"] = 98, ["Divide"] = 98,
@@ -404,6 +450,8 @@ public class GameHost : Control, ICustomHitTest
         ["PageDown"] = 109, ["Next"] = 109,
         ["Insert"] = 110,
         ["Delete"] = 111,
+        ["NumpadComma"] = 121, ["AbntC2"] = 121,
+        ["IntlYen"] = 124,
         ["MetaLeft"] = 125, ["LWin"] = 125,
         ["MetaRight"] = 126, ["RWin"] = 126,
     };
@@ -491,6 +539,11 @@ public class GameHost : Control, ICustomHitTest
     {
         base.OnDetachedFromVisualTree(e);
         _isVisibleCached = false;
+        if (_waylandHost != IntPtr.Zero && _lastSentVisible != false)
+        {
+            _lastSentVisible = false;
+            BonxieWaylandNative.SetVisible(_waylandHost, 0);
+        }
         _resizeDebounceTimer?.Stop();
         if (_activeInstance == this)
             _activeInstance = null;

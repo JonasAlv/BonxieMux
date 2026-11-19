@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using Avalonia;
@@ -20,6 +21,7 @@ internal struct BonxieDmaBufPlane
 internal struct BonxieDmaBufFrame
 {
     public ulong Seq;
+    public ulong BufferId;
     public uint Width;
     public uint Height;
     public uint Fourcc;
@@ -60,11 +62,23 @@ internal static unsafe partial class BonxieWaylandNative
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_poll_dmabuf")]
     public static partial int PollDmabuf(IntPtr host, ulong lastSeq, out BonxieDmaBufFrame outDmabuf);
 
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_peek_frame")]
+    public static partial int PeekFrame(IntPtr host, out ulong outSeq, out ulong outBufferId, out uint outWidth, out uint outHeight);
+
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_ack_frame")]
+    public static partial void AckFrame(IntPtr host, ulong seq);
+
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_notify_presented")]
     public static partial void NotifyPresented(IntPtr host);
 
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_set_refresh_mhz")]
     public static partial void SetRefreshMhz(IntPtr host, uint mhz);
+
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_set_uncapped")]
+    public static partial void SetUncapped(IntPtr host, byte uncapped);
+
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_set_visible")]
+    public static partial void SetVisible(IntPtr host, byte visible);
 
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_resize")]
     public static partial void Resize(IntPtr host, uint width, uint height);
@@ -162,8 +176,28 @@ internal sealed unsafe class DmabufGlRenderer
     private delegate* unmanaged[Cdecl]<int, IntPtr, void> _glEglImageTargetTexture2DOes;
     private delegate* unmanaged[Cdecl]<int, float, float, void> _glUniform2f;
 
+    private readonly struct CachedDmabufTexture
+    {
+        public readonly int Texture;
+        public readonly IntPtr EglImage;
+        public readonly uint Width;
+        public readonly uint Height;
+
+        public CachedDmabufTexture(int texture, IntPtr eglImage, uint width, uint height)
+        {
+            Texture = texture;
+            EglImage = eglImage;
+            Width = width;
+            Height = height;
+        }
+    }
+
+    private const int MaxCachedBuffers = 8;
+    private readonly Dictionary<ulong, CachedDmabufTexture> _bufferCache = new();
+    private readonly Queue<ulong> _cacheOrder = new();
+
     private IntPtr _eglDisplay;
-    private IntPtr _currentEglImage;
+    private int _activeTexture;
     private int _texture;
     private int _program;
     private int _vao;
@@ -276,23 +310,42 @@ internal sealed unsafe class DmabufGlRenderer
         if (!_initialized || waylandHost == IntPtr.Zero)
             return;
 
-        if (BonxieWaylandNative.FrameSeq(waylandHost) != _lastSeq
-            && BonxieWaylandNative.PollDmabuf(waylandHost, _lastSeq, out BonxieDmaBufFrame dmabuf) == 1)
+        if (BonxieWaylandNative.FrameSeq(waylandHost) != _lastSeq)
         {
-            ImportDmabuf(gl, in dmabuf);
+            if (BonxieWaylandNative.PeekFrame(waylandHost, out ulong seq, out ulong bufferId, out uint fw, out uint fh) == 1
+                && seq != _lastSeq)
+            {
+                if (bufferId != 0
+                    && _bufferCache.TryGetValue(bufferId, out CachedDmabufTexture cached)
+                    && cached.Width == fw
+                    && cached.Height == fh)
+                {
+                    _activeTexture = cached.Texture;
+                    _fbWidth = cached.Width;
+                    _fbHeight = cached.Height;
+                    _lastSeq = seq;
+                    BonxieWaylandNative.AckFrame(waylandHost, seq);
+                }
+                else if (BonxieWaylandNative.PollDmabuf(waylandHost, _lastSeq, out BonxieDmaBufFrame dmabuf) == 1)
+                {
+                    ImportDmabuf(gl, in dmabuf);
+                }
+            }
         }
 
         gl.Viewport(0, 0, Math.Max(1, viewportW), Math.Max(1, viewportH));
-        if (_lastSeq == 0 || _fbWidth == 0 || _fbHeight == 0)
+        if (_lastSeq == 0 || _fbWidth == 0 || _fbHeight == 0 || _activeTexture == 0)
         {
             gl.ClearColor(0f, 0f, 0f, 1f);
             gl.Clear(GL_COLOR_BUFFER_BIT);
             return;
         }
 
+        gl.Disable(0x0BE2); // GL_BLEND
+        gl.Disable(0x0B71); // GL_DEPTH_TEST
         gl.UseProgram(_program);
         gl.ActiveTexture(0x84C0); // GL_TEXTURE0
-        gl.BindTexture(GL_TEXTURE_2D, _texture);
+        gl.BindTexture(GL_TEXTURE_2D, _activeTexture);
 
         if (_uUvScaleLoc >= 0 && _glUniform2f != null)
         {
@@ -402,14 +455,38 @@ internal sealed unsafe class DmabufGlRenderer
                 return;
             }
 
-            gl.BindTexture(GL_TEXTURE_2D, _texture);
+            int tex = gl.GenTexture();
+            gl.BindTexture(GL_TEXTURE_2D, tex);
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             _glEglImageTargetTexture2DOes(GL_TEXTURE_2D, img);
             gl.BindTexture(GL_TEXTURE_2D, 0);
 
-            if (_currentEglImage != IntPtr.Zero && _eglDestroyImageKhr != null)
-                _eglDestroyImageKhr(_eglDisplay, _currentEglImage);
+            if (dmabuf.BufferId != 0)
+            {
+                if (_bufferCache.Remove(dmabuf.BufferId, out CachedDmabufTexture replaced))
+                    DestroyCachedTexture(gl, replaced);
 
-            _currentEglImage = img;
+                while (_bufferCache.Count >= MaxCachedBuffers && _cacheOrder.Count > 0)
+                {
+                    ulong oldestId = _cacheOrder.Dequeue();
+                    if (_bufferCache.Remove(oldestId, out CachedDmabufTexture evicted))
+                        DestroyCachedTexture(gl, evicted);
+                }
+
+                _bufferCache[dmabuf.BufferId] = new CachedDmabufTexture(tex, img, dmabuf.Width, dmabuf.Height);
+                _cacheOrder.Enqueue(dmabuf.BufferId);
+            }
+            else
+            {
+                if (_texture != 0)
+                    gl.DeleteTexture(_texture);
+                _texture = tex;
+            }
+
+            _activeTexture = tex;
             _fbWidth = dmabuf.Width;
             _fbHeight = dmabuf.Height;
             _lastSeq = dmabuf.Seq;
@@ -423,16 +500,25 @@ internal sealed unsafe class DmabufGlRenderer
         }
     }
 
+    private void DestroyCachedTexture(GlInterface gl, CachedDmabufTexture cached)
+    {
+        if (cached.Texture != 0)
+            gl.DeleteTexture(cached.Texture);
+        if (cached.EglImage != IntPtr.Zero && _eglDisplay != IntPtr.Zero && _eglDestroyImageKhr != null)
+            _eglDestroyImageKhr(_eglDisplay, cached.EglImage);
+    }
+
     public void Deinit(GlInterface gl)
     {
         if (!_initialized)
             return;
 
-        if (_currentEglImage != IntPtr.Zero && _eglDisplay != IntPtr.Zero && _eglDestroyImageKhr != null)
-        {
-            _eglDestroyImageKhr(_eglDisplay, _currentEglImage);
-            _currentEglImage = IntPtr.Zero;
-        }
+        foreach (CachedDmabufTexture cached in _bufferCache.Values)
+            DestroyCachedTexture(gl, cached);
+        _bufferCache.Clear();
+        _cacheOrder.Clear();
+        _activeTexture = 0;
+
         if (_texture != 0) gl.DeleteTexture(_texture);
         if (_vbo != 0) gl.DeleteBuffer(_vbo);
         if (_vao != 0) gl.DeleteVertexArray(_vao);
@@ -504,7 +590,8 @@ internal sealed class WaylandDmabufViewport : OpenGlControlBase
             return;
         }
 
-        RequestNextFrameRendering();
+        if (_lastRecordedSeq == 0 || HasPendingFrame())
+            RequestNextFrameRendering();
         _topLevel.RequestAnimationFrame(_animCallback);
     }
 

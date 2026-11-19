@@ -48,8 +48,11 @@ pub struct DmabufPlane {
     pub modifier: u64,
 }
 
+static NEXT_BUFFER_ID: AtomicU64 = AtomicU64::new(1);
+
 #[derive(Debug, Clone)]
 pub struct DmabufFrame {
+    pub id: u64,
     pub width: u32,
     pub height: u32,
     pub fourcc: u32,
@@ -70,6 +73,8 @@ pub enum DmabufInput {
     Key { evdev_code: u32, pressed: bool },
     Resize { width: u32, height: u32 },
     SetRefreshMhz { mhz: u32 },
+    SetUncapped { uncapped: bool },
+    SetVisible { visible: bool },
 }
 
 pub type DmabufNotifyFn = extern "C" fn(usize);
@@ -242,6 +247,10 @@ struct DmabufState {
     displayed_buffer: Option<WlBuffer>,
     staged_buffer: Option<(u64, WlBuffer)>,
     refresh_mhz: u32,
+    uncapped: bool,
+    visible: bool,
+    uncapped_path: Option<PathBuf>,
+    last_uncapped_check: Instant,
     pending_frame_callbacks: Vec<WlCallback>,
     pending_cb_since: Option<Instant>,
     last_cb_flush: Instant,
@@ -286,6 +295,12 @@ impl DmabufState {
     }
 }
 
+fn read_uncapped_file(path: &Option<PathBuf>) -> bool {
+    path.as_ref()
+        .and_then(|p| std::fs::read_to_string(p).ok())
+        .is_some_and(|s| s.trim().eq_ignore_ascii_case("on"))
+}
+
 #[allow(clippy::too_many_arguments)]
 fn run_dmabuf_loop(
     listener: ListeningSocket,
@@ -312,6 +327,13 @@ fn run_dmabuf_loop(
     dh.create_global::<DmabufState, WlSeat, _>(5, ());
     dh.create_global::<DmabufState, WlOutput, _>(3, ());
 
+    let uncapped_path = std::env::var_os("XDG_CONFIG_HOME")
+        .filter(|v| !v.is_empty())
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))
+        .map(|d| d.join("ruffle").join("mugetsu-uncapped.txt"));
+    let initial_uncapped = read_uncapped_file(&uncapped_path);
+
     let mut state = DmabufState {
         frame,
         frame_seq,
@@ -333,6 +355,10 @@ fn run_dmabuf_loop(
         displayed_buffer: None,
         staged_buffer: None,
         refresh_mhz: 60_000,
+        uncapped: initial_uncapped,
+        visible: true,
+        uncapped_path,
+        last_uncapped_check: Instant::now(),
         pending_frame_callbacks: Vec::new(),
         pending_cb_since: None,
         last_cb_flush: Instant::now(),
@@ -351,16 +377,39 @@ fn run_dmabuf_loop(
 
         let _ = display.dispatch_clients(&mut state);
         state.promote_acquired_buffer(acquired_serial.swap(0, Ordering::AcqRel));
-
-        let min_cb_interval =
-            std::time::Duration::from_micros((950_000_000u64 / state.refresh_mhz.max(24_000) as u64).max(1000));
-        if (presented_flag.swap(false, Ordering::AcqRel)
-            && state.last_cb_flush.elapsed() >= min_cb_interval)
-            || state
+        if state.last_uncapped_check.elapsed() >= std::time::Duration::from_millis(250) {
+            state.last_uncapped_check = Instant::now();
+            let disk_uncapped = read_uncapped_file(&state.uncapped_path);
+            if disk_uncapped != state.uncapped {
+                state.uncapped = disk_uncapped;
+                if disk_uncapped {
+                    state.flush_frame_callbacks();
+                }
+            }
+        }
+        if !state.visible {
+            let _ = presented_flag.swap(false, Ordering::AcqRel);
+            if state
                 .pending_cb_since
-                .is_some_and(|s| s.elapsed() >= std::time::Duration::from_millis(50))
-        {
+                .is_some_and(|s| s.elapsed() >= std::time::Duration::from_millis(100))
+            {
+                state.flush_frame_callbacks();
+            }
+        } else if state.uncapped {
+            let _ = presented_flag.swap(false, Ordering::AcqRel);
             state.flush_frame_callbacks();
+        } else {
+            let min_cb_interval = std::time::Duration::from_micros(
+                (950_000_000u64 / state.refresh_mhz.max(24_000) as u64).max(1000),
+            );
+            if (presented_flag.swap(false, Ordering::AcqRel)
+                && state.last_cb_flush.elapsed() >= min_cb_interval)
+                || state
+                    .pending_cb_since
+                    .is_some_and(|s| s.elapsed() >= std::time::Duration::from_millis(50))
+            {
+                state.flush_frame_callbacks();
+            }
         }
 
         let _ = display.flush_clients();
@@ -377,8 +426,15 @@ fn run_dmabuf_loop(
             },
         ];
         let nfds = if wake_fd >= 0 { 2 } else { 1 };
+        let poll_timeout_ms = if state.pending_frame_callbacks.is_empty() {
+            250
+        } else if !state.visible {
+            25
+        } else {
+            5
+        };
         unsafe {
-            libc::poll(pfds.as_mut_ptr(), nfds, 5);
+            libc::poll(pfds.as_mut_ptr(), nfds, poll_timeout_ms);
             if wake_fd >= 0 && pfds[1].revents != 0 {
                 let mut val = 0u64;
                 libc::read(
@@ -545,6 +601,19 @@ fn handle_input(state: &mut DmabufState, ev: DmabufInput) {
                 }
             }
         }
+        DmabufInput::SetUncapped { uncapped } => {
+            state.uncapped = uncapped;
+            if uncapped && state.visible {
+                state.flush_frame_callbacks();
+            }
+        }
+        DmabufInput::SetVisible { visible } => {
+            let became_visible = visible && !state.visible;
+            state.visible = visible;
+            if became_visible {
+                state.flush_frame_callbacks();
+            }
+        }
     }
 }
 
@@ -651,7 +720,7 @@ impl Dispatch<WlSurface, Mutex<SurfaceData>> for DmabufState {
                 }
 
                 if !cbs.is_empty() {
-                    if is_main && has_buf {
+                    if is_main && has_buf && (!state.visible || !state.uncapped) {
                         state.pending_frame_callbacks.extend(cbs);
                         state.pending_cb_since.get_or_insert_with(Instant::now);
                     } else {
@@ -751,14 +820,15 @@ impl GlobalDispatch<ZwpLinuxDmabufV1, ()> for DmabufState {
         data_init: &mut DataInit<'_, Self>,
     ) {
         let dmabuf = data_init.init(resource, ());
+        let caps = cached_dmabuf_caps();
         const DRM_FORMAT_XRGB8888: u32 = 0x34325258;
         const DRM_FORMAT_ARGB8888: u32 = 0x34325241;
-        const MOD_INVALID: u64 = 0x00ff_ffff_ffff_ffff;
         for fmt in [DRM_FORMAT_XRGB8888, DRM_FORMAT_ARGB8888] {
             dmabuf.format(fmt);
-            if dmabuf.version() >= 3 {
-                dmabuf.modifier(fmt, (MOD_INVALID >> 32) as u32, MOD_INVALID as u32);
-                dmabuf.modifier(fmt, 0, 0);
+        }
+        if dmabuf.version() >= 3 {
+            for &(fmt, modifier) in &caps.entries {
+                dmabuf.modifier(fmt, (modifier >> 32) as u32, modifier as u32);
             }
         }
     }
@@ -801,29 +871,181 @@ impl Dispatch<ZwpLinuxDmabufFeedbackV1, ()> for DmabufState {
     }
 }
 
-fn send_dmabuf_feedback(fb: &ZwpLinuxDmabufFeedbackV1) {
-    let dev_id: u64 = std::fs::metadata("/dev/dri/renderD128")
-        .or_else(|_| std::fs::metadata("/dev/dri/card1"))
-        .or_else(|_| std::fs::metadata("/dev/dri/card0"))
-        .map(|m| m.rdev())
-        .unwrap_or(0);
-    if dev_id == 0 {
-        return;
-    }
-    let dev_bytes = dev_id.to_ne_bytes().to_vec();
+struct DmabufCaps {
+    main_device: Option<Vec<u8>>,
+    entries: Vec<(u32, u64)>,
+}
+
+fn probe_host_dmabuf_caps() -> DmabufCaps {
+    use std::io::Read;
+    use wayland_client::protocol::wl_registry as c_reg;
+    use wayland_client::{Connection, Dispatch as CDispatch, QueueHandle};
+    use wayland_protocols::wp::linux_dmabuf::zv1::client::{
+        zwp_linux_dmabuf_feedback_v1 as c_fb, zwp_linux_dmabuf_v1 as c_dmabuf,
+    };
 
     const DRM_FORMAT_XRGB8888: u32 = 0x34325258;
     const DRM_FORMAT_ARGB8888: u32 = 0x34325241;
     const MOD_INVALID: u64 = 0x00ff_ffff_ffff_ffff;
-    let entries: [(u32, u64); 4] = [
+
+    #[derive(Default)]
+    struct DmabufProbe {
+        dmabuf: Option<c_dmabuf::ZwpLinuxDmabufV1>,
+        feedback: Option<c_fb::ZwpLinuxDmabufFeedbackV1>,
+        main_device: Option<Vec<u8>>,
+        entries: Vec<(u32, u64)>,
+    }
+
+    impl DmabufProbe {
+        fn push_unique(&mut self, fmt: u32, modifier: u64) {
+            if (fmt == DRM_FORMAT_XRGB8888 || fmt == DRM_FORMAT_ARGB8888)
+                && !self.entries.contains(&(fmt, modifier))
+            {
+                self.entries.push((fmt, modifier));
+            }
+        }
+    }
+
+    impl CDispatch<c_reg::WlRegistry, ()> for DmabufProbe {
+        fn event(
+            state: &mut Self,
+            registry: &c_reg::WlRegistry,
+            event: c_reg::Event,
+            _: &(),
+            _: &Connection,
+            qh: &QueueHandle<Self>,
+        ) {
+            if let c_reg::Event::Global {
+                name,
+                interface,
+                version,
+            } = event
+            {
+                if interface == "zwp_linux_dmabuf_v1" && state.dmabuf.is_none() {
+                    let bound = registry.bind::<c_dmabuf::ZwpLinuxDmabufV1, _, _>(
+                        name,
+                        version.min(4),
+                        qh,
+                        (),
+                    );
+                    if version >= 4 {
+                        state.feedback = Some(bound.get_default_feedback(qh, ()));
+                    }
+                    state.dmabuf = Some(bound);
+                }
+            }
+        }
+    }
+
+    impl CDispatch<c_dmabuf::ZwpLinuxDmabufV1, ()> for DmabufProbe {
+        fn event(
+            state: &mut Self,
+            _: &c_dmabuf::ZwpLinuxDmabufV1,
+            event: c_dmabuf::Event,
+            _: &(),
+            _: &Connection,
+            _: &QueueHandle<Self>,
+        ) {
+            if let c_dmabuf::Event::Modifier {
+                format,
+                modifier_hi,
+                modifier_lo,
+            } = event
+            {
+                let modifier = (u64::from(modifier_hi) << 32) | u64::from(modifier_lo);
+                state.push_unique(format, modifier);
+            }
+        }
+    }
+
+    impl CDispatch<c_fb::ZwpLinuxDmabufFeedbackV1, ()> for DmabufProbe {
+        fn event(
+            state: &mut Self,
+            _: &c_fb::ZwpLinuxDmabufFeedbackV1,
+            event: c_fb::Event,
+            _: &(),
+            _: &Connection,
+            _: &QueueHandle<Self>,
+        ) {
+            match event {
+                c_fb::Event::MainDevice { device } => {
+                    if !device.is_empty() {
+                        state.main_device = Some(device);
+                    }
+                }
+                c_fb::Event::FormatTable { fd, size } => {
+                    let mut file = std::fs::File::from(fd);
+                    let mut buf = vec![0u8; size as usize];
+                    if file.read_exact(&mut buf).is_ok() {
+                        for chunk in buf.chunks_exact(16) {
+                            let fmt = u32::from_ne_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+                            let modifier = u64::from_ne_bytes([
+                                chunk[8], chunk[9], chunk[10], chunk[11], chunk[12], chunk[13],
+                                chunk[14], chunk[15],
+                            ]);
+                            state.push_unique(fmt, modifier);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    let mut probe = DmabufProbe::default();
+    if let Ok(conn) = Connection::connect_to_env() {
+        let mut queue = conn.new_event_queue();
+        let qh = queue.handle();
+        let _registry = conn.display().get_registry(&qh, ());
+        let _ = queue.roundtrip(&mut probe);
+        let _ = queue.roundtrip(&mut probe);
+        if probe.entries.is_empty() {
+            let _ = queue.roundtrip(&mut probe);
+        }
+    }
+
+    // Always ensure LINEAR and MOD_INVALID are present as fallbacks after native tiled/compressed modifiers.
+    for &(fmt, modifier) in &[
+        (DRM_FORMAT_XRGB8888, 0u64),
+        (DRM_FORMAT_ARGB8888, 0u64),
         (DRM_FORMAT_XRGB8888, MOD_INVALID),
         (DRM_FORMAT_ARGB8888, MOD_INVALID),
-        (DRM_FORMAT_XRGB8888, 0),
-        (DRM_FORMAT_ARGB8888, 0),
-    ];
+    ] {
+        probe.push_unique(fmt, modifier);
+    }
 
-    let mut table = Vec::with_capacity(entries.len() * 16);
-    for (fmt, modifier) in entries {
+    let main_device = probe.main_device.or_else(|| {
+        let dev_id: u64 = std::fs::metadata("/dev/dri/renderD128")
+            .or_else(|_| std::fs::metadata("/dev/dri/card1"))
+            .or_else(|_| std::fs::metadata("/dev/dri/card0"))
+            .map(|m| m.rdev())
+            .unwrap_or(0);
+        if dev_id != 0 {
+            Some(dev_id.to_ne_bytes().to_vec())
+        } else {
+            None
+        }
+    });
+
+    DmabufCaps {
+        main_device,
+        entries: probe.entries,
+    }
+}
+
+fn cached_dmabuf_caps() -> &'static DmabufCaps {
+    static CAPS: OnceLock<DmabufCaps> = OnceLock::new();
+    CAPS.get_or_init(probe_host_dmabuf_caps)
+}
+
+fn send_dmabuf_feedback(fb: &ZwpLinuxDmabufFeedbackV1) {
+    let caps = cached_dmabuf_caps();
+    let Some(dev_bytes) = caps.main_device.clone() else {
+        return;
+    };
+
+    let mut table = Vec::with_capacity(caps.entries.len() * 16);
+    for &(fmt, modifier) in &caps.entries {
         table.extend_from_slice(&fmt.to_ne_bytes());
         table.extend_from_slice(&0u32.to_ne_bytes());
         table.extend_from_slice(&modifier.to_ne_bytes());
@@ -847,7 +1069,7 @@ fn send_dmabuf_feedback(fb: &ZwpLinuxDmabufFeedbackV1) {
     fb.format_table(file.as_fd(), table.len() as u32);
     fb.tranche_target_device(dev_bytes);
     fb.tranche_flags(TrancheFlags::empty());
-    let indices: Vec<u8> = (0u16..entries.len() as u16)
+    let indices: Vec<u8> = (0u16..caps.entries.len() as u16)
         .flat_map(|i| i.to_ne_bytes())
         .collect();
     fb.tranche_formats(indices);
@@ -904,6 +1126,7 @@ impl Dispatch<ZwpLinuxBufferParamsV1, Mutex<DmabufParamsData>> for DmabufState {
                 data_init.init(
                     buffer_id,
                     DmabufBufferKind::Dmabuf(Arc::new(DmabufFrame {
+                        id: NEXT_BUFFER_ID.fetch_add(1, Ordering::Relaxed),
                         width: width.max(1) as u32,
                         height: height.max(1) as u32,
                         fourcc: format,
@@ -929,6 +1152,7 @@ impl Dispatch<ZwpLinuxBufferParamsV1, Mutex<DmabufParamsData>> for DmabufState {
                         dh,
                         1,
                         DmabufBufferKind::Dmabuf(Arc::new(DmabufFrame {
+                            id: NEXT_BUFFER_ID.fetch_add(1, Ordering::Relaxed),
                             width: width.max(1) as u32,
                             height: height.max(1) as u32,
                             fourcc: format,
@@ -1107,34 +1331,165 @@ impl Dispatch<WlKeyboard, ()> for DmabufState {
     }
 }
 
+fn probe_host_wayland_keymap() -> Option<Vec<u8>> {
+    use std::io::Read;
+    use wayland_client::protocol::{
+        wl_keyboard as c_kb, wl_registry as c_reg, wl_seat as c_seat,
+    };
+    use wayland_client::{Connection, Dispatch as CDispatch, QueueHandle, WEnum};
+
+    #[derive(Default)]
+    struct KeymapProbe {
+        seat: Option<c_seat::WlSeat>,
+        kb: Option<c_kb::WlKeyboard>,
+        keymap: Option<Vec<u8>>,
+    }
+
+    impl CDispatch<c_reg::WlRegistry, ()> for KeymapProbe {
+        fn event(
+            state: &mut Self,
+            registry: &c_reg::WlRegistry,
+            event: c_reg::Event,
+            _: &(),
+            _: &Connection,
+            qh: &QueueHandle<Self>,
+        ) {
+            if let c_reg::Event::Global {
+                name,
+                interface,
+                version,
+            } = event
+            {
+                if interface == "wl_seat" && state.seat.is_none() {
+                    state.seat = Some(registry.bind::<c_seat::WlSeat, _, _>(
+                        name,
+                        version.min(5),
+                        qh,
+                        (),
+                    ));
+                }
+            }
+        }
+    }
+
+    impl CDispatch<c_seat::WlSeat, ()> for KeymapProbe {
+        fn event(
+            state: &mut Self,
+            seat: &c_seat::WlSeat,
+            event: c_seat::Event,
+            _: &(),
+            _: &Connection,
+            qh: &QueueHandle<Self>,
+        ) {
+            if let c_seat::Event::Capabilities {
+                capabilities: WEnum::Value(caps),
+            } = event
+            {
+                if caps.contains(c_seat::Capability::Keyboard) && state.kb.is_none() {
+                    state.kb = Some(seat.get_keyboard(qh, ()));
+                }
+            }
+        }
+    }
+
+    impl CDispatch<c_kb::WlKeyboard, ()> for KeymapProbe {
+        fn event(
+            state: &mut Self,
+            _: &c_kb::WlKeyboard,
+            event: c_kb::Event,
+            _: &(),
+            _: &Connection,
+            _: &QueueHandle<Self>,
+        ) {
+            if let c_kb::Event::Keymap {
+                format: WEnum::Value(c_kb::KeymapFormat::XkbV1),
+                fd,
+                size,
+            } = event
+            {
+                let mut file = std::fs::File::from(fd);
+                let mut buf = vec![0u8; size as usize];
+                if file.read_exact(&mut buf).is_ok() {
+                    while buf.last() == Some(&0) {
+                        buf.pop();
+                    }
+                    if !buf.is_empty() {
+                        state.keymap = Some(buf);
+                    }
+                }
+            }
+        }
+    }
+
+    let conn = Connection::connect_to_env().ok()?;
+    let mut queue = conn.new_event_queue();
+    let qh = queue.handle();
+    let mut probe = KeymapProbe::default();
+    let _registry = conn.display().get_registry(&qh, ());
+    let _ = queue.roundtrip(&mut probe);
+    let _ = queue.roundtrip(&mut probe);
+    if probe.keymap.is_none() {
+        let _ = queue.roundtrip(&mut probe);
+    }
+    probe.keymap
+}
+
+fn compile_xkb_fallback() -> Option<Vec<u8>> {
+    let mut args: Vec<String> = Vec::new();
+    if let Ok(model) = std::env::var("XKB_DEFAULT_MODEL") {
+        if !model.trim().is_empty() {
+            args.push("-model".into());
+            args.push(model.trim().into());
+        }
+    }
+    if let Ok(layout) = std::env::var("XKB_DEFAULT_LAYOUT") {
+        if !layout.trim().is_empty() {
+            args.push("-layout".into());
+            args.push(layout.trim().into());
+        }
+    }
+    if let Ok(variant) = std::env::var("XKB_DEFAULT_VARIANT") {
+        if !variant.trim().is_empty() {
+            args.push("-variant".into());
+            args.push(variant.trim().into());
+        }
+    }
+    args.push("-print".into());
+
+    let setxkb = Command::new("setxkbmap")
+        .args(&args)
+        .output()
+        .ok()
+        .filter(|o| o.status.success() && !o.stdout.is_empty())
+        .or_else(|| {
+            Command::new("setxkbmap")
+                .args(["-model", "pc105", "-layout", "us", "-print"])
+                .output()
+                .ok()
+                .filter(|o| o.status.success() && !o.stdout.is_empty())
+        })?;
+    let mut child = Command::new("xkbcomp")
+        .args(["-xkb", "-", "-"])
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .ok()?;
+    if let Some(mut stdin) = child.stdin.take() {
+        let _ = stdin.write_all(&setxkb.stdout);
+    }
+    let out = child.wait_with_output().ok()?;
+    if out.status.success() && !out.stdout.is_empty() {
+        Some(out.stdout)
+    } else {
+        None
+    }
+}
+
 fn cached_xkb_keymap() -> Option<&'static [u8]> {
     static KEYMAP: OnceLock<Option<Vec<u8>>> = OnceLock::new();
     KEYMAP
-        .get_or_init(|| {
-            let setxkb = Command::new("setxkbmap")
-                .args(["-model", "pc105", "-layout", "us", "-print"])
-                .output()
-                .ok()?;
-            if !setxkb.status.success() {
-                return None;
-            }
-            let mut child = Command::new("xkbcomp")
-                .args(["-xkb", "-", "-"])
-                .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped())
-                .stderr(std::process::Stdio::null())
-                .spawn()
-                .ok()?;
-            if let Some(mut stdin) = child.stdin.take() {
-                let _ = stdin.write_all(&setxkb.stdout);
-            }
-            let out = child.wait_with_output().ok()?;
-            if out.status.success() && !out.stdout.is_empty() {
-                Some(out.stdout)
-            } else {
-                None
-            }
-        })
+        .get_or_init(|| probe_host_wayland_keymap().or_else(compile_xkb_fallback))
         .as_deref()
 }
 

@@ -27,6 +27,7 @@ pub struct BonxieDmaBufPlane {
 #[derive(Clone, Copy, Default)]
 pub struct BonxieDmaBufFrame {
     pub seq: u64,
+    pub buffer_id: u64,
     pub width: u32,
     pub height: u32,
     pub fourcc: u32,
@@ -111,6 +112,7 @@ pub unsafe extern "C" fn bonxie_wl_poll_dmabuf(
     }
     let mut out = BonxieDmaBufFrame {
         seq: published.serial,
+        buffer_id: frame.id,
         width: frame.width,
         height: frame.height,
         fourcc: frame.fourcc,
@@ -152,6 +154,61 @@ pub unsafe extern "C" fn bonxie_wl_set_refresh_mhz(host: *mut BonxieWlHost, mhz:
         (&*host)
             .inner
             .send_input(DmabufInput::SetRefreshMhz { mhz });
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn bonxie_wl_peek_frame(
+    host: *mut BonxieWlHost,
+    out_seq: *mut u64,
+    out_buffer_id: *mut u64,
+    out_width: *mut u32,
+    out_height: *mut u32,
+) -> i32 {
+    if host.is_null() {
+        return -1;
+    }
+    let h = &(&*host).inner;
+    let Some(published) = h.latest_frame() else {
+        return 0;
+    };
+    if !out_seq.is_null() {
+        *out_seq = published.serial;
+    }
+    if !out_buffer_id.is_null() {
+        *out_buffer_id = published.frame.id;
+    }
+    if !out_width.is_null() {
+        *out_width = published.frame.width;
+    }
+    if !out_height.is_null() {
+        *out_height = published.frame.height;
+    }
+    1
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn bonxie_wl_ack_frame(host: *mut BonxieWlHost, seq: u64) {
+    if !host.is_null() && seq > 0 {
+        (&*host).inner.notify_frame_acquired(seq);
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn bonxie_wl_set_uncapped(host: *mut BonxieWlHost, uncapped: u8) {
+    if !host.is_null() {
+        (&*host).inner.send_input(DmabufInput::SetUncapped {
+            uncapped: uncapped != 0,
+        });
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn bonxie_wl_set_visible(host: *mut BonxieWlHost, visible: u8) {
+    if !host.is_null() {
+        (&*host).inner.send_input(DmabufInput::SetVisible {
+            visible: visible != 0,
+        });
     }
 }
 

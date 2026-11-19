@@ -1310,6 +1310,8 @@ public partial class TabbedHostWindow : Window
                                 string[] parts = line.Split('|', 3);
                                 if (parts.Length == 3)
                                 {
+                                    if (parts[1] == "uncapped")
+                                        Controls.GameHost.SetAllUncapped(parts[2] == "true");
                                     var payload = new { input = "mugetsu_setting", name = parts[1], value = parts[2] };
                                     foreach (TabInfo tab in _tabs.Values)
                                     {

@@ -13,5 +13,5 @@ anyhow = "1"
 libc = "0.2"
 uuid = { version = "1", features = ["v4"] }
 wayland-client = "0.31"
-wayland-protocols = { version = "0.32", features = ["server"] }
+wayland-protocols = { version = "0.32", features = ["client", "server"] }
 wayland-server = "0.31"

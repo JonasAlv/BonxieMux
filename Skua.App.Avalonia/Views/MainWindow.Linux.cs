@@ -1001,6 +1001,9 @@ public partial class MainWindow : Window
 
     internal static void BroadcastMugetsuSetting(string name, string value)
     {
+        if (name == "uncapped")
+            Controls.GameHost.SetAllUncapped(value == "true");
+
         if (!string.IsNullOrEmpty(App.HostPipeName))
         {
             SendPipeToHost($"MUGETSU_SETTING|{name}|{value}");
