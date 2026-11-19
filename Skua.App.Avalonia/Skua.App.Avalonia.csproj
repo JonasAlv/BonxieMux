@@ -75,7 +75,7 @@
 
     <Target Name="DownloadSkuaPlayer" Condition="'$(SkuaPlayerLocal)' == '' And !Exists('$(SkuaPlayerDir)\$(SkuaPlayerExe)')">
         <MakeDir Directories="$(SkuaPlayerCache)" />
-        <DownloadFile SourceUrl="https://github.com/JonasAlv/skua-mugetsu/releases/download/v$(SkuaPlayerVersion)/linux.tar.gz" DestinationFolder="$(SkuaPlayerCache)" DestinationFileName="player.tar.gz" />
+        <DownloadFile SourceUrl="https://github.com/JonasAlv/skua-mugetsu/releases/download/v$(SkuaPlayerVersion)/linux-x86-64-v3.tar.gz" DestinationFolder="$(SkuaPlayerCache)" DestinationFileName="player.tar.gz" />
         <Exec Command="tar -xzf player.tar.gz" WorkingDirectory="$(SkuaPlayerCache)" />
     </Target>
 
