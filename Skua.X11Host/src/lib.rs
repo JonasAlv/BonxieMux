@@ -291,8 +291,9 @@ fn run_x11_host(
         return;
     };
 
-    // Unmap before enabling override_redirect and reparenting so WMs/compositors cleanly release any frame.
-    let _ = conn.unmap_window(target_win);
+    // Strip decorations / WM override-redirect and reparent directly into the NativeControlHost child X11 window.
+    // Avoid an extra UnmapWindow before ReparentWindow: X11 ReparentWindow atomically unmaps/reparents/remaps
+    // if mapped, keeping Vulkan and OpenGL surfaces stable on both XWayland and Xorg/XLibre.
     let _ = conn.change_window_attributes(
         target_win,
         &ChangeWindowAttributesAux::new()
@@ -315,12 +316,6 @@ fn run_x11_host(
             }
         }
     }
-
-    // Watch parent_xid StructureNotify on this connection (per-client mask; does not affect Avalonia).
-    let _ = conn.change_window_attributes(
-        parent_xid,
-        &ChangeWindowAttributesAux::new().event_mask(EventMask::STRUCTURE_NOTIFY),
-    );
 
     let config_ok = conn
         .configure_window(
@@ -398,7 +393,6 @@ fn run_x11_host(
             }
         }
 
-        let mut needs_flush = false;
         loop {
             match conn.poll_for_event() {
                 Ok(Some(Event::ButtonPress(bp))) => {
@@ -409,16 +403,6 @@ fn run_x11_host(
                         if let Some((cb, user_data)) = *guard {
                             cb(user_data);
                         }
-                    }
-                }
-                Ok(Some(Event::ConfigureNotify(cn))) if cn.window == parent_xid => {
-                    let rw = u32::from(cn.width);
-                    let rh = u32::from(cn.height);
-                    if rw >= 2 && rh >= 2 && (rw != cur_w || rh != cur_h) {
-                        cur_w = rw;
-                        cur_h = rh;
-                        apply_window_size(&conn, target_win, cur_w, cur_h);
-                        needs_flush = true;
                     }
                 }
                 Ok(Some(Event::DestroyNotify(dn))) if dn.window == target_win => {
@@ -434,9 +418,6 @@ fn run_x11_host(
                     break;
                 }
             }
-        }
-        if needs_flush {
-            let _ = conn.flush();
         }
         if destroyed || shared.stop.load(Ordering::Acquire) {
             break;
