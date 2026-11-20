@@ -1,6 +1,6 @@
 # BonxieMux
 
-**BonxieMux** is a native Linux AdventureQuest Worlds (AQW) bot and multi-account tabbed client built with .NET 10 and Avalonia. It embeds the [skua-mugetsu](https://github.com/retr0gr4d3/skua-mugetsu) Flash runner via a Rust X11/XWayland host (`Skua.X11Host`) (native Wayland host and implementation in `wayland` branch) and includes **BonxieMux Manager** for managing accounts, scripts, and updates.
+**BonxieMux** is a native Linux focused AdventureQuest Worlds (AQW) bot and multi-account tabbed client built with .NET 10 and Avalonia. It embeds the [skua-mugetsu](https://github.com/retr0gr4d3/skua-mugetsu) Flash runner via a Rust X11/XWayland host (`Skua.X11Host`) (native Wayland host and implementation in `wayland` branch) and includes **BonxieMux Manager** for managing accounts, scripts, and updates.
 It's based on [VibeSkua](https://github.com/NinjaXz/VibeSkua) and [Skua](https://github.com/auqw/skua)
 
 ---
