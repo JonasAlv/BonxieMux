@@ -19,6 +19,9 @@ internal static partial class BonxieX11Native
     [LibraryImport(Lib, EntryPoint = "bonxie_x11_stop")]
     public static partial void Stop(IntPtr host);
 
+    [LibraryImport(Lib, EntryPoint = "bonxie_x11_suspend")]
+    public static partial void Suspend(IntPtr host);
+
     [LibraryImport(Lib, EntryPoint = "bonxie_x11_resize")]
     public static partial void Resize(IntPtr host, uint width, uint height);
 
@@ -57,6 +60,7 @@ public class GameHost : NativeControlHost
     private int _pendingResizeH;
     private int _lastSentWidth;
     private int _lastSentHeight;
+    private bool _forceNextResize;
 
     public static event Action? GameClicked;
     public event Action? Clicked;
@@ -268,7 +272,7 @@ public class GameHost : NativeControlHost
         }
     }
 
-    private void StopX11Host()
+    private void StopX11Host(bool keepMapped = false)
     {
         _attachMonitorTimer?.Stop();
         if (_x11Host != IntPtr.Zero)
@@ -276,14 +280,21 @@ public class GameHost : NativeControlHost
             IntPtr h = _x11Host;
             _x11Host = IntPtr.Zero;
             try { BonxieX11Native.SetClickCallback(h, IntPtr.Zero, 0); } catch { }
-            try { BonxieX11Native.Stop(h); } catch { }
+            try
+            {
+                if (keepMapped)
+                    BonxieX11Native.Suspend(h);
+                else
+                    BonxieX11Native.Stop(h);
+            }
+            catch { }
         }
         if (_selfHandle.IsAllocated)
             _selfHandle.Free();
         _attachedPid = 0;
     }
 
-    public void SuspendCapture() => StopX11Host();
+    public void SuspendCapture() => StopX11Host(keepMapped: true);
 
     public void DisposeResources()
     {
@@ -325,8 +336,18 @@ public class GameHost : NativeControlHost
 
     private void OnOwnerWindowPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
-        if (e.Property == Window.WindowStateProperty || e.Property == IsVisibleProperty)
+        if (e.Property == Window.WindowStateProperty)
+        {
+            _forceNextResize = true;
+            if (IsHostEffectivelyVisible)
+                ScheduleResizeDebounce();
+            else
+                _resizeDebounceTimer?.Stop();
+        }
+        else if (e.Property == IsVisibleProperty)
+        {
             UpdateHostedVisibility();
+        }
     }
 
     private bool IsHostEffectivelyVisible =>
@@ -395,7 +416,12 @@ public class GameHost : NativeControlHost
 
         _pendingResizeW = w;
         _pendingResizeH = h;
-        _resizeDebounceTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+        ScheduleResizeDebounce();
+    }
+
+    private void ScheduleResizeDebounce()
+    {
+        _resizeDebounceTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
         _resizeDebounceTimer.Tick -= OnResizeDebounceTick;
         _resizeDebounceTimer.Tick += OnResizeDebounceTick;
         _resizeDebounceTimer.Stop();
@@ -407,9 +433,14 @@ public class GameHost : NativeControlHost
         _resizeDebounceTimer?.Stop();
         if (!OperatingSystem.IsLinux() || TargetPid <= 0 || !IsHostEffectivelyVisible)
             return;
-        int w = _pendingResizeW;
-        int h = _pendingResizeH;
-        if (w <= 2 || h <= 2 || (w == _lastSentWidth && h == _lastSentHeight))
+        double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
+        int bw = (int)Math.Round(Bounds.Width * scale);
+        int bh = (int)Math.Round(Bounds.Height * scale);
+        int w = bw > 2 ? bw : _pendingResizeW;
+        int h = bh > 2 ? bh : _pendingResizeH;
+        bool force = _forceNextResize;
+        _forceNextResize = false;
+        if (w <= 2 || h <= 2 || (!force && w == _lastSentWidth && h == _lastSentHeight))
             return;
         _lastSentWidth = w;
         _lastSentHeight = h;

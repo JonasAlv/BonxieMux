@@ -14,6 +14,7 @@ use x11rb::rust_connection::RustConnection;
 
 struct SharedState {
     stop: AtomicBool,
+    keep_mapped_on_stop: AtomicBool,
     /// 0 = pending, 1 = attached, -1 = failed.
     attach_state: AtomicI32,
     /// Packed `(width << 32) | height`, 0 when no resize is pending.
@@ -64,6 +65,7 @@ pub unsafe extern "C" fn bonxie_x11_start(
     let wake_fd = libc::eventfd(0, libc::EFD_NONBLOCK | libc::EFD_CLOEXEC);
     let shared = Arc::new(SharedState {
         stop: AtomicBool::new(false),
+        keep_mapped_on_stop: AtomicBool::new(false),
         attach_state: AtomicI32::new(0),
         pending_resize: AtomicU64::new(0),
         wake_fd,
@@ -90,6 +92,20 @@ pub unsafe extern "C" fn bonxie_x11_stop(host: *mut BonxieX11Host) {
         return;
     }
     let mut boxed = Box::from_raw(host);
+    boxed.shared.stop.store(true, Ordering::Release);
+    boxed.shared.wake();
+    if let Some(worker) = boxed.worker.take() {
+        let _ = worker.join();
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn bonxie_x11_suspend(host: *mut BonxieX11Host) {
+    if host.is_null() {
+        return;
+    }
+    let mut boxed = Box::from_raw(host);
+    boxed.shared.keep_mapped_on_stop.store(true, Ordering::Release);
     boxed.shared.stop.store(true, Ordering::Release);
     boxed.shared.wake();
     if let Some(worker) = boxed.worker.take() {
@@ -165,6 +181,28 @@ pub unsafe extern "C" fn bonxie_x11_resize(host: *mut BonxieX11Host, width: u32,
     shared.wake();
 }
 
+fn find_pid_window_recursive(
+    conn: &RustConnection,
+    parent: Window,
+    pid_atom: u32,
+    target_pid: u32,
+    depth: u8,
+) -> Option<Window> {
+    if depth == 0 {
+        return None;
+    }
+    let tree = conn.query_tree(parent).ok()?.reply().ok()?;
+    for &child in tree.children.iter().rev() {
+        if window_matches_pid(conn, child, pid_atom, target_pid) {
+            return Some(child);
+        }
+        if let Some(found) = find_pid_window_recursive(conn, child, pid_atom, target_pid, depth - 1) {
+            return Some(found);
+        }
+    }
+    None
+}
+
 fn find_pid_window(
     conn: &RustConnection,
     root: Window,
@@ -173,32 +211,11 @@ fn find_pid_window(
     target_pid: u32,
 ) -> Option<Window> {
     if parent_xid != 0 {
-        if let Ok(sub_tree) = conn.query_tree(parent_xid).and_then(|c| Ok(c.reply())) {
-            if let Ok(tree) = sub_tree {
-                for &child in tree.children.iter().rev() {
-                    if window_matches_pid(conn, child, pid_atom, target_pid) {
-                        return Some(child);
-                    }
-                }
-            }
+        if let Some(found) = find_pid_window_recursive(conn, parent_xid, pid_atom, target_pid, 2) {
+            return Some(found);
         }
     }
-    let tree = conn.query_tree(root).ok()?.reply().ok()?;
-    for &win in tree.children.iter().rev() {
-        if window_matches_pid(conn, win, pid_atom, target_pid) {
-            return Some(win);
-        }
-        if let Ok(sub) = conn.query_tree(win).and_then(|c| Ok(c.reply())) {
-            if let Ok(sub_tree) = sub {
-                for &child in sub_tree.children.iter().rev() {
-                    if window_matches_pid(conn, child, pid_atom, target_pid) {
-                        return Some(child);
-                    }
-                }
-            }
-        }
-    }
-    None
+    find_pid_window_recursive(conn, root, pid_atom, target_pid, 6)
 }
 
 fn window_matches_pid(
@@ -228,7 +245,15 @@ fn detach_window_to_root(
     target_win: Window,
     root: Window,
     was_reparented: bool,
+    keep_mapped: bool,
 ) {
+    if keep_mapped {
+        // Leave target_win mapped and override_redirect(1) in place; the new host
+        // will atomically ReparentWindow it to its own NativeControlHost without
+        // unmapping or destroying XWayland's wl_surface.
+        let _ = conn.flush();
+        return;
+    }
     if was_reparented {
         // Unmap while still override-redirect and inside parent_xid so ReparentWindow
         // does not remap it as a WM-decorated top-level window (prevents close flash).
@@ -367,12 +392,12 @@ fn run_x11_host(
         eprintln!(
             "[bonxie_x11] failed to reparent/configure/map/grab window {target_win} for pid {child_pid}"
         );
-        detach_window_to_root(&conn, target_win, root, reparent_ok);
+        detach_window_to_root(&conn, target_win, root, reparent_ok, false);
         shared.attach_state.store(-1, Ordering::Release);
         return;
     }
     if conn.flush().is_err() {
-        detach_window_to_root(&conn, target_win, root, true);
+        detach_window_to_root(&conn, target_win, root, true, false);
         shared.attach_state.store(-1, Ordering::Release);
         return;
     }
@@ -387,7 +412,7 @@ fn run_x11_host(
         if packed != 0 {
             let rw = (packed >> 32) as u32;
             let rh = (packed & 0xFFFF_FFFF) as u32;
-            if rw >= 2 && rh >= 2 && (rw != cur_w || rh != cur_h) {
+            if rw >= 2 && rh >= 2 {
                 cur_w = rw;
                 cur_h = rh;
                 apply_window_size(&conn, target_win, cur_w, cur_h);
@@ -448,6 +473,7 @@ fn run_x11_host(
     }
 
     if !destroyed {
-        detach_window_to_root(&conn, target_win, root, true);
+        let keep_mapped = shared.keep_mapped_on_stop.load(Ordering::Acquire);
+        detach_window_to_root(&conn, target_win, root, true, keep_mapped);
     }
 }

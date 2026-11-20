@@ -908,6 +908,7 @@ public partial class TabbedHostWindow : Window
 
 
     private WindowState _stateBeforeFullScreen = WindowState.Normal;
+    private (int X, int Y, double WidthDip, double HeightDip)? _boundsBeforeFullScreen;
     private bool _gameOnly;
     private bool _gameOnlySetFullScreen;
 
@@ -920,17 +921,54 @@ public partial class TabbedHostWindow : Window
 
         if (WindowState == WindowState.FullScreen)
         {
-            WindowState = (_stateBeforeFullScreen == WindowState.FullScreen || _stateBeforeFullScreen == WindowState.Minimized)
+            WindowState target = (_stateBeforeFullScreen == WindowState.FullScreen || _stateBeforeFullScreen == WindowState.Minimized)
                 ? WindowState.Normal
                 : _stateBeforeFullScreen;
+            WindowState = target;
             if (wasGameOnly)
                 ApplyGameOnly(false);
+            if (target == WindowState.Normal && _boundsBeforeFullScreen is { } saved)
+            {
+                DispatcherTimer.RunOnce(() =>
+                {
+                    if (WindowState != WindowState.Normal)
+                        return;
+                    Width = saved.WidthDip + 1;
+                    Height = saved.HeightDip + 1;
+                    DispatcherTimer.RunOnce(() =>
+                    {
+                        if (WindowState != WindowState.Normal)
+                            return;
+                        Width = saved.WidthDip;
+                        Height = saved.HeightDip;
+                        var screen = Screens?.ScreenFromWindow(this) ?? Screens?.Primary;
+                        if (screen != null)
+                        {
+                            double scale = RenderScaling > 0 ? RenderScaling : 1.0;
+                            int wPx = (int)Math.Round(saved.WidthDip * scale);
+                            int hPx = (int)Math.Round(saved.HeightDip * scale);
+                            var wa = screen.WorkingArea;
+                            int cx = wa.X + Math.Max(0, (wa.Width - wPx) / 2);
+                            int cy = wa.Y + Math.Max(0, (wa.Height - hPx) / 2);
+                            Position = new global::Avalonia.PixelPoint(cx, cy);
+                        }
+                        else
+                        {
+                            Position = new global::Avalonia.PixelPoint(saved.X, saved.Y);
+                        }
+                    }, TimeSpan.FromMilliseconds(50));
+                }, TimeSpan.FromMilliseconds(150));
+            }
             return;
         }
         _stateBeforeFullScreen = WindowState == WindowState.Minimized ? WindowState.Normal : WindowState;
-        WindowState = WindowState.FullScreen;
+        if (_stateBeforeFullScreen == WindowState.Normal && ClientSize.Width > 0 && ClientSize.Height > 0)
+            _boundsBeforeFullScreen = (Position.X, Position.Y, ClientSize.Width, ClientSize.Height);
         if (wasGameOnly)
             ApplyGameOnly(false);
+        Width = double.NaN;
+        Height = double.NaN;
+        WindowState = WindowState.FullScreen;
     }
 
     /// <summary>Shift+F11: full screen with only the game. The title bar, the tab bar, the notices and every client's menu are hidden;
@@ -945,10 +983,10 @@ public partial class TabbedHostWindow : Window
             ApplyGameOnly(false);
             return;
         }
+        ApplyGameOnly(true);
         _gameOnlySetFullScreen = WindowState != WindowState.FullScreen;
         if (_gameOnlySetFullScreen)
             ToggleFullScreen(keepGameOnly: true);
-        ApplyGameOnly(true);
     }
 
     private void ApplyGameOnly(bool on)

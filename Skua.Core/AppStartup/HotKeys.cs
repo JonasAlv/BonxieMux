@@ -315,12 +315,16 @@ public class HotKeys
     }
 
     public static bool IsDetachedMode { get; set; }
+    public static Action? ToggleDetachedFullScreenRequested { get; set; }
     public static Action? ToggleDetachedGameFullScreenRequested { get; set; }
 
     private static void ToggleFullScreen()
     {
         if (IsDetachedMode)
+        {
+            ToggleDetachedFullScreenRequested?.Invoke();
             return;
+        }
 
         if (!IsHostProcess)
             SendHostCommand("FULLSCREEN");

@@ -146,6 +146,12 @@ public partial class MainWindow : Window
             Focus();
 
         UpdateBackgroundThrottleState(false);
+        if (string.IsNullOrEmpty(App.HostPipeName) || HotKeys.IsDetachedMode)
+        {
+            _isWindowFocused = true;
+            EvaluateAutoHeadless();
+            UpdateQualityFocusState();
+        }
     }
 
     private void UpdateBackgroundThrottleState(bool throttle)
@@ -832,10 +838,12 @@ public partial class MainWindow : Window
         else if (uMsg == HotKeys.WM_SKUA_FOCUS)
         {
             bool focused = wParam != IntPtr.Zero;
-            _isWindowFocused = focused;
-            ReleaseAllPressedKeys();
             Dispatcher.UIThread.Post(() =>
             {
+                if (HotKeys.IsDetachedMode)
+                    return;
+                _isWindowFocused = focused;
+                ReleaseAllPressedKeys();
                 if (focused)
                     UpdateBackgroundThrottleState(false);
                 EvaluateAutoHeadless();
@@ -892,13 +900,16 @@ public partial class MainWindow : Window
                 this.Width = 948;
                 this.Height = 600;
                 this.Position = new global::Avalonia.PixelPoint(targetX, targetY);
+                if (FlashHost != null)
+                    FlashHost.IsVisible = !_options.IsHeadlessNow();
+                if (_flash is Flash.FlashUtil detachPlayer && detachPlayer.PlayerPid > 0)
+                    FlashHost?.AttachFlash(detachPlayer);
                 this.Show();
                 this.Position = new global::Avalonia.PixelPoint(targetX, targetY);
                 this.Activate();
-                if (_flash is Flash.FlashUtil detachPlayer && detachPlayer.PlayerPid > 0)
-                    FlashHost?.AttachFlash(detachPlayer);
-                if (FlashHost != null)
-                    FlashHost.IsVisible = !_options.IsHeadlessNow();
+                _isWindowFocused = true;
+                EvaluateAutoHeadless();
+                UpdateQualityFocusState();
                 SyncHostedVisibility();
                 Dispatcher.UIThread.Post(() => FlashHost?.ForceRefreshFrame(), DispatcherPriority.Render);
                 DispatcherTimer.RunOnce(() =>

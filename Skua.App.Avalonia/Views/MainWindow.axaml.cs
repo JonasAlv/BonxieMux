@@ -95,24 +95,85 @@ public partial class MainWindow : Window
         });
     }
 
+    private WindowState _stateBeforeFullScreen = WindowState.Normal;
+    private (int X, int Y, double WidthDip, double HeightDip)? _boundsBeforeFullScreen;
     private bool _gameOnly;
     private bool _gameOnlySetFullScreen;
+
+    public void ToggleDetachedFullScreen(bool keepGameOnly = false)
+    {
+        bool wasGameOnly = _gameOnly && !keepGameOnly;
+        if (wasGameOnly)
+            _gameOnlySetFullScreen = false;
+
+        if (WindowState == WindowState.FullScreen)
+        {
+            WindowState target = (_stateBeforeFullScreen == WindowState.FullScreen || _stateBeforeFullScreen == WindowState.Minimized)
+                ? WindowState.Normal
+                : _stateBeforeFullScreen;
+            WindowState = target;
+            if (wasGameOnly)
+                ApplyGameOnly(false);
+            if (target == WindowState.Normal && _boundsBeforeFullScreen is { } saved)
+            {
+                DispatcherTimer.RunOnce(() =>
+                {
+                    if (WindowState != WindowState.Normal)
+                        return;
+                    Width = saved.WidthDip + 1;
+                    Height = saved.HeightDip + 1;
+                    DispatcherTimer.RunOnce(() =>
+                    {
+                        if (WindowState != WindowState.Normal)
+                            return;
+                        Width = saved.WidthDip;
+                        Height = saved.HeightDip;
+                        var screen = Screens?.ScreenFromWindow(this) ?? Screens?.Primary;
+                        if (screen != null)
+                        {
+                            double scale = RenderScaling > 0 ? RenderScaling : 1.0;
+                            int wPx = (int)Math.Round(saved.WidthDip * scale);
+                            int hPx = (int)Math.Round(saved.HeightDip * scale);
+                            var wa = screen.WorkingArea;
+                            int cx = wa.X + Math.Max(0, (wa.Width - wPx) / 2);
+                            int cy = wa.Y + Math.Max(0, (wa.Height - hPx) / 2);
+                            Position = new global::Avalonia.PixelPoint(cx, cy);
+                        }
+                        else
+                        {
+                            Position = new global::Avalonia.PixelPoint(saved.X, saved.Y);
+                        }
+                    }, TimeSpan.FromMilliseconds(50));
+                }, TimeSpan.FromMilliseconds(150));
+            }
+            return;
+        }
+
+        _stateBeforeFullScreen = WindowState == WindowState.Minimized ? WindowState.Normal : WindowState;
+        if (_stateBeforeFullScreen == WindowState.Normal && ClientSize.Width > 0 && ClientSize.Height > 0)
+            _boundsBeforeFullScreen = (Position.X, Position.Y, ClientSize.Width, ClientSize.Height);
+        if (wasGameOnly)
+            ApplyGameOnly(false);
+        Width = double.NaN;
+        Height = double.NaN;
+        WindowState = WindowState.FullScreen;
+    }
 
     public void ToggleDetachedGameOnly()
     {
         if (_gameOnly)
         {
-            ApplyGameOnly(false);
             if (_gameOnlySetFullScreen && WindowState == WindowState.FullScreen)
-                WindowState = WindowState.Normal;
+                ToggleDetachedFullScreen(keepGameOnly: true);
             _gameOnlySetFullScreen = false;
+            ApplyGameOnly(false);
             return;
         }
 
+        ApplyGameOnly(true);
         _gameOnlySetFullScreen = WindowState != WindowState.FullScreen;
         if (_gameOnlySetFullScreen)
-            WindowState = WindowState.FullScreen;
-        ApplyGameOnly(true);
+            ToggleDetachedFullScreen(keepGameOnly: true);
     }
 
     /// <summary>Game-only full screen: this client's menu bar and title bar are hidden (inside a tab window the tab window hides its own).</summary>
@@ -371,6 +432,7 @@ public partial class MainWindow : Window
             }
             catch { }
         });
+        HotKeys.ToggleDetachedFullScreenRequested = () => Dispatcher.UIThread.Post(() => ToggleDetachedFullScreen());
         HotKeys.ToggleDetachedGameFullScreenRequested = () => Dispatcher.UIThread.Post(ToggleDetachedGameOnly);
         if (HotKeys.IsHostProcess)
         {
