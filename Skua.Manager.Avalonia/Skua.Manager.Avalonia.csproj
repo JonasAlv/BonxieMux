@@ -14,6 +14,9 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets/**" />
+    <None Include="..\Skua.X11Host\target\release\libbonxie_x11.so" Link="libbonxie_x11.so" Condition="Exists('..\Skua.X11Host\target\release\libbonxie_x11.so')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

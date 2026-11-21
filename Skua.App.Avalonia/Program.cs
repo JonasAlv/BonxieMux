@@ -15,9 +15,6 @@ namespace Skua.App.Avalonia;
 
 internal static class Program
 {
-    [DllImport("libX11.so.6")]
-    private static extern int XInitThreads();
-
     [STAThread]
     public static void Main(string[] args)
     {
@@ -31,9 +28,21 @@ internal static class Program
             {
             }
         }
-        XInitThreads();
         InitializeAssemblyResolvers();
+        InitX11Threads();
         RunApp(args);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void InitX11Threads()
+    {
+        try
+        {
+            Skua.Shared.Avalonia.Services.BonxieX11Helpers.InitThreads();
+        }
+        catch
+        {
+        }
     }
 
     private static void InitializeAssemblyResolvers()

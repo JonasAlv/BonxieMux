@@ -5,7 +5,6 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using System;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
 namespace Skua.Shared.Avalonia.Services;
@@ -17,25 +16,6 @@ namespace Skua.Shared.Avalonia.Services;
 /// </summary>
 public static class X11WindowPositionTracker
 {
-    [DllImport("libX11.so.6")]
-    private static extern IntPtr XOpenDisplay(IntPtr display);
-
-    [DllImport("libX11.so.6")]
-    private static extern IntPtr XDefaultRootWindow(IntPtr display);
-
-    [DllImport("libX11.so.6")]
-    private static extern int XTranslateCoordinates(
-        IntPtr display,
-        IntPtr src_w,
-        IntPtr dest_w,
-        int src_x,
-        int src_y,
-        out int dest_x_return,
-        out int dest_y_return,
-        out IntPtr child_return);
-
-    private static IntPtr _display;
-    private static IntPtr _rootWindow;
     private static readonly object _lock = new();
 
     private static Type? _x11WindowType;
@@ -64,27 +44,6 @@ public static class X11WindowPositionTracker
             }
         }
         catch { }
-    }
-
-    private static bool EnsureDisplay()
-    {
-        lock (_lock)
-        {
-            if (_display != IntPtr.Zero)
-                return true;
-
-            try
-            {
-                _display = XOpenDisplay(IntPtr.Zero);
-                if (_display != IntPtr.Zero)
-                {
-                    _rootWindow = XDefaultRootWindow(_display);
-                    return true;
-                }
-            }
-            catch { }
-            return false;
-        }
     }
 
     /// <summary>
@@ -195,10 +154,8 @@ public static class X11WindowPositionTracker
             if (handle == IntPtr.Zero)
                 return;
 
-            if (!EnsureDisplay())
-                return;
-
-            if (XTranslateCoordinates(_display, handle, _rootWindow, 0, 0, out int realX, out int realY, out _) != 0)
+            uint xid = unchecked((uint)handle.ToInt64());
+            if (xid != 0 && BonxieX11Helpers.TranslateToRoot(xid, out int realX, out int realY))
             {
                 PixelPoint livePos = new(realX, realY);
                 object? currentValue = _positionField?.GetValue(platformImpl);

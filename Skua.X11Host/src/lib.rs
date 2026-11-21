@@ -1,6 +1,6 @@
 use std::os::fd::{AsRawFd, RawFd};
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
@@ -11,6 +11,12 @@ use x11rb::protocol::xproto::{
 };
 use x11rb::protocol::Event;
 use x11rb::rust_connection::RustConnection;
+
+mod helpers;
+mod hotkeys;
+
+pub use helpers::*;
+pub use hotkeys::*;
 
 struct SharedState {
     stop: AtomicBool,
@@ -140,34 +146,12 @@ pub unsafe extern "C" fn bonxie_x11_focus(xid: u32) {
     if xid == 0 {
         return;
     }
-    static FOCUS_CONN: OnceLock<Mutex<Option<RustConnection>>> = OnceLock::new();
-    let cell = FOCUS_CONN.get_or_init(|| Mutex::new(None));
-    let Ok(mut guard) = cell.lock() else {
-        return;
-    };
-    if guard.is_none() {
-        if let Ok((conn, _)) = x11rb::connect(None) {
-            *guard = Some(conn);
-        }
-    }
-    let mut ok = false;
-    if let Some(conn) = guard.as_ref() {
-        if conn
-            .set_input_focus(InputFocus::POINTER_ROOT, xid, x11rb::CURRENT_TIME)
-            .is_ok()
-            && conn.flush().is_ok()
-        {
-            ok = true;
-        }
-    }
-    if !ok {
-        *guard = None;
-        if let Ok((conn, _)) = x11rb::connect(None) {
-            let _ = conn.set_input_focus(InputFocus::POINTER_ROOT, xid, x11rb::CURRENT_TIME);
-            let _ = conn.flush();
-            *guard = Some(conn);
-        }
-    }
+    let _ = helpers::with_util_conn(|conn, _root| {
+        conn.set_input_focus(InputFocus::POINTER_ROOT, xid, x11rb::CURRENT_TIME)
+            .map_err(|_| helpers::UtilErr::Conn)?;
+        conn.flush().map_err(|_| helpers::UtilErr::Conn)?;
+        Ok(())
+    });
 }
 
 #[no_mangle]

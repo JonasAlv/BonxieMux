@@ -12,27 +12,6 @@ public static class WindowPlacementHelper
 {
     #region Native Cursor Detection
 
-    [DllImport("libX11.so.6")]
-    private static extern IntPtr XOpenDisplay(IntPtr display);
-
-    [DllImport("libX11.so.6")]
-    private static extern int XCloseDisplay(IntPtr display);
-
-    [DllImport("libX11.so.6")]
-    private static extern IntPtr XDefaultRootWindow(IntPtr display);
-
-    [DllImport("libX11.so.6")]
-    private static extern bool XQueryPointer(
-        IntPtr d,
-        IntPtr w,
-        out IntPtr root_return,
-        out IntPtr child_return,
-        out int rx,
-        out int ry,
-        out int wx,
-        out int wy,
-        out uint mask);
-
     [StructLayout(LayoutKind.Sequential)]
     private struct POINT { public int X; public int Y; }
 
@@ -45,19 +24,8 @@ public static class WindowPlacementHelper
         {
             try
             {
-                IntPtr disp = XOpenDisplay(IntPtr.Zero);
-                if (disp != IntPtr.Zero)
-                {
-                    try
-                    {
-                        if (XQueryPointer(disp, XDefaultRootWindow(disp), out _, out _, out int rx, out int ry, out _, out _, out _))
-                            return new PixelPoint(rx, ry);
-                    }
-                    finally
-                    {
-                        XCloseDisplay(disp);
-                    }
-                }
+                if (BonxieX11Helpers.QueryPointerRoot(out int rx, out int ry))
+                    return new PixelPoint(rx, ry);
             }
             catch { }
         }

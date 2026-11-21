@@ -11,11 +11,10 @@ Install these tools using your distribution's package manager or official instal
 
 ### Required
 - **.NET 10 SDK** (`dotnet` 10.0)
-- **Rust toolchain** (`cargo` and `rustc`) — builds `Skua.X11Host` (`libbonxie_x11.so`).
+- **Rust toolchain** (`cargo` and `rustc`) — builds `Skua.X11Host` (`libbonxie_x11.so` and `bonxie-launcher`).
 - **Archive & download tools**: `curl`, `tar`, and `zip` (or `bsdtar`)
 
 ### Optional
-- **`gcc`** — only needed for `./build-binaries.sh` (compiles native launcher wrappers)
 - **`python3` + `Pillow`** — only needed for multi-resolution icon generation in `./build-appimages.sh` (falls back to raw icon copy if missing)
 - **`appimagetool`** — `./build-appimages.sh` downloads it automatically into `Build/tools/` if not in `PATH`
 - **Apache Flex SDK (`mxmlc`)** — only needed if you modify `Skua.AS3/` (a prebuilt `skua.swf` is already included)

@@ -1,26 +1,14 @@
 using Skua.Core.Interfaces;
+using Skua.Shared.Avalonia.Services;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace Skua.App.Avalonia.Services;
 
 public class SoundService : ISoundService
 {
-    [DllImport("libX11.so.6")]
-    private static extern IntPtr XOpenDisplay(IntPtr display);
-
-    [DllImport("libX11.so.6")]
-    private static extern int XCloseDisplay(IntPtr display);
-
-    [DllImport("libX11.so.6")]
-    private static extern int XBell(IntPtr display, int percent);
-
-    [DllImport("libX11.so.6")]
-    private static extern int XFlush(IntPtr display);
-
     private static readonly string[] SoundCandidates =
     [
         "/usr/share/sounds/freedesktop/stereo/bell.oga",
@@ -79,14 +67,8 @@ public class SoundService : ISoundService
                 }
 
                 // 3. Fallback to X11 display bell
-                IntPtr disp = XOpenDisplay(IntPtr.Zero);
-                if (disp != IntPtr.Zero)
-                {
-                    XBell(disp, 50);
-                    XFlush(disp);
-                    XCloseDisplay(disp);
+                if (BonxieX11Helpers.Bell(50))
                     return;
-                }
             }
             catch { }
 
