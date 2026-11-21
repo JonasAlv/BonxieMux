@@ -73,19 +73,20 @@ assemble_payload() {
         exit 1
     fi
 
-    # Build embedded Wayland DMA-BUF host (libbonxie_wayland.so)
+    # Build embedded Wayland DMA-BUF host (libbonxie_wayland.so) and Rust launcher (bonxie-launcher)
     local wayland_host_so="$SCRIPT_DIR/Skua.WaylandHost/target/release/libbonxie_wayland.so"
+    local wayland_launcher="$SCRIPT_DIR/Skua.WaylandHost/target/release/bonxie-launcher"
     if command -v cargo &>/dev/null; then
-        if [[ ! -s "$wayland_host_so" ]] || [[ -n "$(find "$SCRIPT_DIR/Skua.WaylandHost/src" "$SCRIPT_DIR/Skua.WaylandHost/Cargo.toml" -type f -newer "$wayland_host_so" -print -quit 2>/dev/null)" ]]; then
-            echo "--- Building embedded Wayland DMA-BUF host (libbonxie_wayland.so) ---"
+        if [[ ! -s "$wayland_host_so" || ! -x "$wayland_launcher" ]] || [[ -n "$(find "$SCRIPT_DIR/Skua.WaylandHost/src" "$SCRIPT_DIR/Skua.WaylandHost/Cargo.toml" -type f \( -newer "$wayland_host_so" -o -newer "$wayland_launcher" \) -print -quit 2>/dev/null)" ]]; then
+            echo "--- Building embedded Wayland DMA-BUF host & Rust launcher ---"
             cargo build --release --manifest-path "$SCRIPT_DIR/Skua.WaylandHost/Cargo.toml"
         else
-            echo "--- Embedded Wayland DMA-BUF host (libbonxie_wayland.so) is up-to-date ---"
+            echo "--- Embedded Wayland DMA-BUF host & Rust launcher are up-to-date ---"
         fi
-    elif [[ -s "$wayland_host_so" ]]; then
-        echo "--- Using existing libbonxie_wayland.so (install cargo to build from source) ---"
+    elif [[ -s "$wayland_host_so" && -x "$wayland_launcher" ]]; then
+        echo "--- Using existing libbonxie_wayland.so & bonxie-launcher (install cargo to build from source) ---"
     else
-        echo "Error: libbonxie_wayland.so not found and cargo is missing." >&2
+        echo "Error: libbonxie_wayland.so or bonxie-launcher not found and cargo is missing." >&2
         exit 1
     fi
 

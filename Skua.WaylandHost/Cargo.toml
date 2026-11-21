@@ -8,6 +8,10 @@ license = "MIT"
 name = "bonxie_wayland"
 crate-type = ["cdylib"]
 
+[[bin]]
+name = "bonxie-launcher"
+path = "src/launcher.rs"
+
 [dependencies]
 anyhow = "1"
 libc = "0.2"

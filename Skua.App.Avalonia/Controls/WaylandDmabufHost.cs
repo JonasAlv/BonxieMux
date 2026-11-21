@@ -10,30 +10,6 @@ using Avalonia.OpenGL.Controls;
 namespace Skua.App.Avalonia.Controls;
 
 [StructLayout(LayoutKind.Sequential)]
-internal struct BonxieDmaBufPlane
-{
-    public int Fd;
-    public uint Offset;
-    public uint Stride;
-}
-
-[StructLayout(LayoutKind.Sequential)]
-internal struct BonxieDmaBufFrame
-{
-    public ulong Seq;
-    public ulong BufferId;
-    public uint Width;
-    public uint Height;
-    public uint Fourcc;
-    public ulong Modifier;
-    public uint NumPlanes;
-    public BonxieDmaBufPlane Plane0;
-    public BonxieDmaBufPlane Plane1;
-    public BonxieDmaBufPlane Plane2;
-    public BonxieDmaBufPlane Plane3;
-}
-
-[StructLayout(LayoutKind.Sequential)]
 internal struct BonxieOutputInfo
 {
     public int X;
@@ -59,8 +35,19 @@ internal static unsafe partial class BonxieWaylandNative
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_set_frame_callback")]
     public static partial void SetFrameCallback(IntPtr host, IntPtr cb, nuint userData);
 
-    [LibraryImport(Lib, EntryPoint = "bonxie_wl_poll_dmabuf")]
-    public static partial int PollDmabuf(IntPtr host, ulong lastSeq, out BonxieDmaBufFrame outDmabuf);
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_import_dmabuf_to_bound_texture")]
+    public static partial int ImportDmabufToBoundTexture(
+        IntPtr host,
+        ulong lastSeq,
+        out ulong outSeq,
+        out ulong outBufferId,
+        out uint outWidth,
+        out uint outHeight,
+        out IntPtr outEglDisplay,
+        out IntPtr outEglImage);
+
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_destroy_egl_image")]
+    public static partial void DestroyEglImage(IntPtr eglDisplay, IntPtr eglImage);
 
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_peek_frame")]
     public static partial int PeekFrame(IntPtr host, out ulong outSeq, out ulong outBufferId, out uint outWidth, out uint outHeight);
@@ -97,15 +84,6 @@ internal static unsafe partial class BonxieWaylandNative
 
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_query_outputs")]
     public static partial int QueryOutputs(BonxieOutputInfo* outBuf, nuint maxCount);
-
-    [LibraryImport("libc", EntryPoint = "close")]
-    public static partial int CloseFd(int fd);
-
-    [LibraryImport("libEGL.so.1", EntryPoint = "eglGetCurrentDisplay")]
-    public static partial IntPtr EglGetCurrentDisplay();
-
-    [LibraryImport("libEGL.so.1", EntryPoint = "eglGetProcAddress", StringMarshalling = StringMarshalling.Utf8)]
-    public static partial IntPtr EglGetProcAddress(string name);
 
     public static (IntPtr Handle, string SocketName) StartHost(uint width, uint height, bool enableDmabuf = true)
     {
@@ -145,47 +123,20 @@ internal sealed unsafe class DmabufGlRenderer
     private const int GL_TRIANGLE_STRIP = 0x0005;
     private const int GL_COLOR_BUFFER_BIT = 0x00004000;
 
-    private const int EGL_WIDTH = 0x3057;
-    private const int EGL_HEIGHT = 0x3056;
-    private const int EGL_NONE = 0x3038;
-    private const int EGL_LINUX_DMA_BUF_EXT = 0x3270;
-    private const int EGL_LINUX_DRM_FOURCC_EXT = 0x3271;
-    private const int EGL_DMA_BUF_PLANE0_FD_EXT = 0x3272;
-    private const int EGL_DMA_BUF_PLANE0_OFFSET_EXT = 0x3273;
-    private const int EGL_DMA_BUF_PLANE0_PITCH_EXT = 0x3274;
-    private const int EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT = 0x3443;
-    private const int EGL_DMA_BUF_PLANE0_MODIFIER_HI_EXT = 0x3444;
-    private const int EGL_DMA_BUF_PLANE1_FD_EXT = 0x3275;
-    private const int EGL_DMA_BUF_PLANE1_OFFSET_EXT = 0x3276;
-    private const int EGL_DMA_BUF_PLANE1_PITCH_EXT = 0x3277;
-    private const int EGL_DMA_BUF_PLANE1_MODIFIER_LO_EXT = 0x3445;
-    private const int EGL_DMA_BUF_PLANE1_MODIFIER_HI_EXT = 0x3446;
-    private const int EGL_DMA_BUF_PLANE2_FD_EXT = 0x3278;
-    private const int EGL_DMA_BUF_PLANE2_OFFSET_EXT = 0x3279;
-    private const int EGL_DMA_BUF_PLANE2_PITCH_EXT = 0x327A;
-    private const int EGL_DMA_BUF_PLANE2_MODIFIER_LO_EXT = 0x3447;
-    private const int EGL_DMA_BUF_PLANE2_MODIFIER_HI_EXT = 0x3448;
-    private const int EGL_DMA_BUF_PLANE3_FD_EXT = 0x3440;
-    private const int EGL_DMA_BUF_PLANE3_OFFSET_EXT = 0x3441;
-    private const int EGL_DMA_BUF_PLANE3_PITCH_EXT = 0x3442;
-    private const int EGL_DMA_BUF_PLANE3_MODIFIER_LO_EXT = 0x3449;
-    private const int EGL_DMA_BUF_PLANE3_MODIFIER_HI_EXT = 0x344A;
-
-    private delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int, IntPtr, int*, IntPtr> _eglCreateImageKhr;
-    private delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int> _eglDestroyImageKhr;
-    private delegate* unmanaged[Cdecl]<int, IntPtr, void> _glEglImageTargetTexture2DOes;
     private delegate* unmanaged[Cdecl]<int, float, float, void> _glUniform2f;
 
     private readonly struct CachedDmabufTexture
     {
         public readonly int Texture;
+        public readonly IntPtr EglDisplay;
         public readonly IntPtr EglImage;
         public readonly uint Width;
         public readonly uint Height;
 
-        public CachedDmabufTexture(int texture, IntPtr eglImage, uint width, uint height)
+        public CachedDmabufTexture(int texture, IntPtr eglDisplay, IntPtr eglImage, uint width, uint height)
         {
             Texture = texture;
+            EglDisplay = eglDisplay;
             EglImage = eglImage;
             Width = width;
             Height = height;
@@ -196,9 +147,10 @@ internal sealed unsafe class DmabufGlRenderer
     private readonly Dictionary<ulong, CachedDmabufTexture> _bufferCache = new();
     private readonly Queue<ulong> _cacheOrder = new();
 
-    private IntPtr _eglDisplay;
     private int _activeTexture;
     private int _texture;
+    private IntPtr _fallbackEglDisplay;
+    private IntPtr _fallbackEglImage;
     private int _program;
     private int _vao;
     private int _vbo;
@@ -218,24 +170,9 @@ internal sealed unsafe class DmabufGlRenderer
         if (_initialized)
             return;
 
-        _eglDisplay = BonxieWaylandNative.EglGetCurrentDisplay();
-        _eglCreateImageKhr = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int, IntPtr, int*, IntPtr>)
-            BonxieWaylandNative.EglGetProcAddress("eglCreateImageKHR");
-        _eglDestroyImageKhr = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int>)
-            BonxieWaylandNative.EglGetProcAddress("eglDestroyImageKHR");
-        _glEglImageTargetTexture2DOes = (delegate* unmanaged[Cdecl]<int, IntPtr, void>)
-            BonxieWaylandNative.EglGetProcAddress("glEGLImageTargetTexture2DOES");
-
         IntPtr uniform2fPtr = gl.GetProcAddress("glUniform2f");
         if (uniform2fPtr != IntPtr.Zero)
             _glUniform2f = (delegate* unmanaged[Cdecl]<int, float, float, void>)uniform2fPtr;
-
-        _texture = gl.GenTexture();
-        gl.BindTexture(GL_TEXTURE_2D, _texture);
-        gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         const string vsSrc = """
             #version 330 core
@@ -326,9 +263,9 @@ internal sealed unsafe class DmabufGlRenderer
                     _lastSeq = seq;
                     BonxieWaylandNative.AckFrame(waylandHost, seq);
                 }
-                else if (BonxieWaylandNative.PollDmabuf(waylandHost, _lastSeq, out BonxieDmaBufFrame dmabuf) == 1)
+                else
                 {
-                    ImportDmabuf(gl, in dmabuf);
+                    ImportLatestDmabuf(gl, waylandHost);
                 }
             }
         }
@@ -361,151 +298,71 @@ internal sealed unsafe class DmabufGlRenderer
         gl.UseProgram(0);
     }
 
-    private void ImportDmabuf(GlInterface gl, in BonxieDmaBufFrame dmabuf)
+    private void ImportLatestDmabuf(GlInterface gl, IntPtr waylandHost)
     {
-        try
+        int tex = gl.GenTexture();
+        gl.BindTexture(GL_TEXTURE_2D, tex);
+        gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        int rc = BonxieWaylandNative.ImportDmabufToBoundTexture(
+            waylandHost,
+            _lastSeq,
+            out ulong seq,
+            out ulong bufferId,
+            out uint fw,
+            out uint fh,
+            out IntPtr eglDisplay,
+            out IntPtr eglImage);
+
+        gl.BindTexture(GL_TEXTURE_2D, 0);
+
+        if (rc != 1 || eglImage == IntPtr.Zero)
         {
-            if (_eglDisplay == IntPtr.Zero || _eglCreateImageKhr == null || _glEglImageTargetTexture2DOes == null)
-                return;
-
-            int* attribs = stackalloc int[48];
-            int idx = 0;
-            attribs[idx++] = EGL_WIDTH;
-            attribs[idx++] = (int)dmabuf.Width;
-            attribs[idx++] = EGL_HEIGHT;
-            attribs[idx++] = (int)dmabuf.Height;
-            attribs[idx++] = EGL_LINUX_DRM_FOURCC_EXT;
-            attribs[idx++] = (int)dmabuf.Fourcc;
-
-            bool hasMod = dmabuf.Modifier != 0x00ffffffffffffffUL;
-            int modLo = unchecked((int)(dmabuf.Modifier & 0xFFFFFFFFUL));
-            int modHi = unchecked((int)(dmabuf.Modifier >> 32));
-            uint planes = Math.Min(dmabuf.NumPlanes, 4u);
-
-            if (planes > 0)
-            {
-                attribs[idx++] = EGL_DMA_BUF_PLANE0_FD_EXT;
-                attribs[idx++] = dmabuf.Plane0.Fd;
-                attribs[idx++] = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
-                attribs[idx++] = (int)dmabuf.Plane0.Offset;
-                attribs[idx++] = EGL_DMA_BUF_PLANE0_PITCH_EXT;
-                attribs[idx++] = (int)dmabuf.Plane0.Stride;
-                if (hasMod)
-                {
-                    attribs[idx++] = EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT;
-                    attribs[idx++] = modLo;
-                    attribs[idx++] = EGL_DMA_BUF_PLANE0_MODIFIER_HI_EXT;
-                    attribs[idx++] = modHi;
-                }
-            }
-            if (planes > 1)
-            {
-                attribs[idx++] = EGL_DMA_BUF_PLANE1_FD_EXT;
-                attribs[idx++] = dmabuf.Plane1.Fd;
-                attribs[idx++] = EGL_DMA_BUF_PLANE1_OFFSET_EXT;
-                attribs[idx++] = (int)dmabuf.Plane1.Offset;
-                attribs[idx++] = EGL_DMA_BUF_PLANE1_PITCH_EXT;
-                attribs[idx++] = (int)dmabuf.Plane1.Stride;
-                if (hasMod)
-                {
-                    attribs[idx++] = EGL_DMA_BUF_PLANE1_MODIFIER_LO_EXT;
-                    attribs[idx++] = modLo;
-                    attribs[idx++] = EGL_DMA_BUF_PLANE1_MODIFIER_HI_EXT;
-                    attribs[idx++] = modHi;
-                }
-            }
-            if (planes > 2)
-            {
-                attribs[idx++] = EGL_DMA_BUF_PLANE2_FD_EXT;
-                attribs[idx++] = dmabuf.Plane2.Fd;
-                attribs[idx++] = EGL_DMA_BUF_PLANE2_OFFSET_EXT;
-                attribs[idx++] = (int)dmabuf.Plane2.Offset;
-                attribs[idx++] = EGL_DMA_BUF_PLANE2_PITCH_EXT;
-                attribs[idx++] = (int)dmabuf.Plane2.Stride;
-                if (hasMod)
-                {
-                    attribs[idx++] = EGL_DMA_BUF_PLANE2_MODIFIER_LO_EXT;
-                    attribs[idx++] = modLo;
-                    attribs[idx++] = EGL_DMA_BUF_PLANE2_MODIFIER_HI_EXT;
-                    attribs[idx++] = modHi;
-                }
-            }
-            if (planes > 3)
-            {
-                attribs[idx++] = EGL_DMA_BUF_PLANE3_FD_EXT;
-                attribs[idx++] = dmabuf.Plane3.Fd;
-                attribs[idx++] = EGL_DMA_BUF_PLANE3_OFFSET_EXT;
-                attribs[idx++] = (int)dmabuf.Plane3.Offset;
-                attribs[idx++] = EGL_DMA_BUF_PLANE3_PITCH_EXT;
-                attribs[idx++] = (int)dmabuf.Plane3.Stride;
-                if (hasMod)
-                {
-                    attribs[idx++] = EGL_DMA_BUF_PLANE3_MODIFIER_LO_EXT;
-                    attribs[idx++] = modLo;
-                    attribs[idx++] = EGL_DMA_BUF_PLANE3_MODIFIER_HI_EXT;
-                    attribs[idx++] = modHi;
-                }
-            }
-            attribs[idx] = EGL_NONE;
-
-            IntPtr img = _eglCreateImageKhr(_eglDisplay, IntPtr.Zero, EGL_LINUX_DMA_BUF_EXT, IntPtr.Zero, attribs);
-            if (img == IntPtr.Zero)
-            {
-                Console.Error.WriteLine($"[WaylandDmabuf] eglCreateImageKHR failed for {dmabuf.Width}x{dmabuf.Height} fourcc=0x{dmabuf.Fourcc:X8}");
-                return;
-            }
-
-            int tex = gl.GenTexture();
-            gl.BindTexture(GL_TEXTURE_2D, tex);
-            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            _glEglImageTargetTexture2DOes(GL_TEXTURE_2D, img);
-            gl.BindTexture(GL_TEXTURE_2D, 0);
-
-            if (dmabuf.BufferId != 0)
-            {
-                if (_bufferCache.Remove(dmabuf.BufferId, out CachedDmabufTexture replaced))
-                    DestroyCachedTexture(gl, replaced);
-
-                while (_bufferCache.Count >= MaxCachedBuffers && _cacheOrder.Count > 0)
-                {
-                    ulong oldestId = _cacheOrder.Dequeue();
-                    if (_bufferCache.Remove(oldestId, out CachedDmabufTexture evicted))
-                        DestroyCachedTexture(gl, evicted);
-                }
-
-                _bufferCache[dmabuf.BufferId] = new CachedDmabufTexture(tex, img, dmabuf.Width, dmabuf.Height);
-                _cacheOrder.Enqueue(dmabuf.BufferId);
-            }
-            else
-            {
-                if (_texture != 0)
-                    gl.DeleteTexture(_texture);
-                _texture = tex;
-            }
-
-            _activeTexture = tex;
-            _fbWidth = dmabuf.Width;
-            _fbHeight = dmabuf.Height;
-            _lastSeq = dmabuf.Seq;
+            gl.DeleteTexture(tex);
+            return;
         }
-        finally
+
+        if (bufferId != 0)
         {
-            if (dmabuf.NumPlanes > 0 && dmabuf.Plane0.Fd >= 0) BonxieWaylandNative.CloseFd(dmabuf.Plane0.Fd);
-            if (dmabuf.NumPlanes > 1 && dmabuf.Plane1.Fd >= 0) BonxieWaylandNative.CloseFd(dmabuf.Plane1.Fd);
-            if (dmabuf.NumPlanes > 2 && dmabuf.Plane2.Fd >= 0) BonxieWaylandNative.CloseFd(dmabuf.Plane2.Fd);
-            if (dmabuf.NumPlanes > 3 && dmabuf.Plane3.Fd >= 0) BonxieWaylandNative.CloseFd(dmabuf.Plane3.Fd);
+            if (_bufferCache.Remove(bufferId, out CachedDmabufTexture replaced))
+                DestroyCachedTexture(gl, replaced);
+
+            while (_bufferCache.Count >= MaxCachedBuffers && _cacheOrder.Count > 0)
+            {
+                ulong oldestId = _cacheOrder.Dequeue();
+                if (_bufferCache.Remove(oldestId, out CachedDmabufTexture evicted))
+                    DestroyCachedTexture(gl, evicted);
+            }
+
+            _bufferCache[bufferId] = new CachedDmabufTexture(tex, eglDisplay, eglImage, fw, fh);
+            _cacheOrder.Enqueue(bufferId);
         }
+        else
+        {
+            if (_texture != 0)
+                gl.DeleteTexture(_texture);
+            if (_fallbackEglImage != IntPtr.Zero)
+                BonxieWaylandNative.DestroyEglImage(_fallbackEglDisplay, _fallbackEglImage);
+            _texture = tex;
+            _fallbackEglDisplay = eglDisplay;
+            _fallbackEglImage = eglImage;
+        }
+
+        _activeTexture = tex;
+        _fbWidth = fw;
+        _fbHeight = fh;
+        _lastSeq = seq;
     }
 
-    private void DestroyCachedTexture(GlInterface gl, CachedDmabufTexture cached)
+    private static void DestroyCachedTexture(GlInterface gl, CachedDmabufTexture cached)
     {
         if (cached.Texture != 0)
             gl.DeleteTexture(cached.Texture);
-        if (cached.EglImage != IntPtr.Zero && _eglDisplay != IntPtr.Zero && _eglDestroyImageKhr != null)
-            _eglDestroyImageKhr(_eglDisplay, cached.EglImage);
+        if (cached.EglImage != IntPtr.Zero)
+            BonxieWaylandNative.DestroyEglImage(cached.EglDisplay, cached.EglImage);
     }
 
     public void Deinit(GlInterface gl)
@@ -520,6 +377,12 @@ internal sealed unsafe class DmabufGlRenderer
         _activeTexture = 0;
 
         if (_texture != 0) gl.DeleteTexture(_texture);
+        if (_fallbackEglImage != IntPtr.Zero)
+        {
+            BonxieWaylandNative.DestroyEglImage(_fallbackEglDisplay, _fallbackEglImage);
+            _fallbackEglImage = IntPtr.Zero;
+            _fallbackEglDisplay = IntPtr.Zero;
+        }
         if (_vbo != 0) gl.DeleteBuffer(_vbo);
         if (_vao != 0) gl.DeleteVertexArray(_vao);
         if (_program != 0) gl.DeleteProgram(_program);

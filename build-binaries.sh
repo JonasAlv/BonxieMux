@@ -51,67 +51,15 @@ mkdir -p "$BINARY_DIR"
 cp -a "$CURRENT_DIR/." "$BINARY_DIR/current/"
 touch "$BINARY_DIR/.portable"
 
-# Compile native root C launchers
-cat << 'EOF' > "$BUILD_DIR/launcher.c"
-#define _GNU_SOURCE
-#include <unistd.h>
-#include <libgen.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-int main(int argc, char *argv[]) {
-    char exe_path[PATH_MAX];
-    ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
-    if (len == -1) {
-        perror("readlink");
-        return 1;
-    }
-    exe_path[len] = '\0';
-
-    char *dir = dirname(exe_path);
-    char current_dir[PATH_MAX];
-    snprintf(current_dir, sizeof(current_dir), "%s/current", dir);
-
-    char target[PATH_MAX];
-    snprintf(target, sizeof(target), "%s/%s", current_dir, TARGET_BIN);
-
-    if (chdir(current_dir) != 0) {
-        perror("chdir");
-        return 1;
-    }
-
-    char *orig_ld = getenv("LD_LIBRARY_PATH");
-    char new_ld[PATH_MAX * 4];
-    if (orig_ld && strlen(orig_ld) > 0) {
-        snprintf(new_ld, sizeof(new_ld), "%s:%s/runtimes/linux-x64/native:%s", current_dir, current_dir, orig_ld);
-    } else {
-        snprintf(new_ld, sizeof(new_ld), "%s:%s/runtimes/linux-x64/native", current_dir, current_dir);
-    }
-    setenv("LD_LIBRARY_PATH", new_ld, 1);
-
-    char *orig_path = getenv("PATH");
-    char new_path[PATH_MAX * 2];
-    if (orig_path && strlen(orig_path) > 0) {
-        snprintf(new_path, sizeof(new_path), "%s:%s", current_dir, orig_path);
-    } else {
-        snprintf(new_path, sizeof(new_path), "%s", current_dir);
-    }
-    setenv("PATH", new_path, 1);
-    setenv("DOTNET_ROOT", current_dir, 1);
-
-    argv[0] = target;
-    execv(target, argv);
-
-    perror("execv failed");
-    return 1;
-}
-EOF
-
-gcc -O2 -DTARGET_BIN=\"BonxieMux\" "$BUILD_DIR/launcher.c" -o "$BINARY_DIR/BonxieMux"
-gcc -O2 -DTARGET_BIN=\"BonxieMux.Manager\" "$BUILD_DIR/launcher.c" -o "$BINARY_DIR/BonxieMux.Manager"
-rm -f "$BUILD_DIR/launcher.c"
+# Copy compiled Rust root launcher wrappers
+LAUNCHER_BIN="$SCRIPT_DIR/Skua.WaylandHost/target/release/bonxie-launcher"
+if [[ ! -x "$LAUNCHER_BIN" ]]; then
+    echo "Error: Compiled Rust launcher not found or not executable: $LAUNCHER_BIN" >&2
+    exit 1
+fi
+cp -f "$LAUNCHER_BIN" "$BINARY_DIR/BonxieMux"
+cp -f "$LAUNCHER_BIN" "$BINARY_DIR/BonxieMux.Manager"
+chmod +x "$BINARY_DIR/BonxieMux" "$BINARY_DIR/BonxieMux.Manager"
 
 # Shell script launcher fallbacks
 cat << 'EOF' > "$BINARY_DIR/BonxieMux.sh"

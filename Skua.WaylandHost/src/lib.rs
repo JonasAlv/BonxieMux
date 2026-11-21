@@ -1,4 +1,7 @@
 mod dmabuf_host;
+mod egl_dmabuf;
+
+pub use egl_dmabuf::*;
 
 use dmabuf_host::{DmabufHost, DmabufInput};
 use std::os::fd::AsRawFd;
@@ -12,7 +15,7 @@ use wayland_client::{
 };
 
 pub struct BonxieWlHost {
-    inner: DmabufHost,
+    pub(crate) inner: DmabufHost,
 }
 
 #[repr(C)]
