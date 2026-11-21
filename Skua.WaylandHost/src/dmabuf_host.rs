@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::thread::JoinHandle;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use uuid::Uuid;
 use wayland_protocols::wp::linux_dmabuf::zv1::server::{
     zwp_linux_buffer_params_v1::{self, ZwpLinuxBufferParamsV1},
@@ -74,6 +74,7 @@ pub enum DmabufInput {
     Resize { width: u32, height: u32 },
     SetRefreshMhz { mhz: u32 },
     SetUncapped { uncapped: bool },
+    SetInterpolation { enabled: bool },
     SetVisible { visible: bool },
 }
 
@@ -87,7 +88,7 @@ pub struct DmabufHost {
     on_frame: Arc<Mutex<Option<(DmabufNotifyFn, usize)>>>,
     input_tx: Sender<DmabufInput>,
     acquired_serial: Arc<AtomicU64>,
-    presented_flag: Arc<AtomicBool>,
+    presented_serial: Arc<AtomicU64>,
     wake_fd: RawFd,
     stop: Arc<AtomicBool>,
     thread: Option<JoinHandle<()>>,
@@ -114,8 +115,8 @@ impl DmabufHost {
         let (input_tx, input_rx) = mpsc::channel();
         let acquired_serial = Arc::new(AtomicU64::new(0));
         let acquired_clone = Arc::clone(&acquired_serial);
-        let presented_flag = Arc::new(AtomicBool::new(false));
-        let presented_clone = Arc::clone(&presented_flag);
+        let presented_serial = Arc::new(AtomicU64::new(0));
+        let presented_clone = Arc::clone(&presented_serial);
         let wake_fd = unsafe { libc::eventfd(0, libc::EFD_NONBLOCK | libc::EFD_CLOEXEC) };
         let stop = Arc::new(AtomicBool::new(false));
         let stop_clone = Arc::clone(&stop);
@@ -146,7 +147,7 @@ impl DmabufHost {
             on_frame,
             input_tx,
             acquired_serial,
-            presented_flag,
+            presented_serial,
             wake_fd,
             stop,
             thread: Some(thread),
@@ -165,12 +166,24 @@ impl DmabufHost {
     }
 
     pub fn notify_frame_acquired(&self, serial: u64) {
-        self.acquired_serial.store(serial, Ordering::Release);
-        self.wake_loop();
+        if serial > 0 {
+            self.acquired_serial.fetch_max(serial, Ordering::AcqRel);
+            self.wake_loop();
+        }
+    }
+
+    pub fn notify_presented_seq(&self, serial: u64) {
+        if serial > 0 {
+            self.presented_serial.fetch_max(serial, Ordering::AcqRel);
+            self.wake_loop();
+        }
     }
 
     pub fn notify_presented(&self) {
-        self.presented_flag.store(true, Ordering::Release);
+        let seq = self.frame_seq.load(Ordering::Acquire);
+        if seq > 0 {
+            self.presented_serial.fetch_max(seq, Ordering::AcqRel);
+        }
         self.wake_loop();
     }
 
@@ -248,8 +261,10 @@ struct DmabufState {
     staged_buffer: Option<(u64, WlBuffer)>,
     refresh_mhz: u32,
     uncapped: bool,
+    interpolation: bool,
     visible: bool,
     uncapped_path: Option<PathBuf>,
+    interpolation_path: Option<PathBuf>,
     last_uncapped_check: Instant,
     pending_frame_callbacks: Vec<WlCallback>,
     pending_cb_since: Option<Instant>,
@@ -264,6 +279,13 @@ impl DmabufState {
 
     fn time_ms(&self) -> u32 {
         self.start_time.elapsed().as_millis() as u32
+    }
+
+    // Mugetsu's uncapped and FPS-limit settings only apply when Frame Interpolation is enabled.
+    // With interpolation off, the game runs at native 24 FPS and wl_surface.frame MUST stay
+    // presentation-synced even if mugetsu-uncapped.txt is "on".
+    fn effective_uncapped(&self) -> bool {
+        self.uncapped && self.interpolation
     }
 
     fn flush_frame_callbacks(&mut self) {
@@ -301,6 +323,68 @@ fn read_uncapped_file(path: &Option<PathBuf>) -> bool {
         .is_some_and(|s| s.trim().eq_ignore_ascii_case("on"))
 }
 
+fn read_interpolation_file(path: &Option<PathBuf>) -> bool {
+    path.as_ref().is_some_and(|p| p.exists())
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FrameCbDecision {
+    FlushNow,
+    WaitMs(i32),
+}
+
+// Tracks monotonic u64 `presented_serial >= frame_serial` (NOT a single AtomicBool, which can
+// allow a stale presentation ack to flush a newer unpresented frame's callback) and enforces a
+// 75% refresh-period floor (`750_000_000 / refresh_mhz`) to tolerate compositor vsync jitter
+// without dropping frame cadence.
+#[allow(clippy::too_many_arguments)]
+fn decide_frame_cb_action(
+    has_pending_cbs: bool,
+    visible: bool,
+    uncapped: bool,
+    refresh_mhz: u32,
+    frame_serial: u64,
+    presented_serial: u64,
+    elapsed_since_flush: Duration,
+    elapsed_since_pending: Duration,
+) -> FrameCbDecision {
+    if !has_pending_cbs {
+        return FrameCbDecision::WaitMs(250);
+    }
+
+    if !visible {
+        const HIDDEN_CB_INTERVAL: Duration = Duration::from_millis(100);
+        if elapsed_since_pending >= HIDDEN_CB_INTERVAL {
+            return FrameCbDecision::FlushNow;
+        }
+        let rem = HIDDEN_CB_INTERVAL.saturating_sub(elapsed_since_pending);
+        return FrameCbDecision::WaitMs((rem.as_millis() as i32).clamp(1, 100));
+    }
+
+    if uncapped {
+        return FrameCbDecision::FlushNow;
+    }
+
+    let clamped_mhz = u64::from(refresh_mhz.max(24_000));
+    let min_cb_interval = Duration::from_micros((750_000_000u64 / clamped_mhz).max(1000));
+    let fallback_timeout = Duration::from_millis((2_500_000u64 / clamped_mhz).clamp(40, 100));
+    let is_presented = presented_serial >= frame_serial;
+
+    if (is_presented && elapsed_since_flush >= min_cb_interval)
+        || elapsed_since_pending >= fallback_timeout
+    {
+        return FrameCbDecision::FlushNow;
+    }
+
+    if is_presented {
+        let rem = min_cb_interval.saturating_sub(elapsed_since_flush);
+        return FrameCbDecision::WaitMs((rem.as_millis() as i32).clamp(1, 50));
+    }
+
+    let rem = fallback_timeout.saturating_sub(elapsed_since_pending);
+    FrameCbDecision::WaitMs((rem.as_millis() as i32).clamp(1, 50))
+}
+
 #[allow(clippy::too_many_arguments)]
 fn run_dmabuf_loop(
     listener: ListeningSocket,
@@ -309,7 +393,7 @@ fn run_dmabuf_loop(
     on_frame: Arc<Mutex<Option<(DmabufNotifyFn, usize)>>>,
     input_rx: Receiver<DmabufInput>,
     acquired_serial: Arc<AtomicU64>,
-    presented_flag: Arc<AtomicBool>,
+    presented_serial: Arc<AtomicU64>,
     wake_fd: RawFd,
     stop: Arc<AtomicBool>,
     width: u32,
@@ -327,12 +411,19 @@ fn run_dmabuf_loop(
     dh.create_global::<DmabufState, WlSeat, _>(5, ());
     dh.create_global::<DmabufState, WlOutput, _>(3, ());
 
-    let uncapped_path = std::env::var_os("XDG_CONFIG_HOME")
+    let ruffle_config_dir = std::env::var_os("XDG_CONFIG_HOME")
         .filter(|v| !v.is_empty())
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))
-        .map(|d| d.join("ruffle").join("mugetsu-uncapped.txt"));
+        .map(|d| d.join("ruffle"));
+    let uncapped_path = ruffle_config_dir
+        .as_ref()
+        .map(|d| d.join("mugetsu-uncapped.txt"));
+    let interpolation_path = ruffle_config_dir
+        .as_ref()
+        .map(|d| d.join("mugetsu-interpolation.txt"));
     let initial_uncapped = read_uncapped_file(&uncapped_path);
+    let initial_interpolation = read_interpolation_file(&interpolation_path);
 
     let mut state = DmabufState {
         frame,
@@ -356,8 +447,10 @@ fn run_dmabuf_loop(
         staged_buffer: None,
         refresh_mhz: 60_000,
         uncapped: initial_uncapped,
+        interpolation: initial_interpolation,
         visible: true,
         uncapped_path,
+        interpolation_path,
         last_uncapped_check: Instant::now(),
         pending_frame_callbacks: Vec::new(),
         pending_cb_since: None,
@@ -377,40 +470,36 @@ fn run_dmabuf_loop(
 
         let _ = display.dispatch_clients(&mut state);
         state.promote_acquired_buffer(acquired_serial.swap(0, Ordering::AcqRel));
-        if state.last_uncapped_check.elapsed() >= std::time::Duration::from_millis(250) {
+        if state.last_uncapped_check.elapsed() >= Duration::from_millis(250) {
             state.last_uncapped_check = Instant::now();
-            let disk_uncapped = read_uncapped_file(&state.uncapped_path);
-            if disk_uncapped != state.uncapped {
-                state.uncapped = disk_uncapped;
-                if disk_uncapped {
-                    state.flush_frame_callbacks();
-                }
-            }
-        }
-        if !state.visible {
-            let _ = presented_flag.swap(false, Ordering::AcqRel);
-            if state
-                .pending_cb_since
-                .is_some_and(|s| s.elapsed() >= std::time::Duration::from_millis(100))
-            {
-                state.flush_frame_callbacks();
-            }
-        } else if state.uncapped {
-            let _ = presented_flag.swap(false, Ordering::AcqRel);
-            state.flush_frame_callbacks();
-        } else {
-            let min_cb_interval = std::time::Duration::from_micros(
-                (950_000_000u64 / state.refresh_mhz.max(24_000) as u64).max(1000),
-            );
-            if (presented_flag.swap(false, Ordering::AcqRel)
-                && state.last_cb_flush.elapsed() >= min_cb_interval)
-                || state
-                    .pending_cb_since
-                    .is_some_and(|s| s.elapsed() >= std::time::Duration::from_millis(50))
-            {
+            let was_effective_uncapped = state.effective_uncapped();
+            state.uncapped = read_uncapped_file(&state.uncapped_path);
+            state.interpolation = read_interpolation_file(&state.interpolation_path);
+            if !was_effective_uncapped && state.effective_uncapped() && state.visible {
                 state.flush_frame_callbacks();
             }
         }
+
+        let elapsed_since_flush = state.last_cb_flush.elapsed();
+        let elapsed_since_pending = state
+            .pending_cb_since
+            .map_or(Duration::ZERO, |s| s.elapsed());
+        let poll_timeout_ms = match decide_frame_cb_action(
+            !state.pending_frame_callbacks.is_empty(),
+            state.visible,
+            state.effective_uncapped(),
+            state.refresh_mhz,
+            state.frame_serial,
+            presented_serial.load(Ordering::Acquire),
+            elapsed_since_flush,
+            elapsed_since_pending,
+        ) {
+            FrameCbDecision::FlushNow => {
+                state.flush_frame_callbacks();
+                250
+            }
+            FrameCbDecision::WaitMs(ms) => ms,
+        };
 
         let _ = display.flush_clients();
         let mut pfds = [
@@ -426,13 +515,6 @@ fn run_dmabuf_loop(
             },
         ];
         let nfds = if wake_fd >= 0 { 2 } else { 1 };
-        let poll_timeout_ms = if state.pending_frame_callbacks.is_empty() {
-            250
-        } else if !state.visible {
-            25
-        } else {
-            5
-        };
         unsafe {
             libc::poll(pfds.as_mut_ptr(), nfds, poll_timeout_ms);
             if wake_fd >= 0 && pfds[1].revents != 0 {
@@ -603,7 +685,13 @@ fn handle_input(state: &mut DmabufState, ev: DmabufInput) {
         }
         DmabufInput::SetUncapped { uncapped } => {
             state.uncapped = uncapped;
-            if uncapped && state.visible {
+            if state.effective_uncapped() && state.visible {
+                state.flush_frame_callbacks();
+            }
+        }
+        DmabufInput::SetInterpolation { enabled } => {
+            state.interpolation = enabled;
+            if state.effective_uncapped() && state.visible {
                 state.flush_frame_callbacks();
             }
         }
@@ -720,7 +808,7 @@ impl Dispatch<WlSurface, Mutex<SurfaceData>> for DmabufState {
                 }
 
                 if !cbs.is_empty() {
-                    if is_main && has_buf && (!state.visible || !state.uncapped) {
+                    if is_main && has_buf && (!state.visible || !state.effective_uncapped()) {
                         state.pending_frame_callbacks.extend(cbs);
                         state.pending_cb_since.get_or_insert_with(Instant::now);
                     } else {
@@ -745,8 +833,10 @@ fn publish_dmabuf_frame(state: &mut DmabufState, dframe: &Arc<DmabufFrame>) {
         });
     }
     state.frame_seq.store(state.frame_serial, Ordering::Release);
-    if let Some((f, user_data)) = state.on_frame.lock().ok().and_then(|g| *g) {
-        f(user_data);
+    if let Ok(guard) = state.on_frame.lock() {
+        if let Some((f, user_data)) = *guard {
+            f(user_data);
+        }
     }
 }
 
@@ -1562,5 +1652,170 @@ impl Dispatch<WlOutput, ()> for DmabufState {
         _dh: &DisplayHandle,
         _data_init: &mut DataInit<'_, Self>,
     ) {
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cadence_24fps_on_60hz_flushes_immediately_when_presented() {
+        assert_eq!(
+            decide_frame_cb_action(
+                true,
+                true,
+                false,
+                60_000,
+                10,
+                10,
+                Duration::from_millis(41),
+                Duration::from_millis(5),
+            ),
+            FrameCbDecision::FlushNow
+        );
+    }
+
+    #[test]
+    fn vsync_jitter_14ms_on_60hz_flushes_immediately() {
+        // 75% of 16.67ms = 12.5ms, so 14ms early vsync must still flush immediately.
+        assert_eq!(
+            decide_frame_cb_action(
+                true,
+                true,
+                false,
+                60_000,
+                20,
+                20,
+                Duration::from_millis(14),
+                Duration::from_millis(6),
+            ),
+            FrameCbDecision::FlushNow
+        );
+    }
+
+    #[test]
+    fn too_early_presented_waits_exact_remaining_ms_then_flushes() {
+        // At 60Hz, min_cb_interval = 12.5ms. At elapsed=4ms, wait ~8ms (not 50ms!),
+        // then flush as soon as elapsed reaches 13ms.
+        assert_eq!(
+            decide_frame_cb_action(
+                true,
+                true,
+                false,
+                60_000,
+                21,
+                21,
+                Duration::from_millis(4),
+                Duration::from_millis(4),
+            ),
+            FrameCbDecision::WaitMs(8)
+        );
+        assert_eq!(
+            decide_frame_cb_action(
+                true,
+                true,
+                false,
+                60_000,
+                21,
+                21,
+                Duration::from_millis(13),
+                Duration::from_millis(13),
+            ),
+            FrameCbDecision::FlushNow
+        );
+    }
+
+    #[test]
+    fn unpresented_frame_waits_until_fallback_timeout() {
+        // 2_500_000 / 60_000 = 41ms fallback timeout on 60Hz.
+        assert_eq!(
+            decide_frame_cb_action(
+                true,
+                true,
+                false,
+                60_000,
+                5,
+                4,
+                Duration::from_millis(20),
+                Duration::from_millis(10),
+            ),
+            FrameCbDecision::WaitMs(31)
+        );
+        assert_eq!(
+            decide_frame_cb_action(
+                true,
+                true,
+                false,
+                60_000,
+                5,
+                4,
+                Duration::from_millis(41),
+                Duration::from_millis(41),
+            ),
+            FrameCbDecision::FlushNow
+        );
+    }
+
+    #[test]
+    fn hidden_tab_throttles_to_100ms_and_uncapped_flushes_immediately() {
+        assert_eq!(
+            decide_frame_cb_action(
+                true,
+                false,
+                true,
+                60_000,
+                8,
+                0,
+                Duration::from_millis(20),
+                Duration::from_millis(20),
+            ),
+            FrameCbDecision::WaitMs(80)
+        );
+        assert_eq!(
+            decide_frame_cb_action(
+                true,
+                false,
+                false,
+                60_000,
+                8,
+                8,
+                Duration::from_millis(100),
+                Duration::from_millis(100),
+            ),
+            FrameCbDecision::FlushNow
+        );
+        assert_eq!(
+            decide_frame_cb_action(
+                true,
+                true,
+                true,
+                60_000,
+                8,
+                0,
+                Duration::from_millis(0),
+                Duration::from_millis(0),
+            ),
+            FrameCbDecision::FlushNow
+        );
+    }
+
+    #[test]
+    fn uncapped_setting_without_interpolation_remains_vsync_paced() {
+        let state_effective_uncapped = false; // uncapped=true && interpolation=false
+        // At 100Hz, fallback_timeout clamps to 40ms; with 5ms elapsed and frame 12 unpresented, WaitMs(35).
+        assert_eq!(
+            decide_frame_cb_action(
+                true,
+                true,
+                state_effective_uncapped,
+                100_000,
+                12,
+                11,
+                Duration::from_millis(5),
+                Duration::from_millis(5),
+            ),
+            FrameCbDecision::WaitMs(35)
+        );
     }
 }

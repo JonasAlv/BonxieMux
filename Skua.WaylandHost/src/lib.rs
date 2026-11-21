@@ -152,6 +152,13 @@ pub unsafe extern "C" fn bonxie_wl_notify_presented(host: *mut BonxieWlHost) {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn bonxie_wl_notify_presented_seq(host: *mut BonxieWlHost, seq: u64) {
+    if !host.is_null() && seq > 0 {
+        (&*host).inner.notify_presented_seq(seq);
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn bonxie_wl_set_refresh_mhz(host: *mut BonxieWlHost, mhz: u32) {
     if !host.is_null() {
         (&*host)
@@ -202,6 +209,15 @@ pub unsafe extern "C" fn bonxie_wl_set_uncapped(host: *mut BonxieWlHost, uncappe
     if !host.is_null() {
         (&*host).inner.send_input(DmabufInput::SetUncapped {
             uncapped: uncapped != 0,
+        });
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn bonxie_wl_set_interpolation(host: *mut BonxieWlHost, enabled: u8) {
+    if !host.is_null() {
+        (&*host).inner.send_input(DmabufInput::SetInterpolation {
+            enabled: enabled != 0,
         });
     }
 }

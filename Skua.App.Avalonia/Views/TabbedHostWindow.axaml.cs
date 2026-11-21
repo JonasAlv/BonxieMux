@@ -1312,6 +1312,8 @@ public partial class TabbedHostWindow : Window
                                 {
                                     if (parts[1] == "uncapped")
                                         Controls.GameHost.SetAllUncapped(parts[2] == "true");
+                                    else if (parts[1] == "interpolation")
+                                        Controls.GameHost.SetAllInterpolation(parts[2] == "true");
                                     var payload = new { input = "mugetsu_setting", name = parts[1], value = parts[2] };
                                     foreach (TabInfo tab in _tabs.Values)
                                     {

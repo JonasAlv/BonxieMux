@@ -3,8 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Avalonia.OpenGL;
-using Avalonia.OpenGL.Controls;
 using Avalonia.Platform;
 using Avalonia.Rendering;
 using Avalonia.Threading;
@@ -25,8 +23,8 @@ namespace Skua.App.Avalonia.Controls;
 
 /// <summary>
 /// Pure Wayland/Avalonia game viewport. Hosts an embedded Wayland compositor
-/// (<c>libbonxie_wayland.so</c>) for zero-copy <c>DMA-BUF</c> presentation inside
-/// Avalonia's OpenGL context via <see cref="OpenGlControlBase"/>.
+/// (<c>libbonxie_wayland.so</c>) for zero-copy <c>DMA-BUF</c> presentation directly
+/// into Avalonia's Skia composition tree via <see cref="WaylandDmabufViewport"/>.
 /// </summary>
 public class GameHost : Control, ICustomHitTest
 {
@@ -41,17 +39,36 @@ public class GameHost : Control, ICustomHitTest
     private static (PixelRect Bounds, uint RefreshMhz)[] _cachedOutputs = Array.Empty<(PixelRect, uint)>();
     private static readonly ConcurrentDictionary<IntPtr, byte> _liveWaylandHosts = new();
     private static volatile bool _uncapped = ReadInitialUncapped();
+    private static volatile bool _interpolation = ReadInitialInterpolation();
+
+    private static string GetRuffleConfigDir()
+    {
+        string? xdg = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
+        string configRoot = !string.IsNullOrEmpty(xdg)
+            ? xdg
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config");
+        return Path.Combine(configRoot, "ruffle");
+    }
 
     private static bool ReadInitialUncapped()
     {
         try
         {
-            string? xdg = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
-            string configRoot = !string.IsNullOrEmpty(xdg)
-                ? xdg
-                : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config");
-            string path = Path.Combine(configRoot, "ruffle", "mugetsu-uncapped.txt");
+            string path = Path.Combine(GetRuffleConfigDir(), "mugetsu-uncapped.txt");
             return File.Exists(path) && File.ReadAllText(path).Trim().Equals("on", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool ReadInitialInterpolation()
+    {
+        try
+        {
+            string path = Path.Combine(GetRuffleConfigDir(), "mugetsu-interpolation.txt");
+            return File.Exists(path);
         }
         catch
         {
@@ -69,19 +86,30 @@ public class GameHost : Control, ICustomHitTest
         }
     }
 
+    public static void SetAllInterpolation(bool enabled)
+    {
+        _interpolation = enabled;
+        byte flag = enabled ? (byte)1 : (byte)0;
+        foreach (IntPtr handle in _liveWaylandHosts.Keys)
+        {
+            try { BonxieWaylandNative.SetInterpolation(handle, flag); } catch { }
+        }
+    }
+
     private FlashUtil? _flash;
     private readonly int _remoteChildPid;
     private IntPtr _waylandHost;
     private string _waylandSocket = string.Empty;
     private uint _lastSentRefreshMhz;
     private Control? _glViewport;
+    private TopLevel? _trackedTopLevel;
     private Func<bool>? _hasPendingFrame;
     private Action? _requestNextFrame;
     private volatile bool _isVisibleCached;
     private DispatcherTimer? _resizeDebounceTimer;
     private int _pendingResizeW;
     private int _pendingResizeH;
-    private ulong _lastSeq;
+    private long _lastSeq;
     private int _lastSentWidth;
     private int _lastSentHeight;
     private bool? _lastSentVisible;
@@ -167,6 +195,7 @@ public class GameHost : Control, ICustomHitTest
                 _liveWaylandHosts[handle] = 0;
                 BonxieWaylandNative.SetRefreshMhz(handle, DetectDisplayRefreshMhz());
                 BonxieWaylandNative.SetUncapped(handle, _uncapped ? (byte)1 : (byte)0);
+                BonxieWaylandNative.SetInterpolation(handle, _interpolation ? (byte)1 : (byte)0);
             }
             return (handle, socket);
         }
@@ -215,6 +244,7 @@ public class GameHost : Control, ICustomHitTest
                         _liveWaylandHosts[_waylandHost] = 0;
                         BonxieWaylandNative.SetRefreshMhz(_waylandHost, DetectDisplayRefreshMhz());
                         BonxieWaylandNative.SetUncapped(_waylandHost, _uncapped ? (byte)1 : (byte)0);
+                        BonxieWaylandNative.SetInterpolation(_waylandHost, _interpolation ? (byte)1 : (byte)0);
                     }
                     if (!string.IsNullOrEmpty(_waylandSocket))
                     {
@@ -251,24 +281,33 @@ public class GameHost : Control, ICustomHitTest
         }
     }
 
+    private static bool IsTopLevelVisible(TopLevel? tl) =>
+        tl is { IsVisible: true } && (tl is not Window w || w.WindowState != WindowState.Minimized);
+
     private void OnWaylandViewportRendered(ulong seq, string mode)
     {
-        if (_waylandHost == IntPtr.Zero)
+        IntPtr host = _waylandHost;
+        if (host == IntPtr.Zero)
             return;
 
-        BonxieWaylandNative.NotifyPresented(_waylandHost);
+        if (seq != 0)
+            BonxieWaylandNative.NotifyPresentedSeq(host, seq);
+        else
+            BonxieWaylandNative.NotifyPresented(host);
 
-        if (seq != 0 && seq != _lastSeq)
+        if (seq != 0 && (long)seq != Volatile.Read(ref _lastSeq))
         {
-            _lastSeq = seq;
+            Volatile.Write(ref _lastSeq, (long)seq);
             RecordHostPresentedFrame(mode);
         }
     }
 
     private void SyncPollTimerState()
     {
-        bool shouldRun = IsVisible && TopLevel.GetTopLevel(this) is { IsVisible: true };
+        bool shouldRun = IsVisible && IsTopLevelVisible(TopLevel.GetTopLevel(this));
         _isVisibleCached = shouldRun;
+        if (_glViewport != null && _glViewport.IsVisible != shouldRun)
+            _glViewport.IsVisible = shouldRun;
         if (_waylandHost != IntPtr.Zero && _lastSentVisible != shouldRun)
         {
             _lastSentVisible = shouldRun;
@@ -281,6 +320,10 @@ public class GameHost : Control, ICustomHitTest
     public void DisposeResources()
     {
         _resizeDebounceTimer?.Stop();
+        DetachTopLevelHandlers();
+        // Must detach and lock out the render thread before bonxie_wl_stop frees the native host.
+        if (_glViewport is WaylandDmabufViewport vp)
+            vp.DisposeRenderer();
         _isVisibleCached = false;
         if (_activeInstance == this)
             _activeInstance = null;
@@ -483,7 +526,7 @@ public class GameHost : Control, ICustomHitTest
         _resizeDebounceTimer?.Stop();
         _lastSentWidth = -1;
         _lastSentHeight = -1;
-        _lastSeq = 0;
+        Volatile.Write(ref _lastSeq, 0);
         SendResizeIfNeeded();
         _requestNextFrame?.Invoke();
     }
@@ -492,7 +535,6 @@ public class GameHost : Control, ICustomHitTest
     {
         if (_remoteChildPid > 0)
             return;
-        _lastSentVisible = visible;
         DispatchInput(new { input = "visible", visible });
     }
 
@@ -510,11 +552,73 @@ public class GameHost : Control, ICustomHitTest
         }
     }
 
+    private void AttachTopLevelHandlers(TopLevel? tl)
+    {
+        if (ReferenceEquals(_trackedTopLevel, tl))
+            return;
+
+        DetachTopLevelHandlers();
+        _trackedTopLevel = tl;
+        if (tl is Window w)
+        {
+            w.Opened += OnTrackedTopLevelOpened;
+            w.Activated += OnTrackedTopLevelActivated;
+            w.PositionChanged += OnTrackedTopLevelPositionChanged;
+        }
+        if (tl != null)
+            tl.PropertyChanged += OnTrackedTopLevelPropertyChanged;
+    }
+
+    private void DetachTopLevelHandlers()
+    {
+        if (_trackedTopLevel is Window w)
+        {
+            w.Opened -= OnTrackedTopLevelOpened;
+            w.Activated -= OnTrackedTopLevelActivated;
+            w.PositionChanged -= OnTrackedTopLevelPositionChanged;
+        }
+        if (_trackedTopLevel != null)
+            _trackedTopLevel.PropertyChanged -= OnTrackedTopLevelPropertyChanged;
+        _trackedTopLevel = null;
+    }
+
+    private void OnTrackedTopLevelOpened(object? sender, EventArgs e)
+    {
+        SyncPollTimerState();
+        UpdateRefreshRateForWindow();
+        if (IsVisible)
+            _requestNextFrame?.Invoke();
+        SendResizeIfNeeded();
+    }
+
+    // Avalonia.Wayland does not emit Window.PositionChanged and populates CurrentOutputIds only after
+    // KWin delivers wl_surface.enter, so re-query on activation/resize/click for multi-monitor refresh sync.
+    private void OnTrackedTopLevelActivated(object? sender, EventArgs e)
+    {
+        UpdateRefreshRateForWindow();
+    }
+
+    private void OnTrackedTopLevelPositionChanged(object? sender, PixelPointEventArgs e)
+    {
+        UpdateRefreshRateForWindow();
+    }
+
+    private void OnTrackedTopLevelPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == IsVisibleProperty || e.Property == Window.WindowStateProperty)
+        {
+            SyncPollTimerState();
+            if (IsVisible && IsTopLevelVisible(_trackedTopLevel))
+                _requestNextFrame?.Invoke();
+        }
+    }
+
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
         if (_remoteChildPid <= 0 || IsVisible)
             _activeInstance = this;
+        AttachTopLevelHandlers(TopLevel.GetTopLevel(this));
         SyncPollTimerState();
         UpdateRefreshRateForWindow();
         if (IsVisible)
@@ -538,7 +642,10 @@ public class GameHost : Control, ICustomHitTest
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
+        DetachTopLevelHandlers();
         _isVisibleCached = false;
+        if (_glViewport != null)
+            _glViewport.IsVisible = false;
         if (_waylandHost != IntPtr.Zero && _lastSentVisible != false)
         {
             _lastSentVisible = false;
@@ -552,6 +659,7 @@ public class GameHost : Control, ICustomHitTest
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
+        UpdateRefreshRateForWindow();
         SendResizeIfNeeded();
         if (_requestNextFrame != null)
             _requestNextFrame();
@@ -587,6 +695,7 @@ public class GameHost : Control, ICustomHitTest
 
         if (_waylandHost != IntPtr.Zero)
         {
+            UpdateRefreshRateForWindow();
             BonxieWaylandNative.PointerMotion(_waylandHost, p.X * scale, p.Y * scale);
             uint wlBtn = kind switch
             {

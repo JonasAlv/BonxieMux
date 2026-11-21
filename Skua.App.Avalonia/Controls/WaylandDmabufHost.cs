@@ -1,11 +1,17 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.OpenGL;
-using Avalonia.OpenGL.Controls;
+using Avalonia.Media;
+using Avalonia.Rendering.SceneGraph;
+using Avalonia.Skia;
+using Avalonia.Threading;
+using SkiaSharp;
 
 namespace Skua.App.Avalonia.Controls;
 
@@ -33,21 +39,25 @@ internal static unsafe partial class BonxieWaylandNative
     public static partial ulong FrameSeq(IntPtr host);
 
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_set_frame_callback")]
-    public static partial void SetFrameCallback(IntPtr host, IntPtr cb, nuint userData);
+    public static partial void SetFrameCallback(IntPtr host, delegate* unmanaged[Cdecl]<nuint, void> cb, nuint userData);
 
-    [LibraryImport(Lib, EntryPoint = "bonxie_wl_import_dmabuf_to_bound_texture")]
-    public static partial int ImportDmabufToBoundTexture(
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_import_dmabuf_texture")]
+    public static partial int ImportDmabufTexture(
         IntPtr host,
         ulong lastSeq,
         out ulong outSeq,
         out ulong outBufferId,
         out uint outWidth,
         out uint outHeight,
+        out uint outGlTex,
         out IntPtr outEglDisplay,
         out IntPtr outEglImage);
 
-    [LibraryImport(Lib, EntryPoint = "bonxie_wl_destroy_egl_image")]
-    public static partial void DestroyEglImage(IntPtr eglDisplay, IntPtr eglImage);
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_rebind_dmabuf_texture")]
+    public static partial int RebindDmabufTexture(uint glTex, IntPtr eglImage);
+
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_destroy_dmabuf_texture")]
+    public static partial void DestroyDmabufTexture(IntPtr eglDisplay, IntPtr eglImage, uint glTex);
 
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_peek_frame")]
     public static partial int PeekFrame(IntPtr host, out ulong outSeq, out ulong outBufferId, out uint outWidth, out uint outHeight);
@@ -58,11 +68,17 @@ internal static unsafe partial class BonxieWaylandNative
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_notify_presented")]
     public static partial void NotifyPresented(IntPtr host);
 
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_notify_presented_seq")]
+    public static partial void NotifyPresentedSeq(IntPtr host, ulong seq);
+
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_set_refresh_mhz")]
     public static partial void SetRefreshMhz(IntPtr host, uint mhz);
 
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_set_uncapped")]
     public static partial void SetUncapped(IntPtr host, byte uncapped);
+
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_set_interpolation")]
+    public static partial void SetInterpolation(IntPtr host, byte enabled);
 
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_set_visible")]
     public static partial void SetVisible(IntPtr host, byte visible);
@@ -101,415 +117,549 @@ internal static unsafe partial class BonxieWaylandNative
 }
 
 /// <summary>
-/// Imports DMA-BUF frames from <c>libbonxie_wayland.so</c> into
-/// Avalonia's OpenGL/EGL context and blits them as a fullscreen textured quad.
+/// Renders DMA-BUF textures from <c>libbonxie_wayland.so</c> via Skia on Avalonia's
+/// composition render thread without skipping compositor ticks or stalling buffers.
 /// </summary>
-internal sealed unsafe class DmabufGlRenderer
+internal sealed class DmabufSkiaRenderer
 {
-    private const int GL_TEXTURE_2D = 0x0DE1;
-    private const int GL_TEXTURE_MIN_FILTER = 0x2801;
-    private const int GL_TEXTURE_MAG_FILTER = 0x2800;
-    private const int GL_TEXTURE_WRAP_S = 0x2802;
-    private const int GL_TEXTURE_WRAP_T = 0x2803;
-    private const int GL_LINEAR = 0x2601;
-    private const int GL_CLAMP_TO_EDGE = 0x812F;
-    private const int GL_RGBA = 0x1908;
-    private const int GL_UNSIGNED_BYTE = 0x1401;
-    private const int GL_VERTEX_SHADER = 0x8B31;
-    private const int GL_FRAGMENT_SHADER = 0x8B30;
-    private const int GL_ARRAY_BUFFER = 0x8892;
-    private const int GL_STATIC_DRAW = 0x88E4;
-    private const int GL_FLOAT = 0x1406;
-    private const int GL_TRIANGLE_STRIP = 0x0005;
-    private const int GL_COLOR_BUFFER_BIT = 0x00004000;
+    private const uint GL_TEXTURE_2D = 0x0DE1u;
+    private const uint GL_RGBA8 = 0x8058u;
+    private const int MaxCachedBuffers = 8;
+    private static readonly SKSamplingOptions LinearSampling = new(SKFilterMode.Linear);
+    private static readonly ConcurrentQueue<DmabufSkiaRenderer> s_retiredRenderers = new();
 
-    private delegate* unmanaged[Cdecl]<int, float, float, void> _glUniform2f;
-
-    private readonly struct CachedDmabufTexture
+    private sealed class CachedDmabufImage
     {
-        public readonly int Texture;
+        public readonly uint GlTex;
         public readonly IntPtr EglDisplay;
         public readonly IntPtr EglImage;
+        public readonly GRBackendTexture BackendTexture;
+        public readonly SKImage Image;
         public readonly uint Width;
         public readonly uint Height;
 
-        public CachedDmabufTexture(int texture, IntPtr eglDisplay, IntPtr eglImage, uint width, uint height)
+        public CachedDmabufImage(
+            uint glTex,
+            IntPtr eglDisplay,
+            IntPtr eglImage,
+            GRBackendTexture backendTexture,
+            SKImage image,
+            uint width,
+            uint height)
         {
-            Texture = texture;
+            GlTex = glTex;
             EglDisplay = eglDisplay;
             EglImage = eglImage;
+            BackendTexture = backendTexture;
+            Image = image;
             Width = width;
             Height = height;
         }
     }
 
-    private const int MaxCachedBuffers = 8;
-    private readonly Dictionary<ulong, CachedDmabufTexture> _bufferCache = new();
+    private readonly object _hostLock = new();
+    private IntPtr _waylandHost;
+    private readonly Action<ulong> _onPresentedFrame;
+    private readonly Action _scheduleWake;
+    private readonly Dictionary<ulong, CachedDmabufImage> _bufferCache = new();
     private readonly Queue<ulong> _cacheOrder = new();
+    private readonly SKPaint _opaquePaint = new() { BlendMode = SKBlendMode.Src, IsAntialias = false };
+    private readonly SKPaint _blackPaint = new() { Color = SKColors.Black, Style = SKPaintStyle.Fill, BlendMode = SKBlendMode.Src };
 
-    private int _activeTexture;
-    private int _texture;
-    private IntPtr _fallbackEglDisplay;
-    private IntPtr _fallbackEglImage;
-    private int _program;
-    private int _vao;
-    private int _vbo;
-    private int _uTexLoc = -1;
-    private int _uUvScaleLoc = -1;
-    private ulong _lastSeq;
-    public ulong LastSeq => _lastSeq;
-    private uint _fbWidth;
-    private uint _fbHeight;
-    private bool _initialized;
+    private CachedDmabufImage? _activeEntry;
+    private CachedDmabufImage? _fallbackEntry;
+    private IntPtr _lastGrContextHandle;
+    private long _lastSeq;
+    private bool _disposed;
 
-    public uint FrameWidth => _fbWidth;
-    public uint FrameHeight => _fbHeight;
-
-    public void Init(GlInterface gl)
+    public DmabufSkiaRenderer(
+        IntPtr waylandHost,
+        Action<ulong> onPresentedFrame,
+        Action scheduleWake)
     {
-        if (_initialized)
-            return;
-
-        IntPtr uniform2fPtr = gl.GetProcAddress("glUniform2f");
-        if (uniform2fPtr != IntPtr.Zero)
-            _glUniform2f = (delegate* unmanaged[Cdecl]<int, float, float, void>)uniform2fPtr;
-
-        const string vsSrc = """
-            #version 330 core
-            layout(location = 0) in vec2 a_pos;
-            layout(location = 1) in vec2 a_uv;
-            uniform vec2 u_uv_scale;
-            out vec2 v_uv;
-            void main() {
-                v_uv = a_uv * u_uv_scale;
-                gl_Position = vec4(a_pos, 0.0, 1.0);
-            }
-            """;
-
-        const string fsSrc = """
-            #version 330 core
-            uniform sampler2D u_tex;
-            in vec2 v_uv;
-            out vec4 o_color;
-            void main() {
-                o_color = vec4(texture(u_tex, v_uv).rgb, 1.0);
-            }
-            """;
-
-        int vs = CompileShader(gl, GL_VERTEX_SHADER, vsSrc);
-        int fs = CompileShader(gl, GL_FRAGMENT_SHADER, fsSrc);
-        _program = gl.CreateProgram();
-        gl.AttachShader(_program, vs);
-        gl.AttachShader(_program, fs);
-        gl.LinkProgram(_program);
-        gl.DeleteShader(vs);
-        gl.DeleteShader(fs);
-
-        _uTexLoc = gl.GetUniformLocationString(_program, "u_tex");
-        _uUvScaleLoc = gl.GetUniformLocationString(_program, "u_uv_scale");
-        if (_uTexLoc >= 0)
-        {
-            gl.UseProgram(_program);
-            gl.Uniform1i(_uTexLoc, 0);
-            gl.UseProgram(0);
-        }
-
-        _vao = gl.GenVertexArray();
-        _vbo = gl.GenBuffer();
-        gl.BindVertexArray(_vao);
-        gl.BindBuffer(GL_ARRAY_BUFFER, _vbo);
-
-        float[] quad =
-        {
-            -1f, -1f, 0f, 1f,
-             1f, -1f, 1f, 1f,
-            -1f,  1f, 0f, 0f,
-             1f,  1f, 1f, 0f,
-        };
-        fixed (float* qPtr = quad)
-        {
-            gl.BufferData(GL_ARRAY_BUFFER, (IntPtr)(quad.Length * sizeof(float)), (IntPtr)qPtr, GL_STATIC_DRAW);
-        }
-
-        gl.EnableVertexAttribArray(0);
-        gl.VertexAttribPointer(0, 2, GL_FLOAT, 0, 4 * sizeof(float), IntPtr.Zero);
-        gl.EnableVertexAttribArray(1);
-        gl.VertexAttribPointer(1, 2, GL_FLOAT, 0, 4 * sizeof(float), (IntPtr)(2 * sizeof(float)));
-
-        gl.BindVertexArray(0);
-        gl.BindBuffer(GL_ARRAY_BUFFER, 0);
-        gl.BindTexture(GL_TEXTURE_2D, 0);
-        _initialized = true;
+        _waylandHost = waylandHost;
+        _onPresentedFrame = onPresentedFrame;
+        _scheduleWake = scheduleWake;
     }
 
-    public void Render(GlInterface gl, IntPtr waylandHost, int viewportW, int viewportH)
+    public ulong LastSeq => (ulong)Volatile.Read(ref _lastSeq);
+
+    public bool HasPendingFrame()
     {
-        if (!_initialized || waylandHost == IntPtr.Zero)
+        lock (_hostLock)
+        {
+            if (_disposed || _waylandHost == IntPtr.Zero)
+                return false;
+
+            ulong seq = BonxieWaylandNative.FrameSeq(_waylandHost);
+            return seq != 0 && seq != LastSeq;
+        }
+    }
+
+    /// <summary>
+    /// Detaches the native Wayland host handle under <see cref="_hostLock"/> and defers GL/Skia
+    /// resource teardown to the render thread where the <see cref="GRContext"/> is current.
+    /// </summary>
+    public void DetachHostAndRetire()
+    {
+        lock (_hostLock)
+        {
+            if (_disposed)
+                return;
+            _disposed = true;
+            _waylandHost = IntPtr.Zero;
+        }
+        s_retiredRenderers.Enqueue(this);
+    }
+
+    public void Render(ImmediateDrawingContext drawingContext, Size size)
+    {
+        if (size.Width <= 0 || size.Height <= 0)
             return;
 
-        if (BonxieWaylandNative.FrameSeq(waylandHost) != _lastSeq)
+        if (drawingContext.TryGetFeature(typeof(ISkiaSharpApiLeaseFeature)) is not ISkiaSharpApiLeaseFeature skiaFeature)
+            return;
+
+        using ISkiaSharpApiLease lease = skiaFeature.Lease();
+        SKCanvas canvas = lease.SkCanvas;
+        GRContext? grContext = lease.GrContext;
+        SKRect dstRect = new(0f, 0f, (float)size.Width, (float)size.Height);
+        if (grContext == null)
         {
-            if (BonxieWaylandNative.PeekFrame(waylandHost, out ulong seq, out ulong bufferId, out uint fw, out uint fh) == 1
-                && seq != _lastSeq)
+            canvas.DrawRect(dstRect, _blackPaint);
+            return;
+        }
+
+        while (s_retiredRenderers.TryDequeue(out DmabufSkiaRenderer? retired))
+            retired.CleanupOnRenderThread(grContext.Handle);
+
+        bool hasMore = false;
+        lock (_hostLock)
+        {
+            if (_disposed || _waylandHost == IntPtr.Zero)
+                return;
+
+            if (_lastGrContextHandle != IntPtr.Zero && _lastGrContextHandle != grContext.Handle)
+                ClearCache(sameGrContext: false);
+            _lastGrContextHandle = grContext.Handle;
+
+            ulong lastSeq = LastSeq;
+            ulong acquiredSeq = 0;
+            if (BonxieWaylandNative.FrameSeq(_waylandHost) != lastSeq)
             {
-                if (bufferId != 0
-                    && _bufferCache.TryGetValue(bufferId, out CachedDmabufTexture cached)
-                    && cached.Width == fw
-                    && cached.Height == fh)
+                if (BonxieWaylandNative.PeekFrame(_waylandHost, out ulong seq, out ulong bufferId, out uint fw, out uint fh) == 1
+                    && seq != lastSeq)
                 {
-                    _activeTexture = cached.Texture;
-                    _fbWidth = cached.Width;
-                    _fbHeight = cached.Height;
-                    _lastSeq = seq;
-                    BonxieWaylandNative.AckFrame(waylandHost, seq);
-                }
-                else
-                {
-                    ImportLatestDmabuf(gl, waylandHost);
+                    if (bufferId != 0
+                        && _bufferCache.TryGetValue(bufferId, out CachedDmabufImage? cached)
+                        && cached.Width == fw
+                        && cached.Height == fh)
+                    {
+                        // Rebind the EGLImage so Mesa radeonsi re-validates DMA-BUF/DCC state on buffer reuse.
+                        BonxieWaylandNative.RebindDmabufTexture(cached.GlTex, cached.EglImage);
+                        grContext.ResetContext(GRGlBackendState.TextureBinding);
+                        _activeEntry = cached;
+                        Volatile.Write(ref _lastSeq, (long)seq);
+                        acquiredSeq = seq;
+                    }
+                    else if (TryImportLatestDmabuf(grContext, _waylandHost, lastSeq, out ulong importedSeq))
+                    {
+                        acquiredSeq = importedSeq;
+                    }
                 }
             }
+
+            if (_activeEntry == null)
+            {
+                canvas.DrawRect(dstRect, _blackPaint);
+            }
+            else
+            {
+                SKMatrix m = canvas.TotalMatrix;
+                float scaleX = MathF.Sqrt(m.ScaleX * m.ScaleX + m.SkewY * m.SkewY);
+                float scaleY = MathF.Sqrt(m.ScaleY * m.ScaleY + m.SkewX * m.SkewX);
+                if (scaleX < 0.01f) scaleX = 1f;
+                if (scaleY < 0.01f) scaleY = 1f;
+                float srcW = Math.Clamp((float)size.Width * scaleX, 1f, _activeEntry.Width);
+                float srcH = Math.Clamp((float)size.Height * scaleY, 1f, _activeEntry.Height);
+                SKRect srcRect = new(0f, 0f, srcW, srcH);
+                canvas.DrawImage(_activeEntry.Image, srcRect, dstRect, LinearSampling, _opaquePaint);
+                // Guard: flush Skia GPU commands before AckFrame releases the previous wl_buffer back to Mugetsu,
+                // otherwise Mugetsu can overwrite the active DMA-BUF while Skia's draw is still queued.
+                grContext.Flush();
+            }
+
+            ulong presentedSeq = LastSeq;
+            if (acquiredSeq != 0)
+                BonxieWaylandNative.AckFrame(_waylandHost, acquiredSeq);
+            _onPresentedFrame(presentedSeq);
+
+            // Guard: if a newer frame arrived while rendering (e.g., high-FPS interpolation), wake immediately
+            // outside _hostLock so it is never stranded waiting for another commit.
+            ulong latestSeq = BonxieWaylandNative.FrameSeq(_waylandHost);
+            hasMore = latestSeq != 0 && latestSeq != presentedSeq;
         }
 
-        gl.Viewport(0, 0, Math.Max(1, viewportW), Math.Max(1, viewportH));
-        if (_lastSeq == 0 || _fbWidth == 0 || _fbHeight == 0 || _activeTexture == 0)
-        {
-            gl.ClearColor(0f, 0f, 0f, 1f);
-            gl.Clear(GL_COLOR_BUFFER_BIT);
-            return;
-        }
-
-        gl.Disable(0x0BE2); // GL_BLEND
-        gl.Disable(0x0B71); // GL_DEPTH_TEST
-        gl.UseProgram(_program);
-        gl.ActiveTexture(0x84C0); // GL_TEXTURE0
-        gl.BindTexture(GL_TEXTURE_2D, _activeTexture);
-
-        if (_uUvScaleLoc >= 0 && _glUniform2f != null)
-        {
-            float sx = Math.Clamp(viewportW / (float)_fbWidth, 0.01f, 1.0f);
-            float sy = Math.Clamp(viewportH / (float)_fbHeight, 0.01f, 1.0f);
-            _glUniform2f(_uUvScaleLoc, sx, sy);
-        }
-
-        gl.BindVertexArray(_vao);
-        gl.DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        gl.BindVertexArray(0);
-        gl.BindTexture(GL_TEXTURE_2D, 0);
-        gl.UseProgram(0);
+        if (hasMore)
+            _scheduleWake();
     }
 
-    private void ImportLatestDmabuf(GlInterface gl, IntPtr waylandHost)
+    private bool TryImportLatestDmabuf(GRContext grContext, IntPtr waylandHost, ulong lastSeq, out ulong outSeq)
     {
-        int tex = gl.GenTexture();
-        gl.BindTexture(GL_TEXTURE_2D, tex);
-        gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        int rc = BonxieWaylandNative.ImportDmabufToBoundTexture(
+        outSeq = 0;
+        int rc = BonxieWaylandNative.ImportDmabufTexture(
             waylandHost,
-            _lastSeq,
+            lastSeq,
             out ulong seq,
             out ulong bufferId,
             out uint fw,
             out uint fh,
+            out uint glTex,
             out IntPtr eglDisplay,
             out IntPtr eglImage);
 
-        gl.BindTexture(GL_TEXTURE_2D, 0);
+        if (rc != 1 || glTex == 0 || eglImage == IntPtr.Zero)
+            return false;
 
-        if (rc != 1 || eglImage == IntPtr.Zero)
+        grContext.ResetContext(GRGlBackendState.TextureBinding);
+
+        GRGlTextureInfo texInfo = new(GL_TEXTURE_2D, glTex, GL_RGBA8);
+        GRBackendTexture backendTex = new((int)fw, (int)fh, false, texInfo);
+        SKImage? skImage = SKImage.FromTexture(grContext, backendTex, GRSurfaceOrigin.TopLeft, SKColorType.Rgba8888, SKAlphaType.Opaque);
+        if (skImage == null)
         {
-            gl.DeleteTexture(tex);
-            return;
+            backendTex.Dispose();
+            BonxieWaylandNative.DestroyDmabufTexture(eglDisplay, eglImage, glTex);
+            return false;
         }
 
+        CachedDmabufImage entry = new(glTex, eglDisplay, eglImage, backendTex, skImage, fw, fh);
         if (bufferId != 0)
         {
-            if (_bufferCache.Remove(bufferId, out CachedDmabufTexture replaced))
-                DestroyCachedTexture(gl, replaced);
+            if (_bufferCache.Remove(bufferId, out CachedDmabufImage? replaced))
+            {
+                if (ReferenceEquals(_activeEntry, replaced))
+                    _activeEntry = null;
+                DestroyCachedImage(replaced, sameGrContext: true);
+            }
 
             while (_bufferCache.Count >= MaxCachedBuffers && _cacheOrder.Count > 0)
             {
                 ulong oldestId = _cacheOrder.Dequeue();
-                if (_bufferCache.Remove(oldestId, out CachedDmabufTexture evicted))
-                    DestroyCachedTexture(gl, evicted);
+                if (_bufferCache.Remove(oldestId, out CachedDmabufImage? evicted))
+                {
+                    if (ReferenceEquals(_activeEntry, evicted))
+                        _activeEntry = null;
+                    DestroyCachedImage(evicted, sameGrContext: true);
+                }
             }
 
-            _bufferCache[bufferId] = new CachedDmabufTexture(tex, eglDisplay, eglImage, fw, fh);
+            _bufferCache[bufferId] = entry;
             _cacheOrder.Enqueue(bufferId);
         }
         else
         {
-            if (_texture != 0)
-                gl.DeleteTexture(_texture);
-            if (_fallbackEglImage != IntPtr.Zero)
-                BonxieWaylandNative.DestroyEglImage(_fallbackEglDisplay, _fallbackEglImage);
-            _texture = tex;
-            _fallbackEglDisplay = eglDisplay;
-            _fallbackEglImage = eglImage;
+            if (_fallbackEntry != null)
+            {
+                if (ReferenceEquals(_activeEntry, _fallbackEntry))
+                    _activeEntry = null;
+                DestroyCachedImage(_fallbackEntry, sameGrContext: true);
+            }
+            _fallbackEntry = entry;
         }
 
-        _activeTexture = tex;
-        _fbWidth = fw;
-        _fbHeight = fh;
-        _lastSeq = seq;
+        _activeEntry = entry;
+        Volatile.Write(ref _lastSeq, (long)seq);
+        outSeq = seq;
+        return true;
     }
 
-    private static void DestroyCachedTexture(GlInterface gl, CachedDmabufTexture cached)
+    private void ClearCache(bool sameGrContext)
     {
-        if (cached.Texture != 0)
-            gl.DeleteTexture(cached.Texture);
-        if (cached.EglImage != IntPtr.Zero)
-            BonxieWaylandNative.DestroyEglImage(cached.EglDisplay, cached.EglImage);
-    }
-
-    public void Deinit(GlInterface gl)
-    {
-        if (!_initialized)
-            return;
-
-        foreach (CachedDmabufTexture cached in _bufferCache.Values)
-            DestroyCachedTexture(gl, cached);
+        foreach (CachedDmabufImage cached in _bufferCache.Values)
+            DestroyCachedImage(cached, sameGrContext);
         _bufferCache.Clear();
         _cacheOrder.Clear();
-        _activeTexture = 0;
-
-        if (_texture != 0) gl.DeleteTexture(_texture);
-        if (_fallbackEglImage != IntPtr.Zero)
+        if (_fallbackEntry != null)
         {
-            BonxieWaylandNative.DestroyEglImage(_fallbackEglDisplay, _fallbackEglImage);
-            _fallbackEglImage = IntPtr.Zero;
-            _fallbackEglDisplay = IntPtr.Zero;
+            DestroyCachedImage(_fallbackEntry, sameGrContext);
+            _fallbackEntry = null;
         }
-        if (_vbo != 0) gl.DeleteBuffer(_vbo);
-        if (_vao != 0) gl.DeleteVertexArray(_vao);
-        if (_program != 0) gl.DeleteProgram(_program);
-        _texture = _vbo = _vao = _program = 0;
-        _initialized = false;
+        _activeEntry = null;
+        Volatile.Write(ref _lastSeq, 0);
     }
 
-    private static int CompileShader(GlInterface gl, int type, string src)
+    private void CleanupOnRenderThread(IntPtr currentGrContextHandle)
     {
-        int shader = gl.CreateShader(type);
-        gl.ShaderSourceString(shader, src);
-        gl.CompileShader(shader);
-        return shader;
+        lock (_hostLock)
+        {
+            bool sameContext = _lastGrContextHandle == IntPtr.Zero || _lastGrContextHandle == currentGrContextHandle;
+            ClearCache(sameContext);
+            _opaquePaint.Dispose();
+            _blackPaint.Dispose();
+        }
+    }
+
+    private static void DestroyCachedImage(CachedDmabufImage cached, bool sameGrContext)
+    {
+        cached.Image.Dispose();
+        cached.BackendTexture.Dispose();
+        BonxieWaylandNative.DestroyDmabufTexture(cached.EglDisplay, cached.EglImage, sameGrContext ? cached.GlTex : 0);
     }
 }
 
-internal sealed class WaylandDmabufViewport : OpenGlControlBase
+/// <summary>
+/// Custom Skia draw operation recorded in <see cref="WaylandDmabufViewport.Render"/>.
+/// <para>
+/// CRITICAL INVARIANT — DO NOT replace <c>Control.InvalidateVisual()</c> + <see cref="ICustomDrawOperation"/>
+/// with <c>OpenGlControlBase</c> or <c>CompositionCustomVisual.SendHandlerMessage()</c> on <c>Avalonia.Wayland</c>:
+/// <list type="bullet">
+/// <item>Avalonia 12.1.6 <c>ServerCompositor.RenderCore()</c> executes <c>ApplyPendingBatches()</c> -&gt;
+/// <c>VisualOwnPropertiesUpdatePass()</c> -&gt; <c>ExecuteServerJobs()</c> -&gt; <c>ServerCompositionTarget.Render()</c>.</item>
+/// <item>Both <c>OpenGlControlBase</c> (<c>CompositionDrawingSurface.UpdateAsync</c>) and
+/// <c>CompositionCustomVisual.SendHandlerMessage</c> invalidate visuals inside <c>ExecuteServerJobs()</c>
+/// <b>after</b> <c>VisualOwnPropertiesUpdatePass()</c> has already finished. On event-driven
+/// <c>Avalonia.Wayland</c> (<c>WaylandWorker</c>), that leaves <c>DirtyRects</c> empty on Tick #1 so the
+/// compositor sleeps until the next frame arrives (~41.7 ms later), silently dropping every odd frame
+/// (locking 24 FPS playback to ~12 FPS / 83.3 ms intervals).</item>
+/// <item><c>Control.InvalidateVisual()</c> -&gt; <c>Control.Render()</c> -&gt; <c>context.Custom(new DmabufDrawOperation(...))</c>
+/// updates <c>CompositionDrawListVisual.DrawList</c>, which runs <c>InvalidateContent()</c> during
+/// <c>ApplyPendingBatches()</c> <b>before</b> <c>VisualOwnPropertiesUpdatePass()</c>, presenting every
+/// incoming DMA-BUF on Tick #1 with zero skipped frames and zero idle redraws.</item>
+/// <item><see cref="Equals(ICustomDrawOperation?)"/> MUST return <c>false</c> so Avalonia never coalesces
+/// away consecutive DMA-BUF frames.</item>
+/// </list>
+/// </para>
+/// </summary>
+internal sealed class DmabufDrawOperation : ICustomDrawOperation
+{
+    private readonly DmabufSkiaRenderer _renderer;
+
+    public DmabufDrawOperation(Rect bounds, DmabufSkiaRenderer renderer)
+    {
+        Bounds = bounds;
+        _renderer = renderer;
+    }
+
+    public Rect Bounds { get; }
+
+    public bool Equals(ICustomDrawOperation? other) => false;
+
+    public bool HitTest(Point p) => false;
+
+    public void Dispose()
+    {
+    }
+
+    public void Render(ImmediateDrawingContext context) => _renderer.Render(context, Bounds.Size);
+}
+
+internal sealed unsafe class WaylandDmabufViewport : Control
 {
     private readonly IntPtr _waylandHost;
-    private readonly DmabufGlRenderer _renderer = new();
-    private readonly Action _onBeforeRender;
-    private readonly Action<ulong> _onPresentedFrame;
-    private readonly Action<TimeSpan> _animCallback;
+    private readonly DmabufSkiaRenderer _renderer;
+    private readonly Action _invalidateAction;
+    private readonly Action _scheduleWakeAction;
+    private readonly object _cbLock = new();
     private TopLevel? _topLevel;
-    private bool _attached;
-    private bool _animLoopRunning;
-    private ulong _lastRecordedSeq;
+    private GCHandle _selfHandle;
+    private volatile bool _attached;
+    private volatile bool _isVisibleCached;
+    private volatile bool _topLevelVisibleCached;
+    private int _wakeQueued;
 
     public WaylandDmabufViewport(
         IntPtr waylandHost,
-        Action onBeforeRender,
+        Action _onBeforeRender,
         Action<ulong> onPresentedFrame)
     {
         _waylandHost = waylandHost;
-        _onBeforeRender = onBeforeRender;
-        _onPresentedFrame = onPresentedFrame;
-        _animCallback = OnAnimationFrame;
+        _invalidateAction = DoInvalidate;
+        _scheduleWakeAction = ScheduleWake;
+        _renderer = new DmabufSkiaRenderer(waylandHost, onPresentedFrame, _scheduleWakeAction);
         IsHitTestVisible = false;
     }
 
-    public bool HasPendingFrame()
-    {
-        if (_waylandHost == IntPtr.Zero)
-            return false;
+    public bool HasPendingFrame() => _renderer.HasPendingFrame();
 
-        ulong seq = BonxieWaylandNative.FrameSeq(_waylandHost);
-        return seq != 0 && seq != _lastRecordedSeq;
+    public void DisposeRenderer()
+    {
+        DetachCallback();
+        _renderer.DetachHostAndRetire();
     }
 
-    private void EnsureAnimationLoop()
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static void OnNativeFrameReady(nuint userData)
     {
-        if (_animLoopRunning || !_attached || !IsVisible)
-            return;
-
-        _topLevel ??= TopLevel.GetTopLevel(this);
-        if (_topLevel is not { IsVisible: true })
-            return;
-
-        _animLoopRunning = true;
-        _topLevel.RequestAnimationFrame(_animCallback);
-    }
-
-    private void OnAnimationFrame(TimeSpan _)
-    {
-        if (!_attached || !IsVisible || _topLevel is not { IsVisible: true })
+        try
         {
-            _animLoopRunning = false;
+            if (userData == 0)
+                return;
+
+            GCHandle handle = GCHandle.FromIntPtr((IntPtr)userData);
+            if (handle.Target is WaylandDmabufViewport vp)
+                vp.ScheduleWake();
+        }
+        catch
+        {
+        }
+    }
+
+    private void ScheduleWake()
+    {
+        if (_attached &&
+            _isVisibleCached &&
+            _topLevelVisibleCached &&
+            Interlocked.Exchange(ref _wakeQueued, 1) == 0)
+        {
+            Dispatcher.UIThread.Post(_invalidateAction, DispatcherPriority.Render);
+        }
+    }
+
+    private void DoInvalidate()
+    {
+        Interlocked.Exchange(ref _wakeQueued, 0);
+        UpdateVisibilityCache();
+        if (!_attached || !_isVisibleCached || !_topLevelVisibleCached)
+            return;
+
+        InvalidateVisual();
+    }
+
+    public void RequestNextFrameRendering()
+    {
+        UpdateVisibilityCache();
+        if (_attached && _isVisibleCached && _topLevelVisibleCached)
+        {
+            Interlocked.Exchange(ref _wakeQueued, 0);
+            InvalidateVisual();
+        }
+    }
+
+    public override void Render(DrawingContext context)
+    {
+        if (!_attached || _waylandHost == IntPtr.Zero)
+            return;
+
+        Size size = Bounds.Size;
+        if (size.Width <= 0 || size.Height <= 0)
+            return;
+
+        context.Custom(new DmabufDrawOperation(new Rect(size), _renderer));
+    }
+
+    private void AttachCallback()
+    {
+        lock (_cbLock)
+        {
+            if (_waylandHost == IntPtr.Zero || _selfHandle.IsAllocated)
+                return;
+
+            _selfHandle = GCHandle.Alloc(this);
+            BonxieWaylandNative.SetFrameCallback(_waylandHost, &OnNativeFrameReady, (nuint)GCHandle.ToIntPtr(_selfHandle));
+        }
+    }
+
+    public void DetachCallback()
+    {
+        lock (_cbLock)
+        {
+            if (_waylandHost != IntPtr.Zero)
+                BonxieWaylandNative.SetFrameCallback(_waylandHost, null, 0);
+
+            if (_selfHandle.IsAllocated)
+            {
+                _selfHandle.Free();
+                _selfHandle = default;
+            }
+        }
+    }
+
+    private void AttachTopLevelHandlers(TopLevel? tl)
+    {
+        if (ReferenceEquals(_topLevel, tl))
+        {
+            UpdateVisibilityCache();
             return;
         }
 
-        if (_lastRecordedSeq == 0 || HasPendingFrame())
+        DetachTopLevelHandlers();
+        _topLevel = tl;
+        if (tl is Window w)
+            w.Opened += OnTopLevelOpened;
+        if (tl != null)
+            tl.PropertyChanged += OnTopLevelPropertyChanged;
+        UpdateVisibilityCache();
+    }
+
+    private void DetachTopLevelHandlers()
+    {
+        if (_topLevel is Window w)
+            w.Opened -= OnTopLevelOpened;
+        if (_topLevel != null)
+            _topLevel.PropertyChanged -= OnTopLevelPropertyChanged;
+        _topLevel = null;
+        _topLevelVisibleCached = false;
+    }
+
+    private void OnTopLevelOpened(object? sender, EventArgs e)
+    {
+        RequestRenderIfNeeded();
+    }
+
+    private void OnTopLevelPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == Window.IsVisibleProperty || e.Property == Window.WindowStateProperty)
+            RequestRenderIfNeeded();
+    }
+
+    private void UpdateVisibilityCache()
+    {
+        _isVisibleCached = IsVisible && this.IsEffectivelyVisible;
+        _topLevelVisibleCached = _topLevel is { IsVisible: true } &&
+            (_topLevel is not Window w || w.WindowState != WindowState.Minimized);
+    }
+
+    private void RequestRenderIfNeeded()
+    {
+        UpdateVisibilityCache();
+        if (_attached && _isVisibleCached && _topLevelVisibleCached &&
+            (_renderer.LastSeq == 0 || HasPendingFrame()))
+        {
             RequestNextFrameRendering();
-        _topLevel.RequestAnimationFrame(_animCallback);
+        }
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
         _attached = true;
-        _topLevel = TopLevel.GetTopLevel(this);
-        EnsureAnimationLoop();
+        AttachTopLevelHandlers(TopLevel.GetTopLevel(this));
+        AttachCallback();
+        RequestRenderIfNeeded();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         _attached = false;
-        _animLoopRunning = false;
-        _topLevel = null;
+        Interlocked.Exchange(ref _wakeQueued, 0);
+        DetachCallback();
+        DetachTopLevelHandlers();
         base.OnDetachedFromVisualTree(e);
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == IsVisibleProperty && IsVisible)
-            EnsureAnimationLoop();
-    }
-
-    protected override void OnOpenGlInit(GlInterface gl)
-    {
-        base.OnOpenGlInit(gl);
-        _renderer.Init(gl);
-        if (IsVisible)
-            RequestNextFrameRendering();
-    }
-
-    protected override void OnOpenGlDeinit(GlInterface gl)
-    {
-        _renderer.Deinit(gl);
-        base.OnOpenGlDeinit(gl);
-    }
-
-    protected override void OnOpenGlRender(GlInterface gl, int fb)
-    {
-        if (_waylandHost == IntPtr.Zero)
-            return;
-
-        _onBeforeRender();
-        double scale = _topLevel?.RenderScaling ?? TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
-        int w = Math.Max(1, (int)Math.Round(Bounds.Width * scale));
-        int h = Math.Max(1, (int)Math.Round(Bounds.Height * scale));
-        _renderer.Render(gl, _waylandHost, w, h);
-        ulong seq = _renderer.LastSeq;
-        if (seq != 0 && seq != _lastRecordedSeq)
+        if (change.Property == BoundsProperty)
         {
-            _lastRecordedSeq = seq;
+            RequestNextFrameRendering();
         }
-        _onPresentedFrame(seq);
+        else if (change.Property == IsVisibleProperty)
+        {
+            UpdateVisibilityCache();
+            if (IsVisible)
+                RequestRenderIfNeeded();
+        }
     }
 }

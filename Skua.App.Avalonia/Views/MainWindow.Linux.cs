@@ -1003,6 +1003,8 @@ public partial class MainWindow : Window
     {
         if (name == "uncapped")
             Controls.GameHost.SetAllUncapped(value == "true");
+        else if (name == "interpolation")
+            Controls.GameHost.SetAllInterpolation(value == "true");
 
         if (!string.IsNullOrEmpty(App.HostPipeName))
         {
