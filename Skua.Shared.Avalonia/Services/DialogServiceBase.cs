@@ -353,44 +353,15 @@ public abstract class DialogServiceBase : IDialogService
             MinHeight = 100,
             SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.Manual,
-            WindowDecorations = WindowDecorations.None,
-            ExtendClientAreaToDecorationsHint = true,
-            ExtendClientAreaTitleBarHeightHint = 32,
             CanResize = true,
-            ShowActivated = true,
-            Classes = { "skua" }
+            ShowActivated = true
         };
-        dialog[!Window.BackgroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaPageBrush");
-        ThemeResourceApplicator.ApplyTitleBarTheme(dialog);
-        WindowResizeHelper.Attach(dialog);
+        ShellWindowHelper.ConfigureFramelessWindow(dialog);
         return dialog;
     }
 
-    protected static Control WrapWithShell(string title, Control content)
-    {
-        Grid layout = new();
-        layout.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-        layout.RowDefinitions.Add(new RowDefinition(GridLength.Star));
-
-        WindowTitleBar titleBar = new() { TitleText = title };
-        Border contentHost = new() { Child = content };
-        contentHost.Classes.Add("shell");
-        contentHost[!Border.BackgroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaPageBrush");
-
-        Grid.SetRow(titleBar, 0);
-        Grid.SetRow(contentHost, 1);
-        layout.Children.Add(titleBar);
-        layout.Children.Add(contentHost);
-
-        Border rootBorder = new()
-        {
-            BorderThickness = new Thickness(1),
-            Child = layout
-        };
-        rootBorder[!Border.BorderBrushProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaBorderBrush");
-        rootBorder[!Border.BackgroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaPageBrush");
-        return rootBorder;
-    }
+    protected static Control WrapWithShell(string title, Control content) =>
+        ShellWindowHelper.CreateShellContent(title, content);
 
     protected static void Show(Window dialog)
     {

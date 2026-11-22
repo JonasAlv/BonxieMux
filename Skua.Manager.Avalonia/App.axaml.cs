@@ -45,11 +45,11 @@ public partial class App : Application
         services.AddSingleton<IScriptManager, ScriptManager>();
         services.AddTransient<IScriptOptionContainer, ScriptOptionContainer>();
         services.AddTransient<IOptionContainer, OptionContainer>();
-        services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<ISettingsService>(_ => new Skua.Shared.Avalonia.Services.SettingsService(Skua.Core.Models.AppRole.Manager));
         services.AddSingleton<IDispatcherService, Skua.Shared.Avalonia.Services.DispatcherService>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<IFileDialogService, Skua.Shared.Avalonia.Services.FileDialogService>();
-        services.AddSingleton<IWindowService, WindowService>();
+        services.AddSingleton<IWindowService, Skua.Shared.Avalonia.Services.WindowServiceBase>();
         services.AddSingleton<IClientFilesService, ClientFilesService>();
         services.AddSingleton<IThemeService, Skua.Shared.Avalonia.Services.AvaloniaThemeService>();
         services.AddSkuaManagerViewModels();
@@ -59,9 +59,7 @@ public partial class App : Application
         Ioc.Default.GetRequiredService<ISettingsService>().SetApplicationVersion();
         ColorSpectrumFix.Initialize();
         IThemeService themeService = Ioc.Default.GetRequiredService<IThemeService>();
-        themeService.ThemeChanged += OnThemeChanged;
-        themeService.SchemeChanged += OnSchemeChanged;
-        ApplyThemeFromService(themeService);
+        ThemeResourceApplicator.AttachThemeService(this, themeService);
 
         IClientFilesService clientFiles = Ioc.Default.GetRequiredService<IClientFilesService>();
         clientFiles.CreateDirectories();
@@ -123,81 +121,6 @@ public partial class App : Application
         catch { }
 
         await Ioc.Default.GetRequiredService<IDiagnosticsService>().DisposeAsync();
-    }
-
-    private void OnThemeChanged(object? theme)
-    {
-        IThemeService themeService = Ioc.Default.GetRequiredService<IThemeService>();
-        ThemeVariant targetVariant = themeService.IsDarkTheme ? ThemeVariant.Dark : ThemeVariant.Light;
-        if (RequestedThemeVariant != targetVariant)
-            RequestedThemeVariant = targetVariant;
-
-        ThemeResourceApplicator.ApplyTitleBarTheme(this, themeService.IsDarkTheme);
-        if (themeService is AvaloniaThemeService ats)
-        {
-            ThemeResourceApplicator.ApplyVsCodePalette(this, ats.ActivePalette);
-            ThemeResourceApplicator.ApplyAccentBrushes(
-                this,
-                ats.PrimaryColor,
-                ats.PrimaryForegroundColor,
-                ats.SecondaryColor,
-                ats.SecondaryForegroundColor,
-                isDarkTheme: themeService.IsDarkTheme);
-        }
-        else
-        {
-            string? accentHex = theme?.ToString();
-            ThemeResourceApplicator.ApplyAccentBrushes(this, accentHex, isDarkTheme: themeService.IsDarkTheme);
-        }
-    }
-
-    private void OnSchemeChanged(Core.Models.ColorScheme scheme, object? color)
-    {
-        IThemeService themeService = Ioc.Default.GetRequiredService<IThemeService>();
-        bool isDark = themeService.IsDarkTheme;
-        ThemeVariant targetVariant = isDark ? ThemeVariant.Dark : ThemeVariant.Light;
-        if (RequestedThemeVariant != targetVariant)
-            RequestedThemeVariant = targetVariant;
-
-        if (themeService is AvaloniaThemeService ats)
-        {
-            ThemeResourceApplicator.ApplyVsCodePalette(this, ats.ActivePalette);
-            ThemeResourceApplicator.ApplyAccentBrushes(
-                this,
-                ats.PrimaryColor,
-                ats.PrimaryForegroundColor,
-                ats.SecondaryColor,
-                ats.SecondaryForegroundColor,
-                isDarkTheme: isDark);
-            return;
-        }
-
-        if (scheme == Core.Models.ColorScheme.PrimaryForeground)
-            ThemeResourceApplicator.ApplyAccentBrushes(this, accentForegroundHex: color?.ToString(), isDarkTheme: isDark);
-        else
-            ThemeResourceApplicator.ApplyAccentBrushes(this, accentHex: color?.ToString(), isDarkTheme: isDark);
-    }
-
-    private void ApplyThemeFromService(IThemeService themeService)
-    {
-        bool isDark = themeService.IsDarkTheme;
-        RequestedThemeVariant = isDark ? ThemeVariant.Dark : ThemeVariant.Light;
-        ThemeResourceApplicator.ApplyTitleBarTheme(this, isDark);
-        if (themeService is AvaloniaThemeService ats)
-        {
-            ThemeResourceApplicator.ApplyVsCodePalette(this, ats.ActivePalette);
-            ThemeResourceApplicator.ApplyAccentBrushes(
-                this,
-                ats.PrimaryColor,
-                ats.PrimaryForegroundColor,
-                ats.SecondaryColor,
-                ats.SecondaryForegroundColor,
-                isDarkTheme: isDark);
-            return;
-        }
-
-        string? accentHex = themeService.SelectedColor?.ToString();
-        ThemeResourceApplicator.ApplyAccentBrushes(this, accentHex, isDarkTheme: isDark);
     }
 
     private void TrayShowManager_Click(object? sender, EventArgs e)

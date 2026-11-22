@@ -438,4 +438,43 @@ public static class ThemeResourceApplicator
             ? fallback
             : Color.FromArgb(255, 16, 185, 129);
     }
+
+    public static void AttachThemeService(
+        Application app,
+        Core.Interfaces.IThemeService themeService,
+        Action<AvaloniaThemeService>? onApplied = null)
+    {
+        void Apply(object? themeArg = null, Core.Models.ColorScheme? scheme = null)
+        {
+            bool isDark = themeService.IsDarkTheme;
+            ThemeVariant targetVariant = isDark ? ThemeVariant.Dark : ThemeVariant.Light;
+            if (app.RequestedThemeVariant != targetVariant)
+                app.RequestedThemeVariant = targetVariant;
+
+            if (themeService is AvaloniaThemeService ats)
+            {
+                ApplyVsCodePalette(app, ats.ActivePalette);
+                ApplyTitleBarTheme(app, isDark, ats.PrimaryColor, ats.PrimaryForegroundColor);
+                ApplyAccentBrushes(
+                    app,
+                    ats.PrimaryColor,
+                    ats.PrimaryForegroundColor,
+                    ats.SecondaryColor,
+                    ats.SecondaryForegroundColor,
+                    isDarkTheme: isDark);
+                onApplied?.Invoke(ats);
+                return;
+            }
+
+            ApplyTitleBarTheme(app, isDark);
+            if (scheme == Core.Models.ColorScheme.PrimaryForeground)
+                ApplyAccentBrushes(app, accentForegroundHex: themeArg?.ToString(), isDarkTheme: isDark);
+            else
+                ApplyAccentBrushes(app, accentHex: themeArg?.ToString() ?? themeService.SelectedColor?.ToString(), isDarkTheme: isDark);
+        }
+
+        themeService.ThemeChanged += theme => Apply(themeArg: theme);
+        themeService.SchemeChanged += (scheme, color) => Apply(themeArg: color, scheme: scheme);
+        Apply();
+    }
 }

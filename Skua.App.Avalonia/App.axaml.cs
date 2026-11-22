@@ -90,7 +90,7 @@ public partial class App : Application
         services.AddCommonServices();
         services.AddCompiler();
         services.AddScriptableObjects();
-        services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<ISettingsService>(_ => new Skua.Shared.Avalonia.Services.SettingsService(Skua.Core.Models.AppRole.Client));
         services.AddSingleton<IDispatcherService, Skua.Shared.Avalonia.Services.DispatcherService>();
         services.AddSingleton<IClipboardService, ClipboardService>();
         services.AddSingleton<IDialogService, DialogService>();
@@ -121,9 +121,18 @@ public partial class App : Application
         ColorSpectrumFix.Initialize();
 
         IThemeService themeService = Ioc.Default.GetRequiredService<IThemeService>();
-        themeService.ThemeChanged += OnThemeChanged;
-        themeService.SchemeChanged += OnSchemeChanged;
-        ApplyThemeFromService(themeService);
+        ThemeResourceApplicator.AttachThemeService(this, themeService, ats =>
+        {
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
+                desktop.MainWindow is Views.TabbedHostWindow hostWindow)
+            {
+                hostWindow.MainTitleBar.UseAccentBackground = ats.UseAccentOnMainTitleBar;
+                ThemeResourceApplicator.ApplyTitleBarTheme(hostWindow, ats.IsDarkTheme,
+                    ats.UseAccentOnMainTitleBar ? ats.PrimaryColor : (Color?)null,
+                    ats.UseAccentOnMainTitleBar ? ats.PrimaryForegroundColor : (Color?)null);
+            }
+            QueueHostThemeSync(ats);
+        });
 
         string[] args = Environment.GetCommandLineArgs();
         bool hasEmbedFlag = false;
@@ -526,98 +535,6 @@ public partial class App : Application
                 Environment.Exit(0);
             }
         });
-    }
-
-    private void OnThemeChanged(object? theme)
-    {
-        IThemeService themeService = Ioc.Default.GetRequiredService<IThemeService>();
-        ThemeVariant targetVariant = themeService.IsDarkTheme ? ThemeVariant.Dark : ThemeVariant.Light;
-        if (RequestedThemeVariant != targetVariant)
-            RequestedThemeVariant = targetVariant;
-
-        if (themeService is AvaloniaThemeService ats)
-        {
-            ThemeResourceApplicator.ApplyVsCodePalette(this, ats.ActivePalette);
-            ThemeResourceApplicator.ApplyTitleBarTheme(this, themeService.IsDarkTheme, ats.PrimaryColor, ats.PrimaryForegroundColor);
-            ThemeResourceApplicator.ApplyAccentBrushes(
-                this,
-                ats.PrimaryColor,
-                ats.PrimaryForegroundColor,
-                ats.SecondaryColor,
-                ats.SecondaryForegroundColor,
-                isDarkTheme: themeService.IsDarkTheme);
-            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
-                desktop.MainWindow is Views.TabbedHostWindow hostWindow)
-            {
-                hostWindow.MainTitleBar.UseAccentBackground = ats.UseAccentOnMainTitleBar;
-                ThemeResourceApplicator.ApplyTitleBarTheme(hostWindow, ats.IsDarkTheme,
-                    ats.UseAccentOnMainTitleBar ? ats.PrimaryColor : (Color?)null,
-                    ats.UseAccentOnMainTitleBar ? ats.PrimaryForegroundColor : (Color?)null);
-            }
-            QueueHostThemeSync(ats);
-        }
-        else
-        {
-            string? accentHex = theme?.ToString();
-            ThemeResourceApplicator.ApplyAccentBrushes(this, accentHex, isDarkTheme: themeService.IsDarkTheme);
-        }
-    }
-
-    private void OnSchemeChanged(Core.Models.ColorScheme scheme, object? color)
-    {
-        IThemeService themeService = Ioc.Default.GetRequiredService<IThemeService>();
-        bool isDark = themeService.IsDarkTheme;
-        ThemeVariant targetVariant = isDark ? ThemeVariant.Dark : ThemeVariant.Light;
-        if (RequestedThemeVariant != targetVariant)
-            RequestedThemeVariant = targetVariant;
-
-        if (themeService is AvaloniaThemeService ats)
-        {
-            ThemeResourceApplicator.ApplyTitleBarTheme(this, isDark, ats.PrimaryColor, ats.PrimaryForegroundColor);
-            ThemeResourceApplicator.ApplyAccentBrushes(
-                this,
-                ats.PrimaryColor,
-                ats.PrimaryForegroundColor,
-                ats.SecondaryColor,
-                ats.SecondaryForegroundColor,
-                isDarkTheme: isDark);
-            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
-                desktop.MainWindow is Views.TabbedHostWindow hostWindow)
-            {
-                hostWindow.MainTitleBar.UseAccentBackground = ats.UseAccentOnMainTitleBar;
-                ThemeResourceApplicator.ApplyTitleBarTheme(hostWindow, isDark,
-                    ats.UseAccentOnMainTitleBar ? ats.PrimaryColor : (Color?)null,
-                    ats.UseAccentOnMainTitleBar ? ats.PrimaryForegroundColor : (Color?)null);
-            }
-            QueueHostThemeSync(ats);
-            return;
-        }
-
-        if (scheme == Core.Models.ColorScheme.PrimaryForeground)
-            ThemeResourceApplicator.ApplyAccentBrushes(this, accentForegroundHex: color?.ToString(), isDarkTheme: isDark);
-        else
-            ThemeResourceApplicator.ApplyAccentBrushes(this, accentHex: color?.ToString(), isDarkTheme: isDark);
-    }
-
-    private void ApplyThemeFromService(IThemeService themeService)
-    {
-        bool isDark = themeService.IsDarkTheme;
-        RequestedThemeVariant = isDark ? ThemeVariant.Dark : ThemeVariant.Light;
-        if (themeService is AvaloniaThemeService ats)
-        {
-            ThemeResourceApplicator.ApplyTitleBarTheme(this, isDark, ats.PrimaryColor, ats.PrimaryForegroundColor);
-            ThemeResourceApplicator.ApplyAccentBrushes(
-                this,
-                ats.PrimaryColor,
-                ats.PrimaryForegroundColor,
-                ats.SecondaryColor,
-                ats.SecondaryForegroundColor,
-                isDarkTheme: isDark);
-            return;
-        }
-
-        string? accentHex = themeService.SelectedColor?.ToString();
-        ThemeResourceApplicator.ApplyAccentBrushes(this, accentHex, isDarkTheme: isDark);
     }
 
     private void OnTitleBarArtworkPathChanged(string? path)

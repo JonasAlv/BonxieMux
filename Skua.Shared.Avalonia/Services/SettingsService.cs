@@ -2,16 +2,15 @@ using Skua.Core.Interfaces;
 using Skua.Core.Models;
 using Skua.Core.Services;
 
-namespace Skua.Manager.Avalonia.Services;
+namespace Skua.Shared.Avalonia.Services;
 
-public class SettingsService : ISettingsService
+public sealed class SettingsService : ISettingsService
 {
-    private readonly UnifiedSettingsService _unifiedService;
+    private readonly UnifiedSettingsService _unifiedService = new();
 
-    public SettingsService()
+    public SettingsService(AppRole role)
     {
-        _unifiedService = new UnifiedSettingsService();
-        _unifiedService.Initialize(AppRole.Manager);
+        _unifiedService.Initialize(role);
     }
 
     public T? Get<T>(string key) => _unifiedService.Get<T>(key);
