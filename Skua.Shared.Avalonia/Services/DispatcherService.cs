@@ -1,7 +1,7 @@
 using Avalonia.Threading;
 using System;
 
-namespace Skua.Manager.Avalonia.Services;
+namespace Skua.Shared.Avalonia.Services;
 
 public class DispatcherService : Skua.Core.Interfaces.IDispatcherService
 {

@@ -93,11 +93,11 @@ public partial class App : Application
         services.AddCompiler();
         services.AddScriptableObjects();
         services.AddSingleton<ISettingsService, SettingsService>();
-        services.AddSingleton<IDispatcherService, DispatcherService>();
+        services.AddSingleton<IDispatcherService, Skua.Shared.Avalonia.Services.DispatcherService>();
         services.AddSingleton<IClipboardService, ClipboardService>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<IWindowService, WindowService>();
-        services.AddSingleton<IFileDialogService, FileDialogService>();
+        services.AddSingleton<IFileDialogService, Skua.Shared.Avalonia.Services.FileDialogService>();
         services.AddSingleton<IThemeService, AvaloniaThemeService>();
         services.AddSingleton(HotKeys.CreateHotKeys);
         services.AddSingleton<IHotKeyService, HotKeyService>();

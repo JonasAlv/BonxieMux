@@ -12,7 +12,7 @@ using global::Avalonia.Controls.ApplicationLifetimes;
 using global::Avalonia.Platform.Storage;
 using global::Avalonia.Threading;
 
-namespace Skua.App.Avalonia.Services;
+namespace Skua.Shared.Avalonia.Services;
 
 // Avalonia's StorageProvider shows the system dialog (desktop portal or GTK).
 // Pickers are async, so synchronous calls wait in a nested dispatcher frame

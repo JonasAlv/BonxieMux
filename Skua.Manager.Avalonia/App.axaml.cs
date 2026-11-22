@@ -46,9 +46,9 @@ public partial class App : Application
         services.AddTransient<IScriptOptionContainer, ScriptOptionContainer>();
         services.AddTransient<IOptionContainer, OptionContainer>();
         services.AddSingleton<ISettingsService, SettingsService>();
-        services.AddSingleton<IDispatcherService, DispatcherService>();
+        services.AddSingleton<IDispatcherService, Skua.Shared.Avalonia.Services.DispatcherService>();
         services.AddSingleton<IDialogService, DialogService>();
-        services.AddSingleton<IFileDialogService, FileDialogService>();
+        services.AddSingleton<IFileDialogService, Skua.Shared.Avalonia.Services.FileDialogService>();
         services.AddSingleton<IWindowService, WindowService>();
         services.AddSingleton<IClientFilesService, ClientFilesService>();
         services.AddSingleton<IThemeService, Skua.Shared.Avalonia.Services.AvaloniaThemeService>();
