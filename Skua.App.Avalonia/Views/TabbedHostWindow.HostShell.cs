@@ -325,21 +325,42 @@ public partial class TabbedHostWindow : Window
         }
         detachedMenu.Items.Add(rootMenuItem);
 
-        Button autoBtn = CreateDetachedTitleButton(Material.Icons.MaterialIconKind.RobotOutline, "Auto Attack / Stop", () =>
-            Skua.App.Avalonia.Services.TabIpc.SendCommand(childPid, "AUTO_ATTACK"));
-        Button jumpBtn = CreateDetachedTitleButton(Material.Icons.MaterialIconKind.RunFast, "Map & Cell Jump", () =>
-            Skua.App.Avalonia.Services.TabIpc.SendCommand(childPid, "JUMP_WINDOW"));
+        QuickBarControls detachedQuickBar = new();
+        _detachedQuickBars[childPid] = detachedQuickBar;
+
+        Button sizeBtn = CreateDetachedTitleButton(
+            Material.Icons.MaterialIconKind.ResizeBottomRight,
+            ToolTip.GetTip(GameSizeBorder)?.ToString() ?? "Game Viewport Size: Auto (click to cycle)",
+            () => { });
+        sizeBtn.Click += (_, _) =>
+        {
+            GameSizeBorder_PointerPressed(null, null!);
+            ToolTip.SetTip(sizeBtn, ToolTip.GetTip(GameSizeBorder));
+        };
+
+        var (autoToggle, autoPopup) = BuildAutoControls(detachedQuickBar, PlacementMode.BottomEdgeAlignedRight, childPid);
+        autoToggle.Classes.Remove("activity-item");
+        autoToggle.Classes.Add("titlebar");
+        autoToggle.Width = 26;
+        autoToggle.Height = 26;
+        Panel autoHost = new() { Width = 26, Height = 26, Children = { autoToggle, autoPopup } };
+
+        var (jumpToggle, jumpPopup) = BuildJumpControls(detachedQuickBar, PlacementMode.BottomEdgeAlignedRight, childPid);
+        jumpToggle.Classes.Remove("activity-item");
+        jumpToggle.Classes.Add("titlebar");
+        jumpToggle.Width = 26;
+        jumpToggle.Height = 26;
+        Panel jumpHost = new() { Width = 26, Height = 26, Children = { jumpToggle, jumpPopup } };
+
         Button botWinBtn = CreateDetachedTitleButton(Material.Icons.MaterialIconKind.Apps, "Show All Bot Windows & Tools", () =>
             Skua.App.Avalonia.Services.TabIpc.SendCommand(childPid, "BOT_WINDOW"));
-        Button optionsBtn = CreateDetachedTitleButton(Material.Icons.MaterialIconKind.CogOutline, "Application Options", () =>
-            Skua.App.Avalonia.Services.TabIpc.SendCommand(childPid, "MENU|Application Options"));
 
         StackPanel rightButtons = new()
         {
             Orientation = Orientation.Horizontal,
             Spacing = 2,
             VerticalAlignment = VerticalAlignment.Center,
-            Children = { autoBtn, jumpBtn, botWinBtn, optionsBtn }
+            Children = { sizeBtn, autoHost, jumpHost, botWinBtn }
         };
 
         var titleBar = new Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar
@@ -408,6 +429,10 @@ public partial class TabbedHostWindow : Window
 
     private void PlatformReattachChild(IntPtr childHwnd)
     {
+        TabInfo? info = _tabs.Values.FirstOrDefault(t => t.ChildHwnd == childHwnd);
+        if (info?.Process != null)
+            _detachedQuickBars.Remove(info.Process.Id);
+
         if (_detachedViewportHosts.TryGetValue(childHwnd, out ContentControl? viewportHost))
         {
             viewportHost.Content = null;
@@ -571,6 +596,10 @@ public partial class TabbedHostWindow : Window
             Dispatcher.UIThread.Post(() => PlatformUnmapChild(childHwnd));
             return;
         }
+
+        TabInfo? unmapInfo = _tabs.Values.FirstOrDefault(t => t.ChildHwnd == childHwnd);
+        if (unmapInfo?.Process != null)
+            _detachedQuickBars.Remove(unmapInfo.Process.Id);
 
         if (_detachedViewportHosts.Remove(childHwnd, out ContentControl? detachedHost))
             detachedHost.Content = null;
