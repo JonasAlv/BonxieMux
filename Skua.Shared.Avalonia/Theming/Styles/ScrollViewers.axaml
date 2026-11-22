@@ -11,7 +11,6 @@
         <Setter Property="Background" Value="Transparent" />
     </Style>
 
-    <!-- Sleek, Minimalist Modern Scrollbar -->
     <Style Selector="ScrollBar">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="AllowAutoHide" Value="False" />
@@ -29,7 +28,6 @@
         <Setter Property="MaxHeight" Value="6" />
     </Style>
 
-    <!-- Template parts constraint -->
     <Style Selector="ScrollBar:vertical /template/ Border#Root">
         <Setter Property="Width" Value="6" />
         <Setter Property="MinWidth" Value="6" />
@@ -54,7 +52,6 @@
         <Setter Property="MaxHeight" Value="6" />
     </Style>
 
-    <!-- ScrollBar Thumb: Sleek modern pill -->
     <Style Selector="ScrollBar /template/ Thumb#PART_Thumb, ScrollBar /template/ Thumb">
         <Setter Property="Background" Value="{DynamicResource SkuaScrollThumbBrush}" />
     </Style>
@@ -83,8 +80,6 @@
         <Setter Property="Background" Value="{DynamicResource SkuaScrollThumbPressedBrush}" />
     </Style>
 
-    <!-- Hide the arrow buttons. The page buttons (the track either side of the thumb) stay, so a click on
-         the track still pages; Fluent draws them transparent. -->
     <Style Selector="ScrollBar /template/ RepeatButton#PART_LineUpButton,
                      ScrollBar /template/ RepeatButton#PART_LineDownButton,
                      ScrollBar /template/ RepeatButton#PART_LineLeftButton,

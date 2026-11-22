@@ -5,7 +5,6 @@
              x:Class="Skua.App.Avalonia.Views.FastTravelView"
              x:DataType="vms:FastTravelViewModel">
   <UserControl.Styles>
-    <!-- Destination card: the whole card travels; edit and remove show on hover -->
     <Style Selector="Border.travel-card">
       <Setter Property="Height" Value="48" />
       <Setter Property="Margin" Value="3" />
@@ -42,7 +41,6 @@
   </UserControl.Styles>
 
   <Grid Margin="12" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="10">
-    <!-- Search and private room -->
     <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,96" ColumnSpacing="8">
       <TextBox Grid.Column="0" PlaceholderText="Search name, map or cell" Text="{Binding SearchText, Mode=TwoWay}">
         <TextBox.InnerLeftContent>
@@ -64,7 +62,6 @@
       </TextBox>
     </Grid>
 
-    <!-- Destinations header -->
     <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="6">
       <TextBlock Grid.Column="0" Classes="section-label" Text="DESTINATIONS" />
       <Border Grid.Column="1" Classes="count">
@@ -84,7 +81,6 @@
       </Button>
     </Grid>
 
-    <!-- Destination cards, three per row -->
     <ScrollViewer Grid.Row="2" Margin="-3" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
       <ItemsControl ItemsSource="{Binding FilteredFastTravelItems}">
         <ItemsControl.ItemsPanel>
@@ -134,7 +130,6 @@
       </ItemsControl>
     </ScrollViewer>
 
-    <!-- Add a destination -->
     <Border Grid.Row="3"
             Background="{DynamicResource SkuaSurfaceBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"

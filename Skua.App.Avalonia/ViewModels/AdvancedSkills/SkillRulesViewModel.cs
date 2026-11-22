@@ -44,7 +44,6 @@ public partial class SkillRulesViewModel : ObservableRecipient
     [ObservableProperty]
     private bool _multiAuraBool;
 
-    /// <summary>Use the skill when any of its conditions holds (OR), not only when all of them do.</summary>
     [ObservableProperty]
     private bool _matchAnyBool;
 

@@ -146,7 +146,6 @@ internal static class Program
             }
             catch
             {
-                // Ignore secondary logging failures on read-only filesystems
             }
         }
     }

@@ -9,7 +9,6 @@ using System.Diagnostics;
 
 namespace Skua.Manager.Avalonia.Controls;
 
-/// <summary>Non-blocking status messages shown over the Manager.</summary>
 public sealed class ToastHost : Panel
 {
     private const double SlideIn = 0.28;

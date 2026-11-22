@@ -33,7 +33,6 @@
       <Setter Property="Foreground" Value="{DynamicResource SkuaWarningBrush}" />
     </Style>
 
-    <!-- Rounded tile behind a heading icon -->
     <Style Selector="Border.cal-tile">
       <Setter Property="Width" Value="26" />
       <Setter Property="Height" Value="26" />
@@ -41,7 +40,6 @@
       <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
-    <!-- Progress bars: thin and round, the fill colour set per use -->
     <Style Selector="ProgressBar.cal-bar">
       <Setter Property="Height" Value="7" />
       <Setter Property="MinHeight" Value="7" />
@@ -53,7 +51,6 @@
     <Style Selector="ProgressBar.cal-bar.green"><Setter Property="Foreground" Value="{DynamicResource SkuaSuccessBrush}" /></Style>
     <Style Selector="ProgressBar.cal-bar.ending"><Setter Property="Foreground" Value="{DynamicResource SkuaWarningBrush}" /></Style>
 
-    <!-- A boost row: an icon tile, the name, the time and a bar -->
     <Style Selector="Border.boost-row">
       <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
       <Setter Property="CornerRadius" Value="8" />
@@ -72,7 +69,6 @@
 
   <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="12" Spacing="10">
-      <!-- Server time (US Eastern) -->
       <Border Classes="cal-card">
         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
           <Border Classes="cal-tile" Background="#334C8DFF">
@@ -86,7 +82,6 @@
         </Grid>
       </Border>
 
-      <!-- The two resets side by side; icons and bars have fixed colours; only the headings follow the Application Theme (accent); green / yellow mean ON and coming up -->
       <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
         <Border Grid.Column="0" Classes="cal-card">
           <StackPanel Spacing="7">
@@ -114,7 +109,6 @@
         </Border>
       </Grid>
 
-      <!-- Boosts -->
       <Border Classes="cal-card">
         <StackPanel Spacing="6">
           <Grid ColumnDefinitions="*,Auto">
@@ -135,7 +129,6 @@
           <TextBlock Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" Foreground="{DynamicResource SkuaWarningBrush}" FontSize="12" />
           <TextBlock Text="No boosts listed." IsVisible="{Binding HasNoBoosts}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
 
-          <!-- Running now: green -->
           <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,8,0,0" IsVisible="{Binding HasActive}">
             <materialIcons:MaterialIcon Kind="PlayCircle" Width="15" Height="15" Foreground="{DynamicResource SkuaSuccessBrush}" />
             <TextBlock Classes="cal-heading" Text="ACTIVE NOW" Foreground="{DynamicResource SkuaSuccessBrush}" />
@@ -161,7 +154,6 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
 
-          <!-- Coming: amber -->
           <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,8,0,0" IsVisible="{Binding HasUpcoming}">
             <materialIcons:MaterialIcon Kind="ClockFast" Width="15" Height="15" Foreground="{DynamicResource SkuaWarningBrush}" />
             <TextBlock Classes="cal-heading" Text="COMING UP" Foreground="{DynamicResource SkuaWarningBrush}" />

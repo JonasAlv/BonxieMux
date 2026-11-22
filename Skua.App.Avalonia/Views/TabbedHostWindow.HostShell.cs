@@ -40,7 +40,6 @@ public partial class TabbedHostWindow : Window
     private Canvas? _viewportCanvas;
     private bool _hostInitialized;
 
-
     private void StartGridFocusTracking()
     {
         EnsureHostLayout();
@@ -216,8 +215,6 @@ public partial class TabbedHostWindow : Window
             bool shownInHost = viewport.IsVisible || overlay.IsVisible;
             if (shownInHost)
             {
-                // Host state (active tab, Grid Mode, window focus) is authoritative for AutoHeadless;
-                // prevents stale in-flight child HEADLESS_STATE messages from sticking the overlay on.
                 bool isHeadless = PredictEffectiveHeadless(childHwnd, _isGridViewEnabled, isShownTile: true);
                 viewport.IsVisible = !isHeadless;
                 overlay.IsVisible = isHeadless;

@@ -11,10 +11,6 @@ using System.Text.Json;
 
 namespace Skua.App.Avalonia.ViewModels;
 
-/// <summary>
-/// Ultra boss guide built from the community Ultras spreadsheet (UltraWiki.json): teams, enhancements,
-/// class ratings per role and a team builder that rates a team from 0 to 6 stars.
-/// </summary>
 public partial class UltraWikiViewModel : BotControlViewModelBase
 {
     public const double MaxScore = 6;
@@ -161,12 +157,6 @@ public partial class UltraWikiViewModel : BotControlViewModelBase
             + (result.Filled < SelectedUltra.TeamSize ? $"   ({SelectedUltra.TeamSize - result.Filled} empty slot(s) count as 0)" : string.Empty);
     }
 
-    /// <summary>
-    /// Rates a team: every member gets the stars of the role it fills (one Healer, one Support, the rest
-    /// whatever they rate best at, picking the best assignment), averaged over the team size (0-5).
-    /// Best Group classes count 5 stars in any slot.
-    /// Repeated classes count half. Up to +1 for the named classes of the Recommended Group in the team.
-    /// </summary>
     public static TeamResult Evaluate(UltraEntry ultra, IList<string?> team)
     {
         List<(int Slot, string Cls)> members = team
@@ -184,14 +174,12 @@ public partial class UltraWikiViewModel : BotControlViewModelBase
         string[] bestRoles = new string[members.Count];
         double[] bestStars = new double[members.Count];
 
-        // h/s = index of the Healer/Support member, -1 when nobody takes that role.
         for (int h = -1; h < members.Count; h++)
         {
             for (int s = -1; s < members.Count; s++)
             {
                 if (s >= 0 && s == h)
                     continue;
-                // A team of 2+ fills both roles; a single member just plays what it rates best at.
                 if (members.Count >= 2 ? h < 0 || s < 0 : h >= 0 || s >= 0)
                     continue;
 
@@ -206,8 +194,6 @@ public partial class UltraWikiViewModel : BotControlViewModelBase
                         : i == s
                             ? (SupportCategory, ultra.Rating(members[i].Cls, SupportCategory))
                             : ultra.BestDps(members[i].Cls, DpsCategories, members.Count < 2);
-                    // The sheet's own Best Group picks rate full stars in whatever slot they take,
-                    // even where a single category under-rates them (e.g. StoneCrusher on Speaker).
                     raw += value;
                     if (value < BestGroupStars && ultra.InBestGroup(members[i].Cls))
                         (role, value) = ($"{role} · Best Group", BestGroupStars);
@@ -216,7 +202,6 @@ public partial class UltraWikiViewModel : BotControlViewModelBase
                     total += stars[i];
                 }
 
-                // Ties go to the assignment the sheet rates higher, so roles read naturally.
                 if (total > bestTotal || (total == bestTotal && raw > bestRaw))
                 {
                     bestTotal = total;
@@ -241,10 +226,6 @@ public partial class UltraWikiViewModel : BotControlViewModelBase
         return new TeamResult(baseScore, bonus, Math.Min(MaxScore, baseScore + bonus), members.Count, slots);
     }
 
-    /// <summary>
-    /// The Recommended Group with its role placeholders ("Healer / Support", "DPS", ...) filled by the
-    /// best rated class for those roles that is not in the team yet; Best Group classes win ties.
-    /// </summary>
     public static List<string> ResolveRecommended(UltraEntry ultra)
     {
         List<string> team = ultra.Recommended.Where(ultra.IsClass).ToList();
@@ -281,7 +262,6 @@ public partial class UltraWikiViewModel : BotControlViewModelBase
         return result;
     }
 
-    /// <summary>Best rated team among the strongest classes of the ultra plus its recommended ones.</summary>
     public static List<string> FindBestTeam(UltraEntry ultra)
     {
         List<string> pool = ultra.AllClasses
@@ -303,7 +283,6 @@ public partial class UltraWikiViewModel : BotControlViewModelBase
             }
         }
 
-        // Keep the recommended order first so the slots read like the sheet.
         return best
             .OrderBy(c => ultra.Recommended.FindIndex(r => r.Equals(c, StringComparison.OrdinalIgnoreCase)) is int i && i >= 0 ? i : 99)
             .ToList();
@@ -380,7 +359,6 @@ public class UltraEntry
 
     public bool HasMechanics => Mechanics.Length > 0;
 
-    /// <summary>4-player ultras list 4 recommended members, 7-player ones list 7.</summary>
     public int TeamSize => Math.Max(Recommended.Count, BestGroup.Count) > 4 ? 7 : 4;
 
     private List<string>? _allClasses;
@@ -401,7 +379,6 @@ public class UltraEntry
             ? list.Where(r => r.Cls.Equals(cls, StringComparison.OrdinalIgnoreCase)).Select(r => (double)r.Stars).DefaultIfEmpty(0).Max()
             : 0;
 
-    /// <summary>Role a non Healer/Support member plays: its best DPS rating, or its best rating of any kind when <paramref name="anyRole"/>.</summary>
     public (string Role, double Stars) BestDps(string cls, string[] dpsCategories, bool anyRole)
     {
         IEnumerable<string> categories = anyRole ? Ratings.Keys : Ratings.Keys.Where(dpsCategories.Contains);
@@ -413,7 +390,6 @@ public class UltraEntry
                 best = (category, stars);
         }
 
-        // A class only rated as Support/Healer can still fill a flex slot at that rating.
         if (best.Stars == 0 && !anyRole)
         {
             foreach (string category in Ratings.Keys)

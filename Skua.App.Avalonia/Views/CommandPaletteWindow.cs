@@ -10,7 +10,6 @@ using System.Linq;
 
 namespace Skua.App.Avalonia.Views;
 
-/// <summary>Searches the client's main menu and executes the selected command.</summary>
 public sealed class CommandPaletteWindow : Window
 {
     private sealed record Entry(string Path, string Title, IMainMenuItemViewModel Item);

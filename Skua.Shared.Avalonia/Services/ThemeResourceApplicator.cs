@@ -15,8 +15,6 @@ public static class ThemeResourceApplicator
     private static bool _materialChecked;
     private static bool _hasMaterialStyles;
 
-
-
     public static void ApplyTitleBarTheme(Application app, bool isDark, Color? accentColor = null, Color? accentTextColor = null)
     {
         if (!Dispatcher.UIThread.CheckAccess())
@@ -51,7 +49,6 @@ public static class ThemeResourceApplicator
         if (window.RequestedThemeVariant != targetVariant)
             window.RequestedThemeVariant = targetVariant;
 
-
     }
 
     public static void ApplyNativeTitleBar(IntPtr hwnd, bool isDark, Color captionColor, Color textColor)
@@ -76,8 +73,6 @@ public static class ThemeResourceApplicator
         SetOrUpdateBrush(app.Resources, "SkuaAccentHoverBrush", Lighten(primary, 0.1));
         SetOrUpdateBrush(app.Resources, "SkuaAccentPressedBrush", Darken(primary, 0.12));
 
-        // Fluent controls (CheckBox, RadioButton, ToggleSwitch, Slider, ProgressBar, checked
-        // ToggleButton, TabItem pipe, TextBox focus) read the OS accent unless these are set.
         ApplyFluentAccent(app, primary, primaryForeground);
 
         Color selectionLight = Color.FromArgb(0x33, primary.R, primary.G, primary.B);
@@ -85,7 +80,6 @@ public static class ThemeResourceApplicator
         bool useDarkSelection = isDarkTheme ?? false;
         SetOrUpdateBrush(app.Resources, "SkuaSelectionBrush", useDarkSelection ? selectionDark : selectionLight);
 
-        // Selected/on fill for tabs, toggles, rows, cards and chips; the strong one is its hover.
         SetOrUpdateBrush(app.Resources, "SkuaAccentTintBrush", Color.FromArgb(0x24, primary.R, primary.G, primary.B));
         SetOrUpdateBrush(app.Resources, "SkuaAccentTintStrongBrush", Color.FromArgb(0x38, primary.R, primary.G, primary.B));
 
@@ -157,7 +151,6 @@ public static class ThemeResourceApplicator
 
     private static void ApplyFluentAccent(Application app, Color primary, Color primaryForeground)
     {
-        // Glyphs drawn on an accent fill use the theme's text-on-accent colour, not Fluent's fixed white.
         foreach (string key in FluentOnAccentBrushKeys)
             SetOrUpdateBrush(app.Resources, key, primaryForeground);
 
@@ -229,7 +222,6 @@ public static class ThemeResourceApplicator
             }
             catch
             {
-                // Best effort: keep app theme application resilient across Material versions.
             }
         }
     }
@@ -309,7 +301,6 @@ public static class ThemeResourceApplicator
         }
         catch
         {
-            // Best effort across Material versions.
         }
     }
 
@@ -345,7 +336,6 @@ public static class ThemeResourceApplicator
         }
         catch
         {
-            // Best effort across Material versions.
         }
     }
 

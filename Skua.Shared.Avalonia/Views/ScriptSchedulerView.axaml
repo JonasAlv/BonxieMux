@@ -10,7 +10,6 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Skua.Shared.Avalonia.Views.ScriptSchedulerView">
 
-    <!-- The playlist: runs top to bottom. A table of #, script, status and time; each row's actions are in its menu. -->
     <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="10">
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
             <Button Grid.Column="0"
@@ -50,7 +49,6 @@
             <Grid RowDefinitions="Auto,*">
                 <Border Grid.Row="0" Height="30" Background="{DynamicResource SkuaSurfaceAltBrush}"
                         BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="0,0,0,1">
-                    <!-- Same columns as the rows below -->
                     <Grid ColumnDefinitions="40,*,120,100,44">
                         <TextBlock Grid.Column="0" Classes="section-label" Text="#" HorizontalAlignment="Center" />
                         <TextBlock Grid.Column="1" Classes="section-label" Text="SCRIPT" Margin="12,0" />
@@ -86,7 +84,6 @@
                         <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
                             <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
                         </Style>
-                        <!-- Finished scripts step back -->
                         <Style Selector="TextBlock.done">
                             <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
                         </Style>
@@ -123,7 +120,6 @@
                                 <TextBlock Grid.Column="0" Text="{Binding $parent[ListBoxItem].Tag}" FontSize="11" HorizontalAlignment="Center"
                                            VerticalAlignment="Center" Foreground="{DynamicResource SkuaMutedTextBrush}" />
 
-                                <!-- Name: double-click to rename (Enter or leaving the box ends it, Escape undoes it) -->
                                 <Grid Grid.Column="1" Margin="12,0">
                                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                                Classes.done="{Binding IsDone}" ToolTip.Tip="{Binding Path}"

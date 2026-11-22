@@ -22,7 +22,6 @@ public partial class ToPickupDropsViewModel : ObservableRecipient
         _windowService = windowService;
         RemoveAllDropsCommand = new RelayCommand(Drops.Clear);
 
-        // Subscribe to property changes directly
         Drops.PropertyChanged += OnDropsPropertyChanged;
     }
 
@@ -30,7 +29,6 @@ public partial class ToPickupDropsViewModel : ObservableRecipient
     {
         Messenger.Register<ToPickupDropsViewModel, PropertyChangedMessage<IEnumerable<string>>>(this, ToPickupChanged);
         Messenger.Register<ToPickupDropsViewModel, PropertyChangedMessage<IEnumerable<int>>>(this, ToPickupIDsChanged);
-        // Force refresh to show any drops added while the window was closed
         OnPropertyChanged(nameof(ToPickup));
     }
 
@@ -121,7 +119,6 @@ public partial class ToPickupDropsViewModel : ObservableRecipient
 
     private void ToPickupIDsChanged(ToPickupDropsViewModel recipient, PropertyChangedMessage<IEnumerable<int>> message)
     {
-        // Check for both the interface name and the property name
         if (message.PropertyName is (nameof(IScriptDrop.ToPickupIDs)) or "ToPickupIDs")
             recipient.OnPropertyChanged(nameof(recipient.ToPickup));
     }

@@ -75,8 +75,6 @@ public partial class App : Application
             Converters = { new Skua.Core.Models.Converters.WholeNumberConverter() },
             Error = (sender, args) =>
             {
-                // Suppress benign warnings when ActionScript queries return null or empty string ("")
-                // for value types (e.g. booleans) while game screens/maps are still loading.
                 if (args.ErrorContext.Error.Message.Contains("No JSON content found") ||
                     args.ErrorContext.Error.Message.Contains("Error converting value {null}"))
                 {
@@ -223,7 +221,6 @@ public partial class App : Application
             {
                 desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-                // Child instance
                 Views.MainWindow mainChild = new()
                 {
                     WindowStartupLocation = global::Avalonia.Controls.WindowStartupLocation.Manual,
@@ -295,8 +292,6 @@ public partial class App : Application
                 string? envUser = Environment.GetEnvironmentVariable("BONXIEMUX_USERNAME");
                 string? envPass = Environment.GetEnvironmentVariable("BONXIEMUX_PASSWORD");
 
-                // Scrub credentials from the master/forwarding process environment immediately
-                // so TabbedHostWindow neither retains Account #1's credentials nor leaks them to blank '+' tabs.
                 try
                 {
                     Environment.SetEnvironmentVariable("BONXIEMUX_USERNAME", null);
@@ -370,8 +365,6 @@ public partial class App : Application
                         return;
                     }
 
-                    // If pipe forwarding failed, the previous host is dead or non-responsive.
-                    // Recover and take over as the host window.
                     try
                     {
                         TryAcquireSingleInstanceLock(HostInstanceId);
@@ -379,8 +372,6 @@ public partial class App : Application
                     catch { }
                 }
 
-                // Master instance. The tray icon is created only here: an instance that forwards to an
-                // existing host exits through Environment.Exit, which never removes it (ghost icon).
                 SetupTrayIcon();
                 Views.TabbedHostWindow masterWindow = new(clientArgs);
                 desktop.MainWindow = masterWindow;
@@ -427,7 +418,6 @@ public partial class App : Application
         }
         catch
         {
-            // ignored
         }
         finally
         {
@@ -472,7 +462,6 @@ public partial class App : Application
 
             await getScripts.GetScriptsAsync(null, default);
 
-            // Each tab runs as an --embed child process; only the host downloads, so the prompt shows once.
             if (!Skua.Core.AppStartup.HotKeys.IsHostProcess)
                 return;
 
@@ -539,8 +528,6 @@ public partial class App : Application
         });
     }
 
-    // Full theme changes can include base theme + multiple palette slots, so we always
-    // republish the complete resource map here (see ThemeResourceApplicator).
     private void OnThemeChanged(object? theme)
     {
         IThemeService themeService = Ioc.Default.GetRequiredService<IThemeService>();
@@ -550,7 +537,6 @@ public partial class App : Application
 
         if (themeService is AvaloniaThemeService ats)
         {
-            // Keep accents on secondary windows; the checkbox only controls the main tab host caption.
             ThemeResourceApplicator.ApplyTitleBarTheme(this, themeService.IsDarkTheme, ats.PrimaryColor, ats.PrimaryForegroundColor);
             ThemeResourceApplicator.ApplyAccentBrushes(
                 this,
@@ -576,8 +562,6 @@ public partial class App : Application
         }
     }
 
-    // Single-scheme edits still republish all known colors when AvaloniaThemeService is active.
-    // This keeps Material and Skua resources in lockstep and prevents partial updates.
     private void OnSchemeChanged(Core.Models.ColorScheme scheme, object? color)
     {
         IThemeService themeService = Ioc.Default.GetRequiredService<IThemeService>();
@@ -588,8 +572,6 @@ public partial class App : Application
 
         if (themeService is AvaloniaThemeService ats)
         {
-            // Scheme edits can change the primary palette without changing the base theme.
-            // Keep accents on secondary windows and control only the main host caption with the checkbox.
             ThemeResourceApplicator.ApplyTitleBarTheme(this, isDark, ats.PrimaryColor, ats.PrimaryForegroundColor);
             ThemeResourceApplicator.ApplyAccentBrushes(
                 this,
@@ -610,15 +592,12 @@ public partial class App : Application
             return;
         }
 
-        // Non-AvaloniaThemeService fallback can only target one path at a time.
         if (scheme == Core.Models.ColorScheme.PrimaryForeground)
             ThemeResourceApplicator.ApplyAccentBrushes(this, accentForegroundHex: color?.ToString(), isDarkTheme: isDark);
         else
             ThemeResourceApplicator.ApplyAccentBrushes(this, accentHex: color?.ToString(), isDarkTheme: isDark);
     }
 
-    // Apply theme resources before first window render so root styles and previews do not
-    // flash default colors on startup.
     private void ApplyThemeFromService(IThemeService themeService)
     {
         bool isDark = themeService.IsDarkTheme;
@@ -640,11 +619,6 @@ public partial class App : Application
         ThemeResourceApplicator.ApplyAccentBrushes(this, accentHex, isDarkTheme: isDark);
     }
 
-    /// <summary>
-    /// Sends the selected title-bar artwork path to the separate main tab-host process.
-    /// The image is updated independently of palette changes so other clients cannot overwrite it
-    /// with an older in-memory settings value.
-    /// </summary>
     private void OnTitleBarArtworkPathChanged(string? path)
     {
         if (_parentHostProcessId <= 0)
@@ -673,10 +647,6 @@ public partial class App : Application
         });
     }
 
-    /// <summary>
-    /// Debounces live palette changes and sends the latest display colors to the parent tab host.
-    /// Embedded clients run in separate processes, so their theme events cannot reach the host directly.
-    /// </summary>
     private void QueueHostThemeSync(AvaloniaThemeService themeService)
     {
         if (_parentHostProcessId <= 0)
@@ -702,10 +672,6 @@ public partial class App : Application
         timer.Start();
     }
 
-    /// <summary>
-    /// Sends the live, already-adjusted theme through the existing local tab-host pipe.
-    /// The snapshot is display-only and is not persisted by the host process.
-    /// </summary>
     private void SendHostThemeSnapshot(AvaloniaThemeService themeService)
     {
         try
@@ -734,7 +700,6 @@ public partial class App : Application
         }
         catch
         {
-            // Theme synchronization is best effort; the embedded client remains usable if the host is closing.
         }
     }
 
@@ -752,9 +717,6 @@ public partial class App : Application
     {
         if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null)
             return;
-        // Minimize the owner instead of hiding it directly. The embedded game HWNDs
-        // are separate top-level windows owned by the host; Windows hides owned windows
-        // with the owner while preserving the Flash renderer for a clean restore.
         desktop.MainWindow.WindowState = WindowState.Minimized;
     }
 

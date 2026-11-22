@@ -38,9 +38,6 @@ public partial class WindowTitleBar : UserControl
         ArtworkPathChanged?.Invoke(_artworkPath);
     }
 
-    /// <summary>
-    /// Sets the default title bar, window, and tray icon for the current application process.
-    /// </summary>
     public static bool SetDefaultIcon(string avaresUri)
     {
         try
@@ -164,7 +161,7 @@ public partial class WindowTitleBar : UserControl
     {
         IImage icon = _defaultIconSource ??= LoadIcon(BuiltInIconUri);
         if (IconSource is not null && IconSource != icon)
-            return; // a caller set its own icon
+            return;
         SetCurrentValue(IconSourceProperty, icon);
     }
 
@@ -217,7 +214,6 @@ public partial class WindowTitleBar : UserControl
             _artworkBitmap?.Dispose();
             _artworkBitmap = null;
             ArtworkImage.Source = null;
-            // Keep the normal themed title bar if the selected image cannot be loaded.
         }
     }
 
@@ -261,10 +257,7 @@ public partial class WindowTitleBar : UserControl
 
     private static IImage LoadIcon(Uri uri)
     {
-        // Keep shell icon parity with WPF title bar artwork so badge tint behavior matches.
         using var stream = AssetLoader.Open(uri);
-        // The source is 2000x2000 but drawn at 30 DIP; decoding at full size and letting the renderer
-        // shrink it 60x+ aliases badly, so pre-scale (128 px covers up to 400% DPI).
         return Bitmap.DecodeToWidth(stream, 128, BitmapInterpolationMode.HighQuality);
     }
 }

@@ -5,7 +5,6 @@
              x:Class="Skua.App.Avalonia.Views.NotifyDropView"
              x:DataType="vms:NotifyDropViewModel">
   <UserControl.Styles>
-    <!-- The per-row remove button shows on hover and on selected rows -->
     <Style Selector="ListBoxItem Button.row-remove">
       <Setter Property="IsVisible" Value="False" />
     </Style>
@@ -15,7 +14,6 @@
   </UserControl.Styles>
 
   <Grid Margin="12" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="10">
-    <!-- Add items to watch -->
     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
       <TextBox Grid.Column="0"
                PlaceholderText="Item name (separate several with |)"
@@ -33,7 +31,6 @@
       </Button>
     </Grid>
 
-    <!-- Watched items header -->
     <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="6">
       <TextBlock Grid.Column="0" Classes="section-label" Text="WATCHING" />
       <Border Grid.Column="1" Classes="count">
@@ -42,7 +39,6 @@
       <Button Grid.Column="3" Classes="skua-button small skua-danger-soft w84" Content="Clear all" Command="{Binding RemoveAllDropsCommand}" />
     </Grid>
 
-    <!-- Watched items: Delete removes the selection, each row has its own remove button -->
     <ListBox Grid.Row="2"
              x:Name="NotifyDropListBox"
              ItemsSource="{Binding NotifyDropList}"
@@ -77,7 +73,6 @@
       </ListBox.ContextMenu>
     </ListBox>
 
-    <!-- Alert sound -->
     <Grid Grid.Row="3" ColumnDefinitions="Auto,96,Auto,110,*,Auto" ColumnSpacing="8">
       <TextBlock Grid.Column="0" Text="Beep" VerticalAlignment="Center" Foreground="{DynamicResource SkuaMutedTextBrush}" />
       <NumericUpDown Grid.Column="1" Minimum="1" Maximum="25" Value="{Binding SoundCount}" FormatString="0" ToolTip.Tip="How many beeps per drop" />

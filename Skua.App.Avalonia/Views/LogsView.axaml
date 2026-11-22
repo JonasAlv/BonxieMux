@@ -4,7 +4,6 @@
              x:Class="Skua.App.Avalonia.Views.LogsView">
 
     <Grid Margin="12" RowDefinitions="Auto,*" RowSpacing="10">
-        <!-- Log tabs; the actions apply to the open tab -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="8">
             <ListBox Grid.Column="0"
                      Classes="top-tabs-client"

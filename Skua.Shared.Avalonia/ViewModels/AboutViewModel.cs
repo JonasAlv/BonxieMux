@@ -46,7 +46,7 @@ public class AboutViewModel : BotControlViewModelBase
         }
         catch
         {
-            /* ignored */
+            
         }
     }
 

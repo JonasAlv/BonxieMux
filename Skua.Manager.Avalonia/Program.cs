@@ -46,7 +46,6 @@ internal static class Program
         string socketPath = Path.Combine(ClientFileSources.TabsDIR, "manager.sock");
         string lockPath = Path.Combine(ClientFileSources.TabsDIR, "manager.lock");
 
-        // Attempt to signal existing primary instance
         try
         {
             using Socket client = new(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
@@ -57,7 +56,6 @@ internal static class Program
         }
         catch
         {
-            // Socket doesn't exist or is stale
             try { if (File.Exists(socketPath)) File.Delete(socketPath); } catch { }
         }
 
@@ -228,7 +226,6 @@ internal static class Program
             }
             catch
             {
-                // Ignore secondary logging failures on read-only filesystems
             }
         }
     }

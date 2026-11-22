@@ -114,8 +114,6 @@ public partial class TabbedHostWindow
         }
     }
 
-    // How Grid View arranges the accounts: "auto" (a near-square grid), "vertical" (one column: two accounts stack top and
-    // bottom) or "horizontal" (one row: side by side). Kept in the settings.
     private string _gridLayout = "auto";
 
     private static string NormalGridLayout(string? value) => value is "vertical" or "horizontal" ? value : "auto";
@@ -132,8 +130,6 @@ public partial class TabbedHostWindow
         }
     }
 
-    // The size (pixels) the game is played at while one account is shown: null fills the window. The Size button steps through
-    // these; the game is centred and shrunk (same shape) when the window is smaller. Kept in the settings.
     private static readonly (int W, int H)[] GameSizes = { (640, 367), (960, 550), (1280, 720), (1600, 900), (1920, 1080) };
     private (int W, int H)? _gameSize;
 
@@ -169,7 +165,7 @@ public partial class TabbedHostWindow
         _gameSize = next < GameSizes.Length ? GameSizes[next] : null;
         Ioc.Default.GetService<ISettingsService>()?.Set("BonxieMuxGameSize", _gameSize is { } g ? $"{g.W}x{g.H}" : "auto");
         UpdateGameSizeButton();
-        _lastX = int.MinValue; // forces the game to be placed again
+        _lastX = int.MinValue;
         DoReposition();
     }
 
@@ -212,7 +208,6 @@ public partial class TabbedHostWindow
             int attachedCount = _tabs.Values.Count(t => !t.IsDetached);
             if (attachedCount <= 1)
             {
-                // If 1 or 0 attached accounts in host, Grid View has nothing to tile
                 return;
             }
             EnterGridView();
@@ -325,7 +320,6 @@ public partial class TabbedHostWindow
                 }
             }
 
-            // ExitGridView restores _lastSelectedTab, so point it at the tab that was just clicked.
             if (InstancesTabControl.SelectedItem is TabItem attachedTab)
                 _lastSelectedTab = attachedTab;
             ExitGridView();
@@ -402,10 +396,8 @@ public partial class TabbedHostWindow
         }
     }
 
-
     private void UpdateGridViewBorderColor()
     {
-        // The layout button only shows while Grid View is on.
         if (GridLayoutBorder != null)
             GridLayoutBorder.IsVisible = _isGridViewEnabled;
         if (GameSizeBorder != null)
@@ -426,9 +418,6 @@ public partial class TabbedHostWindow
         }
     }
 
-    /// <summary>
-    /// Hides all embedded game windows to prevent their pixels remaining visible when the client is hidden.
-    /// </summary>
     public void HideEmbeddedClients()
     {
         foreach (TabInfo info in _tabs.Values)
@@ -442,9 +431,6 @@ public partial class TabbedHostWindow
         HotKeys.ActiveChildHwnd = IntPtr.Zero;
     }
 
-    /// <summary>
-    /// Restores embedded game windows after the client is shown again.
-    /// </summary>
     public void ShowEmbeddedClients()
     {
         _lastX = int.MinValue;
@@ -455,7 +441,6 @@ public partial class TabbedHostWindow
         ScheduleReposition();
     }
 
-    // Places the tabs now, even mid-drag.
     private void RepositionWithFreshCache()
     {
         if (_isClosing) return;
@@ -496,7 +481,6 @@ public partial class TabbedHostWindow
 
     private void FastReposition(PixelPoint newPos)
     {
-        // On Linux, child windows are reparented into _hostHwnd and move with it automatically in X11.
     }
 
     private void ScheduleReposition()
@@ -801,7 +785,6 @@ public partial class TabbedHostWindow
             Dispatcher.UIThread.Post(EnterGridView, DispatcherPriority.Background);
     }
 
-    // Keep the 960x550 game aspect ratio in Grid View instead of stretching the embedded player.
     private static (int X, int Y, int W, int H) GridTileRect(int index, int count, int cols, int rows, int areaW, int areaH)
     {
         int row = index / cols, col = index % cols;

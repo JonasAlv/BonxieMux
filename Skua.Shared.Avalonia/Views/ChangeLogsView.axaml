@@ -9,7 +9,6 @@
              d:DesignHeight="700" d:DesignWidth="600"
              mc:Ignorable="d">
     <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="10">
-        <!-- Header Card -->
         <Border Grid.Row="0"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -34,7 +33,6 @@
             </Grid>
         </Border>
 
-        <!-- Logs Content Card -->
         <Border Grid.Row="1"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -50,7 +48,6 @@
             </ScrollViewer>
         </Border>
 
-        <!-- Donation Card -->
         <Border Grid.Row="2"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -70,7 +67,4 @@
         </Border>
     </Grid>
 </UserControl>
-
-
-
 

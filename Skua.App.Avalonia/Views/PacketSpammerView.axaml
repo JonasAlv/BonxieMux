@@ -8,7 +8,6 @@
         ColumnSpacing="12"
         RowSpacing="10">
     
-    <!-- Left: Packets List Card -->
     <Border Grid.Row="0"
             Grid.Column="0"
             Background="{DynamicResource SkuaSurfaceBrush}"
@@ -29,7 +28,6 @@
       </Grid>
     </Border>
 
-    <!-- Right: Spammer Controls Card -->
     <Border Grid.Row="0"
             Grid.Column="1"
             Background="{DynamicResource SkuaSurfaceBrush}"
@@ -87,7 +85,6 @@
       </ScrollViewer>
     </Border>
 
-    <!-- Bottom: Packet Input & Send Card -->
     <Border Grid.Row="1"
             Grid.Column="0"
             Grid.ColumnSpan="2"

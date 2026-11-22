@@ -72,7 +72,6 @@ internal static class SkuaExecutableLocator
 
     private static string Resolve()
     {
-        // If running inside an AppImage, check if a BonxieMux AppImage exists next to this manager AppImage
         string? appImageEnv = Environment.GetEnvironmentVariable("APPIMAGE");
         if (!string.IsNullOrEmpty(appImageEnv))
         {
@@ -89,7 +88,6 @@ internal static class SkuaExecutableLocator
         if (!string.IsNullOrEmpty(foundInBase))
             return foundInBase;
 
-        // Check standard Linux user directories where AppImages might be placed
         string userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         string[] searchDirs =
         [
@@ -110,7 +108,6 @@ internal static class SkuaExecutableLocator
                 return found;
         }
 
-        // Check system PATH
         string? pathEnv = Environment.GetEnvironmentVariable("PATH");
         if (!string.IsNullOrEmpty(pathEnv))
         {
@@ -122,7 +119,6 @@ internal static class SkuaExecutableLocator
             }
         }
 
-        // Check repository build paths
         string repositoryRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         string? foundInBuild = TryFindInDirectory(Path.Combine(repositoryRoot, "Build"), appImageEnv);
         if (!string.IsNullOrEmpty(foundInBuild))

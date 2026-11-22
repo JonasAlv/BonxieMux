@@ -125,8 +125,6 @@ public partial class App : Application
         await Ioc.Default.GetRequiredService<IDiagnosticsService>().DisposeAsync();
     }
 
-    // Full theme changes can include base theme + multiple palette slots, so we always
-    // republish the complete resource map here (see ThemeResourceApplicator).
     private void OnThemeChanged(object? theme)
     {
         IThemeService themeService = Ioc.Default.GetRequiredService<IThemeService>();
@@ -152,8 +150,6 @@ public partial class App : Application
         }
     }
 
-    // Single-scheme edits still republish all known colors when AvaloniaThemeService is active.
-    // This keeps Material and Skua resources in lockstep and prevents partial updates.
     private void OnSchemeChanged(Core.Models.ColorScheme scheme, object? color)
     {
         IThemeService themeService = Ioc.Default.GetRequiredService<IThemeService>();
@@ -174,15 +170,12 @@ public partial class App : Application
             return;
         }
 
-        // Non-AvaloniaThemeService fallback can only target one path at a time.
         if (scheme == Core.Models.ColorScheme.PrimaryForeground)
             ThemeResourceApplicator.ApplyAccentBrushes(this, accentForegroundHex: color?.ToString(), isDarkTheme: isDark);
         else
             ThemeResourceApplicator.ApplyAccentBrushes(this, accentHex: color?.ToString(), isDarkTheme: isDark);
     }
 
-    // Apply theme resources before first window render so root styles and previews do not
-    // flash default colors on startup.
     private void ApplyThemeFromService(IThemeService themeService)
     {
         bool isDark = themeService.IsDarkTheme;

@@ -189,7 +189,6 @@ public static class Services
         services.AddTransient<PluginsViewModel>();
 
         services.AddTransient<HotKeysViewModel>();
-        // Hotkey command map is registered in App startup for this app host.
 
         services.AddTransient(CoreBots.CreateViewModel);
         services.AddTransient(CoreBots.CreateOptions);

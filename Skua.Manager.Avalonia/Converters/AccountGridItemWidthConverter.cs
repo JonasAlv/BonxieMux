@@ -20,8 +20,6 @@ public sealed class AccountGridItemWidthConverter : IMultiValueConverter
         if (availableWidth <= 0d)
             return DefaultItemWidth;
 
-        // WPF parity intent: cards fill the row width evenly by column count.
-        // Subtract a tiny epsilon so floating-point rounding does not force an early wrap.
         double computed = (availableWidth / columns) - 0.5d;
 
         return Math.Max(MinimumItemWidth, computed);

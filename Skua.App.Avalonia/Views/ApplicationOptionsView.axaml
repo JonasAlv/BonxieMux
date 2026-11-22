@@ -7,7 +7,6 @@
              x:DataType="vms:ApplicationOptionsViewModel">
   <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="10">
     
-    <!-- Top Filter Bar -->
     <Border Grid.Row="0"
             Background="{DynamicResource SkuaSurfaceBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -21,7 +20,6 @@
                  Text="{Binding SearchText, Mode=TwoWay}"
                  PlaceholderText="Search application options..." />
 
-        <!-- Category Filter Selector -->
         <ComboBox Grid.Column="1"
                   Width="180"
                   Height="34"
@@ -30,7 +28,6 @@
       </Grid>
     </Border>
 
-    <!-- Grouped Option Cards ScrollViewer -->
     <ScrollViewer Grid.Row="1"
                   HorizontalScrollBarVisibility="Disabled"
                   VerticalScrollBarVisibility="Auto">
@@ -45,7 +42,6 @@
                     Padding="14,12">
               <StackPanel Spacing="10">
                 
-                <!-- Category Section Header -->
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" VerticalAlignment="Center">
                   <materialIcons:MaterialIcon Grid.Column="0"
                                               Kind="{Binding Icon}"
@@ -67,7 +63,6 @@
 
                 <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" Margin="0,2,0,4" />
 
-                <!-- Options Item List -->
                 <ItemsControl ItemsSource="{Binding Items}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -83,7 +78,6 @@
       </ItemsControl>
     </ScrollViewer>
 
-    <!-- Footnote Status / Notice -->
     <Border Grid.Row="2"
             Background="{DynamicResource SkuaSurfaceBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"

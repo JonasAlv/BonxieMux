@@ -6,10 +6,6 @@ using System.Threading.Tasks;
 
 namespace Skua.Manager.Avalonia.Services;
 
-/// <summary>
-/// Stops client processes by asking them to close first via SIGTERM, so they run their own shutdown
-/// (stopping scripts, removing the tray icon).
-/// </summary>
 internal static class ProcessCloser
 {
     public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(5);
@@ -18,9 +14,6 @@ internal static class ProcessCloser
     private static extern int kill(int pid, int sig);
     private const int SIGTERM = 15;
 
-    /// <summary>
-    /// Posts graceful termination to the process.
-    /// </summary>
     public static bool RequestClose(Process process)
     {
         try
@@ -33,9 +26,6 @@ internal static class ProcessCloser
         }
     }
 
-    /// <summary>
-    /// Asks the process to close and waits up to <paramref name="timeout"/>; kills it if it is still running.
-    /// </summary>
     public static async Task CloseAsync(Process process, TimeSpan timeout)
     {
         if (process.HasExited)

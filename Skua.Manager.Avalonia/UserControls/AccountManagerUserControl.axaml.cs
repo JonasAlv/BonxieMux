@@ -36,7 +36,6 @@ public partial class AccountManagerUserControl : UserControl
         Unloaded += OnUnloaded;
     }
 
-    // Measure the servers when the list is opened (again after 30 seconds if it is opened again).
     private void ServerList_DropDownOpened(object? sender, EventArgs e) => _ = _viewModel.RefreshServerPingsAsync();
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
@@ -213,7 +212,6 @@ public partial class AccountManagerUserControl : UserControl
                 return;
             }
 
-            // Check if username was changed and if the new username already exists for a different account
             if (!string.Equals(oldUsername, newUsername, StringComparison.OrdinalIgnoreCase))
             {
                 bool exists = _viewModel.Accounts.Any(a => !ReferenceEquals(a, account) && string.Equals(a.Username, newUsername, StringComparison.OrdinalIgnoreCase));
@@ -243,8 +241,6 @@ public partial class AccountManagerUserControl : UserControl
 
     private void AddAccountToGroup(IAccountItemViewModel account)
     {
-        // When accounts are checked, use the checked selection rather than only the
-        // account whose context menu was clicked.
         if (_viewModel.Accounts.Any(selectedAccount => selectedAccount.UseCheck))
         {
             AddSelectedToGroupAction();

@@ -9,16 +9,10 @@ using System.Threading.Tasks;
 
 namespace Skua.Manager.Avalonia.Services;
 
-/// <summary>
-/// Latency of a game server as the game itself sees it: how long the server takes to answer the game's first message (the version
-/// check). No login is involved and nothing else is sent. A plain connect or ICMP ping is not used: the addresses sit behind nearby
-/// edges, so those say little about the server (a far server such as Yokai connects as fast as the rest but answers slowly).
-/// </summary>
 public static class ServerPing
 {
     private static readonly byte[] VersionCheck = Encoding.ASCII.GetBytes("<msg t='sys'><body action='verChk' r='0'><ver v='165' /></body></msg>\0");
 
-    /// <summary>Median round trip in milliseconds over <paramref name="samples"/> tries, or null when no try got an answer within <paramref name="timeoutMs"/>.</summary>
     public static async Task<long?> MeasureAsync(string host, int port, int samples = 3, int timeoutMs = 2500, CancellationToken token = default)
     {
         if (string.IsNullOrWhiteSpace(host) || port <= 0)
@@ -37,7 +31,6 @@ public static class ServerPing
                 byte[] reply = new byte[256];
                 Stopwatch watch = Stopwatch.StartNew();
                 await stream.WriteAsync(VersionCheck, limit.Token).ConfigureAwait(false);
-                // The answer ends with a zero byte; only the server's own "apiOK" counts (an "apiKO" or a closed connection is no sample).
                 StringBuilder message = new();
                 bool answered = false, refused = false;
                 while (!answered && !refused)
@@ -66,7 +59,6 @@ public static class ServerPing
             }
             catch
             {
-                // no answer for this try
             }
         }
 

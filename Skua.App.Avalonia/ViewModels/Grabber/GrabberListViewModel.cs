@@ -73,7 +73,6 @@ public partial class GrabberListViewModel : ObservableRecipient
     public string Title { get; }
     public bool SelectMultiple { get; }
 
-    // Sidebar grouping and icon for the Grabber window; set where the tabs are created.
     public string Group { get; init; } = string.Empty;
     public Material.Icons.MaterialIconKind Icon { get; init; }
     public bool IsSelectable => true;
@@ -234,8 +233,6 @@ public partial class GrabberListViewModel : ObservableRecipient
         return sb.ToString();
     }
 
-    // Export writes everything the grab returned: a block per item with every public property, and nested lists
-    // (quest requirements, rewards, ...) expanded underneath. Copy keeps the one-line summary from BuildExportText.
     public string BuildDetailedExportText(IEnumerable<object> items)
     {
         var list = items.ToList();
@@ -290,7 +287,6 @@ public partial class GrabberListViewModel : ObservableRecipient
                 }
                 catch
                 {
-                    // A collection that throws while iterated is skipped, not allowed to abort the whole export.
                     sb.AppendLine($"{indent}{property.Name}: (unreadable)");
                     continue;
                 }

@@ -38,7 +38,6 @@
 
   <Grid Margin="12" ColumnDefinitions="240,*" ColumnSpacing="10">
 
-    <!-- Ultra list -->
     <Border Grid.Column="0" Classes="card" Padding="8">
       <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
         <StackPanel Grid.Row="0" Spacing="2" Margin="4,2">
@@ -62,11 +61,9 @@
       </Grid>
     </Border>
 
-    <!-- Details -->
     <ScrollViewer Grid.Column="1" IsVisible="{Binding HasUltra}" HorizontalScrollBarVisibility="Disabled">
       <StackPanel Spacing="10" Margin="0,0,6,0">
 
-        <!-- Header -->
         <Border Classes="card">
           <StackPanel Spacing="6">
             <Grid ColumnDefinitions="*,Auto">
@@ -96,7 +93,6 @@
           </StackPanel>
         </Border>
 
-        <!-- Team builder -->
         <Border Classes="card">
           <StackPanel Spacing="8">
             <Grid ColumnDefinitions="*,Auto">
@@ -169,7 +165,6 @@
           </StackPanel>
         </Border>
 
-        <!-- Groups -->
         <Grid ColumnDefinitions="3*,2*" ColumnSpacing="10">
           <Border Classes="card">
             <StackPanel>
@@ -207,7 +202,6 @@
           </Border>
         </Grid>
 
-        <!-- Ratings -->
         <Border Classes="card">
           <StackPanel>
             <TextBlock Text="CLASS RATINGS" Classes="caption" />
@@ -238,7 +232,6 @@
           </StackPanel>
         </Border>
 
-        <!-- Mechanics -->
         <Border Classes="card" IsVisible="{Binding SelectedUltra.HasMechanics}">
           <StackPanel>
             <TextBlock Text="MECHANICS" Classes="caption" />

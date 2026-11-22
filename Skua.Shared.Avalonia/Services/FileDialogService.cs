@@ -14,10 +14,6 @@ using global::Avalonia.Threading;
 
 namespace Skua.Shared.Avalonia.Services;
 
-// Avalonia's StorageProvider shows the system dialog (desktop portal or GTK).
-// Pickers are async, so synchronous calls wait in a nested dispatcher frame
-// to avoid deadlocking the UI thread while the dialog is open.
-// Falls back to zenity/kdialog if the desktop portal is absent on minimal distros.
 public class FileDialogService : IFileDialogService
 {
     private const string DefaultFilter = "Text Files (*.txt)|*.txt";
@@ -64,7 +60,6 @@ public class FileDialogService : IFileDialogService
         if (!string.IsNullOrEmpty(result) || (pickerInvoked && !pickerUnavailable))
             return result;
 
-        // Fallback for Linux environments where desktop portal is unavailable
         return LinuxNativeFallbackPicker(initialDirectory, filters);
     }
 

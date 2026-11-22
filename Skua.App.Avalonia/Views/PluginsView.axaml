@@ -4,7 +4,6 @@
              x:Class="Skua.App.Avalonia.Views.PluginsView">
 
   <Grid Margin="12" RowDefinitions="Auto,Auto,*" RowSpacing="10">
-    <!-- Search and load -->
     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
       <TextBox Grid.Column="0" PlaceholderText="Search plugins" Text="{Binding SearchText}">
         <TextBox.InnerLeftContent>
@@ -19,7 +18,6 @@
       </Button>
     </Grid>
 
-    <!-- Loaded header -->
     <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="6">
       <TextBlock Grid.Column="0" Classes="section-label" Text="LOADED" />
       <Border Grid.Column="1" Classes="count">
@@ -33,7 +31,6 @@
       </Button>
     </Grid>
 
-    <!-- Loaded plugins -->
     <ListBox Grid.Row="2" ItemsSource="{Binding Plugins}" Padding="4">
       <ListBox.ItemTemplate>
         <DataTemplate>

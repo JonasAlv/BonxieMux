@@ -7,11 +7,6 @@ using System.Threading;
 
 namespace Skua.App.Avalonia.Flash;
 
-/// <summary>
-/// Opt-in accounting of what crosses the game player bridge. The player runs ActionScript and draws frames on one thread,
-/// so every call the host makes (and every byte it has to serialize) is time taken from the frame budget.
-/// Set <c>SKUA_FLASH_STATS=1</c> to log the heaviest callers once a minute through <see cref="Trace"/>.
-/// </summary>
 internal sealed class BridgeStats : IDisposable
 {
     private static readonly TimeSpan ReportInterval = TimeSpan.FromSeconds(60);
@@ -38,7 +33,6 @@ internal sealed class BridgeStats : IDisposable
 
     public bool Enabled { get; }
 
-    /// <summary>A call the host made to the player and the answer it got (<paramref name="chars"/> long).</summary>
     public void RecordCall(string function, long startTimestamp, int chars)
     {
         if (!Enabled)
@@ -47,7 +41,6 @@ internal sealed class BridgeStats : IDisposable
         Add(_calls, function, chars, Stopwatch.GetTimestamp() - startTimestamp);
     }
 
-    /// <summary>An <c>ExternalInterface.call</c> from the SWF (<paramref name="chars"/> is the JSON line's length).</summary>
     public void RecordEvent(string name, int chars)
     {
         if (!Enabled)
@@ -79,13 +72,11 @@ internal sealed class BridgeStats : IDisposable
         }
         catch
         {
-            // Diagnostics must never affect the bridge.
         }
     }
 
     private static void Append(StringBuilder text, string title, ConcurrentDictionary<string, Entry> map, double seconds, bool showTime)
     {
-        // Swap each entry's counters out so the next report only covers the following interval.
         var snapshot = map
             .Select(kv => (Name: kv.Key, Count: Interlocked.Exchange(ref kv.Value.Count, 0), Chars: Interlocked.Exchange(ref kv.Value.Chars, 0), Ticks: Interlocked.Exchange(ref kv.Value.Ticks, 0)))
             .Where(e => e.Count > 0)

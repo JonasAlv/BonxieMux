@@ -22,7 +22,6 @@ public partial class ScriptInfoViewModel : ObservableObject
         _localSize = localSize ?? info.CachedLocalSize ?? (Downloaded ? (int)new FileInfo(LocalFile).Length : 0);
         _isPinned = isPinned;
 
-        // Instances are built off the UI thread, so the SHA256 check can run here.
         _infoOutdated = !IsCustom && Info.Outdated;
     }
 
@@ -42,9 +41,6 @@ public partial class ScriptInfoViewModel : ObservableObject
     public string PinToolTip => IsPinned ? "Unpin script" : "Pin script to top";
     public string ScriptKey => (IsCustom ? LocalFile : FilePath).Replace('\\', '/').Trim();
 
-    // Search, as in Skua 1.4.5: null when the script doesn't match, else a rank (lower comes first). "All" ranks name,
-    // then description, then path, then tag matches; one-field scopes rank exact, then "starts with", then "contains".
-    // The path is ListPath (from the Scripts folder), so the local folder above it never matches.
     public int? SearchRank(string query, string scope)
     {
         switch (scope)
@@ -84,28 +80,22 @@ public partial class ScriptInfoViewModel : ObservableObject
     public string FilePath => Info.FilePath;
     public bool IsCustom { get; }
     public string DisplayPath => IsCustom ? LocalFile : ScriptPath;
-    // The list's path: repo-relative for repo scripts, the whole path for custom ones (they can be anywhere).
-    // A zero-width space after each separator lets it wrap at folders instead of being trimmed.
     public string ListPath => IsCustom ? LocalFile : FilePath;
     public string WrappablePath => ListPath.Replace("\\", "\\\u200B").Replace("/", "/\u200B");
 
     private bool DownloadedFileExists => File.Exists(LocalFile);
     public string ScriptPath => Path.Combine(ClientFileSources.SkuaScriptsDIR, FilePath.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar));
-    // Dates come from "Update dates from Git"; until then there is none to show
     public bool HasCreationDate => Info.CreationDate.HasValue && Info.CreationDate.Value > DateTime.MinValue;
-    // Follows the path in a list row: size, and the date when there is one
     public string ListMeta => HasCreationDate ? $" · {FormattedSize} · {FormattedCreationDate}" : $" · {FormattedSize}";
     public string FormattedCreationDate => Info.CreationDate.HasValue && Info.CreationDate.Value > DateTime.MinValue ? Info.CreationDate.Value.ToString("MMM dd, yyyy") : "Unknown";
 
     private ObservableCollection<string>? _infoTags;
-    // Blank tags from the repo index are left out
     public ObservableCollection<string> InfoTags => _infoTags ??= new((Info.Tags ?? Array.Empty<string>()).Where(t => !string.IsNullOrWhiteSpace(t)));
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Outdated), nameof(StatusText), nameof(StatusColor), nameof(StatusBackground), nameof(CanUpdate))]
     private bool _downloaded;
 
-    // Update re-downloads a local copy of a repo script; custom scripts aren't in the repo, so it's greyed out for them
     public bool CanUpdate => Downloaded && !IsCustom;
 
     private bool? _infoOutdated;
@@ -114,8 +104,6 @@ public partial class ScriptInfoViewModel : ObservableObject
 
     partial void OnLocalSizeChanged(int value) => _infoOutdated = null;
 
-    // Never hashes on the UI thread: a null cache means "not computed yet" and counts as not outdated
-    // until RefreshDownloadStateAsync fills it in off the UI thread.
     public bool Outdated => !IsCustom && Downloaded && (_localSize != Info.Size || (_infoOutdated ?? false));
 
     public async Task RefreshDownloadStateAsync(bool downloaded, int localSize)

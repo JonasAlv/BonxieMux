@@ -13,7 +13,6 @@ public partial class GrabberViewModel : BotControlViewModelBase
         _grabberTabs = new(grabberTabs);
         _selectedTab = _grabberTabs[0];
 
-        // Sidebar: a non-selectable header before the first tab of each group.
         List<object> navItems = new();
         string? lastGroup = null;
         foreach (GrabberListViewModel tab in _grabberTabs)
@@ -52,7 +51,6 @@ public partial class GrabberViewModel : BotControlViewModelBase
     }
 }
 
-/// <summary>Group label in the Grabber sidebar (not selectable).</summary>
 public sealed record GrabberNavHeader(string Title)
 {
     public bool IsSelectable => false;

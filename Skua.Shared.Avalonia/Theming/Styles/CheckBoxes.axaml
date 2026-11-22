@@ -2,14 +2,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Design.PreviewWith>
         <Border Padding="20">
-            <!-- Add Controls for Previewer Here -->
         </Border>
     </Design.PreviewWith>
 
     <Style Selector="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
-    <!-- 6px after the label so the keyboard focus ring, drawn on the control's own edge, doesn't cover it -->
     <Style Selector="CheckBox, RadioButton">
         <Setter Property="Padding" Value="8,0,6,0" />
     </Style>
@@ -124,10 +122,6 @@
         </Setter>
     </Style>
 
-    <!-- Fluent check box, radio and switch at the proposed sizes: 18px box and circle, 12px switch knob.
-         Their colours come from the Fluent resource keys overridden in Colors.axaml. The template sets these
-         sizes itself, which beats a plain style; the always-true :not(:skua-never) makes these trigger styles,
-         which win. -->
     <Style Selector="CheckBox:not(:skua-never) /template/ Border#NormalRectangle">
         <Setter Property="Width" Value="18" />
         <Setter Property="Height" Value="18" />
@@ -151,6 +145,4 @@
         <Setter Property="BorderThickness" Value="1.5" />
     </Style>
 </Styles>
-
-
 

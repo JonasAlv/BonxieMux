@@ -114,7 +114,6 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
     [ObservableProperty]
     private string _progressReportMessage = string.Empty;
 
-    // True while the list is fetched or rebuilt, so an empty list shows "Loading" instead of "No scripts found"
     [ObservableProperty]
     private bool _isLoadingScripts;
 
@@ -127,7 +126,6 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
     [ObservableProperty]
     private string _filterBy = "All";
 
-    // Which part of a script the search looks in (Skua 1.4.5's scopes)
     public List<string> SearchScopes { get; } = new() { "All", "Name", "Tag", "Description", "File" };
 
     [ObservableProperty]
@@ -160,11 +158,8 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
         ? "ClockOutline"
         : (SortDescending ? "SortDescending" : "SortAscending");
 
-    // The button's lit state: off for A to Z and Newest, on for their reverses. It alternates on every click, as a
-    // ToggleButton does by itself, so the two stay in step through the four orders.
     public bool IsSortReversed => IsSortedByDate ? !SortDescending : SortDescending;
 
-    // A to Z, Z to A, Newest, Oldest, and round again. Each step changes one property, so each sorts once.
     [RelayCommand]
     private void CycleSort()
     {
@@ -256,8 +251,6 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
         ApplySearchFilter();
     }
 
-    // The order is read once: a sort can run on a worker while the button is clicked, and a comparer that changes
-    // partway through can throw
     private Comparison<ScriptInfoViewModel> CurrentSortOrder()
     {
         bool byDate = IsSortedByDate;
@@ -272,11 +265,9 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
 
         if (byDate)
         {
-            // Scripts without a date go last either way; scripts from the same commit fall back to the name
             if (a.HasCreationDate != b.HasCreationDate)
                 return a.HasCreationDate ? -1 : 1;
 
-            // ScriptDates.json mixes UTC and offset dates, which load as different kinds
             int dateCmp = a.HasCreationDate
                 ? a.Info.CreationDate!.Value.ToUniversalTime().CompareTo(b.Info.CreationDate!.Value.ToUniversalTime())
                 : 0;
@@ -499,7 +490,6 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
                     StringComparer.OrdinalIgnoreCase
                 );
 
-                // 1. Single-pass fast dictionary of existing local files
                 Dictionary<string, long> existingLocalFiles = new(StringComparer.OrdinalIgnoreCase);
                 try
                 {
@@ -526,7 +516,6 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
                 bool isPinnedFilter = string.Equals(filter, "Pinned", StringComparison.OrdinalIgnoreCase);
                 bool isLocalFilter = string.Equals(filter, "Local", StringComparison.OrdinalIgnoreCase);
 
-                // 1. Repository scripts (only if NOT filtering exclusively by "Local")
                 if (!isLocalFilter && _getScriptsService?.Scripts != null)
                 {
                     foreach (ScriptInfo script in _getScriptsService.Scripts)
@@ -574,7 +563,6 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
                     }
                 }
 
-                // 2. Custom Folders and Custom Scripts (shown when FilterBy is "All", "Local", or "Pinned")
                 if (isAllFilter || isLocalFilter || isPinnedFilter)
                 {
                     try
@@ -661,13 +649,11 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
                     catch { }
                 }
 
-                // 3. Fast in-place sorting
                 viewModels.Sort(sortOrder);
 
                 return viewModels;
             });
 
-            // Clicked during the rebuild: that click's own sort ran on the old list, so this one has to catch up
             if (sortBy != SortBy || sortDescending != SortDescending)
                 scriptViewModels.Sort(CurrentSortOrder());
 
@@ -685,7 +671,6 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
         }
         finally
         {
-            // A refresh during the initial fetch (filter change after Cancel) must not end the loading state
             IsLoadingScripts = _isLoadingInitial;
             _refreshSemaphore.Release();
         }
@@ -932,8 +917,6 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
         IsBusy = false;
     }
 
-    // Matches in rank order. OrderBy is stable, so within a rank the list keeps its order: pinned first, then the
-    // chosen sort.
     private List<ScriptInfoViewModel> FindMatches(string? text, string scope)
     {
         string query = (text ?? string.Empty).Trim();

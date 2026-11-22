@@ -9,7 +9,6 @@
              mc:Ignorable="d" d:DesignHeight="520" d:DesignWidth="720">
 
   <Grid Margin="14" RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="12">
-    <!-- Load a shop or quests by ID -->
     <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
       <ListBox Grid.Column="0" Classes="segmented" Width="136" SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}">
         <ListBoxItem Content="Shop" />
@@ -30,7 +29,6 @@
       </Button>
     </Grid>
 
-    <!-- Quest cache header -->
     <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,240" ColumnSpacing="6">
       <TextBlock Grid.Column="0" Classes="section-label" Text="QUEST CACHE" />
       <Border Grid.Column="1" Classes="count">
@@ -45,7 +43,6 @@
       </TextBox>
     </Grid>
 
-    <!-- Cached quests -->
     <ListBox Grid.Row="2"
              x:Name="QuestList"
              ItemsSource="{Binding FilteredQuestIDs}"
@@ -68,7 +65,6 @@
       </ListBox.ItemTemplate>
     </ListBox>
 
-    <!-- Update the quest cache; shows progress and Cancel while it runs -->
     <Border Grid.Row="3"
             Background="{DynamicResource SkuaSurfaceBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -97,7 +93,6 @@
       </Grid>
     </Border>
 
-    <!-- Act on the selected quests -->
     <Grid Grid.Row="4" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
       <TextBlock Grid.Column="0" x:Name="SelectedCountText" Text="None selected" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
       <Button Grid.Column="1" Classes="skua-button w84" ToolTip.Tip="Copy the selected quests">

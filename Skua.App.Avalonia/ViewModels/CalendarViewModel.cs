@@ -13,17 +13,10 @@ using Avalonia.Threading;
 
 namespace Skua.App.Avalonia.ViewModels;
 
-/// <summary>
-/// Calendar: the daily and weekly reset countdowns and the AQW boost list.
-/// Dailies reset at 12 AM server time; weeklies at 12 AM server time when Thursday turns into Friday. AQW's server time is US Eastern
-/// (with daylight saving). The game's own "server time" chat line is the PC's clock, so time is the PC clock corrected by the
-/// <c>Date</c> header of the artix.com answer. The boosts are read from the script array of https://www.artix.com/calendar/.
-/// </summary>
 public partial class CalendarViewModel : BotControlViewModelBase
 {
     private const string CalendarUrl = "https://www.artix.com/calendar/";
     private static readonly TimeSpan RefreshAfter = TimeSpan.FromMinutes(30);
-    // artix.com answers 403 to a request without a User-Agent.
     private static readonly HttpClient Http = CreateHttp();
 
     private static HttpClient CreateHttp()
@@ -120,8 +113,6 @@ public partial class CalendarViewModel : BotControlViewModelBase
     [RelayCommand(CanExecute = nameof(CanRefresh))]
     private Task Refresh() => LoadAsync();
 
-    // ------------------------------------------------------------------------------------------------ time
-
     private DateTimeOffset ServerUtc => DateTimeOffset.UtcNow + _skew;
 
     private static DateTimeOffset ToUtc(DateTime easternLocalMidnight) =>
@@ -129,13 +120,10 @@ public partial class CalendarViewModel : BotControlViewModelBase
 
     private static DateTime EasternDate(DateTimeOffset utc) => TimeZoneInfo.ConvertTime(utc, Eastern).Date;
 
-    /// <summary>The next daily reset (server midnight) after <paramref name="utc"/>.</summary>
     public static DateTimeOffset NextDaily(DateTimeOffset utc) => ToUtc(EasternDate(utc).AddDays(1));
 
-    /// <summary>The daily reset that last happened.</summary>
     public static DateTimeOffset PrevDaily(DateTimeOffset utc) => ToUtc(EasternDate(utc));
 
-    /// <summary>The next weekly reset (server midnight at the start of Friday) after <paramref name="utc"/>.</summary>
     public static DateTimeOffset NextWeekly(DateTimeOffset utc)
     {
         DateTime day = EasternDate(utc).AddDays(1);
@@ -144,7 +132,6 @@ public partial class CalendarViewModel : BotControlViewModelBase
         return ToUtc(day);
     }
 
-    /// <summary>The weekly reset that last happened.</summary>
     public static DateTimeOffset PrevWeekly(DateTimeOffset utc)
     {
         DateTime day = EasternDate(utc);
@@ -153,7 +140,6 @@ public partial class CalendarViewModel : BotControlViewModelBase
         return ToUtc(day);
     }
 
-    /// <summary>"6d 3h 12m", "3h 12m 05s", "12m 05s", "5s".</summary>
     public static string FormatSpan(TimeSpan span)
     {
         long s = Math.Max(0, (long)span.TotalSeconds);
@@ -164,7 +150,6 @@ public partial class CalendarViewModel : BotControlViewModelBase
         return $"{sec}s";
     }
 
-    /// <summary>The same without seconds.</summary>
     public static string FormatShort(TimeSpan span)
     {
         long s = Math.Max(0, (long)span.TotalSeconds);
@@ -191,8 +176,6 @@ public partial class CalendarViewModel : BotControlViewModelBase
 
     private static double Fraction(DateTimeOffset prev, DateTimeOffset next, DateTimeOffset now) =>
         Math.Clamp((now - prev).TotalSeconds / Math.Max(1, (next - prev).TotalSeconds), 0, 1);
-
-    // ------------------------------------------------------------------------------------------------ boosts
 
     private void RefreshRows(DateTimeOffset now)
     {
@@ -270,7 +253,6 @@ public partial class CalendarViewModel : BotControlViewModelBase
         List<CalendarBoost> rows = ParseBoosts(html);
         if (rows.Count == 0)
             throw new InvalidOperationException("The calendar page had no boosts (its layout may have changed)");
-        // The pages of boosts that began in the last ten days (or begin today) say how long they run and which game they are for.
         DateTime today = EasternDate(DateTimeOffset.UtcNow + skew);
         foreach (CalendarBoost row in rows.Where(r => r.Day <= today.AddDays(1) && r.Day >= today.AddDays(-10)))
         {
@@ -288,7 +270,6 @@ public partial class CalendarViewModel : BotControlViewModelBase
             }
             catch (Exception)
             {
-                // The default length stays.
             }
         }
         rows.RemoveAll(r => r.Hours == 0);

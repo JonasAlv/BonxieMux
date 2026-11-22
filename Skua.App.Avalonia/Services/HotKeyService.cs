@@ -433,7 +433,6 @@ public class HotKeyService : IHotKeyService, IDisposable
             Key.Right => 0x27,
             Key.Down => 0x28,
 
-            // Numpad operations
             Key.Multiply => 0x6A,
             Key.Add => 0x6B,
             Key.Separator => 0x6C,
@@ -442,7 +441,6 @@ public class HotKeyService : IHotKeyService, IDisposable
             Key.Divide => 0x6F,
             Key.NumLock => 0x90,
 
-            // OEM keys
             Key.OemTilde => 0xC0,
             Key.OemMinus => 0xBD,
             Key.OemPlus => 0xBB,
@@ -490,7 +488,6 @@ public class HotKeyService : IHotKeyService, IDisposable
             _mainWindow.Activated -= MainWindowOnActivated;
             _mainWindow.Deactivated -= MainWindowOnDeactivated;
         }
-
 
         lock (_bindingsLock)
             _bindings.Clear();

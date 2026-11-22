@@ -6,11 +6,6 @@ using System.Reflection;
 
 namespace Skua.Shared.Avalonia.Controls.Theming;
 
-/// <summary>
-/// Fixes an Avalonia ColorSpectrum pointer capture bug where dismissing or closing the flyout/popup
-/// while a mouse button is pressed leaves ColorSpectrum's internal _isPointerPressed field stuck at true.
-/// When reopened, any hover would register as a mouse drag/click and immediately trigger selections.
-/// </summary>
 public static class ColorSpectrumFix
 {
     private static readonly FieldInfo? s_isPointerPressedField =
@@ -25,25 +20,21 @@ public static class ColorSpectrumFix
             return;
         s_initialized = true;
 
-        // When ColorSpectrum loads (flyout/popup opens):
         Control.LoadedEvent.AddClassHandler<ColorSpectrum>((spectrum, _) =>
         {
             ResetPointerState(spectrum);
         }, handledEventsToo: true);
 
-        // When ColorSpectrum unloads (flyout/popup closes):
         Control.UnloadedEvent.AddClassHandler<ColorSpectrum>((spectrum, _) =>
         {
             ResetPointerState(spectrum);
         }, handledEventsToo: true);
 
-        // When pointer capture is lost on ColorSpectrum:
         InputElement.PointerCaptureLostEvent.AddClassHandler<ColorSpectrum>((spectrum, _) =>
         {
             ResetPointerState(spectrum);
         }, RoutingStrategies.Bubble | RoutingStrategies.Tunnel, handledEventsToo: true);
 
-        // When pointer enters ColorSpectrum:
         InputElement.PointerEnteredEvent.AddClassHandler<ColorSpectrum>((spectrum, e) =>
         {
             var point = e.GetCurrentPoint(spectrum);
@@ -53,8 +44,6 @@ public static class ColorSpectrumFix
             }
         }, RoutingStrategies.Bubble | RoutingStrategies.Tunnel, handledEventsToo: true);
 
-        // When pointer moves over ColorSpectrum:
-        // Use Tunneling strategy to intercept before ColorSpectrum's internal InputTarget_PointerMoved executes.
         InputElement.PointerMovedEvent.AddClassHandler<ColorSpectrum>((spectrum, e) =>
         {
             var point = e.GetCurrentPoint(spectrum);
@@ -64,7 +53,6 @@ public static class ColorSpectrumFix
             }
         }, RoutingStrategies.Tunnel, handledEventsToo: true);
 
-        // When pointer is released:
         InputElement.PointerReleasedEvent.AddClassHandler<ColorSpectrum>((spectrum, _) =>
         {
             ResetPointerState(spectrum);
@@ -86,7 +74,6 @@ public static class ColorSpectrumFix
         }
         catch
         {
-            // Best effort safeguard
         }
     }
 }

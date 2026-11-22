@@ -2,7 +2,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Design.PreviewWith>
         <Border Padding="20">
-            <!-- Add Controls for Previewer Here -->
         </Border>
     </Design.PreviewWith>
     
@@ -115,8 +114,6 @@
         <Setter Property="MaxHeight" Value="32" />
         <Setter Property="ClipToBounds" Value="True" />
     </Style>
-    <!-- Chips: small pill labels for status and tags. Neutral by default; .accent, .success, .warning, .danger,
-         .gold tint the fill, outline and text. -->
     <Style Selector="Border.chip">
         <Setter Property="Height" Value="20" />
         <Setter Property="Padding" Value="8,0" />
@@ -168,7 +165,6 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaGoldBrush}" />
     </Style>
 
-    <!-- Count badge: quantities and list counts -->
     <Style Selector="Border.count">
         <Setter Property="MinWidth" Value="18" />
         <Setter Property="Height" Value="16" />
@@ -185,7 +181,6 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
     </Style>
 
-    <!-- Section label above a list: small caps-style muted heading -->
     <Style Selector="TextBlock.section-label">
         <Setter Property="FontSize" Value="10" />
         <Setter Property="FontWeight" Value="Bold" />

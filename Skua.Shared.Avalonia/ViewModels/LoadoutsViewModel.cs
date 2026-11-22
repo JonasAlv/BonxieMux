@@ -25,9 +25,6 @@ public partial class LoadoutsViewModel : BotControlViewModelBase
     [ObservableProperty]
     private LoadoutProfile? _selectedLoadout;
 
-    /// <summary>
-    /// Accounts whose loadouts can be edited here: the one logged in on this tab and the ones logged in on the other open tabs.
-    /// </summary>
     public ObservableCollection<string> Profiles { get; } = new();
 
     [ObservableProperty]
@@ -58,14 +55,10 @@ public partial class LoadoutsViewModel : BotControlViewModelBase
 
     protected override void OnActivated()
     {
-        // Always open on the account logged in here
         SetProfileSilently(_player.Username);
         base.OnActivated();
     }
 
-    /// <summary>
-    /// Equipping and saving the equipped items only work on the account logged in here.
-    /// </summary>
     public bool IsOwnProfile => string.IsNullOrEmpty(_loadoutService.Profile);
 
     private string Account => _loadoutService.Profile ?? _player.Username;
@@ -160,7 +153,6 @@ public partial class LoadoutsViewModel : BotControlViewModelBase
         ReloadAndSelect(profile.Name);
     }
 
-    // Force synchronous update of the collection to prevent ComboBox selection race condition
     private void ReloadAndSelect(string name)
     {
         Loadouts.Clear();
@@ -217,7 +209,6 @@ public partial class LoadoutsViewModel : BotControlViewModelBase
                     return;
                 }
 
-                // No manual rebuilding needed here since LoadoutsChanged will be fired by the service
                 OnPropertyChanged();
             }
         }

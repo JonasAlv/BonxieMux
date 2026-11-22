@@ -5,7 +5,6 @@
     
     <Grid Margin="12" ColumnDefinitions="2*,*" ColumnSpacing="12">
         
-        <!-- Left Side: Packet Logs Card -->
         <Border Grid.Column="0"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -13,7 +12,6 @@
                 CornerRadius="8"
                 Padding="12">
             <Grid RowDefinitions="Auto,*,Auto" RowSpacing="10">
-                <!-- Search Packets Bar -->
                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
                     <TextBox Grid.Column="0"
                              Height="34"
@@ -33,7 +31,6 @@
                     </Border>
                 </Grid>
 
-                <!-- Packets List -->
                 <Border Grid.Row="1"
                         Background="{DynamicResource SkuaPageBrush}"
                         BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -63,7 +60,6 @@
                     </ListBox>
                 </Border>
             
-                <!-- Action Buttons Toolbar -->
                 <Grid Grid.Row="2" ColumnDefinitions="Auto,*,*,*,*" ColumnSpacing="6">
                     <Button Grid.Column="0"
                             Classes="skua-button w112"
@@ -110,7 +106,6 @@
             </Grid>
         </Border>
         
-        <!-- Right Side: Filters & Controls Card -->
         <Border Grid.Column="1"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"

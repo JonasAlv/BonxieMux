@@ -85,8 +85,6 @@ public sealed partial class JunkItemsViewModel : BotControlViewModelBase
 
     public int SelectedCount => Items.Count(i => i.IsSelected);
 
-    // Drives the select-all check box above the list: true when every shown item is selected, false when none
-    // is, null (indeterminate) in between. Checking it selects the shown items; unchecking clears the selection.
     public bool? SelectionState
     {
         get

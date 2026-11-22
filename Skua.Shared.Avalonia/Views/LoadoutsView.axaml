@@ -9,7 +9,6 @@
              mc:Ignorable="d"
              d:DesignHeight="500" d:DesignWidth="600">
   <UserControl.Styles>
-    <!-- One equipment slot: icon, slot name, item, enhancement chip -->
     <Style Selector="Grid.slot">
       <Setter Property="Height" Value="38" />
       <Setter Property="Margin" Value="10,0" />
@@ -36,7 +35,6 @@
   </UserControl.Styles>
 
   <Grid Margin="14" ColumnDefinitions="240,*" ColumnSpacing="14">
-    <!-- Saved loadouts -->
     <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto" RowSpacing="8">
       <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6" MinHeight="26">
         <TextBlock Grid.Column="0" Classes="section-label" Text="LOADOUTS" VerticalAlignment="Center" />
@@ -90,7 +88,6 @@
       </Button>
     </Grid>
 
-    <!-- Selected loadout -->
     <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
       <Grid Grid.Row="0" ColumnDefinitions="*,Auto" MinHeight="26">
         <TextBlock Grid.Column="0" Classes="section-label" Text="LOADOUT DETAILS" />
@@ -102,7 +99,6 @@
         </Button>
       </Grid>
 
-      <!-- Renames on Enter or when the field loses focus, not on every keystroke -->
       <TextBox Grid.Row="1"
                Text="{Binding SelectedLoadoutName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                PlaceholderText="Select a loadout to inspect"

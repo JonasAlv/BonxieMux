@@ -14,7 +14,6 @@ internal static class PacketInterceptor
         return new PacketInterceptorViewModel(CreateFilters(), s.GetRequiredService<ICaptureProxy>(), s.GetRequiredService<IScriptServers>(), s.GetRequiredService<IFileDialogService>());
     }
 
-    // Each filter is given a packet's commands (PacketCommands.Parse), both directions of a request are listed
     internal static List<PacketLogFilterViewModel> CreateFilters()
     {
         List<PacketLogFilterViewModel> filters = new()

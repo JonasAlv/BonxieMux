@@ -2,12 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Design.PreviewWith>
         <Border Padding="20">
-            <!-- Add Controls for Previewer Here -->
         </Border>
     </Design.PreviewWith>
 
-    <!-- Global TabControl and TabItem defaults (tab strips with their own styles, like the client's
-         instance tabs and the Cosmetics tabs, override these) -->
     <Style Selector="TabControl">
         <Setter Property="Background" Value="Transparent" />
     </Style>
@@ -47,8 +44,6 @@
         <Setter Property="TextElement.FontWeight" Value="SemiBold" />
     </Style>
 
-    <!-- Section tabs: the tabs sit in a segmented track (equal-width segments) above the content.
-         Used by TabControl.section-tabs and the Accounts / Groups switcher. -->
     <Style Selector="TabControl.section-tabs, TabControl.account-groups-switcher">
         <Setter Property="Padding" Value="0" />
         <Setter Property="ItemsPanel">

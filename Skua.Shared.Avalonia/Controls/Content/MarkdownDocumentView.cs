@@ -151,7 +151,6 @@ public class MarkdownDocumentView : UserControl
             TextWrapping = TextWrapping.Wrap
         };
 
-        // Parse **bold** markers
         string[] parts = Regex.Split(markdownSnippet, @"(\*\*.*?\*\*)");
         foreach (string part in parts)
         {

@@ -212,7 +212,6 @@ public partial class AppUpdaterViewModel : ObservableObject
                 return;
             }
 
-            // Same version tag (or older): check if release assets were recently updated / differ from local files
             string targetDir = AppImageUtils.ResolveAppImageDirectory();
             string? localClient = AppImageUtils.FindLocalAppImage(targetDir, isManager: false, _remoteClientFileName);
             string? localManager = AppImageUtils.FindLocalAppImage(targetDir, isManager: true, _remoteManagerFileName);
@@ -230,7 +229,6 @@ public partial class AppUpdaterViewModel : ObservableObject
             bool fileChanged = false;
             string changeReason = string.Empty;
 
-            // Check Manager binary
             if (!string.IsNullOrEmpty(_remoteManagerUrl))
             {
                 if (localManager != null && File.Exists(localManager))
@@ -265,7 +263,6 @@ public partial class AppUpdaterViewModel : ObservableObject
                 }
             }
 
-            // Check Client binary
             if (!fileChanged && !string.IsNullOrEmpty(_remoteClientUrl))
             {
                 if (localClient != null && File.Exists(localClient))
@@ -300,7 +297,6 @@ public partial class AppUpdaterViewModel : ObservableObject
                 }
             }
 
-            // Check saved settings metadata
             if (!fileChanged && _settingsService != null)
             {
                 string lastSavedClientDigest = _settingsService.Get<string>("LastInstalledClientDigest", string.Empty);
@@ -465,7 +461,6 @@ public partial class AppUpdaterViewModel : ObservableObject
                 }
                 catch { }
 
-                // Unlink any older versioned AppImages of the same component in targetDir
                 foreach (string existing in Directory.GetFiles(targetDir, "*.AppImage"))
                 {
                     string existingName = Path.GetFileName(existing);
@@ -504,7 +499,6 @@ public partial class AppUpdaterViewModel : ObservableObject
 
             try { Directory.Delete(tempDir, true); } catch { }
 
-            // Save installation metadata in settings
             try
             {
                 if (!string.IsNullOrEmpty(_remoteTagName))

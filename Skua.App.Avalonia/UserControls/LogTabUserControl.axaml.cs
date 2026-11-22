@@ -15,11 +15,8 @@ namespace Skua.App.Avalonia.UserControls;
 
 public partial class LogTabUserControl : UserControl
 {
-    // The tab whose Logs we listen to. The view is reused across log tabs, so the old tab has to be
-    // unsubscribed when the DataContext changes, not the new one.
     private LogTabViewModel? _subscribed;
 
-    // For narrow hosts (the Script Loader): wrap long lines, and drop the copy hint that doesn't fit
     public static readonly StyledProperty<bool> WrapLinesProperty =
         AvaloniaProperty.Register<LogTabUserControl, bool>(nameof(WrapLines));
 
@@ -82,14 +79,11 @@ public partial class LogTabUserControl : UserControl
 
     private void Logs_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        // After the ListBox has handled the change, so a cleared log also clears the selected count.
         Dispatcher.UIThread.Post(UpdateCountText, DispatcherPriority.Background);
         LogTabViewModel? vm = _subscribed;
         if (vm is null || vm.Logs.Count == 0)
             return;
 
-        // Follow new lines only while the list is already at the bottom, so older lines stay readable
-        // while a script is logging. Layout hasn't run yet, so these are the pre-insert sizes.
         if (LogsListBox.Scroll is ScrollViewer scroll && scroll.Extent.Height > scroll.Viewport.Height
             && scroll.Offset.Y + scroll.Viewport.Height < scroll.Extent.Height - 24)
             return;
@@ -112,7 +106,6 @@ public partial class LogTabUserControl : UserControl
         }
     }
 
-    // Called by the Copy button on the Logs tab row: the selected lines, or the whole log when none are selected.
     public async Task CopySelectedOrAllAsync()
     {
         if (LogsListBox.SelectedItems is { Count: > 0 })
@@ -144,8 +137,6 @@ public partial class LogTabUserControl : UserControl
         await CopySelectedLogsAsync();
     }
 
-    // Every copy handler is async void, so a clipboard failure (another app holding it open) is caught here and
-    // shown in the count line instead of escaping as an unhandled UI exception.
     private async Task CopySelectedLogsAsync()
     {
         if (LogsListBox.SelectedItems is { Count: > 0 } items)

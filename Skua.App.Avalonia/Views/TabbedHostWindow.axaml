@@ -18,7 +18,6 @@
         <Grid x:Name="RootGrid" RowDefinitions="32,Auto,*">
             <sharedShell:WindowTitleBar x:Name="MainTitleBar" Grid.Row="0" TitleText="BonxieMux" />
 
-        <!-- Top Tab Bar & Army Bar -->
         <Border x:Name="TabBarBorder" Grid.Row="1"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -26,9 +25,7 @@
                 Height="36">
             <Grid ColumnDefinitions="*,Auto,Auto">
                 
-                <!-- Client Tabs Bar with Left/Right Scroll Indicators -->
                 <Grid Grid.Column="0" ColumnDefinitions="Auto,*,Auto">
-                    <!-- Scroll Tabs Left Button -->
                     <Button x:Name="ScrollTabsLeftButton"
                             Grid.Column="0"
                             Click="ScrollTabsLeftButton_Click"
@@ -45,7 +42,6 @@
                         <materialIcons:MaterialIcon Kind="ChevronLeft" Width="14" Height="14" Foreground="{DynamicResource SkuaTextBrush}" />
                     </Button>
 
-                    <!-- Client Tabs -->
                     <ScrollViewer x:Name="TabScrollViewer"
                                   Grid.Column="1"
                                   HorizontalScrollBarVisibility="Hidden"
@@ -102,8 +98,6 @@
                                 <Style Selector="TabControl /template/ Rectangle#PART_Separator">
                                     <Setter Property="IsVisible" Value="False" />
                                 </Style>
-                                <!-- Tabs of a follow group (see FollowGroups.cs): the whole tab takes the group's colour, which each tab
-                                     carries as its own resources. These come after the selected and hover styles so they win. -->
                                 <Style Selector="TabItem.follow-group /template/ Border#PART_LayoutRoot">
                                     <Setter Property="Background" Value="{DynamicResource FollowGroupBrush}" />
                                 </Style>
@@ -146,7 +140,6 @@
                         </TabControl>
                     </ScrollViewer>
 
-                    <!-- Scroll Tabs Right Button -->
                     <Button x:Name="ScrollTabsRightButton"
                             Grid.Column="2"
                             Click="ScrollTabsRightButton_Click"
@@ -164,7 +157,6 @@
                     </Button>
                 </Grid>
 
-                <!-- Add Tab Button -->
                 <Button x:Name="AddTabButton"
                         Grid.Column="1"
                         Click="AddTabButton_Click"
@@ -180,9 +172,7 @@
                     <materialIcons:MaterialIcon Kind="Plus" Width="14" Height="14" Foreground="{DynamicResource SkuaAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Button>
 
-                <!-- Quick Multi-Client Actions (Army Control & Grid View) -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,8,0" Spacing="6" VerticalAlignment="Center">
-                    <!-- Army Control Button -->
                     <Border x:Name="GlobeBorder"
                             Cursor="Hand"
                             Height="28"
@@ -320,7 +310,6 @@
                         </FlyoutBase.AttachedFlyout>
                     </Border>
                     
-                    <!-- Grid View Toggle Button -->
                     <Border x:Name="GridViewBorder"
                             Cursor="Hand"
                             Height="28"
@@ -337,7 +326,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Size the game is played at while one account is shown (Grid View off): Auto fills the window. Click to change. -->
                     <Border x:Name="GameSizeBorder"
                             Cursor="Hand"
                             Height="28"
@@ -354,7 +342,6 @@
                             <TextBlock x:Name="GameSizeText" Text="Size: Auto" FontSize="12" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Border>
-                    <!-- How Grid View lays the accounts out: Auto, stacked vertically, side by side. Click to change. -->
                     <Border x:Name="GridLayoutBorder"
                             IsVisible="False"
                             Cursor="Hand"
@@ -376,9 +363,7 @@
             </Grid>
         </Border>
         
-        <!-- Game Instance Host Container -->
         <Grid Grid.Row="2" Background="{DynamicResource SkuaPageBrush}">
-            <!-- Keep the native X11 player off the outer edges so Linux can receive horizontal resize gestures. -->
             <Border x:Name="HostContainer" Background="Transparent" Margin="7,0,7,0" />
             <Border x:Name="DetachedPlaceholder"
                     IsVisible="False"

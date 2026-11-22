@@ -16,10 +16,8 @@
 
     <Grid Margin="8" ColumnDefinitions="2*,*" ColumnSpacing="8">
         
-        <!-- Left Column: Packet Interception Controls & Log -->
         <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="6">
             
-            <!-- Row 0: Server Select & Connect/Disconnect -->
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
                 <ComboBox Grid.Column="0"
                           Height="32"
@@ -62,19 +60,16 @@
                 </Button>
             </Grid>
 
-            <!-- Row 1: Search Packets -->
             <TextBox Grid.Row="1"
                      PlaceholderText="Search packets..."
                      Text="{Binding PacketSearchText, UpdateSourceTrigger=PropertyChanged}" />
 
-            <!-- Row 2: Log Packets Toggle, Visual Legend, & Clear -->
             <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
                 <CheckBox Grid.Column="0"
                           Content="Log Packets"
                           IsChecked="{Binding IsLogging}"
                           VerticalAlignment="Center" />
 
-                <!-- Visual Direction Legend -->
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
                             HorizontalAlignment="Center"
@@ -121,7 +116,6 @@
                         Command="{Binding ClearPacketsCommand}" />
             </Grid>
 
-            <!-- Row 3: Packets List -->
             <Border Grid.Row="3" Classes="list-frame">
                 <ListBox x:Name="PacketsListBox"
                          ItemsSource="{Binding FilteredPackets}"
@@ -168,15 +162,12 @@
             </Border>
         </Grid>
 
-        <!-- Right Column: Packet Filters -->
         <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" RowSpacing="6">
             
-            <!-- Row 0: Search Filters -->
             <TextBox Grid.Row="0"
                      PlaceholderText="Search filters..."
                      Text="{Binding FilterSearchText, UpdateSourceTrigger=PropertyChanged}" />
 
-            <!-- Row 1: Filters List -->
             <Border Grid.Row="1" Classes="list-frame" Padding="6">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <ScrollViewer.ContextMenu>
@@ -200,7 +191,6 @@
                 </ScrollViewer>
             </Border>
 
-            <!-- Row 2: Filter Quick Actions -->
             <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="6">
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="0"
                         Classes="skua-button"

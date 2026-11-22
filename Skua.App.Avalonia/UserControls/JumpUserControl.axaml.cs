@@ -41,9 +41,6 @@ public partial class JumpUserControl : UserControl
 
         int nextIndex = System.Math.Clamp(selectedIndex + direction, 0, Cells.ItemCount - 1);
 
-        // ComboBox treats arrow keys in an open dropdown as preview navigation and
-        // waits for Enter/click to commit. Close it before applying the selection so
-        // SelectedCell changes immediately and triggers the existing auto-jump.
         Cells.IsDropDownOpen = false;
         if (nextIndex != Cells.SelectedIndex)
             Cells.SelectedIndex = nextIndex;

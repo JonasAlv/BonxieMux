@@ -8,7 +8,6 @@
   
     <DockPanel Margin="12" LastChildFill="True">
 
-    <!-- Whose script the card and the buttons below work on: this client or any other open account -->
     <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" ColumnSpacing="8" Margin="0,0,0,10">
       <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
         <materialIcons:MaterialIcon Kind="AccountSwitchOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" />
@@ -20,7 +19,6 @@
 
     <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
         
-        <!-- 1. Header Status Card -->
         <Border Grid.Row="0"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -51,7 +49,6 @@
                         VerticalAlignment="Center"
                         ToolTip.Tip="{Binding ScriptErrorToolTip}">
                     <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                        <!-- Status dot: muted when idle/loaded, green running, amber paused/compiling, red on error -->
                         <Ellipse Width="6" Height="6" VerticalAlignment="Center"
                                  Classes.running="{Binding ShownStatus, Converter={x:Static ObjectConverters.Equal}, ConverterParameter='[Running]'}"
                                  Classes.paused="{Binding ShownStatus, Converter={x:Static ObjectConverters.Equal}, ConverterParameter='[Paused]'}"
@@ -73,14 +70,12 @@
             </Grid>
         </Border>
         
-        <!-- 2. Action Buttons Grid (Uniform 32px height, 6px spacing) -->
         <Grid Grid.Row="1"
               ColumnDefinitions="*,*"
               RowDefinitions="Auto,Auto,Auto,Auto"
               RowSpacing="6"
               ColumnSpacing="6">
             
-            <!-- Load Script -->
             <Button Grid.Row="0" Grid.Column="0"
                     Classes="skua-button"
                     Height="32"
@@ -95,7 +90,6 @@
                 </StackPanel>
             </Button>
             
-            <!-- Open VSCode -->
             <Button Grid.Row="0" Grid.Column="1"
                     Classes="skua-button"
                     Height="32"
@@ -110,7 +104,6 @@
                 </StackPanel>
             </Button>
             
-            <!-- Edit Script -->
             <Button Grid.Row="1" Grid.Column="0"
                     Classes="skua-button"
                     Height="32"
@@ -125,7 +118,6 @@
                 </StackPanel>
             </Button>
             
-            <!-- Search Scripts -->
             <Button Grid.Row="1" Grid.Column="1"
                     Classes="skua-button"
                     Height="32"
@@ -139,7 +131,6 @@
                 </StackPanel>
             </Button>
             
-            <!-- Edit Script Options (Span 2) -->
             <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
                     Classes="skua-button"
                     Height="32"
@@ -154,7 +145,6 @@
                 </StackPanel>
             </Button>
             
-            <!-- Start / Stop Script Button -->
             <Button Grid.Row="3" Grid.Column="0"
                     Classes="skua-button"
                     Classes.skua-danger="{Binding ShownRunning}"
@@ -178,7 +168,6 @@
                 </StackPanel>
             </Button>
             
-            <!-- Pause / Resume Script Button -->
             <Button Grid.Row="3" Grid.Column="1"
                     Classes="skua-button"
                     Height="32"
@@ -194,7 +183,6 @@
             </Button>
         </Grid>
         
-        <!-- 3. Script log: header with its actions, then the log (lines wrap; the copy hint doesn't fit here) -->
         <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="6">
             <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto" ColumnSpacing="6">
                 <TextBlock Grid.Column="0" Classes="section-label" Text="SCRIPT LOG" />

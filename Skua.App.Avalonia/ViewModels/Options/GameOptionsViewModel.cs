@@ -24,7 +24,6 @@ public class GameOptionsViewModel : BotControlViewModelBase
         "Artix", "Twilly", "Galanoth", "Gravelyn", "Safiria", "Sir Ver", "Sepulchure", "Yorumi", "Alteon", "Espada", "Yokai", "Zorbot"
     };
 
-    // Sections by IScriptOption property name; options not listed go to Gameplay.
     private static readonly string[] VisualsOptions = { "LagKiller", "HidePlayers", "OptimizePlayers", "DisableFX", "DisableCollisions", "ShowFPS", "SetFPS" };
     private static readonly string[] TweaksOptions = { "AntiLag", "AutoAntiLag", "AutoAntiLagExcludeFocused", "AutoAntiLagExcludeGridView", "DamageNumbers", "CompactNumbers", "UnitFrameHealth", "MovableTargetFrame" };
     private static readonly string[] HeadlessOptions =
@@ -92,7 +91,6 @@ public class GameOptionsViewModel : BotControlViewModelBase
         base.OnDeactivated();
     }
 
-    // The accounts that are open: this client first, then the others. Picking one shows and edits that account's options.
     public ObservableCollection<AccountChoice> Accounts { get; } = new();
 
     public AccountChoice SelectedAccount
@@ -109,7 +107,6 @@ public class GameOptionsViewModel : BotControlViewModelBase
                     "Unsaved settings", "Save", "Cancel");
                 if (answer.Value != 0)
                 {
-                    // Stay on this account: put the drop-down back once it has finished changing.
                     Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(SelectedAccount)));
                     return;
                 }
@@ -145,7 +142,6 @@ public class GameOptionsViewModel : BotControlViewModelBase
         {
             if (!remote.IsAlive)
             {
-                // The account was closed: back to this client.
                 SwitchTo(Accounts.First(a => a.IsSelf));
                 return;
             }
@@ -157,7 +153,6 @@ public class GameOptionsViewModel : BotControlViewModelBase
     {
         var wanted = new List<AccountChoice> { new(Environment.ProcessId, SelfName(), true) };
         wanted.AddRange(OptionSharing.OtherClients(Environment.ProcessId).Select(c => new AccountChoice(c.ProcessId, c.Account, false)));
-        // An account being edited stays listed while its file is briefly missing.
         if (!_selectedAccount.IsSelf && wanted.All(a => a.ProcessId != _selectedAccount.ProcessId))
             wanted.Add(_selectedAccount);
         if (Accounts.SequenceEqual(wanted))
@@ -272,7 +267,6 @@ public class GameOptionsViewModel : BotControlViewModelBase
     public List<DisplayOptionItemViewModelBase> GameOptions { get; private set; }
     public List<OptionGroupViewModel> OptionGroups { get; private set; } = new();
 
-    // The chip row: "All", then each group
     public List<OptionGroupViewModel> Sections { get; private set; }
 
     private string _searchText = string.Empty;
@@ -295,7 +289,6 @@ public class GameOptionsViewModel : BotControlViewModelBase
         get => _selectedSection;
         set
         {
-            // The chip list clears its selection when it loses its items; keep the last section instead
             if (value is not null && SetProperty(ref _selectedSection, value))
             {
                 OnPropertyChanged(nameof(FilteredGroups));
@@ -304,8 +297,6 @@ public class GameOptionsViewModel : BotControlViewModelBase
         }
     }
 
-
-    // Headers only when several sections are shown
     public bool ShowSectionHeaders => _selectedSection.IsAll;
 
     public IEnumerable<OptionGroupViewModel> FilteredGroups =>
@@ -317,7 +308,6 @@ public class GameOptionsViewModel : BotControlViewModelBase
         List<DisplayOptionItemViewModelBase> InSection(string[] names) =>
             names.Select(n => GameOptions.FirstOrDefault(i => BindingOf(i) == n)).OfType<DisplayOptionItemViewModelBase>().ToList();
 
-        // Name colours and Reload Map aren't script options; they sit with the visuals
         List<DisplayOptionItemViewModelBase> visuals = InSection(VisualsOptions)
             .Concat(GameOptions.Where(i => BindingOf(i) is null))
             .ToList();
@@ -420,7 +410,6 @@ public class GameOptionsViewModel : BotControlViewModelBase
     }
 }
 
-/// <summary>An open account in the Game options drop-down.</summary>
 public sealed record AccountChoice(int ProcessId, string Name, bool IsSelf)
 {
     public override string ToString() => IsSelf ? $"{Name} (this window)" : Name;

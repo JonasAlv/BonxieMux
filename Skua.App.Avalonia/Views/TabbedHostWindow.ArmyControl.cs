@@ -586,7 +586,6 @@ public partial class TabbedHostWindow
         TextBox cellInput = new TextBox { Watermark = "Cell", Text = existingPreset?.Cell ?? "Enter" };
         TextBox padInput = new TextBox { Watermark = "Pad", Text = existingPreset?.Pad ?? "Spawn" };
 
-        // New presets start with the selected client's current location when available.
         if (existingPreset == null
             && InstancesTabControl.SelectedItem is TabItem currentTab
             && _tabs.TryGetValue(currentTab, out TabInfo? currentInfo)
@@ -862,7 +861,6 @@ public partial class TabbedHostWindow
         return !string.IsNullOrWhiteSpace(headerStr) ? headerStr : "Skua Client";
     }
 
-    // Each client joins its own house (no input needed).
     private void MenuItem_JumpHouse_Click(object? sender, RoutedEventArgs e)
     {
         foreach (var info in _tabs.Values)

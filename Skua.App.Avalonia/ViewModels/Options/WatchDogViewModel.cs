@@ -16,7 +16,6 @@ public sealed partial class WatchDogViewModel : BotControlViewModelBase
 
     public ScriptOption Options { get; }
 
-    /// <summary>The accounts on this PC that run a Watch Dog, refreshed while the window is open.</summary>
     public ObservableCollection<RescueAccountRow> Accounts { get; } = new();
 
     [ObservableProperty]
@@ -28,7 +27,6 @@ public sealed partial class WatchDogViewModel : BotControlViewModelBase
     public void RefreshAccounts()
     {
         var list = Options.RescueAccounts();
-        // Keep the rows that are still there, so a checkbox being clicked is not rebuilt under the mouse.
         foreach (RescueAccountRow gone in Accounts.Where(r => list.All(a => !a.Account.Equals(r.Account, System.StringComparison.OrdinalIgnoreCase))).ToList())
             Accounts.Remove(gone);
         foreach (ScriptOption.RescueAccountInfo info in list)
@@ -44,7 +42,6 @@ public sealed partial class WatchDogViewModel : BotControlViewModelBase
     internal void SetNote(string text) => AccountsNote = text;
 }
 
-/// <summary>One account of the Accounts tab: where it is, what it is doing, whether it may help, and a button to ask for help for it.</summary>
 public sealed partial class RescueAccountRow : ObservableObject
 {
     private readonly WatchDogViewModel _owner;

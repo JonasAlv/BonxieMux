@@ -55,7 +55,6 @@ public sealed partial class NotifyDropViewModel : BotControlViewModelBase
         }
     }
 
-    // The per-row remove button in the list.
     [RelayCommand]
     private void RemoveDrop(string? item)
     {

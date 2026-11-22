@@ -31,7 +31,6 @@ public partial class MainMenuViewModel : ObservableRecipient
 
         _plugins = new(new[] { new MainMenuItemViewModel("View Plugins", new RelayCommand(ShowPlugins)) });
         
-        // Populate any buttons that were registered before MainMenuViewModel was constructed
         foreach (var btn in pluginHelper.MenuButtons)
         {
             if (!_plugins.Contains(btn))

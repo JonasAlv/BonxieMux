@@ -20,8 +20,6 @@ public partial class MainWindow : Window
     private readonly ApplicationThemesViewModel _themesViewModel;
     private bool _allowClose;
 
-
-
     public MainWindow()
     {
         InitializeComponent();

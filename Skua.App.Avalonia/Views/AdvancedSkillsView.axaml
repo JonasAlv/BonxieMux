@@ -7,7 +7,6 @@
     
     <TabControl Classes="section-tabs" SelectedIndex="{Binding SelectedTabIndex}" Margin="6">
         
-        <!-- Tab 0: Create / Edit Skill -->
         <TabItem Header="Create / Edit Skill">
             <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                 <Grid DataContext="{Binding EditViewModel}"
@@ -17,7 +16,6 @@
                       ColumnDefinitions="*, *"
                       ColumnSpacing="12">
                     
-                    <!-- Left Column: Timeout & Skills List -->
                     <Border Grid.Row="0" Grid.Column="0"
                             Background="{DynamicResource SkuaSurfaceBrush}"
                             BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -105,7 +103,6 @@
                                  Text="{Binding CurrentClassName}" />
                     </Border>
                     
-                    <!-- Right Column: Use Mode & Use Rules -->
                     <Border Grid.Row="0" Grid.Column="1"
                             Background="{DynamicResource SkuaSurfaceBrush}"
                             BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -169,7 +166,6 @@
                                   RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                                   RowSpacing="6">
                                 
-                                <!-- Health Condition -->
                                 <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
                                     <ToggleButton Grid.Column="0"
                                                   Classes="compare"
@@ -189,7 +185,6 @@
                                                   ToolTip.Tip="Value Type: % (percentage) / # (flat value)" />
                                 </Grid>
                                 
-                                <!-- Mana Condition -->
                                 <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
                                     <ToggleButton Grid.Column="0"
                                                   Classes="compare"
@@ -209,7 +204,6 @@
                                                   ToolTip.Tip="Value Type: % (percentage) / # (flat value)" />
                                 </Grid>
 
-                                <!-- Party HP Condition -->
                                 <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
                                     <ToggleButton Grid.Column="0"
                                                   Classes="compare"
@@ -229,7 +223,6 @@
                                                   ToolTip.Tip="Value Type: % (percentage) / # (flat value)" />
                                 </Grid>
 
-                                <!-- Multi Aura Operator Row -->
                                 <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6" IsVisible="{Binding UseRules.MultiAuraBool}">
                                     <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Operator:" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                     <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" 
@@ -245,7 +238,6 @@
                                             Command="{Binding AddAuraCheckCommand}" />
                                 </Grid>
 
-                                <!-- Single Aura Row -->
                                 <Grid Grid.Row="4" ColumnDefinitions="Auto,2*,*,Auto" ColumnSpacing="6" IsVisible="{Binding !UseRules.MultiAuraBool}">
                                     <ToggleButton Grid.Column="0"
                                                   Classes="compare"
@@ -269,7 +261,6 @@
                                     </ComboBox>
                                 </Grid>
 
-                                <!-- Multi Aura Items -->
                                 <ItemsControl Grid.Row="5" ItemsSource="{Binding UseRules.MultiAuraChecks}" IsVisible="{Binding UseRules.MultiAuraBool}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="vmas:AuraCheckViewModel">
@@ -299,7 +290,6 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <!-- Skip & Wait Row -->
                                 <Grid Grid.Row="6" ColumnDefinitions="*, *" ColumnSpacing="12" VerticalAlignment="Center" Margin="0,4,0,0">
                                     <CheckBox Grid.Column="0" Content="Skip if not available" IsChecked="{Binding UseRules.SkipUseBool}" VerticalAlignment="Center" />
                                     <NumericUpDown Grid.Column="1" Classes="bottom-line"
@@ -310,7 +300,6 @@
                                                    Value="{Binding UseRules.WaitUseValue}" />
                                 </Grid>
 
-                                <!-- Skill Key Buttons (0-5) -->
                                 <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Center"
                                             Spacing="6"
                                             Margin="0,8,0,0">
@@ -325,7 +314,6 @@
                         </Grid>
                     </Border>
                     
-                    <!-- Save Class Mode Row -->
                     <Border Grid.Row="2" Grid.Column="1"
                             Background="{DynamicResource SkuaSurfaceBrush}"
                             BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -349,7 +337,6 @@
             </ScrollViewer>
         </TabItem>
 
-        <!-- Tab 1: Saved Skills -->
         <TabItem Header="Saved Skills">
             <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                 <Border Background="{DynamicResource SkuaSurfaceBrush}"
@@ -362,7 +349,6 @@
                           RowDefinitions="Auto,*,Auto"
                           RowSpacing="10">
                         
-                        <!-- Top Class Loader Controls -->
                         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,*,Auto" ColumnSpacing="8">
                             <Button Grid.Column="0"
                                     Classes="skua-button"
@@ -384,7 +370,6 @@
                                     Command="{Binding LoadSelectedClassModeCommand}" />
                         </Grid>
 
-                        <!-- Loaded Skills Sequence List -->
                         <Border Grid.Row="1" Classes="list-frame" MinHeight="260">
                             <ListBox ItemsSource="{Binding FilteredLoadedSkills}"
                                      SelectedItem="{Binding SelectedSkill}"
@@ -398,7 +383,6 @@
                             </ListBox>
                         </Border>
 
-                        <!-- Action Buttons -->
                         <StackPanel Grid.Row="2"
                                     Orientation="Horizontal"
                                     Spacing="8">

@@ -100,7 +100,6 @@ public partial class ArmyQueueUserControl : UserControl
     {
         if (e.PropertyName == nameof(ArmyQueueViewModel.ShowHelpGuide))
         {
-            // When guide is closed or opened, smoothly reset/snap scroll offset to top
             ContentScrollViewer?.SetValue(ScrollViewer.OffsetProperty, Vector.Zero);
         }
     }

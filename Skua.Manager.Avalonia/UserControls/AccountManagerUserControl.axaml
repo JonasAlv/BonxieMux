@@ -72,7 +72,6 @@
             <TabItem Header="Accounts">
                 <Grid RowDefinitions="Auto,*" Margin="0,4,0,0">
                     <Grid Grid.Row="0" Margin="0,4,0,6" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto">
-                        <!-- Select All -->
                         <Button Grid.Column="0"
                                 Classes="skua-button"
                                 Height="28"
@@ -87,7 +86,6 @@
                             </StackPanel>
                         </Button>
 
-                        <!-- Selected count -->
                         <TextBlock Grid.Column="1"
                                    Margin="0,0,8,0"
                                    VerticalAlignment="Center"
@@ -96,7 +94,6 @@
                                    Text="{Binding SelectedAccountQuant, StringFormat='Selected: {0}'}"
                                    IsVisible="{Binding SelectedAccountQuant, Converter={StaticResource IntGreaterThanZeroConverter}}" />
 
-                        <!-- Unselect Selected -->
                         <Button Grid.Column="2"
                                 Classes="skua-button"
                                 Height="28"
@@ -112,7 +109,6 @@
                             </StackPanel>
                         </Button>
 
-                        <!-- Remove Selected -->
                         <Button Grid.Column="3"
                                 Classes="skua-button"
                                 Height="28"
@@ -128,7 +124,6 @@
                             </StackPanel>
                         </Button>
 
-                        <!-- Move Selected Up -->
                         <Button Grid.Column="4"
                                 Classes="icon"
                                 Width="28"
@@ -141,7 +136,6 @@
                             <materialIcons:MaterialIcon Kind="ArrowUp" Width="16" Height="16" />
                         </Button>
 
-                        <!-- Move Selected Down -->
                         <Button Grid.Column="5"
                                 Classes="icon"
                                 Width="28"
@@ -154,7 +148,6 @@
                             <materialIcons:MaterialIcon Kind="ArrowDown" Width="16" Height="16" />
                         </Button>
 
-                        <!-- Refresh Accounts Button -->
                         <Button Grid.Column="6"
                                 Classes="icon"
                                 Width="28"
@@ -167,7 +160,6 @@
                             <materialIcons:MaterialIcon Kind="Refresh" Width="15" Height="15" />
                         </Button>
 
-                        <!-- Add Account Button -->
                         <Button x:Name="ShowAddAccountButton"
                                 Grid.Column="7"
                                 Classes="skua-button"
@@ -183,7 +175,6 @@
                             </StackPanel>
                         </Button>
 
-                        <!-- Grid Columns ComboBox -->
                         <ComboBox Grid.Column="8"
                                   Classes="columns-picker"
                                   Height="30"
@@ -201,7 +192,6 @@
                             </ComboBox.ItemTemplate>
                         </ComboBox>
 
-                        <!-- Tag Filter Button -->
                         <ToggleButton x:Name="FilterPopupAnchor"
                                       Grid.Column="9"
                                       Classes="app-toggle"
@@ -214,7 +204,6 @@
                             <materialIcons:MaterialIcon Kind="FilterOutline" Width="16" Height="16" VerticalAlignment="Center" HorizontalAlignment="Center" />
                         </ToggleButton>
 
-                        <!-- Toggle Tags Visibility -->
                         <ToggleButton Grid.Column="10"
                                       Classes="app-toggle"
                                       Width="32"
@@ -226,7 +215,6 @@
                             <materialIcons:MaterialIcon Kind="Tag" Width="16" Height="16" VerticalAlignment="Center" HorizontalAlignment="Center" />
                         </ToggleButton>
 
-                        <!-- Toggle Grid/List View -->
                         <ToggleButton Grid.Column="11"
                                       Classes="app-toggle"
                                       Width="32"
@@ -342,7 +330,6 @@
             </TabItem>
         </TabControl>
 
-        <!-- Start Controls -->
         <Border Grid.Row="2"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -402,7 +389,6 @@
             </Grid>
         </Border>
 
-        <!-- Script Section -->
         <Border Grid.Row="3"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -411,7 +397,6 @@
                 Padding="8,6"
                 Margin="0,0,0,2">
             <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
-                <!-- Script Path Box & Action Buttons -->
                 <DockPanel Grid.Column="0" Height="34">
                     <Button Height="34"
                             VerticalAlignment="Center"
@@ -455,14 +440,12 @@
                     </Border>
                 </DockPanel>
 
-                <!-- Auto-start Checkbox -->
                 <CheckBox Grid.Column="1"
                           VerticalAlignment="Center"
                           Content="Auto-start"
                           IsChecked="{Binding StartWithScript}"
                           ToolTip.Tip="After launching and logging in to the accounts, starts the specified script" />
 
-                <!-- Edit Script Options Button -->
                 <Button Grid.Column="2"
                         Height="34"
                         VerticalAlignment="Center"
@@ -476,7 +459,6 @@
                     </StackPanel>
                 </Button>
 
-                <!-- Save Setup Button -->
                 <Button Grid.Column="3"
                         Height="34"
                         VerticalAlignment="Center"
@@ -488,11 +470,4 @@
         </Border>
     </Grid>
 </UserControl>
-
-
-
-
-
-
-
 

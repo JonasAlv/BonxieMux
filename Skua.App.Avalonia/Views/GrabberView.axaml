@@ -12,7 +12,6 @@
     </UserControl.DataTemplates>
 
     <UserControl.Styles>
-        <!-- Sidebar: boxed page tabs stacked vertically, with group headers that can't be selected -->
         <Style Selector="ListBox.grabber-nav">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
@@ -46,7 +45,6 @@
         <Style Selector="ListBox.grabber-nav ListBoxItem:selected materialIcons|MaterialIcon">
             <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
         </Style>
-        <!-- Group headers: no box, no hover, not faded -->
         <Style Selector="ListBox.grabber-nav ListBoxItem:disabled">
             <Setter Property="MinHeight" Value="0" />
             <Setter Property="Padding" Value="2,6,2,2" />

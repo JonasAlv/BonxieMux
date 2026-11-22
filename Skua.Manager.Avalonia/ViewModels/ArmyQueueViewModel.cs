@@ -396,9 +396,6 @@ public partial class ArmyQueueViewModel : ObservableRecipient
 
     partial void OnAccountPickerSearchTextChanged(string value) => _ = FilterAvailableAccountsAsync(value);
 
-    /// <summary>
-    /// Debounces account searches and replaces the bound collection once, avoiding per-item UI notifications.
-    /// </summary>
     private async Task FilterAvailableAccountsAsync(string searchText)
     {
         CancellationTokenSource searchCts = new();
@@ -430,7 +427,6 @@ public partial class ArmyQueueViewModel : ObservableRecipient
         }
         catch (OperationCanceledException)
         {
-            // A newer search superseded this request.
         }
         finally
         {
@@ -610,14 +606,12 @@ public partial class ArmyQueueViewModel : ObservableRecipient
         List<AccountPickerItemViewModel> selected = _allPickerAccounts.Where(a => a.IsSelected).ToList();
         var selectedUsernames = new HashSet<string>(selected.Select(s => s.Username), StringComparer.OrdinalIgnoreCase);
 
-        // Remove members that were unchecked
         for (int i = SelectedStep.Members.Count - 1; i >= 0; i--)
         {
             if (!selectedUsernames.Contains(SelectedStep.Members[i].Username))
                 SelectedStep.Members.RemoveAt(i);
         }
 
-        // Add newly checked accounts
         foreach (var item in selected)
         {
             if (!SelectedStep.Members.Any(m => m.Username.Equals(item.Username, StringComparison.OrdinalIgnoreCase)))
@@ -763,7 +757,6 @@ public partial class ArmyQueueViewModel : ObservableRecipient
             List<Process> activeProcesses = new();
             Dictionary<int, ArmyQueueMemberViewModel> pidToMember = new();
 
-            // 1. Launch all members of the squad with staggered delay
             foreach (ArmyQueueMemberViewModel member in currentStep.Members)
             {
                 token.ThrowIfCancellationRequested();
@@ -809,7 +802,6 @@ public partial class ArmyQueueViewModel : ObservableRecipient
                 }
             }
 
-            // 2. Monitor processes until all accounts finish naturally (no time limit)
             DateTime startTime = DateTime.UtcNow;
 
             while (activeProcesses.Any(p => !p.HasExited))
@@ -848,7 +840,6 @@ public partial class ArmyQueueViewModel : ObservableRecipient
 
             ProgressValue = ((i + 1) * 100.0) / totalSteps;
 
-            // 3. Pause & Ghost session cooldown before next squad
             if (i < Steps.Count - 1)
             {
                 if (IsPaused && _pauseTcs != null)

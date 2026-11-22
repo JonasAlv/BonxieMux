@@ -8,9 +8,6 @@ using Avalonia.Data;
 
 namespace Skua.Shared.Avalonia.Views;
 
-/// <summary>
-/// Interaction logic for ScriptRepoView.xaml
-/// </summary>
 public partial class ScriptRepoView : UserControl
 {
     public ScriptRepoView()

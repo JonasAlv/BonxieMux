@@ -9,7 +9,6 @@
              Background="{DynamicResource SkuaPageBrush}"
              mc:Ignorable="d" d:DesignHeight="500" d:DesignWidth="480">
   <UserControl.Styles>
-    <!-- Assigned hotkey rows: hover fill like list rows -->
     <Style Selector="Border.hotkey-row">
       <Setter Property="MinHeight" Value="44" />
       <Setter Property="Padding" Value="10,4,6,4" />
@@ -19,7 +18,6 @@
     <Style Selector="Border.hotkey-row:pointerover">
       <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
     </Style>
-    <!-- Key badge: a small mono button; click to capture a new key -->
     <Style Selector="Button.keycap">
       <Setter Property="Height" Value="26" />
       <Setter Property="MinWidth" Value="56" />
@@ -35,7 +33,6 @@
   </UserControl.Styles>
 
   <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="12" RowSpacing="10">
-    <!-- Add an action -->
     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
       <Grid Grid.Column="0">
         <AutoCompleteBox x:Name="ActionAutoComplete"
@@ -82,7 +79,6 @@
       </Button>
     </Grid>
 
-    <!-- Assigned hotkeys header with filter -->
     <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,200" ColumnSpacing="6">
       <TextBlock Grid.Column="0" Classes="section-label" Text="ASSIGNED" />
       <Border Grid.Column="1" Classes="count">
@@ -106,7 +102,6 @@
       </TextBox>
     </Grid>
 
-    <!-- Assigned hotkeys -->
     <Border Grid.Row="2"
             Background="{DynamicResource SkuaSurfaceBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"

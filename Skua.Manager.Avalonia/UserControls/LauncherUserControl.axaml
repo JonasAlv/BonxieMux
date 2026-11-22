@@ -10,7 +10,6 @@
              mc:Ignorable="d">
     <Grid Margin="12" RowDefinitions="Auto,Auto,*" RowSpacing="12">
         
-        <!-- Header & Quick Launch Card -->
         <Border Grid.Row="0"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -45,7 +44,6 @@
             </Grid>
         </Border>
 
-        <!-- Process Monitor Bar Card -->
         <Border Grid.Row="1"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -84,7 +82,6 @@
             </Grid>
         </Border>
 
-        <!-- Process List Card -->
         <Border Grid.Row="2"
                 Background="{DynamicResource SkuaPageBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"

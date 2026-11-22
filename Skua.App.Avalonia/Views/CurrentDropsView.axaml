@@ -9,7 +9,6 @@
              mc:Ignorable="d" d:DesignHeight="400" d:DesignWidth="500">
 
   <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="10">
-    <!-- Search and count -->
     <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
       <TextBox Grid.Column="0"
                PlaceholderText="Search drops"
@@ -29,7 +28,6 @@
       </Border>
     </Grid>
 
-    <!-- Drops on the floor; select several to pick them up together -->
     <ListBox Grid.Row="1"
              x:Name="DropsList"
              ItemsSource="{Binding FilteredCurrentDrops}"
@@ -57,7 +55,6 @@
       </ListBox.ItemTemplate>
     </ListBox>
 
-    <!-- Actions -->
     <Grid Grid.Row="2" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*,*" RowSpacing="8" ColumnSpacing="8">
       <Button Grid.Row="0" Grid.Column="0" Classes="skua-button" Command="{Binding PickupACCommand}" ToolTip.Tip="Pick up only AC items">
         <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">

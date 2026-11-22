@@ -1,10 +1,6 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     
-    <!-- Scheme Target mapping:
-        Primary -> SkuaAccentColor / SkuaAccentBrush
-        Text on Primary -> SkuaAccentForegroundColor / SkuaAccentForegroundBrush
-        These are updated at runtime by ThemeResourceApplicator via theme editor selections. -->
     
     <Color x:Key="SkuaAccentColor">#10B981</Color>
     <Color x:Key="SkuaAccentForegroundColor">#FFFFFFFF</Color>
@@ -17,8 +13,6 @@
     <SolidColorBrush x:Key="SkuaDangerPressedBrush" Color="#B91C1C" />
     <SolidColorBrush x:Key="SkuaDangerForegroundBrush" Color="#FFFFFFFF" />
 
-    <!-- Fluent reads these for CheckBox, RadioButton, Slider, ProgressBar, TabItem pipe, TextBox focus.
-         ThemeResourceApplicator overwrites them with the user's primary colour at startup. -->
     <Color x:Key="SystemAccentColor">#10B981</Color>
     <Color x:Key="SystemAccentColorLight1">#28C08E</Color>
     <Color x:Key="SystemAccentColorLight2">#40C79A</Color>
@@ -32,14 +26,11 @@
     <SolidColorBrush x:Key="SkuaTagBorderHoverBrush" Color="#8010B981" />
     <SolidColorBrush x:Key="SkuaTagTextBrush" Color="#34D399" />
 
-    <!-- Selected and on states: accent tint fill plus accent border. ThemeResourceApplicator derives these from the primary. -->
     <SolidColorBrush x:Key="SkuaAccentTintBrush" Color="#2410B981" />
     <SolidColorBrush x:Key="SkuaAccentTintStrongBrush" Color="#3810B981" />
-    <!-- Soft destructive buttons and the destructive icon button hover -->
     <SolidColorBrush x:Key="SkuaDangerTintBrush" Color="#1FEF4444" />
     <SolidColorBrush x:Key="SkuaDangerTintStrongBrush" Color="#33EF4444" />
     <SolidColorBrush x:Key="SkuaDangerSoftBorderBrush" Color="#73EF4444" />
-    <!-- Status chip tints (fill and outline) -->
     <SolidColorBrush x:Key="SkuaSuccessTintBrush" Color="#1F34D399" />
     <SolidColorBrush x:Key="SkuaSuccessTintBorderBrush" Color="#5934D399" />
     <SolidColorBrush x:Key="SkuaWarningTintBrush" Color="#1FFBBF24" />
@@ -69,16 +60,13 @@
             <SolidColorBrush x:Key="SkuaScrollThumbHoverBrush" Color="#9E9E9E" />
             <SolidColorBrush x:Key="SkuaScrollThumbPressedBrush" Color="#757575" />
             <SolidColorBrush x:Key="SkuaSurfaceSubtleBrush" Color="#FFF0F0F0" />
-            <!-- Status colours (not the accent): darker variants so text stays readable on light surfaces -->
             <SolidColorBrush x:Key="SkuaSuccessBrush" Color="#059669" />
             <SolidColorBrush x:Key="SkuaWarningBrush" Color="#B45309" />
             <SolidColorBrush x:Key="SkuaGoldBrush" Color="#A16207" />
             <SolidColorBrush x:Key="SkuaInfoBrush" Color="#0277BD" />
-            <!-- Control states: hover border, pressed fill, unchecked check box / radio / switch outline -->
             <SolidColorBrush x:Key="SkuaBorderStrongBrush" Color="#FFBDBDBD" />
             <SolidColorBrush x:Key="SkuaPressedBrush" Color="#FFE0E0E0" />
             <SolidColorBrush x:Key="SkuaControlOffBrush" Color="#FF9E9E9E" />
-            <!-- Fluent check box / radio / switch outlines (the Fluent template reads these keys) -->
             <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUnchecked" Color="#FF9E9E9E" />
             <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPointerOver" Color="#FF616161" />
             <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPressed" Color="#FF616161" />
@@ -140,6 +128,4 @@
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>
-
-
 

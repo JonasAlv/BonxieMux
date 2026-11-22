@@ -8,9 +8,9 @@ namespace Skua.App.Avalonia.Converters;
 
 public class InterceptedPacketBackgroundConverter : IValueConverter
 {
-    private static readonly IBrush OutboundBrush = new SolidColorBrush(Color.FromArgb(0x28, 0xFF, 0xD5, 0x4F)); // Subtle Yellow
-    private static readonly IBrush InboundBrush = new SolidColorBrush(Color.FromArgb(0x28, 0x29, 0xB6, 0xF6));  // Subtle Blue
-    private static readonly IBrush BlockedBrush = new SolidColorBrush(Color.FromArgb(0x28, 0xEF, 0x53, 0x50));  // Subtle Red
+    private static readonly IBrush OutboundBrush = new SolidColorBrush(Color.FromArgb(0x28, 0xFF, 0xD5, 0x4F));
+    private static readonly IBrush InboundBrush = new SolidColorBrush(Color.FromArgb(0x28, 0x29, 0xB6, 0xF6));
+    private static readonly IBrush BlockedBrush = new SolidColorBrush(Color.FromArgb(0x28, 0xEF, 0x53, 0x50));
     private static readonly IBrush DefaultBrush = Brushes.Transparent;
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -84,7 +84,6 @@ public class InterceptedPacketTagForegroundConverter : IValueConverter
 {
     private static readonly IBrush DefaultFg = Brushes.Gray;
 
-    // Theme tokens have a darker light-mode variant, so the tag stays readable on light surfaces.
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is bool outbound)

@@ -115,7 +115,6 @@ public partial class MainWindow : Window
         ApplyGameOnly(true);
     }
 
-    /// <summary>Game-only full screen: this client's menu bar and title bar are hidden (inside a tab window the tab window hides its own).</summary>
     public void ApplyGameOnly(bool on)
     {
         _gameOnly = on;
@@ -473,7 +472,6 @@ public partial class MainWindow : Window
                         IScriptPlayer player = Ioc.Default.GetRequiredService<IScriptPlayer>();
                         if (map.Loaded && !string.IsNullOrWhiteSpace(map.Name) && !string.IsNullOrWhiteSpace(player.Cell))
                         {
-                            // Report the server-assigned room number rather than the internal area ID or requested private-room number.
                             string room = map.RoomNumber > 0 ? map.RoomNumber.ToString() : string.Empty;
                             string locationFile = System.IO.Path.Combine(dir, $"{Environment.ProcessId}.location.json");
                             string temporaryFile = locationFile + ".tmp";
@@ -516,10 +514,6 @@ public partial class MainWindow : Window
         catch (OperationCanceledException) { }
     }
 
-    /// <summary>
-    /// Tells the tab host which script this client has loaded and whether it is running, so it can start
-    /// the client again with that script if the client crashes ({ClientFileSources.TabsDIR}/{pid}.state).
-    /// </summary>
     private void WriteTabState()
     {
         try
@@ -529,7 +523,6 @@ public partial class MainWindow : Window
             var player = Ioc.Default.GetRequiredService<IScriptPlayer>();
             if (manager.ScriptRunning)
                 _lastScriptRunning = DateTime.UtcNow;
-            // Still "running" while it is being brought back after a crash or disconnect.
             bool running = manager.ScriptRunning || (DateTime.UtcNow - _lastScriptRunning < TimeSpan.FromMinutes(5) && !player.Playing);
             string state = $"{manager.LoadedScript}\n{(running ? 1 : 0)}";
             if (state == _lastTabState)
@@ -542,7 +535,6 @@ public partial class MainWindow : Window
         catch { }
     }
 
-    /// <summary>Tells the other clients' Game Options windows who this is and what every option is set to.</summary>
     private void PublishSharedOptions()
     {
         try
@@ -556,7 +548,6 @@ public partial class MainWindow : Window
         catch { }
     }
 
-    /// <summary>Makes the changes another client's Game Options window asked for (set an option, save, reset).</summary>
     private void ApplySharedOptionCommands()
     {
         try

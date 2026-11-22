@@ -3,13 +3,8 @@
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia">
     <Design.PreviewWith>
         <Border Padding="20">
-            <!-- Add Controls for Previewer Here -->
         </Border>
     </Design.PreviewWith>
-
-    <!-- Fluent colours a ToggleButton through state setters on its ContentPresenter, which win over
-         the control's own Background/Foreground. Every state a class changes is therefore restyled on
-         "/template/ ContentPresenter#PART_ContentPresenter", not on the ToggleButton itself. -->
 
     <Style Selector="ToggleButton.header-gap">
         <Setter Property="Margin" Value="0,0,4,0" />
@@ -23,8 +18,6 @@
         <Setter Property="Margin" Value="0,0,8,0" />
     </Style>
 
-    <!-- Boxed toggles: one look for toolbar toggles (.app-toggle, 26) and option booleans (.option-chip, 32).
-         Off = muted text in a neutral box; on = accent tint + accent border, white text. -->
     <Style Selector="ToggleButton.app-toggle">
         <Setter Property="Height" Value="26" />
         <Setter Property="MinHeight" Value="26" />
@@ -97,8 +90,6 @@
         <Setter Property="Opacity" Value="0.45" />
     </Style>
 
-    <!-- Two-way choices drawn as a segmented control that shows both options: ≤ | ≥ and # | %.
-         Still one ToggleButton (IsChecked = the second option), so bindings don't change. -->
     <Style Selector="ToggleButton.compare, ToggleButton.value-type">
         <Setter Property="Height" Value="32" />
         <Setter Property="MinWidth" Value="0" />
@@ -164,7 +155,6 @@
         <Setter Property="Opacity" Value="0.45" />
     </Style>
 
-    <!-- Ghost toggles: borderless top bar toggles. On = accent tint (so it reads differently from hover). -->
     <Style Selector="ToggleButton.topbar-action">
         <Setter Property="Height" Value="28" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -189,8 +179,6 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
     </Style>
 
-    <!-- Top bar toggles (Auto, Jump, Bot Window sidebar): ghost box like Button.top-nav-item; on = accent tint
-         with an accent icon -->
     <Style Selector="ToggleButton.top-nav-item:checked /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaAccentTintBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />

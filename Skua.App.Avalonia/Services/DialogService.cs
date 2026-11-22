@@ -317,7 +317,6 @@ public class DialogService : DialogServiceBase
         return title;
     }
 
-
     private static void CopySkillRules(SkillRulesViewModel source, SkillRulesViewModel target)
     {
         target.UseRuleBool = source.UseRuleBool;

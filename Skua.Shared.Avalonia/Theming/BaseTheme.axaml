@@ -1,8 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   
-    <!-- This is the shared theme root. Token resources live above, and focused control
-        rules are split into includes below so style behavior is easier to audit by file. -->
     <StyleInclude Source="avares://Skua.Shared.Avalonia/Theming/Styles/Borders.axaml"/>
     <StyleInclude Source="avares://Skua.Shared.Avalonia/Theming/Styles/Buttons.axaml"/>
     <StyleInclude Source="avares://Skua.Shared.Avalonia/Theming/Styles/CheckBoxes.axaml"/>
@@ -21,15 +19,12 @@
     <StyleInclude Source="avares://Skua.Shared.Avalonia/Theming/Styles/ToggleButtons.axaml"/>
     <StyleInclude Source="avares://Skua.Shared.Avalonia/Theming/Styles/ToolTips.axaml"/>
 
-    <!-- Root shell scope. Windows opt into shared theming, then
-        descendants inherit these defaults and scoped control rules. -->
     <Style Selector="Window, Window.skua">
         <Setter Property="Background" Value="{DynamicResource SkuaPageBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
         <Setter Property="FontSize" Value="12" />
     </Style>
 
-    <!-- Outer frame border for custom client-decorated windows -->
     <Style Selector="Border.window-frame">
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaWindowBorderBrush}" />
         <Setter Property="BorderThickness" Value="{DynamicResource SkuaWindowBorderThickness}" />
@@ -43,6 +38,4 @@
         <Setter Property="BorderThickness" Value="0" />
     </Style>
 </Styles>
-
-
 

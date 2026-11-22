@@ -28,7 +28,6 @@ namespace Skua.Manager.Avalonia.ViewModels;
 
 public sealed partial class AccountManagerViewModel : BotControlViewModelBase
 {
-    // Constructor and Dependencies
     public AccountManagerViewModel(ISettingsService settingsService, IDialogService dialogService, IFileDialogService fileService, IScriptManager scriptManager)
         : base("Accounts")
     {
@@ -68,12 +67,10 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
     private readonly IFileDialogService _fileService;
     private readonly IScriptManager _scriptManager;
 
-    // Collections
     public RangedObservableCollection<IAccountItemViewModel> Accounts { get; }
     public RangedObservableCollection<IAccountItemViewModel> FilteredAccounts { get; } = new();
     public RangedObservableCollection<IGroupItemViewModel> Groups { get; } = new();
 
-    // Account Properties
     [ObservableProperty]
     private int _selectedAccountQuant;
 
@@ -85,7 +82,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
 
     public string PasswordInput { private get; set; }
 
-    // UI State Properties
     [ObservableProperty]
     private bool _showTags = true;
 
@@ -135,7 +131,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
             Columns = 6;
     }
 
-    // Tag Filtering Properties
     [ObservableProperty]
     private bool _isFilterPopupOpen;
 
@@ -165,7 +160,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
     public ObservableCollection<TagFilterItem> FilteredTags { get; } = new();
     private HashSet<string> _selectedTagFilters = new();
 
-    // Script and Server Properties
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasScriptPath))]
     private string _scriptPath = string.Empty;
@@ -200,7 +194,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
     [ObservableProperty]
     private RangedObservableCollection<Server> _serverList;
 
-    // Account Management
     [RelayCommand]
     public void AddAccount()
     {
@@ -214,18 +207,15 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
         string password = PasswordInput;
         string displayName = string.IsNullOrWhiteSpace(DisplayNameInput) ? username : DisplayNameInput.Trim();
 
-        // Check if account with this username already exists
         IAccountItemViewModel? existingAccount = Accounts.FirstOrDefault(a => a.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
 
         if (existingAccount != null)
         {
-            // Update existing account
             existingAccount.Password = password;
             existingAccount.DisplayName = displayName;
         }
         else
         {
-            // Create new account
             AccountItemViewModel newAccount = new()
             {
                 Username = username,
@@ -409,7 +399,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
         if (account.UseCheck)
             SelectedAccountQuant--;
 
-        // Remove account from all groups
         foreach (IGroupItemViewModel group in Groups.ToList())
         {
             if (group.Accounts.Contains(account))
@@ -514,7 +503,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
         }
     }
 
-    // Group Management
     public void AddGroup(string groupName)
     {
         if (string.IsNullOrWhiteSpace(groupName))
@@ -606,10 +594,8 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
         _SaveGroups();
     }
 
-    // Tag Filtering
     public void RefreshTagFilters()
     {
-        // Remember which tags were selected before refresh
         HashSet<string> previouslySelected = new(_selectedTagFilters, StringComparer.OrdinalIgnoreCase);
 
         AllTags.Clear();
@@ -630,7 +616,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
         {
             TagFilterItem tagItem = new(kvp.Key, kvp.Value);
 
-            // Restore selection state if this tag was previously selected
             if (previouslySelected.Contains(kvp.Key))
             {
                 tagItem.IsSelected = true;
@@ -646,7 +631,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
             AllTags.Add(tagItem);
         }
 
-        // Remove any selected tags that no longer exist
         _selectedTagFilters.RemoveWhere(tag => !tagCounts.ContainsKey(tag));
 
         _UpdateFilteredTags();
@@ -664,13 +648,10 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
 
     public void ApplyTagFilter()
     {
-        // Filter uses OR logic: shows accounts that have ANY of the selected tags
         List<IAccountItemViewModel> target = _selectedTagFilters.Count == 0
             ? Accounts.ToList()
             : Accounts.Where(a => a.Tags.Any(t => _selectedTagFilters.Contains(t))).ToList();
 
-        // Update in place: clearing and refilling rebuilt every row and threw the list back to the top
-        // each time the Manager got focus or a client saved settings.
         if (FilteredAccounts.SequenceEqual(target))
             return;
 
@@ -717,7 +698,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
         ApplyTagFilter();
     }
 
-    // Persistence
     public void SaveAccounts() => _SaveAccounts();
 
     [RelayCommand]
@@ -787,7 +767,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
     {
         try
         {
-            // FileSystemWatcher watching all write/create/rename events in Skua directory
             string dir = ClientFileSources.SkuaDIR;
             if (Directory.Exists(dir))
             {
@@ -862,10 +841,8 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
         if (accs is null)
             return;
 
-        // Remember which accounts are currently checked in UI
         HashSet<string> currentlyChecked = Accounts.Where(a => a.UseCheck).Select(a => a.Username).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        // Remove accounts that are no longer in saved settings
         for (int i = Accounts.Count - 1; i >= 0; i--)
         {
             if (!accs.ContainsKey(Accounts[i].Username))
@@ -874,7 +851,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
             }
         }
 
-        // Add or update accounts in-place
         foreach (KeyValuePair<string, AccountData> kvp in accs)
         {
             string password = kvp.Value.Password ?? string.Empty;
@@ -1011,7 +987,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
                 serverToSelect = Enumerable.FirstOrDefault<Server>(ServerList, s => s.Name == lastServer);
             SelectedServer = serverToSelect ?? ServerList[0];
 
-            // The list is shown at once; the pings fill in as they come.
             _ = RefreshServerPingsAsync(force: true);
         }
         catch
@@ -1022,11 +997,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
     private DateTime _lastPingRun = DateTime.MinValue;
     private int _pingRunning;
 
-    /// <summary>
-    /// Measures every online server (how long it takes to answer the game's version check) and files the result on the server,
-    /// which the list shows. Called when the list loads and when the server drop-down opens; not more than every 30 seconds,
-    /// and not while accounts are being launched.
-    /// </summary>
     public Task RefreshServerPingsAsync(bool force = false)
     {
         if (_isLaunching || _cachedServers.Count == 0)
@@ -1058,10 +1028,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
         });
     }
 
-    // Script Commands
-    /// <summary>
-    /// Opens the selected script's shared options editor in the Manager.
-    /// </summary>
     [RelayCommand]
     public async Task EditScriptOptions()
     {
@@ -1110,9 +1076,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
         }
     }
 
-    // Opens a file picker to select a script for auto-start. Starts at the directory
-    // of the currently assigned script if one is loaded, or falls back to the user scripts folder
-    // using Avalonia StorageProvider with Linux portal / zenity / kdialog native fallbacks.
     [RelayCommand]
     public void ChangeScriptPath()
     {
@@ -1125,7 +1088,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
             ScriptPath = folderPath;
     }
 
-    // Opens the user's local scripts folder directly in the system file manager (via xdg-open).
     [RelayCommand]
     public void OpenScriptsFolder()
     {

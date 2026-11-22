@@ -25,7 +25,6 @@
         ExtendClientAreaTitleBarHeightHint="32"
         >
 
-  <!-- This root class enables shared shell selectors from Theme.axaml (Window.skua ...). -->
   <Border Classes="window-frame">
   <Grid RowDefinitions="Auto,*">
 
@@ -36,7 +35,6 @@
     <Grid Grid.Row="1"
       RowDefinitions="Auto,*">
 
-      <!-- Top Navigation & Quick-Tools Bar -->
       <Border x:Name="TopNavBorder"
               Grid.Row="0"
               Background="{DynamicResource SkuaSurfaceBrush}"
@@ -47,13 +45,11 @@
         <DockPanel x:Name="MainMenuBar"
                    DataContext="{Binding MainMenu}"
                    LastChildFill="True">
-          <!-- Right-side Quick Access Tools (Auto, Jump, + Bot Windows) -->
           <StackPanel DockPanel.Dock="Right"
                       Margin="0,0,4,0"
                       Orientation="Horizontal"
                       Spacing="4"
                       VerticalAlignment="Center">
-            <!-- Auto Combat & Hunting Toggle -->
             <ToggleButton x:Name="AutoToggle"
                           Classes="top-nav-item"
                           ToolTip.Tip="Automated Combat &amp; Hunting Controls">
@@ -83,7 +79,6 @@
               </sharedShell:TopbarPopupPanel>
             </Popup>
 
-            <!-- Jump Toggle -->
             <ToggleButton x:Name="JumpToggle"
                           Classes="top-nav-item"
                           ToolTip.Tip="Map &amp; Cell Fast Jump Controls">
@@ -109,7 +104,6 @@
 
             <Border Width="1" Height="16" Background="{DynamicResource SkuaBorderBrush}" Margin="2,0" VerticalAlignment="Center" />
 
-            <!-- Show Bot Window / Tools Launcher -->
             <Button Classes="top-nav-item"
                     Width="28" Height="28"
                     Padding="0"
@@ -123,7 +117,6 @@
             </Button>
           </StackPanel>
 
-          <!-- Top Main Menu Bar (Scripts, Options, Tools & Helpers, Combat, Bank, Diagnostics, Plugins) -->
           <Menu x:Name="MainMenuControl"
                 Classes="top-toolbar"
                 VerticalAlignment="Center">
@@ -155,7 +148,4 @@
   </Border>
 
 </Window>
-
-
-
 

@@ -58,7 +58,6 @@ public partial class ScriptLoaderViewModel : BotControlViewModelBase
                 OnPropertyChanged(nameof(TogglePauseScriptIcon));
             }
         };
-        // The Account drop-down's card follows this client's script when this client is the shown account.
         ScriptManager.PropertyChanged += (_, _) => RaiseShownIfLocal();
         _windowService = windowService;
         _dialogService = dialogService;

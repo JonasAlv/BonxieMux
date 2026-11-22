@@ -98,7 +98,6 @@ public partial class TabbedHostWindow
         }
         catch { }
 
-        // Kill bottom-up so child helpers like Mugetsu cannot survive wrapper/parent termination.
         for (int i = descendants.Count - 1; i >= 0; i--)
         {
             int descPid = descendants[i];
@@ -148,11 +147,9 @@ public partial class TabbedHostWindow
             tab.Classes.Add("tab-detached");
         }
 
-        // Keep the tab in InstancesTabControl!
         InstancesTabControl.SelectedItem = tab;
         UpdateTabScrollButtons();
 
-        // Detach/reattach uses IPC; Wayland windows cannot be reparented across processes.
         if (info.ChildHwnd != IntPtr.Zero)
         {
             PlatformDetachChild(info.ChildHwnd, screenX, screenY, clientWidth, clientHeight);
@@ -273,24 +270,17 @@ public partial class TabbedHostWindow
 
         if (_tabs.Count == 0 || !InstancesTabControl.Items.OfType<TabItem>().Any())
         {
-            // Army Queue passes this flag so its monitored host process exits after the
-            // final account finishes. Without it, keep the normal reusable tab host open.
             if (_initialArgs.Contains("--exit-on-script-stop", StringComparer.OrdinalIgnoreCase))
             {
                 Close();
                 return;
             }
 
-            // Keep the host window alive when the final account tab closes.
-            // This allows the user to open another tab without restarting BonxieMux.
             _lastSelectedTab = null;
             _lastActiveHwnd = IntPtr.Zero;
             _isGridViewEnabled = false;
             PlatformClearAllViewports();
 
-            // Explicitly keep the host alive and visible after the final child exits.
-            // The host is the desktop MainWindow, so closing a child tab must not leave
-            // the application with no visible window or trigger an accidental shutdown.
             if (!IsVisible)
                 Show();
             if (WindowState == WindowState.Minimized)
@@ -319,11 +309,8 @@ public partial class TabbedHostWindow
             DoReposition();
     }
 
-    // ---- Client crash recovery (BonxieMux only: local, no alerts, nothing leaves this machine) -----------
-
     private readonly Dictionary<string, List<DateTime>> _relaunches = new();
 
-    /// <summary>Only clients with a saved login, at most 5 restarts per account per 30 minutes.</summary>
     private bool AllowRelaunch(string[] args)
     {
         string key = AccountKey(args);
@@ -341,7 +328,6 @@ public partial class TabbedHostWindow
         return true;
     }
 
-    /// <summary>The client's arguments with the script it had loaded (running or not), from its state file.</summary>
     internal static string[] WithLastScript(string[] args, int pid)
     {
         try
@@ -360,7 +346,7 @@ public partial class TabbedHostWindow
             {
                 if (args[i] is "--run-script" or "--load-script")
                 {
-                    i++; // skip its value
+                    i++;
                     continue;
                 }
                 if (args[i] == "--unattended")
@@ -370,7 +356,7 @@ public partial class TabbedHostWindow
             result.Add(running ? "--run-script" : "--load-script");
             result.Add(script);
             if (running)
-                result.Add("--unattended"); // use the script's saved options (no options window to click)
+                result.Add("--unattended");
             return result.ToArray();
         }
         catch
@@ -483,7 +469,6 @@ public partial class TabbedHostWindow
         closeTxt[!TextBlock.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaMutedTextBrush");
         closeBtn.Child = closeTxt;
 
-        // The icon sits in a grid so the account that is followed can wear a crown above it.
         MaterialIcon crown = new MaterialIcon
         {
             Kind = MaterialIconKind.Crown,
@@ -569,7 +554,7 @@ public partial class TabbedHostWindow
             }
             else if (ev.Key == Key.Escape)
             {
-                editTitle.Text = title.Text; // revert
+                editTitle.Text = title.Text;
                 closeEditMode();
                 ev.Handled = true;
             }
@@ -633,14 +618,14 @@ public partial class TabbedHostWindow
                      string.Equals(arg, "--user", StringComparison.OrdinalIgnoreCase)) && i + 1 < clientArgs.Length)
                 {
                     embeddedUsername = clientArgs[i + 1];
-                    i++; // skip username value
+                    i++;
                     continue;
                 }
                 if ((string.Equals(arg, "-p", StringComparison.OrdinalIgnoreCase) ||
                      string.Equals(arg, "--password", StringComparison.OrdinalIgnoreCase)) && i + 1 < clientArgs.Length)
                 {
                     embeddedPassword = clientArgs[i + 1];
-                    i++; // skip password value
+                    i++;
                     continue;
                 }
 
@@ -667,9 +652,6 @@ public partial class TabbedHostWindow
                 {
                     if (!_isClosing)
                     {
-                        // Still in _tabs = nobody closed it (closing a tab removes it first): it crashed or
-                        // was killed. Start it again with the same login (and its script) before closing
-                        // the old tab, so the host doesn't close with its last tab.
                         int code = 0;
                         try { code = p.ExitCode; } catch { }
                         if (_tabs.ContainsKey(newTab) && code != 0 && AllowRelaunch(clientArgs))
@@ -731,7 +713,6 @@ public partial class TabbedHostWindow
                         }
                         catch { }
                     }
-
 
                     if (childHwnd != IntPtr.Zero)
                     {
@@ -1007,7 +988,6 @@ public partial class TabbedHostWindow
 
         settings.ReloadSettings();
 
-        // 1. Ensure the account exists in ManagedAccounts so it appears in BonxieMux Manager!
         var accs = settings.Get<Dictionary<string, AccountData>>("ManagedAccounts") ?? new();
         if (!accs.ContainsKey(accountName))
         {
@@ -1021,7 +1001,6 @@ public partial class TabbedHostWindow
             settings.Set("ManagedAccounts", accs);
         }
 
-        // 2. Ensure account is in the selected group
         var currentGroups = settings.Get<List<GroupData>>("AccountGroups") ?? new List<GroupData>();
         var targetGroup = currentGroups.FirstOrDefault(g => g.Name.Equals(group.Name, StringComparison.OrdinalIgnoreCase));
         if (targetGroup == null)

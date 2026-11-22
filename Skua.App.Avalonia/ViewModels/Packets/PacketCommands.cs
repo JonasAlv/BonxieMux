@@ -7,7 +7,6 @@ namespace Skua.App.Avalonia.ViewModels.Packets;
 
 public static class PacketCommands
 {
-    // Quotes inside a JSON string are escaped, so chat text can't match this
     private static readonly Regex _jsonCmd = new("\"cmd\"\\s*:\\s*\"([^\"]+)\"", RegexOptions.Compiled);
     private static readonly Regex _xmlAction = new("action=['\"]([^'\"]+)['\"]", RegexOptions.Compiled);
 

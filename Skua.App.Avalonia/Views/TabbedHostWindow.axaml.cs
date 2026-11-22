@@ -68,9 +68,7 @@ public partial class TabbedHostWindow : Window
         public MaterialIcon? DetachedIcon { get; set; }
         public TabItem? TabItem { get; set; }
         public string AccountOrderKey { get; set; } = "";
-        // The tab header, for the tooltip of a follow group (see FollowGroups.cs).
         public StackPanel? HeaderPanel { get; set; }
-        // The crown over the icon of the account the others follow.
         public MaterialIcon? Crown { get; set; }
     }
 
@@ -167,7 +165,6 @@ public partial class TabbedHostWindow : Window
         SaveArmyJumpSettings();
     }
 
-
     public TabbedHostWindow(string rawInitialArgs) : this(ParseRawCommandLine(rawInitialArgs)) { }
 
     public TabbedHostWindow(string[]? initialArgs)
@@ -219,8 +216,6 @@ public partial class TabbedHostWindow : Window
                 (e.Property == IsVisibleProperty && !IsVisible))
                 CloseHostDropdowns();
 
-            // Minimize/hidden handling unmaps X11 children. Invalidate the cache on restore so
-            // DoReposition calls XMapWindow again instead of returning on unchanged geometry.
             if (WindowState != WindowState.Minimized && IsVisible)
             {
                 _lastX = int.MinValue;
@@ -536,8 +531,6 @@ public partial class TabbedHostWindow : Window
         this.AddHandler(InputElement.PointerReleasedEvent, OnWindowPointerReleased, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
         this.AddHandler(InputElement.PointerCaptureLostEvent, (s, e) =>
         {
-            // Do not abort drag while mouse button is still pressed;
-            // mapping ghost windows on X11 fires a transient capture-lost notification.
             if (_draggedTab != null)
             {
                 try { e.Pointer.Capture(this); } catch { }
@@ -812,8 +805,6 @@ public partial class TabbedHostWindow : Window
         if (_hostHwnd == IntPtr.Zero)
             _hostHwnd = new IntPtr(Environment.ProcessId);
 
-        // F11 is grabbed by the host while an embedded Mugetsu child owns focus.
-        // Toggle the host window here; the child process must not be fullscreened.
         HotKeys.ToggleFullscreenRequested = () => Dispatcher.UIThread.Post(() => ToggleFullScreen());
         HotKeys.ToggleGameFullScreenRequested = () => Dispatcher.UIThread.Post(ToggleGameOnly);
 
@@ -883,8 +874,6 @@ public partial class TabbedHostWindow : Window
                     }
                 }
 
-                // Preset changes and single-scheme edits use separate events. Listen to both so
-                // changing a custom primary/foreground color cannot leave the native caption stale.
                 themeService.ThemeChanged += _ => Dispatcher.UIThread.Post(RefreshNativeTitleBar, DispatcherPriority.Background);
                 themeService.SchemeChanged += (_, _) => Dispatcher.UIThread.Post(RefreshNativeTitleBar, DispatcherPriority.Background);
                 RefreshNativeTitleBar();
@@ -905,13 +894,10 @@ public partial class TabbedHostWindow : Window
         }
     }
 
-
-
     private WindowState _stateBeforeFullScreen = WindowState.Normal;
     private bool _gameOnly;
     private bool _gameOnlySetFullScreen;
 
-    /// <summary>F11: the tab window goes borderless full screen, and back to what it was (it also ends game-only full screen).</summary>
     private void ToggleFullScreen(bool keepGameOnly = false)
     {
         bool wasGameOnly = _gameOnly && !keepGameOnly;
@@ -933,8 +919,6 @@ public partial class TabbedHostWindow : Window
             ApplyGameOnly(false);
     }
 
-    /// <summary>Shift+F11: full screen with only the game. The title bar, the tab bar, the notices and every client's menu are hidden;
-    /// leaving it puts the window back as it was.</summary>
     private void ToggleGameOnly()
     {
         if (_gameOnly)
@@ -1012,12 +996,11 @@ public partial class TabbedHostWindow : Window
         else if (isSelected)
         {
             HotKeys.ActiveChildHwnd = childHwnd;
-            _lastActiveHwnd = IntPtr.Zero; // Invalidate cache so DoReposition maps and positions child
+            _lastActiveHwnd = IntPtr.Zero;
             DoReposition();
         }
         else
         {
-            // Inactive tab: ensure it stays unmapped, offscreen and throttled so it never shows over active tab
             info.IsThrottled = true;
             PlatformHideChild(childHwnd);
             PostChildMessage(childHwnd, SkuaIpcMessages.Throttle, new IntPtr(1), IntPtr.Zero);
@@ -1051,7 +1034,6 @@ public partial class TabbedHostWindow : Window
         _isSpawning = false;
         ProcessNextSpawn();
     }
-
 
     private void OnWindowClosing(object? sender, WindowClosingEventArgs e)
     {

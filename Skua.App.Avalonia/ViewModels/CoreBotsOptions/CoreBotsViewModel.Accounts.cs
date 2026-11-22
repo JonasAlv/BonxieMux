@@ -8,11 +8,6 @@ using System.Linq;
 
 namespace Skua.App.Avalonia.ViewModels.CoreBotsOptions;
 
-/// <summary>
-/// The Account drop-down of the CoreBots window: Load and Save (and the save when the window closes) use the picked account's
-/// CBO_Storage(name).txt, this client's or another open account's. Switching saves the account being left, as closing the window
-/// does, then loads the new one. An account with no file yet starts from the values shown.
-/// </summary>
 public partial class CoreBotsViewModel
 {
     private DispatcherTimer? _accountsTimer;
@@ -39,7 +34,6 @@ public partial class CoreBotsViewModel
 
     public bool IsSelfAccount => _selectedAccount.IsSelf;
 
-    /// <summary>The account whose file Load and Save use: this client's character or the picked account.</summary>
     private string TargetName => _selectedAccount.IsSelf ? _player.Username ?? "" : _selectedAccount.Name;
 
     private void SetAccountPolling(bool on)
@@ -73,7 +67,6 @@ public partial class CoreBotsViewModel
             Accounts.Clear();
             foreach (AccountChoice account in wanted)
                 Accounts.Add(account);
-            // An account that closed (or this client logging in): keep the pick when it is still there, else this client.
             AccountChoice? same = wanted.FirstOrDefault(a => a.ProcessId == _selectedAccount.ProcessId);
             bool lost = same is null;
             _selectedAccount = same ?? wanted[0];

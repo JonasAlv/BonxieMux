@@ -11,7 +11,6 @@
              mc:Ignorable="d" d:DesignHeight="680" d:DesignWidth="640">
 
   <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="10">
-    <!-- Whose options these are: this client, or any other open account -->
     <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="10">
       <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
         <materialIcons:MaterialIcon Kind="AccountSwitchOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" />
@@ -27,7 +26,6 @@
       </TextBox.InnerLeftContent>
     </TextBox>
 
-    <!-- Sections: All, then each group -->
     <ListBox Grid.Row="2" Classes="chips" ItemsSource="{Binding Sections}" SelectedItem="{Binding SelectedSection, Mode=TwoWay}">
       <ListBox.ItemTemplate>
         <DataTemplate x:DataType="vms:OptionGroupViewModel">
@@ -40,13 +38,11 @@
       </ListBox.ItemTemplate>
     </ListBox>
 
-    <!-- One list: a tinted header per section (under All), its options in two columns -->
     <Border Grid.Row="3" Classes="option-list" VerticalAlignment="Top">
       <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" AllowAutoHide="False">
         <StackPanel>
         <ItemsControl ItemsSource="{Binding FilteredGroups}" Margin="0,0,0,-1">
           <ItemsControl.Styles>
-            <!-- A line between the columns -->
             <Style Selector="ContentPresenter:nth-child(2n+1) > Border.option-row">
               <Setter Property="BorderThickness" Value="0,0,1,1" />
             </Style>

@@ -433,7 +433,6 @@ public abstract class DialogServiceBase : IDialogService
         }
         catch (OperationCanceledException)
         {
-            // Expected when the dialog closes and cancels the nested loop.
         }
         finally
         {

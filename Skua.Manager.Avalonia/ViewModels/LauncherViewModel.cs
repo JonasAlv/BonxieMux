@@ -84,7 +84,6 @@ public partial class LauncherViewModel : BotControlViewModelBase, IDisposable
                 args.Add(server);
             }
 
-
             try
             {
                 ProcessStartInfo startInfo = SkuaExecutableLocator.CreateProcessStartInfo(args);
@@ -107,8 +106,6 @@ public partial class LauncherViewModel : BotControlViewModelBase, IDisposable
 
     public Task KillAllSkuaProcesses()
     {
-        // Snapshot on the caller's (UI) thread: IDispatcherService.Invoke only posts, so reading the
-        // collection through it from the background task returned an empty list and closed nothing.
         List<ProcessInfo> processes = SkuaProcesses.ToList();
 
         return Task.Run(async () =>
@@ -145,7 +142,6 @@ public partial class LauncherViewModel : BotControlViewModelBase, IDisposable
         ProcessInfo? procInfo = proc as ProcessInfo;
         if (procInfo == null && proc is Process process)
         {
-            // For backwards compatibility, find ProcessInfo by Process
             procInfo = SkuaProcesses.FirstOrDefault(p => p.Process == process);
         }
 
@@ -178,12 +174,10 @@ public partial class LauncherViewModel : BotControlViewModelBase, IDisposable
         {
             if (disposing)
             {
-                // Stop and dispose timer
                 _timer?.Stop();
                 _timer.Elapsed -= RemoveStoppedCurrentProcess!;
                 _timer?.Dispose();
 
-                // Unregister from messenger
                 StrongReferenceMessenger.Default.Unregister<UpdateStartedMessage>(this);
                 StrongReferenceMessenger.Default.Unregister<AddProcessMessage>(this);
 

@@ -62,7 +62,7 @@ public class ChangeLogsViewModel : BotControlViewModelBase
         }
         catch
         {
-            /* ignored */
+            
         }
     }
 
@@ -74,7 +74,7 @@ public class ChangeLogsViewModel : BotControlViewModelBase
         }
         catch
         {
-            /* ignored */
+            
         }
     }
 }

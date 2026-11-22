@@ -11,14 +11,11 @@ using Skua.Shared.Avalonia.ViewModels.Options;
 
 namespace Skua.Shared.Avalonia.Controls.Options;
 
-// One option row for the options windows: title (and description) on the left, its control on the right. Text
-// options stack the field under the title. The row's border and padding come from the list (Border.option-row).
 public partial class OptionItemControl : UserControl
 {
     private const double StandardOptionHeight = 32;
     private const double NumberFieldWidth = 124;
 
-    // Show descriptions as hover tooltips instead of stacked under the title by default
     public static readonly StyledProperty<bool> CompactTextProperty =
         AvaloniaProperty.Register<OptionItemControl, bool>(nameof(CompactText), defaultValue: true);
 
@@ -70,7 +67,6 @@ public partial class OptionItemControl : UserControl
         };
     }
 
-    // Title line (with a "restart" chip when the option needs one) and the description, when it says more than the title
     private static Control BuildLabel(DisplayOptionItemViewModelBase vm, bool compactText = false)
     {
         StackPanel label = new() { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
@@ -126,7 +122,6 @@ public partial class OptionItemControl : UserControl
             Height = StandardOptionHeight
         };
 
-        // The pair behaves like radio buttons: exactly one is checked, and clicking the checked one keeps it.
         void SyncChoice()
         {
             bool first = vm.Value is true;
@@ -247,7 +242,6 @@ public partial class OptionItemControl : UserControl
         return BuildRow(vm, toggle, compactText);
     }
 
-    // Text options: the field gets the row's full width under the title, or sits inline when compact
     private static Control BuildTextItem(DisplayOptionItemViewModelBase vm, bool compact = false)
     {
         Border field = BuildSetField(vm, numeric: false);
@@ -271,8 +265,6 @@ public partial class OptionItemControl : UserControl
         return BuildRow(vm, field, compactText);
     }
 
-    // A field with Set attached. Typing only edits the field; Set (or Enter) applies it. Set is accent-coloured while
-    // the field holds an unapplied edit, and shows a check once applied.
     private static Border BuildSetField(DisplayOptionItemViewModelBase vm, bool numeric)
     {
         TextBox textBox = CreateBoundTextBox(vm, numericOnly: numeric);
@@ -303,7 +295,6 @@ public partial class OptionItemControl : UserControl
                 }
                 catch (Exception ex) when (ex is FormatException or OverflowException or InvalidCastException)
                 {
-                    // Not a number this option can hold: put the current value back
                     textBox.Text = Current();
                     ShowState(applied: false);
                     return;
@@ -368,7 +359,6 @@ public partial class OptionItemControl : UserControl
         return BuildActionItem(vm, compactText);
     }
 
-    // One way: an edit reaches the option only through Set (BuildSetField)
     private static void BindValue(TextBox textBox, DisplayOptionItemViewModelBase vm)
     {
         textBox[!TextBox.TextProperty] = new Binding(nameof(DisplayOptionItemViewModelBase.Value))

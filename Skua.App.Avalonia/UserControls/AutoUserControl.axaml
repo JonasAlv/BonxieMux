@@ -13,14 +13,12 @@
           Width="360">
     <StackPanel Spacing="10">
       
-      <!-- Top Title & Running Status Badge -->
       <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
           <materialIcons:MaterialIcon Kind="RobotOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
           <TextBlock Text="Combat Automation" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
         </StackPanel>
 
-        <!-- Active Status Indicator -->
         <Border Grid.Column="1"
                 CornerRadius="10"
                 Padding="8,2"
@@ -37,7 +35,6 @@
 
       <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
 
-      <!-- Auto Start / Stop Actions -->
       <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
         <Button Grid.Column="0"
                 Classes="skua-button skua-primary"
@@ -77,7 +74,6 @@
         </Button>
       </Grid>
 
-      <!-- Select Class & Mode -->
       <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
         <ComboBox x:Name="ClassComboBox"
                   Grid.Column="0"
@@ -96,7 +92,6 @@
                   SelectedItem="{Binding SelectedClassModeString}" />
       </Grid>
 
-      <!-- Manual MapIDs -->
       <TextBox Height="34"
                CornerRadius="6"
                VerticalContentAlignment="Center"

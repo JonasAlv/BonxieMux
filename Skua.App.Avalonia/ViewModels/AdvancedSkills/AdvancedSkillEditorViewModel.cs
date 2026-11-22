@@ -29,7 +29,6 @@ public partial class AdvancedSkillEditorViewModel : ObservableRecipient
 
     private readonly IDialogService _dialogService;
 
-    /// <summary>The skill timeout in milliseconds.</summary>
     [ObservableProperty]
     private int _currentSkillTimeoutMs = 10000;
 

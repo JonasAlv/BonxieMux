@@ -112,7 +112,6 @@ public partial class PropertyGridControl : UserControl
             }
             catch
             {
-                // Ignore properties that throw on read
             }
         }
 

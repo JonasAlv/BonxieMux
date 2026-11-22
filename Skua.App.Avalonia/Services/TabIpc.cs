@@ -12,9 +12,6 @@ using Skua.Core.Models;
 
 namespace Skua.App.Avalonia.Services;
 
-/// <summary>
-/// Centralized IPC message IDs shared between TabbedHostWindow, MainWindow, and ScriptLoaderViewModel.
-/// </summary>
 public static class SkuaIpcMessages
 {
     public const int GridView = 0x0400 + 444;
@@ -44,10 +41,6 @@ public static class SkuaIpcMessages
     public const int Dock = 0x0400 + 471;
 }
 
-/// <summary>
-/// Cross-platform lightweight IPC between TabbedHostWindow (host) and MainWindow (child instances)
-/// using asynchronous named pipes and serialized message delivery.
-/// </summary>
 public static class TabIpc
 {
     private static readonly ConcurrentDictionary<int, Channel<string>> _queues = new();
@@ -177,7 +170,6 @@ public static class TabIpc
         }
         catch
         {
-            // Reader completed or faulted
         }
         finally
         {

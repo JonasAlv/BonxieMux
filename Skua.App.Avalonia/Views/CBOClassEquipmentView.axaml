@@ -6,7 +6,6 @@
              x:Class="Skua.App.Avalonia.Views.CBOClassEquipmentView">
   <Grid RowDefinitions="Auto,*" RowSpacing="12" Margin="0">
     
-    <!-- Top Action Bar -->
     <Border Grid.Row="0"
             Background="{DynamicResource SkuaSurfaceAltBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -37,14 +36,12 @@
       </Grid>
     </Border>
 
-    <!-- 2x2 Equipment Cards Grid -->
     <Grid Grid.Row="1"
           RowDefinitions="*,*"
           ColumnDefinitions="*,*"
           RowSpacing="10"
           ColumnSpacing="10">
       
-      <!-- 1. Solo Equipment Card -->
       <Border Grid.Row="0"
               Grid.Column="0"
               Background="{DynamicResource SkuaSurfaceBrush}"
@@ -80,7 +77,6 @@
         </StackPanel>
       </Border>
 
-      <!-- 2. Farm Equipment Card -->
       <Border Grid.Row="0"
               Grid.Column="1"
               Background="{DynamicResource SkuaSurfaceBrush}"
@@ -116,7 +112,6 @@
         </StackPanel>
       </Border>
 
-      <!-- 3. Dodge Equipment Card -->
       <Border Grid.Row="1"
               Grid.Column="0"
               Background="{DynamicResource SkuaSurfaceBrush}"
@@ -152,7 +147,6 @@
         </StackPanel>
       </Border>
 
-      <!-- 4. Boss Equipment Card -->
       <Border Grid.Row="1"
               Grid.Column="1"
               Background="{DynamicResource SkuaSurfaceBrush}"

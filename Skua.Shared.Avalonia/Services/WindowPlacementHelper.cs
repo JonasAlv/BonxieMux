@@ -31,21 +31,12 @@ public static class WindowPlacementHelper
         return null;
     }
 
-    /// <summary>
-    /// Resolves the focused display in priority order:
-    /// 1. Owner window's display
-    /// 2. Currently active window in this application
-    /// 3. Display containing the mouse pointer (where user clicked / is looking)
-    /// 4. Primary display
-    /// 5. First available display
-    /// </summary>
     public static Screen? GetFocusedScreen(Window window)
     {
         var screens = window.Screens;
         if (screens == null)
             return null;
 
-        // Tier 1: Check window owner
         if (window.Owner != null)
         {
             try
@@ -57,7 +48,6 @@ public static class WindowPlacementHelper
             catch { }
         }
 
-        // Tier 2: Check any active window in the current application
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             try
@@ -73,7 +63,6 @@ public static class WindowPlacementHelper
             catch { }
         }
 
-        // Tier 3: Check screen where the mouse cursor is located
         var cursor = GetGlobalCursorPosition();
         if (cursor.HasValue)
         {
@@ -86,8 +75,6 @@ public static class WindowPlacementHelper
             catch { }
         }
 
-        // Tier 4: Primary display fallback
-        // Tier 5: First available screen fallback
         return screens.Primary ?? screens.All?.FirstOrDefault();
     }
 
@@ -102,9 +89,6 @@ public static class WindowPlacementHelper
         return GetFocusedScreen(window);
     }
 
-    /// <summary>
-    /// Calculates the centered position taking DPI scaling and WorkingArea into account.
-    /// </summary>
     public static PixelPoint CalculatePosition(Screen screen, double widthDip, double heightDip)
     {
         double scale = screen.Scaling > 0 ? screen.Scaling : 1.0;
@@ -134,15 +118,11 @@ public static class WindowPlacementHelper
         return CalculatePosition(screen, (double)width, (double)height);
     }
 
-    /// <summary>
-    /// Centers the window on the active/focused display.
-    /// </summary>
     public static void CenterOnActiveScreen(Window window)
     {
         var screen = GetFocusedScreen(window);
         if (screen == null)
         {
-            // Fallback to Avalonia built-in centering if no screen metadata is accessible
             window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             return;
         }
@@ -152,10 +132,8 @@ public static class WindowPlacementHelper
         double targetW = window.Width > 0 && !double.IsNaN(window.Width) ? window.Width : (window.MinWidth > 0 ? window.MinWidth : 800);
         double targetH = window.Height > 0 && !double.IsNaN(window.Height) ? window.Height : (window.MinHeight > 0 ? window.MinHeight : 600);
 
-        // Pre-show positioning to hint to the Window Manager which display to place the window on
         window.Position = CalculatePosition(screen, targetW, targetH);
 
-        // Post-render exact centering once Avalonia has measured layout bounds
         window.Opened += (s, e) =>
         {
             if (window.WindowState == WindowState.Maximized || window.WindowState == WindowState.FullScreen)

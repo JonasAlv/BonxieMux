@@ -11,8 +11,6 @@ public sealed class GrabberItemDisplayConverter : IValueConverter
 {
     public static readonly GrabberItemDisplayConverter Instance = new();
 
-    // ConverterParameter "row": the Grabber row text, the summary without its leading "[ID] " (the ID has its own
-    // column). "junk": true when the item is marked as junk (shows the Junk chip). No parameter: the old one-line text.
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (parameter is "junk")

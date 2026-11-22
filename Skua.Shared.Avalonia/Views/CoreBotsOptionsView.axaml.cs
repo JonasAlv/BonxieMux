@@ -2,9 +2,6 @@ using Avalonia.Controls;
 
 namespace Skua.Shared.Avalonia.Views;
 
-/// <summary>
-/// Interaction logic for CoreBotsOptionsView.xaml
-/// </summary>
 public partial class CoreBotsOptionsView : UserControl
 {
     public CoreBotsOptionsView()

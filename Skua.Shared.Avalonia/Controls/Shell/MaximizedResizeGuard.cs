@@ -5,10 +5,6 @@ using System.Runtime.CompilerServices;
 
 namespace Skua.Shared.Avalonia.Controls.Shell;
 
-/// <summary>
-/// Avalonia's Windows hit-testing keeps reporting resize edges for a maximized window that extends its client area
-/// into the frame. This hook answers those edge hits as client area while the window is maximized.
-/// </summary>
 internal static class MaximizedResizeGuard
 {
     private const uint WM_NCHITTEST = 0x0084;

@@ -26,12 +26,10 @@
 
         <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
 
-        <!-- Accent Color Settings -->
         <sharedTheming:AccentEditorPanel SeparatorBrush="{DynamicResource SkuaBorderBrush}" />
 
         <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
 
-        <!-- Scheme Preview Card -->
         <sharedTheming:SchemePreviewCard PreviewBorderBrush="{DynamicResource SkuaBorderBrush}" />
       </StackPanel>
     </Border>

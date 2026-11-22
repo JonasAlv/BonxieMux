@@ -63,10 +63,8 @@ public partial class DisplayOptionItemViewModelBase : ObservableObject
     public string Tag { get; }
     public string? SuffixText { get; set; }
 
-    // Shows a "restart" chip on the option's row
     public bool RequiresRestart { get; init; }
 
-    // Button label for an action option (Tag "4" or an IRelayCommand display type)
     public string? ActionText { get; init; }
 
     [ObservableProperty]

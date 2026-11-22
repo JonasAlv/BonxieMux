@@ -9,8 +9,6 @@
         <Setter Property="Margin" Value="0,0,8,0" />
     </Style>
 
-    <!-- Sleek, Modern Neutral Dark Base TextBox with crisp high-visibility borders and centered text -->
-    <!-- Height only (MinHeight 0 overrides Fluent's 32): a view's own Height always wins -->
     <Style Selector="TextBox">
         <Setter Property="Height" Value="32" />
         <Setter Property="MinHeight" Value="0" />
@@ -36,7 +34,6 @@
         <Setter Property="VerticalAlignment" Value="Stretch" />
     </Style>
 
-    <!-- Watermark / Placeholder styling (Centered perfectly with clear contrast) -->
     <Style Selector="TextBox /template/ TextBlock#PART_Watermark, TextBox:empty /template/ TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
         <Setter Property="FontSize" Value="12" />
@@ -56,7 +53,6 @@
         <Setter Property="Padding" Value="0" />
     </Style>
 
-    <!-- Hover changes the border only, so a field never looks like a button; focus gets the accent border -->
     <Style Selector="TextBox:pointerover">
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
     </Style>
@@ -64,7 +60,6 @@
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
     </Style>
-    <!-- Disabled: same colours as at rest (Fluent would swap in its grey), faded like every other control -->
     <Style Selector="TextBox:disabled">
         <Setter Property="Opacity" Value="0.45" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
@@ -84,7 +79,6 @@
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
-    <!-- A8: multi-line editors fill their cell and start at the top -->
     <Style Selector="TextBox[AcceptsReturn=True]">
         <Setter Property="Height" Value="NaN" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
@@ -92,7 +86,6 @@
         <Setter Property="Padding" Value="10,8" />
     </Style>
 
-    <!-- Complete Modern Dark AutoCompleteBox -->
     <Style Selector="AutoCompleteBox">
         <Setter Property="Height" Value="32" />
         <Setter Property="MinHeight" Value="0" />
@@ -186,7 +179,6 @@
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
     </Style>
 
-    <!-- Option Input Pill Groups -->
     <Style Selector="TextBox.option-pill-input">
         <Setter Property="Height" Value="32" />
         <Setter Property="MinHeight" Value="32" />

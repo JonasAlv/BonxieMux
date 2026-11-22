@@ -21,11 +21,6 @@ using System.Threading.Tasks;
 
 namespace Skua.App.Avalonia.Controls;
 
-/// <summary>
-/// Pure Wayland/Avalonia game viewport. Hosts an embedded Wayland compositor
-/// (<c>libbonxie_wayland.so</c>) for zero-copy <c>DMA-BUF</c> presentation directly
-/// into Avalonia's Skia composition tree via <see cref="WaylandDmabufViewport"/>.
-/// </summary>
 public class GameHost : Control, ICustomHitTest
 {
     public bool HitTest(Point point) => new Rect(Bounds.Size).Contains(point);
@@ -321,7 +316,6 @@ public class GameHost : Control, ICustomHitTest
     {
         _resizeDebounceTimer?.Stop();
         DetachTopLevelHandlers();
-        // Must detach and lock out the render thread before bonxie_wl_stop frees the native host.
         if (_glViewport is WaylandDmabufViewport vp)
             vp.DisposeRenderer();
         _isVisibleCached = false;
@@ -591,8 +585,6 @@ public class GameHost : Control, ICustomHitTest
         SendResizeIfNeeded();
     }
 
-    // Avalonia.Wayland does not emit Window.PositionChanged and populates CurrentOutputIds only after
-    // KWin delivers wl_surface.enter, so re-query on activation/resize/click for multi-monitor refresh sync.
     private void OnTrackedTopLevelActivated(object? sender, EventArgs e)
     {
         UpdateRefreshRateForWindow();

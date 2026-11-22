@@ -169,7 +169,6 @@ public partial class MainWindow : Window
             topNav.InvalidateVisual();
         }
 
-        // Ensure an opaque repaint whenever returning visible on X11.
         this.InvalidateVisual();
     }
 

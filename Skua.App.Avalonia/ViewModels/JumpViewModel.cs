@@ -59,8 +59,6 @@ public partial class JumpViewModel : BotControlViewModelBase
         _suppressAutoJump = true;
         try
         {
-            // Force a property notification even when the current cell matches the
-            // view-model value already; the selector may not have applied its initial selection.
             SelectedCell = string.Empty;
             SelectedPad = string.Empty;
             SelectedCell = cell ?? string.Empty;
@@ -75,8 +73,6 @@ public partial class JumpViewModel : BotControlViewModelBase
     [RelayCommand]
     private async Task JumpTo()
     {
-        // Capture the selection before dispatching so rapid arrow-key navigation cannot
-        // make a queued jump use a later selection unexpectedly.
         string cell = SelectedCell;
         string pad = SelectedPad;
         if (string.IsNullOrWhiteSpace(cell) || string.IsNullOrWhiteSpace(pad))
@@ -103,7 +99,6 @@ public partial class JumpViewModel : BotControlViewModelBase
         try
         {
             string current = SelectedCell;
-            // ReplaceRange also clears stale entries when the map reports no cells.
             Cells.ReplaceRange(newCells);
             if (!string.IsNullOrEmpty(current) && Cells.Contains(current))
                 SelectedCell = current;

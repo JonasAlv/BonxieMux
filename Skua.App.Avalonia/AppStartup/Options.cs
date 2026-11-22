@@ -20,8 +20,6 @@ public sealed record AppSettingChangedMessage(string Key, object? Value);
 
 internal class Options
 {
-    // The Headless tab of the Game options. Headless Mode is the manual switch; the others are automatic headless, which
-    // only ever sets its own state and never touches Headless Mode (a client put in Headless Mode by hand stays that way).
     private static readonly Dictionary<string, (string Label, string Description)> HeadlessTexts = new()
     {
         [nameof(IScriptOption.HeadlessMode)] = ("Headless Mode", "Manual. Hides this client's game and drops it to 2 fps until you turn it off. Automatic headless never turns it off."),
@@ -41,11 +39,9 @@ internal class Options
         return new GameOptionsViewModel(source => BuildGameOptions(s, source), local, s.GetService<IScriptServers>()!, scriptOpt, s.GetRequiredService<IDialogService>());
     }
 
-    // The rows of the Game options for one account: this client's own options, or those of another open account.
     private static List<DisplayOptionItemViewModelBase> BuildGameOptions(IServiceProvider s, OptionSource source)
     {
         List<DisplayOptionItemViewModelBase> options = new();
-        // These act on this client's own game, so they are only there for this client.
         if (source.IsLocal)
         {
             options.Add(new CommandOptionItemViewModel<bool>("Upgrade Name Colour", "1", new RelayCommand<bool>(b => Ioc.Default.GetRequiredService<IFlashUtil>().SetGameObject("world.myAvatar.pMC.pname.ti.textColor", b ? 0x8CD5FF : 0xFFFFFF))));
@@ -81,7 +77,6 @@ internal class Options
 
         return options;
 
-        // The decamelizer keeps "ACDrops" together
         static string Label(IServiceProvider s, string binding) => binding == nameof(IScriptOption.AcceptACDrops) ? "Accept AC Drops" : s.GetRequiredService<IDecamelizer>().Decamelize(binding, null);
     }
 
@@ -189,7 +184,6 @@ internal class Options
             appOptions.Add(graphicsChoice);
         }
 
-        // Performance Mode
         string perfVal = ReadMugetsuFile("mugetsu-performance.txt").ToLowerInvariant();
         int perfIdx = perfVal switch
         {
@@ -214,7 +208,6 @@ internal class Options
         };
         appOptions.Add(perfChoice);
 
-        // Frame Interpolation
         bool interpOn = File.Exists(Path.Combine(ruffleDir, "mugetsu-interpolation.txt"));
         appOptions.Add(new CommandOptionItemViewModel<bool>(
             "* Frame Interpolation",
@@ -227,7 +220,6 @@ internal class Options
             }),
             interpOn));
 
-        // Frame Pacing
         bool uncappedOn = File.Exists(Path.Combine(ruffleDir, "mugetsu-uncapped.txt"));
         var pacingChoice = new CBOChoiceOptionItemViewModel(
             "Frame Pacing",
@@ -246,7 +238,6 @@ internal class Options
         };
         appOptions.Add(pacingChoice);
 
-        // FPS Limit (Uncapped)
         string fpsLimitRaw = ReadMugetsuFile("mugetsu-fps-limit.txt").ToLowerInvariant();
         int fpsLimitIdx = fpsLimitRaw switch
         {
@@ -286,7 +277,6 @@ internal class Options
         };
         appOptions.Add(fpsLimitChoice);
 
-        // Memory Limit
         string memLimitRaw = ReadMugetsuFile("mugetsu-memory-limit.txt");
         int memLimitIdx = memLimitRaw switch
         {
@@ -320,13 +310,11 @@ internal class Options
         };
         appOptions.Add(memLimitChoice);
 
-        // Free Memory Now
         appOptions.Add(new CommandOptionItemViewModel<IRelayCommand>(
             "Free Memory Now",
             "MugetsuFreeMemoryNow",
             new RelayCommand(() => Views.MainWindow.BroadcastMugetsuSetting("free_memory", "1"))));
 
-        // Show FPS
         bool showFpsOn = File.Exists(Path.Combine(ruffleDir, "mugetsu-show-fps.txt"));
         appOptions.Add(new CommandOptionItemViewModel<bool>(
             "Show FPS",

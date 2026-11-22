@@ -13,11 +13,6 @@ public enum AppIdentity
     Manager
 }
 
-/// <summary>
-/// Handles Linux desktop integration for BonxieMux and BonxieMux Manager AppImages.
-/// Automatically creates and self-heals ~/.local/share/applications/*.desktop entries
-/// and ~/.local/share/icons/hicolor/ icons when the AppImage is moved or upgraded.
-/// </summary>
 public static class AppImageDesktopIntegration
 {
     public static void EnsureIntegrated(AppIdentity identity)
@@ -99,18 +94,15 @@ public static class AppImageDesktopIntegration
                         oldPath = trimmed.Substring(17).Trim();
                 }
 
-                // If path moved or target no longer exists
                 if (!oldExec.Contains(appImagePath, StringComparison.Ordinal) ||
                     (!string.IsNullOrEmpty(oldPath) && !File.Exists(oldPath)))
                 {
                     needsUpdate = true;
                 }
-                // If AppImage file was recompiled/touched since desktop entry was written
                 else if (File.GetLastWriteTimeUtc(appImagePath) > File.GetLastWriteTimeUtc(desktopFilePath))
                 {
                     needsUpdate = true;
                 }
-                // If version changed
                 else if (string.IsNullOrWhiteSpace(oldVersion) ||
                          (Version.TryParse(oldVersion, out var oldV) &&
                           Version.TryParse(currentVersion, out var curV) &&
@@ -124,7 +116,6 @@ public static class AppImageDesktopIntegration
             if (!needsUpdate)
                 return;
 
-            // 1. Refresh icon assets in ~/.local/share/icons/hicolor/
             bool copiedAnyIcon = false;
             string? appDir = Environment.GetEnvironmentVariable("APPDIR");
             if (!string.IsNullOrWhiteSpace(appDir) && Directory.Exists(appDir))
@@ -172,7 +163,6 @@ public static class AppImageDesktopIntegration
                 }
             }
 
-            // Fallback: extract high-res embedded asset from Avalonia resources
             if (!copiedAnyIcon)
             {
                 try
@@ -198,7 +188,6 @@ public static class AppImageDesktopIntegration
                 catch { }
             }
 
-            // 2. Write the .desktop file atomically
             Directory.CreateDirectory(appsDir);
             ClientFileSources.RestrictDirectoryPermissions(appsDir);
 
@@ -224,7 +213,6 @@ public static class AppImageDesktopIntegration
                 File.Move(tempFile, desktopFilePath, overwrite: true);
                 ClientFileSources.RestrictFilePermissions(desktopFilePath);
 
-                // Create case-matching desktop file for Wayland compositors (KWin)
                 if (!string.Equals(desktopFilePath, wmDesktopFilePath, StringComparison.Ordinal))
                 {
                     File.Copy(desktopFilePath, wmDesktopFilePath, overwrite: true);
@@ -237,7 +225,6 @@ public static class AppImageDesktopIntegration
                     File.Delete(tempFile);
             }
 
-            // 3. Notify the desktop environment to reload application shortcuts and icon caches
             NotifyDesktopDatabase(appsDir, iconsBase);
         }
         catch (Exception ex)

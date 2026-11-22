@@ -14,7 +14,6 @@
         <Setter Property="Margin" Value="0,0,8,0" />
     </Style>
 
-    <!-- Sleek Custom ControlTemplate for ComboBox following Pure Neutral Dark UI -->
     <Style Selector="ComboBox">
         <Setter Property="Height" Value="32" />
         <Setter Property="MinHeight" Value="0" />
@@ -54,7 +53,6 @@
                                               TextElement.Foreground="{DynamicResource SkuaTextBrush}"
                                               IsVisible="{TemplateBinding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
-                            <!-- Chevron, like the other Material icons in the app -->
                             <materialIcons:MaterialIcon Grid.Column="1"
                                       Kind="ChevronDown"
                                       Width="16"
@@ -65,7 +63,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Popup Dropdown Menu -->
                     <Popup x:Name="PART_Popup"
                            IsOpen="{TemplateBinding IsDropDownOpen, Mode=TwoWay}"
                            PlacementTarget="{Binding ElementName=PART_RootBorder}"
@@ -103,7 +100,6 @@
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
     </Style>
 
-    <!-- ComboBox Items Styling -->
     <Style Selector="ComboBoxItem">
         <Setter Property="Padding" Value="10,0" />
         <Setter Property="MinHeight" Value="30" />

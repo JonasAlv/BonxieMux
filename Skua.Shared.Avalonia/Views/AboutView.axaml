@@ -9,7 +9,6 @@
              d:DesignHeight="700" d:DesignWidth="600"
              mc:Ignorable="d">
     <Grid Margin="12" RowDefinitions="Auto,*">
-        <!-- Header Card -->
         <Border Grid.Row="0"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -35,7 +34,6 @@
             </Grid>
         </Border>
 
-        <!-- Content Card -->
         <Border Grid.Row="1"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -52,7 +50,4 @@
         </Border>
     </Grid>
 </UserControl>
-
-
-
 

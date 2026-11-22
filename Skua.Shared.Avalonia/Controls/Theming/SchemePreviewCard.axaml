@@ -21,7 +21,6 @@
         </Style>
       </Grid.Styles>
 
-      <!-- Target 1: Primary Accent -->
       <Button Grid.Column="0"
               Classes="skua-button scheme-target"
               Classes.active="{Binding ThemeService.ActiveScheme, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:ColorScheme.Primary}}"
@@ -59,7 +58,6 @@
         </Grid>
       </Button>
 
-      <!-- Target 2: Text on Primary -->
       <Button Grid.Column="1"
               Classes="skua-button scheme-target"
               Classes.active="{Binding ThemeService.ActiveScheme, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:ColorScheme.PrimaryForeground}}"

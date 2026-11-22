@@ -20,7 +20,6 @@
             Padding="14">
       <StackPanel Spacing="14">
 
-        <!-- Title Bar Options -->
         <StackPanel Spacing="2">
           <CheckBox Content="Use theme accent on the Manager title bar"
                     IsChecked="{Binding UseAccentOnManagerTitleBar, Mode=TwoWay}" />
@@ -32,12 +31,10 @@
 
         <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
 
-        <!-- Accent Color Settings -->
         <sharedTheming:AccentEditorPanel SeparatorBrush="{DynamicResource SkuaBorderBrush}" />
 
         <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
 
-        <!-- Scheme Preview Card -->
         <sharedTheming:SchemePreviewCard PreviewBorderBrush="{DynamicResource SkuaBorderBrush}" />
       </StackPanel>
     </Border>

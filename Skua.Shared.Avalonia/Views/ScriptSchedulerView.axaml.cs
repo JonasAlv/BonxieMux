@@ -12,7 +12,6 @@ public partial class ScriptSchedulerView : UserControl
         InitializeComponent();
     }
 
-    // Row numbers: each container carries its 1-based position in Tag, which the row template shows.
     private void QueueList_ContainerPrepared(object? sender, ContainerPreparedEventArgs e)
     {
         e.Container.Tag = (e.Index + 1).ToString();
@@ -23,7 +22,6 @@ public partial class ScriptSchedulerView : UserControl
         e.Container.Tag = (e.NewIndex + 1).ToString();
     }
 
-    // Rename: the name's TextBlock and its TextBox share a Grid; double-click swaps to the box.
     private void Name_DoubleTapped(object? sender, TappedEventArgs e)
     {
         if (sender is not TextBlock name || name.Parent is not Grid cell || cell.Children.OfType<TextBox>().FirstOrDefault() is not { } box)
@@ -62,7 +60,6 @@ public partial class ScriptSchedulerView : UserControl
         if (!box.IsVisible)
             return;
 
-        // An empty name would leave nothing to double-click; keep the old one
         if (string.IsNullOrWhiteSpace(box.Text))
             box.Text = box.Tag as string;
         box.IsVisible = false;

@@ -66,7 +66,6 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
     public bool Running => _gameProxy.Running;
     public IReadOnlyList<PacketLogFilterViewModel> PacketFilters => _allPacketFilters;
 
-    // "shown / total" for the filter button
     public string ShownFiltersText => $"{_allPacketFilters.Count(f => f.IsChecked)} / {_allPacketFilters.Count}";
 
     public PacketInterceptorViewModel(IEnumerable<PacketLogFilterViewModel> filters, ICaptureProxy gameProxy, IScriptServers server, IFileDialogService fileDialog)
@@ -108,7 +107,6 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
         }
         catch
         {
-            // fallback
         }
 
         if (servers == null || servers.Count == 0)
@@ -142,7 +140,6 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
             Packets.Add(packet);
             if (Packets.Count > 1000)
             {
-                // FilteredPackets keeps Packets' order, so the oldest packet can only be its first item
                 InterceptedPacketViewModel evicted = Packets[0];
                 Packets.RemoveAt(0);
                 if (FilteredPackets.Count > 0 && ReferenceEquals(FilteredPackets[0], evicted))
@@ -176,7 +173,6 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
             return false;
         }
 
-        // A packet can be in several categories (a ct with auras is Combat and Auras); any ticked one shows it
         string[] commands = pkt.Commands;
         foreach (PacketLogFilterViewModel filter in _allPacketFilters)
         {
@@ -206,8 +202,6 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
         FilteredPackets.Clear();
     }
 
-    // Every captured packet, filters and search ignored, one "[OUT] packet" line each; line breaks inside a
-    // packet are written as \r and \n so each line stays one packet
     [RelayCommand]
     private void ExportPackets()
     {
@@ -273,7 +267,6 @@ public partial class PacketInterceptorViewModel : BotControlViewModelBase
             _gameProxy.Destination = new IPEndPoint(ip, port);
             _gameProxy.Start();
 
-            // Do not disconnect the active game session if the local proxy failed to bind.
             if (!_gameProxy.Running)
                 return;
 

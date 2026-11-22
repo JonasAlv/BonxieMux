@@ -14,7 +14,6 @@
   </UserControl.Resources>
 
   <UserControl.Styles>
-    <!-- Counter tile: coloured icon + caption over a large value -->
     <Style Selector="Border.stat-tile">
       <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
       <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
@@ -38,7 +37,6 @@
   </UserControl.Styles>
 
   <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
-    <!-- Script time + reset -->
     <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,Auto,*,Auto" ColumnSpacing="8">
       <materialIcons:MaterialIcon Grid.Column="0" Kind="ClockOutline" Width="16" Height="16" Foreground="#9CA3AF" VerticalAlignment="Center" />
       <TextBlock Grid.Column="1" Text="{Binding ScriptStats.Time, StringFormat={}{0:hh\\:mm\\:ss}}" FontFamily="Cascadia Mono,Consolas,Courier New,monospace"
@@ -52,7 +50,6 @@
       </Button>
     </Grid>
 
-    <!-- Counters -->
     <UniformGrid Grid.Row="1" Columns="3" Margin="-3">
       <Border Classes="stat-tile" Margin="3">
         <StackPanel Spacing="2">
@@ -110,7 +107,6 @@
       </Border>
     </UniformGrid>
 
-    <!-- Storage header -->
     <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" Margin="0,2,0,0">
       <TextBlock Grid.Column="0" Classes="section-label" Text="STORAGE" />
       <Button Grid.Column="2" Classes="skua-button small w112" Command="{Binding GetSpaceCommand}" ToolTip.Tip="Refresh inventory and bank space">
@@ -121,7 +117,6 @@
       </Button>
     </Grid>
 
-    <!-- Inventory and bank: used / max -->
     <Border Grid.Row="3"
             Background="{DynamicResource SkuaSurfaceBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"

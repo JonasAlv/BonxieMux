@@ -9,7 +9,6 @@ public partial class ScriptLoaderView : UserControl
     public ScriptLoaderView()
     {
         InitializeComponent();
-        // The open accounts (the Account drop-down) are only polled while this view is on screen.
         AttachedToVisualTree += (_, _) => (DataContext as ScriptLoaderViewModel)?.SetAccountPolling(true);
         DetachedFromVisualTree += (_, _) => (DataContext as ScriptLoaderViewModel)?.SetAccountPolling(false);
     }

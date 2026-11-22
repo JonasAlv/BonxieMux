@@ -7,10 +7,6 @@ using Avalonia.Interactivity;
 
 namespace Skua.Shared.Avalonia.Services;
 
-/// <summary>
-/// Provides client-side resize borders and interactive resizing for custom chrome (undecorated)
-/// windows on Linux desktop platforms where the window manager does not draw sizing frames.
-/// </summary>
 public static class WindowResizeHelper
 {
     private const double BorderThickness = 7.0;
@@ -56,7 +52,6 @@ public static class WindowResizeHelper
             return;
         }
 
-        // If mouse button is held and we are not in resize mode, user is dragging content inside window
         var pointProps = e.GetCurrentPoint(window).Properties;
         if (pointProps.IsLeftButtonPressed && window.Cursor == null)
             return;
@@ -78,8 +73,6 @@ public static class WindowResizeHelper
         if (sender is not Window window)
             return;
 
-        // The custom title bar's minimize/maximize/close buttons live at the window edge.
-        // Never turn their clicks into resize drags.
         if (e.Source is Button)
             return;
 
@@ -96,7 +89,6 @@ public static class WindowResizeHelper
 
         try
         {
-            // If window was using SizeToContent, fix the current dimensions to prevent layout collapse
             if (window.SizeToContent != SizeToContent.Manual)
             {
                 if (double.IsNaN(window.Width) || window.Width <= 0)

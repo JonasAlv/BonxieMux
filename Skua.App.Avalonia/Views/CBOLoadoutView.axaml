@@ -7,10 +7,8 @@
   <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                 VerticalScrollBarVisibility="Auto">
     <StackPanel Spacing="10" Margin="2">
-      <!-- Class Selection Section -->
       <ContentControl Content="{Binding ClassSelectViewModel}" />
 
-      <!-- Equipment Customization Expander -->
       <Expander IsExpanded="False"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"

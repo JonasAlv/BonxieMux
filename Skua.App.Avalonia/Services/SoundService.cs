@@ -22,7 +22,6 @@ public class SoundService : ISoundService
         {
             try
             {
-                // 1. Try canberra-gtk-play
                 try
                 {
                     ProcessStartInfo canberraPsi = new()
@@ -38,7 +37,6 @@ public class SoundService : ISoundService
                 }
                 catch { }
 
-                // 2. Try paplay with standard freedesktop sound
                 string? soundPath = null;
                 foreach (string candidate in SoundCandidates)
                 {

@@ -9,7 +9,6 @@
              mc:Ignorable="d">
     <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="12">
         
-        <!-- Header Status Card -->
         <Border Grid.Row="0"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -46,7 +45,6 @@
             </Grid>
         </Border>
 
-        <!-- Update Action Card -->
         <Border Grid.Row="1"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -99,7 +97,6 @@
             </Grid>
         </Border>
 
-        <!-- Scripts Repository Sync Card -->
         <Border Grid.Row="2"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -138,7 +135,6 @@
             </Grid>
         </Border>
 
-        <!-- Progress Indicator & Status Card -->
         <Border Grid.Row="3"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"

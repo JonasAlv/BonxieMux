@@ -10,20 +10,14 @@ using System.Linq;
 
 namespace Skua.App.Avalonia.ViewModels.Options;
 
-/// <summary>
-/// The options the Game Options window shows and changes: this client's own, or those of another open account.
-/// Everything changed through the window counts as unsaved for that account until Save (or Reset / Defaults).
-/// </summary>
 public abstract class OptionSource : ObservableObject, IOptionDictionary, IDisposable
 {
     public abstract string Account { get; }
     public abstract bool IsLocal { get; }
     public abstract ImmutableDictionary<string, Func<object>> OptionDictionary { get; }
 
-    /// <summary>The bool, int and string options with their types.</summary>
     public abstract IReadOnlyList<(string Name, Type Type)> Properties { get; }
 
-    /// <summary>Changed in this window and not saved yet.</summary>
     public bool HasUnsavedChanges { get; protected set; }
 
     public object? Get(string name) => OptionDictionary.TryGetValue(name, out Func<object>? read) ? read() : null;
@@ -47,7 +41,6 @@ public abstract class OptionSource : ObservableObject, IOptionDictionary, IDispo
     }
 }
 
-/// <summary>This client's own options (changes apply now, as before).</summary>
 public sealed class LocalOptionSource : OptionSource
 {
     private readonly IScriptOption _options;
@@ -105,10 +98,6 @@ public sealed class LocalOptionSource : OptionSource
     }
 }
 
-/// <summary>
-/// Another open account: its values come from the file it publishes and every change is sent to it as a command, so it
-/// applies the change live and, on Save, keeps it.
-/// </summary>
 public sealed class RemoteOptionSource : OptionSource
 {
     private readonly int _processId;
@@ -125,7 +114,6 @@ public sealed class RemoteOptionSource : OptionSource
         _account = account;
     }
 
-    /// <summary>The account's options, or null when it has not reported them.</summary>
     public static RemoteOptionSource? TryOpen(int processId, string account)
     {
         SharedOptions? shared = OptionSharing.Read(processId);
@@ -148,10 +136,8 @@ public sealed class RemoteOptionSource : OptionSource
     public override ImmutableDictionary<string, Func<object>> OptionDictionary => _dictionary;
     public override IReadOnlyList<(string Name, Type Type)> Properties => _properties;
 
-    /// <summary>True while the account is still reporting.</summary>
     public bool IsAlive => OptionSharing.Read(_processId) is not null;
 
-    /// <summary>Picks up changes made on the account itself (not the options just edited here, until the account has them).</summary>
     public void Refresh()
     {
         SharedOptions? shared = OptionSharing.Read(_processId);

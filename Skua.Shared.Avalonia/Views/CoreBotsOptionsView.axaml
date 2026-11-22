@@ -14,7 +14,6 @@
     mc:Ignorable="d">
     <Grid Margin="12" RowDefinitions="Auto,*" RowSpacing="10">
         
-        <!-- Top Toolbar Header Card -->
         <Border Grid.Row="0"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -23,7 +22,6 @@
                 Padding="8">
             <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8" VerticalAlignment="Center">
                 
-                <!-- Category Tabs (Sleek pill tabs) -->
                 <ListBox Grid.Column="0"
                          ItemsSource="{Binding CoreBotsTabs}"
                          SelectedItem="{Binding SelectedTab}"
@@ -73,7 +71,6 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <!-- Current Player Badge -->
                 <Border Grid.Column="1"
                         Background="{DynamicResource SkuaSurfaceAltBrush}"
                         BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -90,7 +87,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Action Buttons -->
                 <Button Grid.Column="2"
                         Classes="skua-button"
                         Command="{Binding LoadCommand}"
@@ -113,7 +109,6 @@
             </Grid>
         </Border>
 
-        <!-- Tab Content Frame -->
         <Border Grid.Row="1"
                 Background="{DynamicResource SkuaPageBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"

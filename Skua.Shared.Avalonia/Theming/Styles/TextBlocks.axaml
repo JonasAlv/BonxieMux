@@ -2,12 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Design.PreviewWith>
         <Border Padding="20">
-            <!-- Add Controls for Previewer Here -->
         </Border>
     </Design.PreviewWith>
     
-    <!-- No global TextBlock foreground: text inherits it from Window.skua (BaseTheme) or from
-         the control it sits in, so labels inside accent/danger buttons follow the button. -->
 
     <Style Selector="TextBlock.option-pill-suffix">
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -44,6 +41,4 @@
         <Setter Property="Padding" Value="16,0" />
     </Style>
 </Styles>
-
-
 

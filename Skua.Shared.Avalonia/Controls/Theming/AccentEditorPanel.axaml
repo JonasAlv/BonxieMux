@@ -6,7 +6,6 @@
              x:Name="Root">
   <StackPanel Spacing="10">
     
-    <!-- Mode & Custom Color Bar -->
     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalAlignment="Center">
       <WrapPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
         <sharedSettings:LabeledToggleRow Label="Sync with System"
@@ -23,7 +22,6 @@
                                          IsChecked="{Binding ThemeService.UseSystemAccentColor, Mode=TwoWay}" />
       </WrapPanel>
 
-      <!-- Compact ColorPicker (Popup flyout only when clicked) -->
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
         <TextBlock Text="Color:"
                    FontSize="12"

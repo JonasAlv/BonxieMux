@@ -134,7 +134,6 @@ public sealed class SkuaStartupHandler : IDisposable
         {
             _bot.Servers.EnsureRelogin(string.IsNullOrWhiteSpace(_options.Server) ? "Twilly" : _options.Server!);
 
-            // Wait for player to be in-game and world to load
             int wait = 0;
             while (!_bot.Player.Playing && wait < 80)
             {

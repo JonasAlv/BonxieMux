@@ -2,7 +2,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Design.PreviewWith>
         <Border Padding="20">
-            <!-- Add Controls for Previewer Here -->
         </Border>
     </Design.PreviewWith>
 
@@ -13,11 +12,9 @@
         <Setter Property="CornerRadius" Value="8" />
     </Style>
 
-    <!-- Rows: hover = NavHover; selected = accent tint + accent border (the same rule as cards, tabs and toggles) -->
     <Style Selector="ListBoxItem">
         <Setter Property="Padding" Value="6,4" />
         <Setter Property="CornerRadius" Value="6" />
-        <!-- On the item, not the presenter: the template binds the presenter border to these -->
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
@@ -52,8 +49,6 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
 
-    <!-- Card lists: ListBox Classes="card-list" whose item template root is Border Classes="list-card".
-         The card itself shows hover/selection; the ListBoxItem around it stays transparent. -->
     <Style Selector="ListBox.card-list ListBoxItem">
         <Setter Property="Padding" Value="0" />
         <Setter Property="BorderThickness" Value="0" />
@@ -95,12 +90,9 @@
         <Setter Property="Margin" Value="0,0,0,8" />
     </Style>
 
-    <!-- Page tabs (Manager navigation, Logs tabs): boxed, one minimum width per strip so short labels line up.
-         Off = neutral box with muted text; selected = accent tint + accent border, white semibold text. -->
     <Style Selector="ListBox.top-tabs, ListBox.top-tabs-client">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <!-- The strip has no box of its own; the global 8px radius would clip the first tab's corners -->
         <Setter Property="CornerRadius" Value="0" />
     </Style>
 
@@ -142,7 +134,6 @@
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
-    <!-- Segmented control: a 32px track with equal options (bind SelectedIndex). Selected = tint + accent border. -->
     <Style Selector="ListBox.segmented">
         <Setter Property="Height" Value="32" />
         <Setter Property="Padding" Value="2" />
@@ -177,7 +168,6 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
 
-    <!-- Compact horizontal category chips used by the options windows. -->
     <Style Selector="ListBox.chips">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />

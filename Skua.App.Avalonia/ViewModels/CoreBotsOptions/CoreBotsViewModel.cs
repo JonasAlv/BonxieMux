@@ -24,7 +24,6 @@ public partial class CoreBotsViewModel : BotControlViewModelBase
 
     protected override void OnActivated()
     {
-        // Opening the window while logged out just shows "Not Logged In"; only the Load button explains why.
         SetAccountPolling(true);
         LoadInternal(showDialog: false);
     }
@@ -32,7 +31,6 @@ public partial class CoreBotsViewModel : BotControlViewModelBase
     protected override void OnDeactivated()
     {
         SetAccountPolling(false);
-        // Auto-save when closing the window
         if (!string.IsNullOrEmpty(TargetName))
         {
             SaveInternal(showDialog: false);
@@ -48,7 +46,6 @@ public partial class CoreBotsViewModel : BotControlViewModelBase
     [NotifyPropertyChangedFor(nameof(IsOptionsTabSelected))]
     private TabItemViewModel _selectedTab;
 
-    // The Options tab's search sits on the tab row, shown while that tab is open
     public CBOptionsViewModel? OptionsTab => CoreBotsTabs.Select(t => t.Content).OfType<CBOptionsViewModel>().FirstOrDefault();
     public bool IsOptionsTabSelected => SelectedTab?.Content is CBOptionsViewModel;
 
@@ -130,8 +127,6 @@ public partial class CoreBotsViewModel : BotControlViewModelBase
         _readValues.Add(TargetName, optionsDict);
     }
 
-    // Refreshes the class and equipment lists from the logged-in character's inventory, keeping the
-    // selections already made in the window.
     [RelayCommand]
     private void LoadCharacter()
     {

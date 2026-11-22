@@ -1,7 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Base Modern NumericUpDown Styling -->
     <Style Selector="NumericUpDown">
         <Setter Property="Height" Value="32" />
         <Setter Property="MinHeight" Value="0" />
@@ -28,7 +27,6 @@
         <Setter Property="BorderThickness" Value="0" />
     </Style>
 
-    <!-- Compact stepper buttons inside the field instead of two full-size buttons -->
     <Style Selector="NumericUpDown:not(:skua-never) /template/ ButtonSpinner /template/ RepeatButton">
         <Setter Property="Width" Value="22" />
         <Setter Property="MinWidth" Value="22" />
@@ -45,13 +43,11 @@
     <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:pressed /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaPressedBrush}" />
     </Style>
-    <!-- At the minimum or maximum the button is disabled: no grey Fluent box, just a faded glyph -->
     <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:disabled /template/ ContentPresenter">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Opacity" Value="0.45" />
     </Style>
 
-    <!-- .bottom-line (rule editors) is now the regular boxed field; its Tag is shown as a muted label inside it -->
     <Style Selector="NumericUpDown.bottom-line">
         <Setter Property="InnerLeftContent">
             <Template>

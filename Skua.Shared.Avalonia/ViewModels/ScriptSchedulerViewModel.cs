@@ -67,7 +67,6 @@ public partial class ScriptSchedulerViewModel : BotControlViewModelBase
 
     public string ToggleQueueText => IsRunningQueue ? "Stop queue" : "Start queue";
 
-    // "Started at 22:10:05 · running 2 of 4", or "4 scripts" while stopped
     public string QueueSummary => IsRunningQueue
         ? $"{QueueStartedTime} · running {Math.Min(CurrentIndex + 1, ScriptQueue.Count)} of {ScriptQueue.Count}"
         : ScriptQueue.Count == 1 ? "1 script" : $"{ScriptQueue.Count} scripts";
@@ -489,7 +488,6 @@ public partial class ScriptSchedulerViewModel : BotControlViewModelBase
             }
             catch (TaskCanceledException)
             {
-                // The queue was stopped while waiting to start the next script.
             }
         });
     }

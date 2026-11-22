@@ -96,7 +96,6 @@ public partial class CBOClassSelectViewModel : ObservableObject, IManageCBOption
     [ObservableProperty]
     private string? _selectedSoloModeString;
 
-    // Keep enum and string mode selections in sync so saves persist the user's choice.
     partial void OnSelectedSoloModeStringChanged(string? value)
     {
         if (!string.IsNullOrWhiteSpace(value) && Enum.TryParse(typeof(ClassUseMode), value, true, out object? result))
@@ -185,7 +184,6 @@ public partial class CBOClassSelectViewModel : ObservableObject, IManageCBOption
     [ObservableProperty]
     private string? _selectedFarmModeString;
 
-    // Keep enum and string mode selections in sync so saves persist the user's choice.
     partial void OnSelectedFarmModeStringChanged(string? value)
     {
         if (!string.IsNullOrWhiteSpace(value) && Enum.TryParse(typeof(ClassUseMode), value, true, out object? result))
@@ -274,7 +272,6 @@ public partial class CBOClassSelectViewModel : ObservableObject, IManageCBOption
     [ObservableProperty]
     private string? _selectedDodgeModeString;
 
-    // Keep enum and string mode selections in sync so saves persist the user's choice.
     partial void OnSelectedDodgeModeStringChanged(string? value)
     {
         if (!string.IsNullOrWhiteSpace(value) && Enum.TryParse(typeof(ClassUseMode), value, true, out object? result))
@@ -363,7 +360,6 @@ public partial class CBOClassSelectViewModel : ObservableObject, IManageCBOption
     [ObservableProperty]
     private string? _selectedBossModeString;
 
-    // Keep enum and string mode selections in sync so saves persist the user's choice.
     partial void OnSelectedBossModeStringChanged(string? value)
     {
         if (!string.IsNullOrWhiteSpace(value) && Enum.TryParse(typeof(ClassUseMode), value, true, out object? result))
@@ -417,7 +413,6 @@ public partial class CBOClassSelectViewModel : ObservableObject, IManageCBOption
     [RelayCommand]
     private void ReloadClasses()
     {
-        // Runs every time the view is shown, so it must refresh the list without clearing the user's picks.
         string? solo = SelectedSoloClass, farm = SelectedFarmClass, dodge = SelectedDodgeClass, boss = SelectedBossClass;
 
         PlayerClasses = new List<string> { CurrentClassOption };
@@ -438,16 +433,12 @@ public partial class CBOClassSelectViewModel : ObservableObject, IManageCBOption
 
         SortPlayerClasses();
 
-        // The ComboBoxes may push null back while their ItemsSource is swapped; restore the picks.
         SelectedSoloClass = solo;
         SelectedFarmClass = farm;
         SelectedDodgeClass = dodge;
         SelectedBossClass = boss;
     }
 
-    // The view is rebuilt each time the Loadout tab is shown, so it must not clear the selections.
-    // SetValues resets the checkbox and mode of a slot with no class and swaps a named preset for the
-    // class's first mode, so those are put back afterwards.
     [RelayCommand]
     private void RefreshClasses()
     {

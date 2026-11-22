@@ -8,7 +8,6 @@
              x:DataType="vms:JunkItemsViewModel"
              mc:Ignorable="d" d:DesignHeight="500" d:DesignWidth="700">
   <UserControl.Styles>
-    <!-- Rows select through their check box, so the row shows the item's IsSelected, not ListBox selection -->
     <Style Selector="Border.junk-row">
       <Setter Property="MinHeight" Value="30" />
       <Setter Property="Padding" Value="8,0" />
@@ -30,7 +29,6 @@
   </UserControl.Styles>
 
   <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="10">
-    <!-- Search and refresh -->
     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
       <TextBox Grid.Column="0"
                PlaceholderText="Search by ID or name"
@@ -49,13 +47,11 @@
       </Button>
     </Grid>
 
-    <!-- Item filters -->
     <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8">
       <ComboBox Grid.Column="0" ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" HorizontalAlignment="Stretch" ToolTip.Tip="Filter by item category" />
       <ComboBox Grid.Column="1" ItemsSource="{Binding AcFilterOptions}" SelectedItem="{Binding AcFilter, Mode=TwoWay}" HorizontalAlignment="Stretch" ToolTip.Tip="Filter AC items or non-AC items" />
     </Grid>
 
-    <!-- Selection bar: select all / clear, and what to do with the selection -->
     <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8" Margin="9,0,0,0">
       <CheckBox Grid.Column="0"
                 IsChecked="{Binding SelectionState, Mode=TwoWay}"
@@ -71,7 +67,6 @@
       <Button Grid.Column="3" Classes="skua-button small w84" Content="Unmark" Command="{Binding UnmarkAsJunkCommand}" />
     </Grid>
 
-    <!-- Inventory and bank items -->
     <ListBox Grid.Row="3"
              Classes="card-list"
              ItemsSource="{Binding FilteredItems}"
@@ -109,7 +104,6 @@
       </ListBox.ItemTemplate>
     </ListBox>
 
-    <!-- Selling -->
     <Grid Grid.Row="4" ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
       <CheckBox Grid.Column="0"
                 Content="Skip sell warning"

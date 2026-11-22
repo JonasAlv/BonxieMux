@@ -78,24 +78,20 @@ public partial class ScriptUpdaterViewModel : BotControlViewModelBase
         {
             string skuaPath = ClientFileSources.SkuaScriptsDIR;
             
-            // Defensive move: retry to overcome transient OS file locks or dangling file handles
             int retries = 5;
             while (retries > 0)
             {
                 try
                 {
-                    // The old folder is renamed, not deleted: scripts of your own, JunkItems.json and the like are still there
-                    // (Scripts-old-<date>) if anything in it was needed.
                     if (Directory.Exists(skuaPath))
                         Directory.Move(skuaPath, $"{skuaPath}-old-{DateTime.Now:yyyyMMdd-HHmmss}");
-                    break; // Success
+                    break;
                 }
                 catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
                 {
                     retries--;
                     if (retries == 0) throw;
                     
-                    // Force GC to clean up any dangling file streams from the script parser
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
                     await Task.Delay(300, token);

@@ -54,7 +54,6 @@ internal class Grabber
         };
         return new List<GrabberListViewModel>()
         {
-            // Order and Group drive the grouped sidebar in the Grabber window.
             new("Shop Items", grabberService, GrabberTypes.Shop_Items, new GrabberTaskViewModel("Buy", grabberService.BuyItems), true) { Group = "SHOPS", Icon = MaterialIconKind.StorefrontOutline },
             new("Shop IDs", grabberService, GrabberTypes.Shop_IDs, new GrabberTaskViewModel("Load Shop", grabberService.LoadShop), false) { Group = "SHOPS", Icon = MaterialIconKind.Pound },
             new("Quests", grabberService, GrabberTypes.Quests, questCommands, true) { Group = "QUESTS", Icon = MaterialIconKind.ClipboardTextOutline },

@@ -11,11 +11,6 @@ using System.Threading.Tasks;
 
 namespace Skua.App.Avalonia.ViewModels;
 
-/// <summary>
-/// The Account drop-down of the Script Loader: the card, Load Script and Start/Stop Script work on this client or on any other open
-/// account. Another account is a separate process, so it is driven with the same messages Army Control uses (load a script, start or
-/// stop it) and its loaded script and running state are read from the file every client writes in the tabs folder: {pid}.state.
-/// </summary>
 public partial class ScriptLoaderViewModel
 {
     private DispatcherTimer? _accountsTimer;
@@ -42,7 +37,6 @@ public partial class ScriptLoaderViewModel
 
     public bool IsOtherAccount => !_selectedAccount.IsSelf;
 
-    // What the card and the buttons show: this client's script, or the picked account's.
     public string ShownScript => IsOtherAccount ? (string.IsNullOrWhiteSpace(_remoteScriptPath) ? "No script loaded" : Path.GetFileName(_remoteScriptPath)) : LoadedScript;
     public string ShownScriptPath => IsOtherAccount ? _remoteScriptPath : LoadedScriptPath;
     public bool ShownRunning => IsOtherAccount ? _remoteRunning : ScriptManager.ScriptRunning;
@@ -51,7 +45,6 @@ public partial class ScriptLoaderViewModel
     public bool CanPauseShown => !IsOtherAccount && ScriptManager.ScriptRunning;
     public bool CanEditOptionsShown => !IsOtherAccount && ToggleScriptEnabled;
 
-    // This client's own state moved: the card follows it while this client is the shown account.
     partial void OnLoadedScriptChanged(string value) => RaiseShownIfLocal();
     partial void OnScriptStatusChanged(string value) => RaiseShownIfLocal();
     partial void OnToggleScriptEnabledChanged(bool value) => RaiseShownIfLocal();
@@ -74,7 +67,6 @@ public partial class ScriptLoaderViewModel
         OnPropertyChanged(nameof(CanEditOptionsShown));
     }
 
-    /// <summary>The view calls this when it appears and goes: the open accounts are only polled while the Script Loader is on screen.</summary>
     public void SetAccountPolling(bool on)
     {
         if (on)
@@ -125,7 +117,6 @@ public partial class ScriptLoaderViewModel
             Accounts.Clear();
             foreach (AccountChoice account in wanted)
                 Accounts.Add(account);
-            // An account that closed: back to this client.
             _selectedAccount = wanted.FirstOrDefault(a => a.ProcessId == _selectedAccount.ProcessId) ?? wanted[0];
             OnPropertyChanged(nameof(SelectedAccount));
             RaiseShown();
@@ -152,7 +143,6 @@ public partial class ScriptLoaderViewModel
         catch { }
     }
 
-    /// <summary>Load Script button: opens the file picker in the local scripts directory and loads the script for the selected account.</summary>
     [RelayCommand]
     private void LoadScriptForAccount()
     {
@@ -169,7 +159,6 @@ public partial class ScriptLoaderViewModel
         SendLoadToAccount(path);
     }
 
-    /// <summary>Start / Stop Script button: on this client as before, or on the picked account.</summary>
     [RelayCommand]
     private async Task ToggleScriptForAccount()
     {
@@ -184,14 +173,12 @@ public partial class ScriptLoaderViewModel
             return;
         }
         Skua.App.Avalonia.Services.TabIpc.SendMessage(_selectedAccount.ProcessId, Skua.App.Avalonia.Services.SkuaIpcMessages.SetOption, new IntPtr(99), new IntPtr(_remoteRunning ? 0 : 1));
-        // The account reports its new state within a moment; show the intent right away.
         _remoteRunning = !_remoteRunning;
         RaiseShown();
     }
 
     private void SendLoadToAccount(string path)
     {
-        // The target reads the path from this shared file when the message reaches it.
         File.WriteAllText(Path.Combine(Skua.Core.Models.ClientFileSources.TabsDIR, "skua_global_script.txt"), path);
         Skua.App.Avalonia.Services.TabIpc.SendMessage(_selectedAccount.ProcessId, Skua.App.Avalonia.Services.SkuaIpcMessages.LoadScript, IntPtr.Zero, IntPtr.Zero);
         _remoteScriptPath = path;

@@ -156,7 +156,6 @@ public class DialogService : DialogServiceBase
         return result;
     }
 
-
     private static bool? ShowSelectGroupDialog(SelectGroupDialogViewModel vm, string title)
     {
         Window dialog = CreateBaseDialog(title);

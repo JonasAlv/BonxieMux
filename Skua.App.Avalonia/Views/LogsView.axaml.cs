@@ -11,7 +11,6 @@ public partial class LogsView : UserControl
         InitializeComponent();
     }
 
-    // Copy lives on the tab row; the open tab knows which lines are selected.
     private async void CopyButton_Click(object? sender, RoutedEventArgs e)
     {
         if (TabContent.Presenter?.Child is LogTabUserControl tab)

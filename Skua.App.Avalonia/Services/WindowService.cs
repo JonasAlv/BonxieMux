@@ -21,8 +21,6 @@ public class WindowService : IWindowService
     private readonly Dictionary<string, Window> _managedWindows = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Func<IManagedWindow>> _managedWindowFactories = new(StringComparer.OrdinalIgnoreCase);
 
-    // One window per view model type for the resolve-from-container overloads: asking again brings the
-    // open window to the front instead of stacking a duplicate.
     private readonly Dictionary<Type, Window> _typeWindows = new();
 
     public void ShowWindow<TViewModel>(int width, int height) where TViewModel : class
@@ -65,7 +63,6 @@ public class WindowService : IWindowService
         if (viewModel is Skua.Shared.Avalonia.ViewModels.BotControlViewModelBase control && !string.IsNullOrWhiteSpace(control.Title))
             return control.Title;
 
-        // "BotWindowViewModel" -> "Bot Window"
         string name = viewModel.GetType().Name;
         if (name.EndsWith("ViewModel", StringComparison.Ordinal))
             name = name[..^"ViewModel".Length];
@@ -188,8 +185,6 @@ public class WindowService : IWindowService
             window.MinHeight = Math.Min(height, 300);
         }
 
-        // Size first, then place: centring a window whose size is still unknown puts it in the wrong spot
-        // and it visibly jumps once Opened corrects it.
         if (initialPos.HasValue)
         {
             window.Position = initialPos.Value;
@@ -275,7 +270,6 @@ public class WindowService : IWindowService
             }
             catch
             {
-                // Fallback to parameterless Show
             }
         }
         window.Show();

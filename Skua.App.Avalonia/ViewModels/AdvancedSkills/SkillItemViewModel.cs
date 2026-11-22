@@ -416,7 +416,6 @@ public class SkillItemViewModel : ObservableObject
 
         List<string> conditions = new();
 
-        // The rules compare inclusively, so the list shows ≥ and ≤ (the rule text keeps > and <).
         if (UseRules.HealthUseValue != 0)
             conditions.Add($"[Health{(UseRules.HealthGreaterThanBool ? " ≥ " : " ≤ ")}{UseRules.HealthUseValue}{(UseRules.HealthIsPercentage ? "%" : "#")}]");
 

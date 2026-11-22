@@ -6,7 +6,6 @@
              x:Class="Skua.App.Avalonia.Views.BotWindowView"
              x:DataType="vms:BotWindowViewModel">
   <Grid RowDefinitions="Auto,*" Margin="8" RowSpacing="8">
-    <!-- Top Toolbar Navigation -->
     <Border Grid.Row="0"
             Background="{DynamicResource SkuaSurfaceBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -15,28 +14,24 @@
             Padding="8,6">
       <DockPanel LastChildFill="True">
         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-          <!-- Toggle Sidebar -->
           <ToggleButton Classes="top-nav-item"
                         IsChecked="{Binding IsSidebarOpen, Mode=TwoWay}"
                         ToolTip.Tip="Toggle Tools Sidebar">
             <materialIcons:MaterialIcon Kind="Menu" Width="14" Height="14" />
           </ToggleButton>
 
-          <!-- Back -->
           <Button Classes="top-nav-item"
                   Command="{Binding MovePrevCommand}"
                   ToolTip.Tip="Previous Tool">
             <materialIcons:MaterialIcon Kind="ArrowLeft" Width="14" Height="14" />
           </Button>
 
-          <!-- Forward -->
           <Button Classes="top-nav-item"
                   Command="{Binding MoveNextCommand}"
                   ToolTip.Tip="Next Tool">
             <materialIcons:MaterialIcon Kind="ArrowRight" Width="14" Height="14" />
           </Button>
 
-          <!-- Home -->
           <Button Classes="top-nav-item"
                   Command="{Binding HomeCommand}"
                   ToolTip.Tip="First Tool">
@@ -54,9 +49,7 @@
       </DockPanel>
     </Border>
 
-    <!-- Main Content Area -->
     <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="8">
-      <!-- Collapsible Tools Sidebar -->
       <Border Grid.Column="0"
               Background="{DynamicResource SkuaSurfaceBrush}"
               BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -97,7 +90,6 @@
         </Grid>
       </Border>
 
-      <!-- Selected Tool View -->
       <Border Grid.Column="1"
               Background="{DynamicResource SkuaSurfaceBrush}"
               BorderBrush="{DynamicResource SkuaBorderBrush}"

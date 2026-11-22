@@ -13,7 +13,6 @@
           Width="320">
     <StackPanel Spacing="10">
       
-      <!-- Top Title -->
       <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
         <materialIcons:MaterialIcon Kind="RunFast" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
         <TextBlock Text="Fast Map Jump" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
@@ -21,7 +20,6 @@
 
       <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
 
-      <!-- Select Cell & Pad -->
       <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
         <ComboBox x:Name="Cells"
                   Grid.Column="0"
@@ -42,7 +40,6 @@
                   SelectedItem="{Binding SelectedPad}" />
       </Grid>
 
-      <!-- Action Buttons -->
       <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
         <Button Grid.Column="0"
                 Classes="skua-button"

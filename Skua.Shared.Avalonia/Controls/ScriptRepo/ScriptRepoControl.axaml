@@ -7,12 +7,8 @@
              Background="{DynamicResource SkuaPageBrush}"
              x:Class="Skua.Shared.Avalonia.Controls.ScriptRepo.ScriptRepoControl">
 
-    <!-- Search Scripts (client) / Script Repo (Manager): search row, one list (each row: name, full description, path
-         with size and date, all tags; Start / Load / Queue / more always on the right), and a footer with the repo
-         counts and the bulk actions. The Manager hides Start. -->
     <Grid RowDefinitions="Auto,*,Auto" Margin="12" RowSpacing="10">
 
-        <!-- 1. Search, what it looks in, category, order (name or date) -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8" IsEnabled="{Binding !IsBusy}">
             <TextBox Grid.Column="0" PlaceholderText="Search scripts by name, path or tag" Text="{Binding SearchText, Mode=TwoWay}">
                 <TextBox.InnerLeftContent>
@@ -39,7 +35,6 @@
             </ToggleButton>
         </Grid>
 
-        <!-- 2. The scripts -->
         <Grid Grid.Row="1">
             <Border Classes="option-list">
                 <Grid>
@@ -59,7 +54,6 @@
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                         <ListBox.Styles>
-                            <!-- Flat rows with a line between them, like the options lists -->
                             <Style Selector="ListBoxItem">
                                 <Setter Property="Padding" Value="12,10" />
                                 <Setter Property="Margin" Value="0" />
@@ -131,7 +125,6 @@
                                         </StackPanel>
                                         <TextBlock Text="{Binding Info.Description}" FontSize="11" TextWrapping="Wrap"
                                                    Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                        <!-- Path (never trimmed; wraps at folders), then size and date -->
                                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4" Margin="0,2,0,0">
                                             <materialIcons:MaterialIcon Grid.Column="0" Kind="FolderOutline" Width="12" Height="12" VerticalAlignment="Top" Margin="0,1,0,0"
                                                                         Foreground="{DynamicResource SkuaMutedTextBrush}" />
@@ -157,7 +150,6 @@
                                         </ItemsControl>
                                     </StackPanel>
 
-                                    <!-- Always there, so nothing moves on hover. 90x30: a little larger than the small buttons, still clear of the text -->
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                         <Button Classes="skua-button skua-primary w90" Height="30" MinHeight="30"
                                                 IsVisible="{Binding #Root.((scriptRepo:ScriptRepoViewModel)DataContext).ShowStartButton}"
@@ -196,8 +188,6 @@
                                                         </MenuItem.Icon>
                                                     </MenuItem>
                                                     <Separator />
-                                                    <!-- Download when it isn't local yet; Update re-downloads a local repo script, newer or not
-                                                         (greyed out for custom scripts, which aren't in the repo) -->
                                                     <MenuItem Header="Download" IsVisible="{Binding !Downloaded}"
                                                               Command="{Binding #Root.((scriptRepo:ScriptRepoViewModel)DataContext).DownloadCommand}" CommandParameter="{Binding .}">
                                                         <MenuItem.Icon>
@@ -232,7 +222,6 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <!-- Still loading the list -->
                     <Panel IsVisible="{Binding IsLoadingScripts}">
                         <StackPanel Spacing="12" HorizontalAlignment="Center" VerticalAlignment="Center"
                                     IsVisible="{Binding !FilteredScripts.Count}">
@@ -244,7 +233,6 @@
                         </StackPanel>
                     </Panel>
 
-                    <!-- Nothing matches -->
                     <Panel IsVisible="{Binding !IsLoadingScripts}">
                         <StackPanel Spacing="10" HorizontalAlignment="Center" VerticalAlignment="Center"
                                     IsVisible="{Binding !FilteredScripts.Count}">
@@ -263,7 +251,6 @@
                 </Grid>
             </Border>
 
-            <!-- Busy: blocks the list until the task ends or is cancelled -->
             <Border Background="#B0000000" CornerRadius="8" IsVisible="{Binding IsBusy}">
                 <Border Background="{DynamicResource SkuaSurfaceBrush}"
                         BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -292,7 +279,6 @@
             </Border>
         </Grid>
 
-        <!-- 3. Repo counts and bulk actions -->
         <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="6" IsEnabled="{Binding !IsBusy}">
             <TextBlock Grid.Column="0" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource SkuaMutedTextBrush}"
                        TextTrimming="CharacterEllipsis">

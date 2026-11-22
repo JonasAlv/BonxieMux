@@ -22,7 +22,6 @@ public partial class ScriptItemViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsRunning), nameof(IsDone), nameof(IsStopped), nameof(IsProblem))]
     private string _status;
 
-    // For the Scheduler's status chip: running green, stopped amber, problems red, done dimmed
     public bool IsRunning => Status == "Running";
     public bool IsDone => Status == "Completed";
     public bool IsStopped => Status == "Stopped";

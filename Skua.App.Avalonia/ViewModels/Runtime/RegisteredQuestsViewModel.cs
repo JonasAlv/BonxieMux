@@ -78,7 +78,6 @@ public partial class RegisteredQuestsViewModel : ObservableRecipient
         if (parts.Length == 0)
             return;
 
-        // Parse reward ID (defaults to -1 if empty or invalid)
         int rewardId = -1;
         if (!string.IsNullOrWhiteSpace(RewardIdInput) && int.TryParse((string?)RewardIdInput.Trim(), out int parsedReward))
             rewardId = parsedReward;

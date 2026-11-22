@@ -3,24 +3,13 @@
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia">
     <Design.PreviewWith>
         <Border Padding="20">
-            <!-- Add Controls for Previewer Here -->
         </Border>
     </Design.PreviewWith>
-
-    <!-- Rules shared by every interactive control: heights 32 (regular) and 26 (.small); fixed widths
-         (.w64 .w84 .w112 .w140) so a label change never resizes a button; hover = NavHover fill + BorderStrong
-         border; pressed = Pressed fill; selected/on = accent tint + accent border; keyboard focus = accent ring;
-         disabled = 45% opacity. -->
 
     <Style Selector="Button, ToggleButton">
         <Setter Property="Cursor" Value="Hand" />
     </Style>
 
-    <!-- Keyboard focus: an accent ring on the control's own edge, following its corners, with a page-coloured
-         inner line so it still shows on accent fills. Avalonia only shows a focus adorner for Tab/arrow focus,
-         never for a click. It replaces Fluent's default for every control that keeps the default (TextBox and
-         ComboBox opt out and use their accent border). It must stay inside the control: templated controls
-         clip to their bounds and the adorner is clipped with them, so a ring drawn outside never shows. -->
     <Style Selector="AdornerLayer">
         <Setter Property="DefaultFocusAdorner">
             <FocusAdornerTemplate>
@@ -32,7 +21,6 @@
             </FocusAdornerTemplate>
         </Setter>
     </Style>
-    <!-- These draw their shape on a template part and leave CornerRadius at 0, so their ring gets the theme's r6 -->
     <Style Selector="CheckBox, RadioButton, ToggleSwitch, Slider, TabItem">
         <Setter Property="FocusAdorner">
             <FocusAdornerTemplate>
@@ -43,7 +31,6 @@
         </Setter>
     </Style>
 
-    <!-- Default Button: the secondary look -->
     <Style Selector="Button">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
@@ -55,8 +42,6 @@
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
-    <!-- No rest-state rule on the presenter: it takes Background/BorderBrush from the button and inherits
-         Foreground, so class and local colours (skua-primary, skua-danger, plugins) show through. -->
     <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
@@ -81,7 +66,6 @@
         <Setter Property="Margin" Value="0,0,8,0" />
     </Style>
 
-    <!-- Icon buttons: square, r6, accent glyph; 26 by default, .icon-28 is the regular 32 -->
     <Style Selector="Button.danger-icon, Button.icon">
         <Setter Property="Width" Value="26" />
         <Setter Property="Height" Value="26" />
@@ -116,7 +100,6 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaAccentPressedBrush}" />
     </Style>
-    <!-- Muted icon buttons: grey glyph that turns white on hover -->
     <Style Selector="Button.icon-muted">
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
     </Style>
@@ -126,7 +109,6 @@
     <Style Selector="Button.icon-muted:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
-    <!-- Destructive icon buttons: muted glyph at rest, red with a red tint on hover -->
     <Style Selector="Button.danger-icon">
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
     </Style>
@@ -138,7 +120,6 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaDangerBrush}" />
     </Style>
 
-    <!-- Outline buttons share the secondary look now; the class stays so views keep working -->
     <Style Selector="Button.outline, Button.skua-outline">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
@@ -146,7 +127,6 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
 
-    <!-- Secondary (default) button -->
     <Style Selector="Button.skua-button">
         <Setter Property="Height" Value="32" />
         <Setter Property="Padding" Value="12,0" />
@@ -162,8 +142,6 @@
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
 
-    <!-- At rest the presenter takes the button's own Background/BorderBrush/Foreground (TemplateBinding),
-         so a local Background on a skua-button is honoured. Only hover/pressed/disabled override it. -->
     <Style Selector="Button.skua-button /template/ ContentPresenter#PART_ContentPresenter">
     </Style>
     <Style Selector="Button.skua-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -177,8 +155,6 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
 
-    <!-- Sizes, declared after .skua-button so they win: .small is the 26px height; .wNN fix the width so
-         the label can change without a resize -->
     <Style Selector="Button.small, ToggleButton.small">
         <Setter Property="Height" Value="26" />
         <Setter Property="MinHeight" Value="26" />
@@ -195,7 +171,6 @@
         <Setter Property="Padding" Value="8,0" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
     </Style>
-    <!-- Exception: Search Scripts' row buttons (84 looked small, 112 doesn't fit beside the text) -->
     <Style Selector="Button.w90, ToggleButton.w90">
         <Setter Property="Width" Value="90" />
         <Setter Property="Padding" Value="8,0" />
@@ -212,7 +187,6 @@
         <Setter Property="HorizontalContentAlignment" Value="Center" />
     </Style>
 
-    <!-- Primary: follows the user's theme colour -->
     <Style Selector="Button.skua-primary, Button.skua-button.skua-primary">
         <Setter Property="Background" Value="{DynamicResource SkuaAccentBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
@@ -240,7 +214,6 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaAccentForegroundBrush}" />
     </Style>
 
-    <!-- Danger: solid red, for confirms that can't be undone -->
     <Style Selector="Button.skua-danger, Button.skua-button.skua-danger">
         <Setter Property="Background" Value="{DynamicResource SkuaDangerBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaDangerBrush}" />
@@ -261,7 +234,6 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaDangerForegroundBrush}" />
     </Style>
 
-    <!-- Soft danger: red text on a red tint, for stops and removals that can't be undone -->
     <Style Selector="Button.skua-danger-soft, Button.skua-button.skua-danger-soft">
         <Setter Property="Background" Value="{DynamicResource SkuaDangerTintBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaDangerSoftBorderBrush}" />
@@ -278,7 +250,6 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaDangerBrush}" />
     </Style>
 
-    <!-- Ghost buttons: no box at rest (top bar actions and menu-bar style navigation) -->
     <Style Selector="Button.topbar-action">
         <Setter Property="Height" Value="28" />
         <Setter Property="MinWidth" Value="34" />
@@ -302,7 +273,6 @@
     </Style>
 
     <Style Selector="Button.top-nav-item, ToggleButton.top-nav-item">
-        <!-- Flat hover, no glow -->
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -332,9 +302,7 @@
         <Setter Property="BorderThickness" Value="0" />
     </Style>
 
-    <!-- Window title bar buttons (unchanged) -->
     <Style Selector="Button.titlebar">
-        <!-- No fade: Transparent is #00FFFFFF, so the base Button Background transition passes through a white tint on pointer-out. -->
         <Setter Property="Transitions" Value="{x:Null}" />
     </Style>
     <Style Selector="Button.titlebar:pressed">
@@ -372,9 +340,7 @@
         <Setter Property="TextBlock.Foreground" Value="{DynamicResource SkuaDangerForegroundBrush}" />
     </Style>
 
-    <!-- Option action buttons: the secondary look, without the Fluent control theme -->
     <Style Selector="Button.option-action-button">
-        <!-- No template (Theme null), so nothing to glow -->
         <Setter Property="Theme" Value="{x:Null}" />
         <Setter Property="Height" Value="32" />
         <Setter Property="MinHeight" Value="32" />
@@ -401,8 +367,6 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
 
-    <!-- Disabled: keep each button's own colours (Fluent would swap in its grey) and fade once, via the
-         generic Button:disabled presenter opacity above. -->
     <Style Selector="Button.skua-button:disabled /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
@@ -424,15 +388,11 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaDangerBrush}" />
     </Style>
 
-    <!-- Set button attached to an option field: flat segment with a divider; .pending (unapplied edit) is accent,
-         .applied shows the green check -->
     <Style Selector="Button.option-set">
-        <!-- Flat hover, no glow -->
         <Setter Property="Height" Value="30" />
         <Setter Property="MinHeight" Value="30" />
         <Setter Property="MinWidth" Value="48" />
         <Setter Property="Padding" Value="10,0" />
-        <!-- Rounded on the right to sit inside the field's 8px corners (8 minus its 1px border) -->
         <Setter Property="CornerRadius" Value="0,7,7,0" />
         <Setter Property="BorderThickness" Value="1,0,0,0" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />

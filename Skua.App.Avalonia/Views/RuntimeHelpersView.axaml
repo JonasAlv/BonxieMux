@@ -5,7 +5,6 @@
     
     <Grid Margin="12" ColumnDefinitions="*,*" ColumnSpacing="12">
         
-        <!-- Left Side: Drops Helper Card -->
         <Border Grid.Column="0"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -74,10 +73,8 @@
             </Grid>
         </Border>
         
-        <!-- Right Side: Quests & Boosts Cards -->
         <Grid Grid.Column="1" RowDefinitions="*, Auto" RowSpacing="12">
             
-            <!-- Quests Helper Card -->
             <Border Grid.Row="0"
                     Background="{DynamicResource SkuaSurfaceBrush}"
                     BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -122,7 +119,6 @@
                 </Grid>
             </Border>
 
-            <!-- Boosts Helper Card -->
             <Border Grid.Row="1"
                     Background="{DynamicResource SkuaSurfaceBrush}"
                     BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -155,28 +151,24 @@
                             CornerRadius="6"
                             Padding="8">
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*, Auto" RowSpacing="4">
-                            <!-- Class boost -->
                             <CheckBox Grid.Row="0" Grid.Column="0" Content="Class Boost"
                                       IsChecked="{Binding Boosts.UseClassBoost}" />
                             <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
                                        Text="{Binding Boosts.ClassBoostID, StringFormat='ID: {0}'}" />
 
-                            <!-- Gold boost -->
                             <CheckBox Grid.Row="1" Grid.Column="0" Content="Gold Boost"
                                       IsChecked="{Binding Boosts.UseGoldBoost}" />
                             <TextBlock Grid.Row="1" Grid.Column="1" VerticalAlignment="Center"
                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
                                        Text="{Binding Boosts.GoldBoostID, StringFormat='ID: {0}'}" />
 
-                            <!-- Exp boost -->
                             <CheckBox Grid.Row="2" Grid.Column="0" Content="Experience Boost"
                                       IsChecked="{Binding Boosts.UseExperienceBoost}" />
                             <TextBlock Grid.Row="2" Grid.Column="1" VerticalAlignment="Center"
                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
                                        Text="{Binding Boosts.ExperienceBoostID, StringFormat='ID: {0}'}" />
 
-                            <!-- Rep boost -->
                             <CheckBox Grid.Row="3" Grid.Column="0" Content="Reputation Boost"
                                       IsChecked="{Binding Boosts.UseReputationBoost}" />
                             <TextBlock Grid.Row="3" Grid.Column="1" VerticalAlignment="Center"

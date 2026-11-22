@@ -6,7 +6,6 @@ using System.Globalization;
 
 namespace Skua.Manager.Avalonia.Converters;
 
-/// <summary>Colour of a server's ping text from its level: green for quick, amber for middling, red for slow or no answer, muted when unknown.</summary>
 public sealed class ServerPingBrushConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)

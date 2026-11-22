@@ -95,7 +95,6 @@ public partial class CurrentDropsViewModel : BotControlViewModelBase
             if (items[i] is ItemBase ib)
                 dropIds[i] = ib.ID;
         }
-        // Pickup(int[]) waits for the server's reply, which arrives on the UI thread: don't block it.
         Task.Run(() => _drops.Pickup(dropIds));
     }
 
@@ -118,7 +117,6 @@ public partial class CurrentDropsViewModel : BotControlViewModelBase
 
     private void PickupResultReceived(CurrentDropsViewModel recipient, DropPickupResultMessage message)
     {
-        // Posted so the list is read after ScriptDrop has handled the same message.
         Dispatcher.UIThread.Post(recipient.RefreshDrops);
     }
 

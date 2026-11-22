@@ -26,12 +26,6 @@ using System.Xml.Linq;
 
 namespace Skua.App.Avalonia.Flash;
 
-/// <summary>
-/// Runs skua.swf in the Skua build of Mugetsu (see github.com/retr0gr4d3/skua-mugetsu) and
-/// bridges ExternalInterface to it. The player connects back over a loopback TCP socket and both sides send one JSON
-/// object per line: <c>{id,name,args}</c> calls a callback of the SWF and is answered with <c>{id,r}</c>, and
-/// <c>{ev,args}</c> is an <c>ExternalInterface.call</c> from the SWF.
-/// </summary>
 public class FlashUtil : IFlashUtil, IRestartableGamePlayer
 {
     private static readonly TimeSpan CallTimeout = TimeSpan.FromSeconds(10);
@@ -69,7 +63,6 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
 
     public event FlashCallHandler? FlashCall;
 
-    /// <summary>Embedded Wayland compositor socket name (<c>WAYLAND_DISPLAY</c>) for <c>Skua.WaylandHost</c> rendering.</summary>
     public string? WaylandDisplay { get; set; }
     public bool IsPlayerRunning => _player is { HasExited: false };
 
@@ -110,22 +103,18 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             const string playerExe = "Mugetsu";
             bool needsV2 = !System.Runtime.Intrinsics.X86.Avx2.IsSupported;
 
-            // The regular player is built for x86-64-v3; use the bundled v2 build on older CPUs.
             string playerV2Subdir = Path.Combine(AppContext.BaseDirectory, "player-x86-64-v2", playerExe);
             if (needsV2 && File.Exists(playerV2Subdir))
                 return playerV2Subdir;
 
-            // Check player subdirectory
             string playerSubdir = Path.Combine(AppContext.BaseDirectory, "player", playerExe);
             if (File.Exists(playerSubdir))
                 return playerSubdir;
 
-            // Check local app directory
             string localBin = Path.Combine(AppContext.BaseDirectory, playerExe);
             if (File.Exists(localBin))
                 return localBin;
 
-            // Check workspace development cache path
             DirectoryInfo? dir = new(AppContext.BaseDirectory);
             while (dir is not null)
             {
@@ -222,7 +211,7 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             if (oldPlayer is { HasExited: false })
                 oldPlayer.Kill(entireProcessTree: true);
         }
-        catch { /* already gone */ }
+        catch {  }
         oldPlayer?.Dispose();
         TryDeleteMugetsuTelemetryFile();
     }
@@ -330,7 +319,6 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
                 }
                 catch (UnauthorizedAccessException)
                 {
-                    // Fall back to UID + single-client PID gate if /proc/<pid>/fd enumeration is restricted.
                     return true;
                 }
             }
@@ -356,7 +344,6 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             client.NoDelay = true;
             NetworkStream stream = client.GetStream();
             StreamWriter writer = new(stream, new UTF8Encoding(false)) { AutoFlush = true, NewLine = "\n" };
-            // A restarted player connects anew; whatever the old one still owed will never come.
             lock (_sendLock)
             {
                 Interlocked.Exchange(ref _bridge, writer)?.Dispose();
@@ -410,7 +397,6 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         string function = (string)msg["ev"]!;
         _stats.RecordEvent(function, chars);
         object[] args = msg["args"] is JArray arr ? arr.Select(FromJson).ToArray() : [];
-        // Handlers expect calls on the UI thread.
         Dispatcher.UIThread.Post(() =>
         {
             try
@@ -581,7 +567,6 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         };
         if (_stats.Enabled)
         {
-            // getGameObject & co. are generic; the path tells which object was read.
             string key = function.StartsWith("getGameObject", StringComparison.Ordinal) && args.Length > 0 && args[0] is string path
                 ? $"{function} {path}"
                 : function;

@@ -116,10 +116,6 @@ internal static unsafe partial class BonxieWaylandNative
     }
 }
 
-/// <summary>
-/// Renders DMA-BUF textures from <c>libbonxie_wayland.so</c> via Skia on Avalonia's
-/// composition render thread without skipping compositor ticks or stalling buffers.
-/// </summary>
 internal sealed class DmabufSkiaRenderer
 {
     private const uint GL_TEXTURE_2D = 0x0DE1u;
@@ -196,10 +192,6 @@ internal sealed class DmabufSkiaRenderer
         }
     }
 
-    /// <summary>
-    /// Detaches the native Wayland host handle under <see cref="_hostLock"/> and defers GL/Skia
-    /// resource teardown to the render thread where the <see cref="GRContext"/> is current.
-    /// </summary>
     public void DetachHostAndRetire()
     {
         lock (_hostLock)
@@ -255,7 +247,6 @@ internal sealed class DmabufSkiaRenderer
                         && cached.Width == fw
                         && cached.Height == fh)
                     {
-                        // Rebind the EGLImage so Mesa radeonsi re-validates DMA-BUF/DCC state on buffer reuse.
                         BonxieWaylandNative.RebindDmabufTexture(cached.GlTex, cached.EglImage);
                         grContext.ResetContext(GRGlBackendState.TextureBinding);
                         _activeEntry = cached;
@@ -284,8 +275,6 @@ internal sealed class DmabufSkiaRenderer
                 float srcH = Math.Clamp((float)size.Height * scaleY, 1f, _activeEntry.Height);
                 SKRect srcRect = new(0f, 0f, srcW, srcH);
                 canvas.DrawImage(_activeEntry.Image, srcRect, dstRect, LinearSampling, _opaquePaint);
-                // Guard: flush Skia GPU commands before AckFrame releases the previous wl_buffer back to Mugetsu,
-                // otherwise Mugetsu can overwrite the active DMA-BUF while Skia's draw is still queued.
                 grContext.Flush();
             }
 
@@ -294,8 +283,6 @@ internal sealed class DmabufSkiaRenderer
                 BonxieWaylandNative.AckFrame(_waylandHost, acquiredSeq);
             _onPresentedFrame(presentedSeq);
 
-            // Guard: if a newer frame arrived while rendering (e.g., high-FPS interpolation), wake immediately
-            // outside _hostLock so it is never stranded waiting for another commit.
             ulong latestSeq = BonxieWaylandNative.FrameSeq(_waylandHost);
             hasMore = latestSeq != 0 && latestSeq != presentedSeq;
         }
@@ -408,29 +395,6 @@ internal sealed class DmabufSkiaRenderer
     }
 }
 
-/// <summary>
-/// Custom Skia draw operation recorded in <see cref="WaylandDmabufViewport.Render"/>.
-/// <para>
-/// CRITICAL INVARIANT — DO NOT replace <c>Control.InvalidateVisual()</c> + <see cref="ICustomDrawOperation"/>
-/// with <c>OpenGlControlBase</c> or <c>CompositionCustomVisual.SendHandlerMessage()</c> on <c>Avalonia.Wayland</c>:
-/// <list type="bullet">
-/// <item>Avalonia 12.1.6 <c>ServerCompositor.RenderCore()</c> executes <c>ApplyPendingBatches()</c> -&gt;
-/// <c>VisualOwnPropertiesUpdatePass()</c> -&gt; <c>ExecuteServerJobs()</c> -&gt; <c>ServerCompositionTarget.Render()</c>.</item>
-/// <item>Both <c>OpenGlControlBase</c> (<c>CompositionDrawingSurface.UpdateAsync</c>) and
-/// <c>CompositionCustomVisual.SendHandlerMessage</c> invalidate visuals inside <c>ExecuteServerJobs()</c>
-/// <b>after</b> <c>VisualOwnPropertiesUpdatePass()</c> has already finished. On event-driven
-/// <c>Avalonia.Wayland</c> (<c>WaylandWorker</c>), that leaves <c>DirtyRects</c> empty on Tick #1 so the
-/// compositor sleeps until the next frame arrives (~41.7 ms later), silently dropping every odd frame
-/// (locking 24 FPS playback to ~12 FPS / 83.3 ms intervals).</item>
-/// <item><c>Control.InvalidateVisual()</c> -&gt; <c>Control.Render()</c> -&gt; <c>context.Custom(new DmabufDrawOperation(...))</c>
-/// updates <c>CompositionDrawListVisual.DrawList</c>, which runs <c>InvalidateContent()</c> during
-/// <c>ApplyPendingBatches()</c> <b>before</b> <c>VisualOwnPropertiesUpdatePass()</c>, presenting every
-/// incoming DMA-BUF on Tick #1 with zero skipped frames and zero idle redraws.</item>
-/// <item><see cref="Equals(ICustomDrawOperation?)"/> MUST return <c>false</c> so Avalonia never coalesces
-/// away consecutive DMA-BUF frames.</item>
-/// </list>
-/// </para>
-/// </summary>
 internal sealed class DmabufDrawOperation : ICustomDrawOperation
 {
     private readonly DmabufSkiaRenderer _renderer;

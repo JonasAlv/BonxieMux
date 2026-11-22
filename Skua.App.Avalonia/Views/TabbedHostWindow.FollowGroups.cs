@@ -10,12 +10,6 @@ using System.Linq;
 
 namespace Skua.App.Avalonia.Views;
 
-/// <summary>
-/// Tabs of accounts that follow another account stand together under one colour, like a browser's tab groups: the group's tabs are
-/// brought next to each other (the master first) and the whole tab takes the group's colour; the master wears a crown over its icon.
-/// Who follows whom comes from the status files the Butler writes (%APPDATA%\Skua\character_locations\{name}_butlerv5).
-/// Same rules as the Rust client.
-/// </summary>
 internal static class FollowGroups
 {
     internal sealed record Group(string Master, int? MasterTab, List<int> Tabs)
@@ -23,7 +17,6 @@ internal static class FollowGroups
         public int Followers => Tabs.Count - (MasterTab.HasValue ? 1 : 0);
     }
 
-    /// <summary>Follower name to the master it follows, from the status files of accounts that are logged in and whose client runs.</summary>
     internal static Dictionary<string, string> ReadFollowMap(string directory)
     {
         var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -72,7 +65,6 @@ internal static class FollowGroups
         catch { return false; }
     }
 
-    /// <summary>The groups among the tabs; <paramref name="names"/> is the account name of each tab.</summary>
     internal static List<Group> Build(IReadOnlyList<string> names, IReadOnlyDictionary<string, string> follows)
     {
         var found = new List<(string Master, List<int> Tabs)>();
@@ -106,7 +98,6 @@ internal static class FollowGroups
         return groups;
     }
 
-    /// <summary>The order that puts every group together: the master first, then its followers; a group stands where its first tab was.</summary>
     internal static List<int> GroupedOrder(int count, IReadOnlyList<Group> groups)
     {
         var placed = new bool[count];
@@ -146,7 +137,6 @@ internal static class FollowGroups
         Color.Parse("#A78BFA"), Color.Parse("#FB923C"), Color.Parse("#2DD4BF"), Color.Parse("#F87171"),
     };
 
-    /// <summary>The colour of a group: the same master always gets the same one.</summary>
     internal static Color ColorFor(string master)
     {
         uint hash = 7;
@@ -175,7 +165,6 @@ public partial class TabbedHostWindow
         List<string> names = tabs.Select(t => _tabs[t].AccountOrderKey).ToList();
         List<FollowGroups.Group> groups = FollowGroups.Build(names, _follows);
         string signature = FollowGroups.Signature(names, groups);
-        // Brought together once when the grouping or the set of tabs changes, so a tab dragged away is left where it was put.
         if (signature != _followSignature || tabs.Count != _followTabCount)
         {
             _followSignature = signature;
@@ -229,7 +218,6 @@ public partial class TabbedHostWindow
                 ToolTip.SetTip(info.HeaderPanel, null);
                 continue;
             }
-            // The whole tab takes the group's colour: the style in TabbedHostWindow.axaml reads these resources from the tab.
             Color color = FollowGroups.ColorFor(group.Master);
             tabs[i].Resources["FollowGroupBrush"] = new SolidColorBrush(color, 0.30);
             tabs[i].Resources["FollowGroupHoverBrush"] = new SolidColorBrush(color, 0.42);
