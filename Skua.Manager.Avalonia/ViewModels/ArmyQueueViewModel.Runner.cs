@@ -27,14 +27,19 @@ namespace Skua.Manager.Avalonia.ViewModels;
 public partial class ArmyQueueViewModel
 {
     [RelayCommand]
-    public async Task StartQueue()
+    public Task StartQueue() => StartQueueAsync(false);
+
+    public async Task StartQueueAsync(bool isAutomated = false)
     {
         if (IsRunning)
             return;
 
         if (Steps.Count == 0 || Steps.All(s => s.Members.Count == 0))
         {
-            _dialogService.ShowMessageBox("Please add at least one squad with accounts to the queue.", "Empty Queue");
+            if (!isAutomated)
+                _dialogService.ShowMessageBox("Please add at least one squad with accounts to the queue.", "Empty Queue");
+            else
+                throw new InvalidOperationException("Please add at least one squad with accounts to the queue.");
             return;
         }
 
@@ -44,16 +49,21 @@ public partial class ArmyQueueViewModel
 
         try
         {
-            await RunQueueAsync(token);
+            await RunQueueAsync(token, isAutomated);
         }
         catch (OperationCanceledException)
         {
             StatusText = "Army Queue was stopped.";
+            if (isAutomated)
+                throw;
         }
         catch (Exception ex)
         {
             StatusText = $"Queue Error: {ex.Message}";
-            _dialogService.ShowMessageBox($"Queue encountered an error: {ex.Message}", "Queue Execution Error");
+            if (!isAutomated)
+                _dialogService.ShowMessageBox($"Queue encountered an error: {ex.Message}", "Queue Execution Error");
+            else
+                throw;
         }
         finally
         {
@@ -73,14 +83,22 @@ public partial class ArmyQueueViewModel
 
         if (_dialogService.ShowMessageBox("Are you sure you want to stop the running Army Queue?", "Stop Queue", true) == true)
         {
-            _pauseTcs?.TrySetCanceled();
-            _queueCts?.Cancel();
-            IsPaused = false;
-            StatusText = "Stopping Army Queue...";
+            StopQueueDirect();
         }
     }
 
-    private async Task RunQueueAsync(CancellationToken token)
+    public void StopQueueDirect()
+    {
+        if (!IsRunning || _queueCts == null)
+            return;
+
+        _pauseTcs?.TrySetCanceled();
+        _queueCts?.Cancel();
+        IsPaused = false;
+        StatusText = "Stopping Army Queue...";
+    }
+
+    private async Task RunQueueAsync(CancellationToken token, bool isAutomated = false)
     {
         int totalSteps = Steps.Count;
         ActiveStepIndex = 0;
@@ -236,7 +254,8 @@ public partial class ArmyQueueViewModel
 
         StatusText = "All Army Queue squads completed successfully!";
         ProgressValue = 100;
-        _dialogService.ShowMessageBox("All scheduled Army Queue squads have completed their runs!", "Army Queue Finished");
+        if (!isAutomated)
+            _dialogService.ShowMessageBox("All scheduled Army Queue squads have completed their runs!", "Army Queue Finished");
     }
 
     private Process? LaunchMemberProcess(IAccountItemViewModel acc, string scriptPath, string? optionsStorage = null)

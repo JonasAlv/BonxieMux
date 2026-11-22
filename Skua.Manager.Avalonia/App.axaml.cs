@@ -109,6 +109,9 @@ public partial class App : Application
 
         if (Ioc.Default.GetRequiredService<ISettingsService>().Get("CheckClientUpdates", true))
             _ = Ioc.Default.GetRequiredService<ClientUpdatesViewModel>().Refresh();
+
+        if (Ioc.Default.GetRequiredService<ISettingsService>().Get("SchedulerAutoStart", true))
+            Ioc.Default.GetService<Services.ISchedulerService>()?.Start();
     }
 
     private async void OnDesktopExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)

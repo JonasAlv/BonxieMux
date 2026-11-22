@@ -37,8 +37,24 @@ public class DialogService : DialogServiceBase
         AccountEditorViewModel accountEditor => ShowAccountEditorDialog(accountEditor, title),
         SelectGroupDialogViewModel selectGroup => ShowSelectGroupDialog(selectGroup, title),
         SelectAccountDialogViewModel selectAccount => ShowSelectAccountDialog(selectAccount, title),
+        JobEditorDialogViewModel jobEditor => ShowJobEditorDialog(jobEditor, title),
         _ => null
     };
+
+    private static bool? ShowJobEditorDialog(JobEditorDialogViewModel vm, string title)
+    {
+        Window dialog = CreateBaseDialog(title);
+        dialog.Width = 640;
+        dialog.Height = 720;
+        dialog.CanResize = true;
+
+        vm.CloseAction = () => dialog.Close();
+        dialog.Closed += (_, _) => vm.Cleanup();
+
+        dialog.Content = WrapWithShell(title, new ContentControl { Content = vm });
+        Show(dialog);
+        return vm.DialogResult;
+    }
 
     private static bool? ShowAccountEditorDialog(AccountEditorViewModel vm, string title)
     {
