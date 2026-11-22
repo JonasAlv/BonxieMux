@@ -714,10 +714,18 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
         {
             try
             {
+                int thresholdMs = Math.Clamp(_settingsService.Get("ServerLatencyThresholdMs", ServerLatencyClassifier.DefaultThresholdMs), 50, 2000);
+                int nearThresholdPercent = Math.Clamp(_settingsService.Get("ServerLatencyNearThresholdPercent", ServerLatencyClassifier.DefaultNearThresholdPercent), 50, 95);
                 await Task.WhenAll(servers.Where(s => s.Online).Select(async server =>
                 {
                     long? ms = await ServerPing.MeasureAsync(server.IP, server.Port);
-                    Dispatcher.UIThread.Post(() => server.Ping = ms ?? Server.NoAnswer);
+                    long ping = ms ?? Server.NoAnswer;
+                    ServerLatencyStatus status = ServerLatencyClassifier.Classify(ping, thresholdMs, nearThresholdPercent);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        server.Ping = ping;
+                        server.LatencyStatus = status;
+                    });
                 }));
             }
             catch

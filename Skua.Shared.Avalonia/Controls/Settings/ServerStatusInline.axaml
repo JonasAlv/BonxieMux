@@ -2,23 +2,32 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Skua.Shared.Avalonia.Controls.Settings.ServerStatusInline"
              x:Name="Root">
+  <UserControl.Styles>
+    <Style Selector="TextBlock#NameText.good">
+      <Setter Property="Foreground" Value="{DynamicResource SkuaSuccessBrush}" />
+    </Style>
+    <Style Selector="TextBlock#NameText.near">
+      <Setter Property="Foreground" Value="{DynamicResource SkuaWarningBrush}" />
+    </Style>
+    <Style Selector="TextBlock#NameText.high, TextBlock#NameText.unavailable">
+      <Setter Property="Foreground" Value="{DynamicResource SkuaDangerBrush}" />
+    </Style>
+  </UserControl.Styles>
   <StackPanel Orientation="Horizontal" Spacing="4">
-    <TextBlock Text="{Binding Server.Name, ElementName=Root}" FontWeight="SemiBold" />
+    <TextBlock x:Name="NameText" Text="{Binding Server.Name, ElementName=Root}" FontWeight="SemiBold" />
     <TextBlock Text="{Binding Server, ElementName=Root, Converter={StaticResource ServerMembershipTextConverter}}"
                FontSize="11"
                Foreground="{DynamicResource SkuaMutedTextBrush}" />
     <TextBlock Text=" - " FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
     <TextBlock Text="{Binding Server.PingText, ElementName=Root}"
                FontSize="11"
-               Foreground="{Binding Server.PingLevel, ElementName=Root, Converter={StaticResource ServerPingBrushConverter}}" />
+               Foreground="{DynamicResource SkuaMutedTextBrush}" />
     <StackPanel Orientation="Horizontal"
                 IsVisible="{Binding Server.Online, ElementName=Root}"
                 Spacing="4">
       <TextBlock Text=" - " FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
       <TextBlock Text="{Binding Server.PlayerCount, ElementName=Root}" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-      <TextBlock Text="/" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-      <TextBlock Text="{Binding Server.MaxPlayers, ElementName=Root}" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+      <TextBlock Text="players" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
     </StackPanel>
   </StackPanel>
 </UserControl>
-

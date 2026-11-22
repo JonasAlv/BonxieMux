@@ -84,6 +84,21 @@ public class Server : INotifyPropertyChanged
     }
 
     private long _ping = -1;
+    private ServerLatencyStatus _latencyStatus = ServerLatencyStatus.Unknown;
+
+    [JsonIgnore]
+    public ServerLatencyStatus LatencyStatus
+    {
+        get => _latencyStatus;
+        set
+        {
+            if (_latencyStatus == value)
+                return;
+
+            _latencyStatus = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LatencyStatus)));
+        }
+    }
 
     /// <summary>Ping value meaning "the server did not answer".</summary>
     public const long NoAnswer = 9999;
