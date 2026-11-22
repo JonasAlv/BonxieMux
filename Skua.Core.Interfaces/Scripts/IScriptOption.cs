@@ -267,6 +267,10 @@ public interface IScriptOption : INotifyPropertyChanged
     /// </summary>
     int SetFPS { get; set; }
 
+    bool EnableScriptWatchdog { get; set; }
+    int ScriptWatchdogTimeout { get; set; }
+    bool WatchdogAutoRestart { get; set; }
+
     /// <summary>
     /// Flash rendering stage quality (LOW, MEDIUM, HIGH, AUTO).
     /// </summary>

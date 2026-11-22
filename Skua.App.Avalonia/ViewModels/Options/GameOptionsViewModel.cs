@@ -33,6 +33,7 @@ public class GameOptionsViewModel : BotControlViewModelBase
     private static readonly string[] CombatOptions = { "AggroMonsters", "AggroAllMonsters", "AttackWithoutTarget", "InfiniteRange", "Magnetise", "HuntDelay", "HuntBuffer", "RestPackets", "SafeTimings" };
     private static readonly string[] DropsOptions = { "AcceptACDrops", "AcceptAllDrops", "RejectAllDrops", "RejectNonACDrops", "PickupACDropsAndSendToBank" };
     private static readonly string[] ReloginOptions = { "AutoRelogin", "AutoReloginAny", "ReloginFallback", "RetryRelogin", "SafeRelogin", "ReloginTries", "LoginTimeout" };
+    private static readonly string[] WatchdogOptions = { "EnableScriptWatchdog", "ScriptWatchdogTimeout", "WatchdogAutoRestart" };
 
     private readonly IScriptServers _servers;
     private readonly IScriptOption _options;
@@ -318,8 +319,9 @@ public class GameOptionsViewModel : BotControlViewModelBase
         List<DisplayOptionItemViewModelBase> drops = InSection(DropsOptions);
         List<DisplayOptionItemViewModelBase> relogin = InSection(ReloginOptions);
         relogin.Insert(0, _reloginServerItem);
+        List<DisplayOptionItemViewModelBase> watchdog = InSection(WatchdogOptions);
 
-        HashSet<DisplayOptionItemViewModelBase> used = new(visuals.Concat(tweaks).Concat(headless).Concat(combat).Concat(drops).Concat(relogin));
+        HashSet<DisplayOptionItemViewModelBase> used = new(visuals.Concat(tweaks).Concat(headless).Concat(combat).Concat(drops).Concat(relogin).Concat(watchdog));
         List<DisplayOptionItemViewModelBase> gameplay = GameOptions.Where(i => !used.Contains(i))
             .OrderBy(i => i.Content, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -332,6 +334,7 @@ public class GameOptionsViewModel : BotControlViewModelBase
             new() { Title = "Combat & Targeting", ShortTitle = "Combat", Icon = "SwordCross", Items = combat },
             new() { Title = "Drops & Looting", ShortTitle = "Drops", Icon = "PackageVariantClosed", Items = drops },
             new() { Title = "Auto-Relogin & Network", ShortTitle = "Relogin", Icon = "ServerNetwork", Items = relogin },
+            new() { Title = "Stuck Script Watchdog", ShortTitle = "Watchdog", Icon = "ShieldAlertOutline", Items = watchdog },
             new() { Title = "Gameplay & Character", ShortTitle = "Gameplay", Icon = "AccountCogOutline", Items = gameplay }
         };
     }

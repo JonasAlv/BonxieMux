@@ -1621,6 +1621,27 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             Reset();
     }
 
+    private bool _enableScriptWatchdog = true;
+    public bool EnableScriptWatchdog
+    {
+        get => _enableScriptWatchdog;
+        set => SetProperty(ref _enableScriptWatchdog, value);
+    }
+
+    private int _scriptWatchdogTimeout = 300;
+    public int ScriptWatchdogTimeout
+    {
+        get => _scriptWatchdogTimeout;
+        set => SetProperty(ref _scriptWatchdogTimeout, value);
+    }
+
+    private bool _watchdogAutoRestart = true;
+    public bool WatchdogAutoRestart
+    {
+        get => _watchdogAutoRestart;
+        set => SetProperty(ref _watchdogAutoRestart, value);
+    }
+
     private Dictionary<string, Func<object>> GenerateDictionary()
     {
         Dictionary<string, Func<object>> dict = new();

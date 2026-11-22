@@ -109,6 +109,7 @@ public interface IScriptInterface
     /// Class to manage drops.
     /// </summary>
     IScriptDrop Drops { get; }
+    IScriptWatchdogService Watchdog { get; }
 
     /// <summary>
     /// Class with events that trigger with in-game events.

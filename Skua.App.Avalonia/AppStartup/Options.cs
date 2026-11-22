@@ -65,7 +65,7 @@ internal class Options
                 options.Add(new BindingOptionItemViewModel<string, OptionSource>(Label(s, binding), "2", binding, source, new RelayCommand<string>(value => source.Set(binding, value))));
             else if (type == typeof(int))
             {
-                string? suffixText = binding == nameof(IScriptOption.SetFPS) ? "FPS" : null;
+                string? suffixText = binding == nameof(IScriptOption.SetFPS) ? "FPS" : binding == nameof(IScriptOption.ScriptWatchdogTimeout) ? "s" : null;
                 options.Add(new BindingOptionItemViewModel<int, OptionSource>(Label(s, binding), "3", binding, source, new RelayCommand<string>(value =>
                 {
                     if (!int.TryParse(value, out int result))

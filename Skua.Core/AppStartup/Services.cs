@@ -27,6 +27,7 @@ public static class Services
         services.AddSingleton<ICustomScriptService, CustomScriptService>();
         services.AddSingleton<IScriptPathResolver, ScriptPathResolver>();
         services.AddSingleton<ILoadoutService, LoadoutService>();
+        services.AddSingleton<IScriptWatchdogService, ScriptWatchdogService>();
 
         return services;
     }

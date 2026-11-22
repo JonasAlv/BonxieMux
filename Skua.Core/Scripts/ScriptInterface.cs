@@ -44,6 +44,7 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
     public IScriptKill Kill { get; }
     public IScriptHunt Hunt { get; }
     public IScriptDrop Drops { get; }
+    public IScriptWatchdogService Watchdog { get; }
     public IScriptEvent Events { get; }
     public IScriptFaction Reputation { get; }
     public IScriptHouseInv House { get; }
@@ -105,8 +106,10 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
         ISettingsService settingsService,
         IAuraMonitorService auraMonitorService,
         IUltraBossHelper ultraBossHelper,
-        IScriptAccounts accounts)
+        IScriptAccounts accounts,
+        IScriptWatchdogService watchdogService)
     {
+        Watchdog = watchdogService;
         _logger = logger;
         Manager = manager;
         Boosts = boosts;
