@@ -102,7 +102,8 @@ public class HotKeys
         "RejectAllDrops",
         // Keep new actions at the end so existing inter-process action ids remain stable.
         "OpenCommandPalette",
-        "ToggleFullscreen"
+        "ToggleFullscreen",
+        "OpenQuickLaunch"
     };
 
     public static int GetActionId(string actionName) => _actionList.IndexOf(actionName);
@@ -131,6 +132,7 @@ public class HotKeys
     {
         return binding switch
         {
+            "OpenQuickLaunch" => "Opens Quick Account Launch to launch saved accounts or groups.",
             // IScriptOption
             "ToggleRejectAllDrops" => "When enabled, will reject all items that drop.",
             "ToggleAggroAllMonsters" => "Provokes all monsters in the MAP, causing them to attack you simultaneously.",
@@ -230,6 +232,7 @@ public class HotKeys
 
     /// <summary>Set by the client window to show the searchable main-menu palette.</summary>
     public static Action? OpenCommandPaletteRequested { get; set; }
+    public static Action? OpenQuickLaunchRequested { get; set; }
     public static Action? ToggleFullscreenRequested { get; set; }
     public static Action? ToggleGameFullScreenRequested { get; set; }
 
@@ -368,6 +371,7 @@ public class HotKeys
         _hotkeyRegistry["ToggleFullscreen"] = new RelayCommand(ToggleFullScreen);
         _hotkeyRegistry["ToggleGameFullScreen"] = new RelayCommand(ToggleGameFullScreen);
         _hotkeyRegistry["OpenCommandPalette"] = new RelayCommand(() => ExecuteOrForward("OpenCommandPalette", () => OpenCommandPaletteRequested?.Invoke()));
+        _hotkeyRegistry["OpenQuickLaunch"] = new RelayCommand(() => ExecuteOrForward("OpenQuickLaunch", () => OpenQuickLaunchRequested?.Invoke()));
         _hotkeyRegistry["ToggleHeadlessMode"] = new RelayCommand(() => ExecuteOrForward("ToggleHeadlessMode", () => Ioc.Default.GetRequiredService<IScriptOption>().HeadlessMode ^= true));
         _hotkeyRegistry["ToggleStreamerMode"] = new RelayCommand(() => ExecuteOrForward("ToggleStreamerMode", () => Ioc.Default.GetRequiredService<IScriptOption>().StreamerMode ^= true));
         _hotkeyRegistry["ToggleHidePlayers"] = new RelayCommand(() => ExecuteOrForward("ToggleHidePlayers", () => Ioc.Default.GetRequiredService<IScriptOption>().HidePlayers ^= true));

@@ -177,6 +177,7 @@ public partial class TabbedHostWindow : Window
         Title = $"BonxieMux V{Skua.Core.Models.ClientFileSources.DisplayVersion}";
         LoadArmyJumpSettings();
         MainTitleBar.TitleText = Title;
+        Skua.Core.AppStartup.HotKeys.OpenQuickLaunchRequested = OpenQuickLaunchFromHotkey;
 
         try
         {
