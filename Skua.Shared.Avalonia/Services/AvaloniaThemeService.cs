@@ -121,7 +121,7 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         }
 
         ApplyThemeItem(current);
-        LoadFromSharedThemeFile();
+        LoadProcessThemeFile();
         HookSystemThemeChanges();
         if (_syncThemeWithSystem)
         {
@@ -131,8 +131,7 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         {
             SyncWithSystemAccentColor();
         }
-        SaveToSharedThemeFile();
-        StartThemeFileWatcher();
+        SaveProcessThemeFile();
     }
 
     public event ThemeChangedEventHandler? ThemeChanged;
@@ -276,16 +275,39 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
 
     private void SaveModeColors(bool isDark, Color accent, Color textOnAccent)
     {
-        string prefix = isDark ? "Dark" : "Light";
-        _settingsService.Set($"{prefix}AccentColor", $"#{accent.A:X2}{accent.R:X2}{accent.G:X2}{accent.B:X2}");
-        _settingsService.Set($"{prefix}TextOnAccentColor", $"#{textOnAccent.A:X2}{textOnAccent.R:X2}{textOnAccent.G:X2}{textOnAccent.B:X2}");
+        string accentHex = $"#{accent.A:X2}{accent.R:X2}{accent.G:X2}{accent.B:X2}";
+        string textHex = $"#{textOnAccent.A:X2}{textOnAccent.R:X2}{textOnAccent.G:X2}{textOnAccent.B:X2}";
+        if (isDark)
+        {
+            _darkAccentColorHex = accentHex;
+            _darkTextOnAccentColorHex = textHex;
+        }
+        else
+        {
+            _lightAccentColorHex = accentHex;
+            _lightTextOnAccentColorHex = textHex;
+        }
+
+        if (!IsManagerProcess)
+        {
+            string prefix = isDark ? "Dark" : "Light";
+            _settingsService.Set($"{prefix}AccentColor", accentHex);
+            _settingsService.Set($"{prefix}TextOnAccentColor", textHex);
+        }
     }
 
     private (Color Accent, Color TextOnAccent) LoadModeColors(bool isDark)
     {
-        string prefix = isDark ? "Dark" : "Light";
-        string? accentHex = _settingsService.Get<string?>($"{prefix}AccentColor", null);
-        string? textHex = _settingsService.Get<string?>($"{prefix}TextOnAccentColor", null);
+        string? accentHex = isDark ? _darkAccentColorHex : _lightAccentColorHex;
+        string? textHex = isDark ? _darkTextOnAccentColorHex : _lightTextOnAccentColorHex;
+
+        if (!IsManagerProcess)
+        {
+            string prefix = isDark ? "Dark" : "Light";
+            accentHex ??= _settingsService.Get<string?>($"{prefix}AccentColor", null);
+            textHex ??= _settingsService.Get<string?>($"{prefix}TextOnAccentColor", null);
+        }
+
         Color accent = !string.IsNullOrWhiteSpace(accentHex) ? ResolveAccentColor(accentHex) : _primaryColor;
         Color textOnAccent = !string.IsNullOrWhiteSpace(textHex) ? ResolveAccentColor(textHex) : _primaryForegroundColor;
         return (accent, textOnAccent);
@@ -1162,15 +1184,26 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
     {
         string themeName = !string.IsNullOrWhiteSpace(name) ? name : "Skua";
         ThemeItem snapshot = BuildThemeSnapshot(themeName);
-        _settingsService.Set("CurrentTheme", snapshot.ConvertToString());
-        SaveToSharedThemeFile();
+        if (!IsManagerProcess)
+        {
+            _settingsService.Set("CurrentTheme", snapshot.ConvertToString());
+        }
+        SaveProcessThemeFile();
     }
 
-    private static string SharedThemeFilePath => Path.Combine(ClientFileSources.SkuaDIR, "theme.json");
-    private FileSystemWatcher? _themeFileWatcher;
-    private long _ignoreWatcherUntilUtcTicks;
+    private static bool IsManagerProcess =>
+        System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name?.Contains("Manager", StringComparison.OrdinalIgnoreCase) ?? false;
 
-    private sealed class SharedThemeFileState
+    private static string ProcessThemeFilePath => IsManagerProcess
+        ? Path.Combine(ClientFileSources.ManagerDIR, "manager-theme.json")
+        : Path.Combine(ClientFileSources.SkuaDIR, "app-theme.json");
+
+    private string? _darkAccentColorHex;
+    private string? _darkTextOnAccentColorHex;
+    private string? _lightAccentColorHex;
+    private string? _lightTextOnAccentColorHex;
+
+    private sealed class ProcessThemeFileState
     {
         public bool IsDarkTheme { get; set; }
         public bool SyncThemeWithSystem { get; set; }
@@ -1185,15 +1218,15 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         public string? LightTextOnAccentColor { get; set; }
     }
 
-    private void LoadFromSharedThemeFile(bool raiseEvents = false)
+    private void LoadProcessThemeFile()
     {
         try
         {
-            if (!File.Exists(SharedThemeFilePath))
+            if (!File.Exists(ProcessThemeFilePath))
                 return;
 
-            string json = File.ReadAllText(SharedThemeFilePath);
-            SharedThemeFileState? state = JsonSerializer.Deserialize<SharedThemeFileState>(json);
+            string json = File.ReadAllText(ProcessThemeFilePath);
+            ProcessThemeFileState? state = JsonSerializer.Deserialize<ProcessThemeFileState>(json);
             if (state is null)
                 return;
 
@@ -1203,14 +1236,10 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             _useAccentOnManagerTitleBar = state.UseAccentOnManagerTitleBar;
             _isDarkTheme = state.IsDarkTheme;
 
-            if (!string.IsNullOrWhiteSpace(state.DarkAccentColor))
-                _settingsService.Set("DarkAccentColor", state.DarkAccentColor);
-            if (!string.IsNullOrWhiteSpace(state.DarkTextOnAccentColor))
-                _settingsService.Set("DarkTextOnAccentColor", state.DarkTextOnAccentColor);
-            if (!string.IsNullOrWhiteSpace(state.LightAccentColor))
-                _settingsService.Set("LightAccentColor", state.LightAccentColor);
-            if (!string.IsNullOrWhiteSpace(state.LightTextOnAccentColor))
-                _settingsService.Set("LightTextOnAccentColor", state.LightTextOnAccentColor);
+            _darkAccentColorHex = state.DarkAccentColor;
+            _darkTextOnAccentColorHex = state.DarkTextOnAccentColor;
+            _lightAccentColorHex = state.LightAccentColor;
+            _lightTextOnAccentColorHex = state.LightTextOnAccentColor;
 
             if (!string.IsNullOrWhiteSpace(state.PrimaryColor))
             {
@@ -1232,25 +1261,22 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             OnPropertyChanged(nameof(UseAccentOnManagerTitleBar));
             OnPropertyChanged(nameof(IsDarkTheme));
             OnPropertyChanged(nameof(SelectedColor));
-
-            if (raiseEvents)
-            {
-                ThemeChanged?.Invoke(_primaryColor);
-                SchemeChanged?.Invoke(ActiveScheme, GetColorForScheme(ActiveScheme));
-            }
         }
         catch { }
     }
 
-    private void SaveToSharedThemeFile()
+    private void SaveProcessThemeFile()
     {
         if (IsApplyingExternalTheme)
             return;
 
         try
         {
-            Directory.CreateDirectory(ClientFileSources.SkuaDIR);
-            SharedThemeFileState state = new()
+            string? dir = Path.GetDirectoryName(ProcessThemeFilePath);
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
+
+            ProcessThemeFileState state = new()
             {
                 IsDarkTheme = _isDarkTheme,
                 SyncThemeWithSystem = _syncThemeWithSystem,
@@ -1259,57 +1285,16 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
                 UseAccentOnManagerTitleBar = _useAccentOnManagerTitleBar,
                 PrimaryColor = PrimaryHex,
                 TextOnAccentColor = ForegroundHex,
-                DarkAccentColor = _settingsService.Get<string?>("DarkAccentColor", null),
-                DarkTextOnAccentColor = _settingsService.Get<string?>("DarkTextOnAccentColor", null),
-                LightAccentColor = _settingsService.Get<string?>("LightAccentColor", null),
-                LightTextOnAccentColor = _settingsService.Get<string?>("LightTextOnAccentColor", null)
+                DarkAccentColor = _darkAccentColorHex,
+                DarkTextOnAccentColor = _darkTextOnAccentColorHex,
+                LightAccentColor = _lightAccentColorHex,
+                LightTextOnAccentColor = _lightTextOnAccentColorHex
             };
 
             string json = JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true });
-            string tmpPath = SharedThemeFilePath + $".{Environment.ProcessId}.tmp";
-            System.Threading.Interlocked.Exchange(ref _ignoreWatcherUntilUtcTicks, DateTime.UtcNow.AddMilliseconds(400).Ticks);
+            string tmpPath = ProcessThemeFilePath + $".{Environment.ProcessId}.tmp";
             File.WriteAllText(tmpPath, json);
-            File.Move(tmpPath, SharedThemeFilePath, overwrite: true);
-        }
-        catch { }
-    }
-
-    private void StartThemeFileWatcher()
-    {
-        try
-        {
-            Directory.CreateDirectory(ClientFileSources.SkuaDIR);
-            _themeFileWatcher = new FileSystemWatcher(ClientFileSources.SkuaDIR, "theme.json")
-            {
-                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.FileName,
-                EnableRaisingEvents = true
-            };
-
-            FileSystemEventHandler onChanged = (_, _) =>
-            {
-                if (DateTime.UtcNow.Ticks < System.Threading.Interlocked.Read(ref _ignoreWatcherUntilUtcTicks))
-                    return;
-
-                Dispatcher.UIThread.Post(() =>
-                {
-                    if (!ManagerThemeBroadcaster.IsSyncEnabled(_settingsService))
-                        return;
-
-                    IsApplyingExternalTheme = true;
-                    try
-                    {
-                        LoadFromSharedThemeFile(raiseEvents: true);
-                    }
-                    finally
-                    {
-                        IsApplyingExternalTheme = false;
-                    }
-                });
-            };
-
-            _themeFileWatcher.Changed += onChanged;
-            _themeFileWatcher.Created += onChanged;
-            _themeFileWatcher.Renamed += (_, _) => onChanged(this, new FileSystemEventArgs(WatcherChangeTypes.Changed, ClientFileSources.SkuaDIR, "theme.json"));
+            File.Move(tmpPath, ProcessThemeFilePath, overwrite: true);
         }
         catch { }
     }

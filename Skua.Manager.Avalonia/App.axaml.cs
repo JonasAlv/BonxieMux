@@ -62,14 +62,6 @@ public partial class App : Application
         themeService.ThemeChanged += OnThemeChanged;
         themeService.SchemeChanged += OnSchemeChanged;
         ApplyThemeFromService(themeService);
-        ManagerThemeBroadcaster.StartManagerThemeListener((themeItem, _) =>
-        {
-            if (Ioc.Default.GetService<IThemeService>() is AvaloniaThemeService ats &&
-                ManagerThemeBroadcaster.IsSyncEnabled(Ioc.Default.GetRequiredService<ISettingsService>()))
-            {
-                ats.ApplyExternalThemeSnapshot(themeItem, ats.UseAccentOnMainTitleBar);
-            }
-        });
 
         IClientFilesService clientFiles = Ioc.Default.GetRequiredService<IClientFilesService>();
         clientFiles.CreateDirectories();
@@ -152,9 +144,6 @@ public partial class App : Application
                 ats.SecondaryColor,
                 ats.SecondaryForegroundColor,
                 isDarkTheme: themeService.IsDarkTheme);
-
-            ISettingsService settingsService = Ioc.Default.GetRequiredService<ISettingsService>();
-            ManagerThemeBroadcaster.BroadcastIfEnabled(ats, settingsService);
         }
         else
         {
@@ -182,9 +171,6 @@ public partial class App : Application
                 ats.SecondaryColor,
                 ats.SecondaryForegroundColor,
                 isDarkTheme: isDark);
-
-            ISettingsService settingsService = Ioc.Default.GetRequiredService<ISettingsService>();
-            ManagerThemeBroadcaster.BroadcastIfEnabled(ats, settingsService);
             return;
         }
 
@@ -211,9 +197,6 @@ public partial class App : Application
                 ats.SecondaryColor,
                 ats.SecondaryForegroundColor,
                 isDarkTheme: isDark);
-
-            ISettingsService settingsService = Ioc.Default.GetRequiredService<ISettingsService>();
-            ManagerThemeBroadcaster.BroadcastIfEnabled(ats, settingsService);
             return;
         }
 

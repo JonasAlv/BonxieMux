@@ -77,12 +77,6 @@ public partial class LauncherViewModel : BotControlViewModelBase, IDisposable
         await Task.Run(() =>
         {
             List<string> args = new();
-            if (_settingsService.Get("syncTheme", false))
-            {
-                args.Add("--use-theme");
-                args.Add(_settingsService.Get("CurrentTheme", "no-theme"));
-            }
-
             string server = _settingsService.Get("LastServer", "Twilly");
             if (!string.IsNullOrWhiteSpace(server))
             {

@@ -919,12 +919,6 @@ public partial class ArmyQueueViewModel : ObservableRecipient
                 psi.EnvironmentVariables["SKUA_PASSWORD"] = acc.Password;
             }
 
-            if (_settingsService.Get("syncTheme", false))
-            {
-                psi.ArgumentList.Add("--use-theme");
-                psi.ArgumentList.Add(_settingsService.Get("CurrentTheme", "no-theme"));
-            }
-
             if (!string.IsNullOrWhiteSpace(scriptPath))
             {
                 psi.ArgumentList.Add("--run-script");

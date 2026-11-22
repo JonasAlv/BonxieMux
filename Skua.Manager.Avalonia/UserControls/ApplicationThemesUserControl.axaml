@@ -20,25 +20,14 @@
             Padding="14">
       <StackPanel Spacing="14">
 
-        <!-- Sync & Title Bar Options -->
-        <StackPanel Spacing="8">
-          <StackPanel Spacing="2">
-            <CheckBox Content="Sync Manager &amp; App theme"
-                      IsChecked="{Binding SyncThemeWithApp, Mode=TwoWay}" />
-            <TextBlock Text="When enabled, changing theme mode or accent color in either the Manager or BonxieMux updates both."
-                       FontSize="11"
-                       Foreground="{DynamicResource SkuaMutedTextBrush}"
-                       TextWrapping="Wrap" />
-          </StackPanel>
-
-          <StackPanel Spacing="2">
-            <CheckBox Content="Use theme accent on the Manager title bar"
-                      IsChecked="{Binding UseAccentOnManagerTitleBar, Mode=TwoWay}" />
-            <TextBlock Text="When enabled, the Manager window title bar follows the active theme accent. Turn it off to keep the normal surface color."
-                       FontSize="11"
-                       Foreground="{DynamicResource SkuaMutedTextBrush}"
-                       TextWrapping="Wrap" />
-          </StackPanel>
+        <!-- Title Bar Options -->
+        <StackPanel Spacing="2">
+          <CheckBox Content="Use theme accent on the Manager title bar"
+                    IsChecked="{Binding UseAccentOnManagerTitleBar, Mode=TwoWay}" />
+          <TextBlock Text="When enabled, the Manager window title bar follows the active theme accent. Turn it off to keep the normal surface color."
+                     FontSize="11"
+                     Foreground="{DynamicResource SkuaMutedTextBrush}"
+                     TextWrapping="Wrap" />
         </StackPanel>
 
         <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />

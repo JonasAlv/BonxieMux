@@ -87,36 +87,6 @@ public class ApplicationThemesViewModel : BotControlViewModelBase
         }
     }
 
-    /// <summary>
-    /// Controls whether changes to the Manager's or App's theme automatically sync with each other (two-way).
-    /// Maps to the persistent "syncTheme" and SharedSettings.SyncManagerAndAppTheme settings.
-    /// </summary>
-    public bool SyncThemeWithApp
-    {
-        get => ManagerThemeBroadcaster.IsSyncEnabled(_settingsService);
-        set
-        {
-            if (SyncThemeWithApp == value)
-                return;
-
-            _settingsService.Set("syncTheme", value);
-            try
-            {
-                var shared = _settingsService.GetShared();
-                shared.SyncManagerAndAppTheme = value;
-                _settingsService.Set("SyncManagerAndAppTheme", value);
-            }
-            catch { }
-            OnPropertyChanged();
-
-            if (value && ThemeService is AvaloniaThemeService ats)
-            {
-                ManagerThemeBroadcaster.Broadcast(ats);
-                ManagerThemeBroadcaster.BroadcastToManager(ats);
-            }
-        }
-    }
-
     public ThemeSettingsViewModel ThemeSettings { get; }
     public ColorSchemeEditorViewModel ColorSchemeEditor { get; }
     public BackgroundThemeViewModel BackgroundTheme { get; }

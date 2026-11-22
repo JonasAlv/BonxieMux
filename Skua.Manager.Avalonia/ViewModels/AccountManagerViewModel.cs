@@ -53,7 +53,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
         _GetSavedAccounts();
         _GetSavedGroups();
         RefreshTagFilters();
-        _syncThemes = _settingsService.Get("syncTheme", false);
         _scriptPath = _settingsService.Get("AutoStartScriptPath", string.Empty);
         _startWithScript = _settingsService.Get("AutoStartScript", false);
         _showTags = _settingsService.Get("ShowAccountTags", true);
@@ -201,8 +200,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
     [ObservableProperty]
     private RangedObservableCollection<Server> _serverList;
 
-    private bool _syncThemes;
-
     // Account Management
     [RelayCommand]
     public void AddAccount()
@@ -282,7 +279,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
             _isLaunching = true;
             _launchCancellation?.Dispose();
             _launchCancellation = new CancellationTokenSource();
-            _syncThemes = _settingsService.Get("syncTheme", false);
             string? hostInstanceId = newWindow ? Guid.NewGuid().ToString("N") : null;
             string batchId = Guid.NewGuid().ToString("N");
 
@@ -437,8 +433,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
 
     private void _StartAccount(IAccountItemViewModel account, bool withScript)
     {
-        _syncThemes = _settingsService.Get("syncTheme", false);
-
         if (withScript && string.IsNullOrEmpty(ScriptPath))
         {
             _dialogService.ShowMessageBox("No script selected. Please select a script first.", "No Script");
@@ -493,11 +487,6 @@ public sealed partial class AccountManagerViewModel : BotControlViewModelBase
             {
                 psi.ArgumentList.Add("--grid-view");
                 psi.ArgumentList.Add(gridBatchId);
-            }
-            if (_syncThemes)
-            {
-                psi.ArgumentList.Add("--use-theme");
-                psi.ArgumentList.Add(_settingsService.Get("CurrentTheme", "no-theme"));
             }
 
             bool shouldUseScript = withScript ?? StartWithScript;
