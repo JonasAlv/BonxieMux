@@ -8,7 +8,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace Skua.Shared.Avalonia.Services;
 
@@ -48,6 +51,7 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         _useAccentOnMainTitleBar = ReadUseAccentOnMainTitleBarSetting();
         _useAccentOnManagerTitleBar = ReadUseAccentOnManagerTitleBarSetting();
         _syncThemeWithSystem = ReadSyncThemeWithSystemSetting();
+        _useSystemAccentColor = ReadUseSystemAccentColorSetting();
 
         _applyThrottleTimer = new DispatcherTimer
         {
@@ -119,6 +123,10 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         if (_syncThemeWithSystem)
         {
             SyncWithSystemTheme();
+        }
+        if (_useSystemAccentColor)
+        {
+            SyncWithSystemAccentColor();
         }
     }
 
@@ -242,14 +250,18 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
 
             // Restore incoming mode's remembered Accent & Text-on-Accent colors
             (Color nextAccent, Color nextTextOnAccent) = LoadModeColors(value);
-            _primaryColor = nextAccent;
-            _secondaryColor = nextAccent;
+            if (!_useSystemAccentColor)
+            {
+                _primaryColor = nextAccent;
+                _secondaryColor = nextAccent;
+            }
             _primaryForegroundColor = nextTextOnAccent;
             _secondaryForegroundColor = nextTextOnAccent;
+            SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
             SetSelectedColorSilently(
                 ActiveScheme == ColorScheme.PrimaryForeground || ActiveScheme == ColorScheme.SecondaryForeground
-                    ? nextTextOnAccent
-                    : nextAccent);
+                    ? _primaryForegroundColor
+                    : _primaryColor);
 
             ThemeChanged?.Invoke(_primaryColor);
             SchemeChanged?.Invoke(ActiveScheme, GetColorForScheme(ActiveScheme));
@@ -269,8 +281,8 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         string prefix = isDark ? "Dark" : "Light";
         string? accentHex = _settingsService.Get<string?>($"{prefix}AccentColor", null);
         string? textHex = _settingsService.Get<string?>($"{prefix}TextOnAccentColor", null);
-        Color accent = !string.IsNullOrWhiteSpace(accentHex) ? ResolveAccentColor(accentHex) : Color.Parse("#10B981");
-        Color textOnAccent = !string.IsNullOrWhiteSpace(textHex) ? ResolveAccentColor(textHex) : Colors.White;
+        Color accent = !string.IsNullOrWhiteSpace(accentHex) ? ResolveAccentColor(accentHex) : _primaryColor;
+        Color textOnAccent = !string.IsNullOrWhiteSpace(textHex) ? ResolveAccentColor(textHex) : _primaryForegroundColor;
         return (accent, textOnAccent);
     }
 
@@ -380,6 +392,32 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             }
         }
     }
+
+    private bool _useSystemAccentColor;
+
+    /// <summary>
+    /// Gets or sets whether the application's accent color automatically syncs with the desktop OS accent color (KDE, GNOME, COSMIC, Windows).
+    /// </summary>
+    public bool UseSystemAccentColor
+    {
+        get => _useSystemAccentColor;
+        set
+        {
+            if (_useSystemAccentColor == value)
+                return;
+
+            _useSystemAccentColor = value;
+            PersistUseSystemAccentColorSetting(value);
+            OnPropertyChanged();
+
+            if (_useSystemAccentColor)
+            {
+                SyncWithSystemAccentColor();
+            }
+        }
+    }
+
+    public bool IsApplyingExternalTheme { get; private set; }
 
     public Color PrimaryColor => _primaryColor;
     public Color PrimaryForegroundColor => _primaryForegroundColor;
@@ -551,9 +589,17 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             ColorSelectionValue = item.ColorSelectionValue
         };
 
-        ApplyThemeItem(displaySnapshot);
-        ThemeChanged?.Invoke(_primaryColor);
-        SchemeChanged?.Invoke(ColorScheme.Primary, _primaryColor);
+        IsApplyingExternalTheme = true;
+        try
+        {
+            ApplyThemeItem(displaySnapshot);
+            ThemeChanged?.Invoke(_primaryColor);
+            SchemeChanged?.Invoke(ColorScheme.Primary, _primaryColor);
+        }
+        finally
+        {
+            IsApplyingExternalTheme = false;
+        }
     }
 
     private bool ReadUseAccentOnMainTitleBarSetting()
@@ -678,6 +724,114 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         }
     }
 
+    private bool ReadUseSystemAccentColorSetting()
+    {
+        try
+        {
+            return _settingsService.Get<bool>("UseSystemAccentColor", false);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void PersistUseSystemAccentColorSetting(bool enabled)
+    {
+        try
+        {
+            _settingsService.Set("UseSystemAccentColor", enabled);
+            var shared = _settingsService.GetShared();
+            shared.UseSystemAccentColor = enabled;
+        }
+        catch { }
+    }
+
+    public void SyncWithSystemAccentColor(Color? knownAccent = null)
+    {
+        if (!_useSystemAccentColor)
+            return;
+
+        Color? systemAccent = knownAccent is { A: > 0 } ? knownAccent : ReadSystemAccentColor();
+        if (systemAccent is not { A: > 0 } accent)
+            return;
+
+        Color opaqueAccent = Color.FromArgb(255, accent.R, accent.G, accent.B);
+        if (_primaryColor == opaqueAccent && _secondaryColor == opaqueAccent)
+            return;
+
+        _primaryColor = opaqueAccent;
+        _secondaryColor = opaqueAccent;
+        if (ActiveScheme == ColorScheme.Primary || ActiveScheme == ColorScheme.Secondary)
+        {
+            SetSelectedColorSilently(opaqueAccent);
+        }
+
+        SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
+        ThemeChanged?.Invoke(_primaryColor);
+        SchemeChanged?.Invoke(ActiveScheme, GetColorForScheme(ActiveScheme));
+        SaveCurrentThemeSnapshot();
+    }
+
+    private static Color? ReadSystemAccentColor()
+    {
+        try
+        {
+            if (Application.Current?.PlatformSettings is { } platformSettings)
+            {
+                Color accent = platformSettings.GetColorValues().AccentColor1;
+                if (accent.A > 0)
+                    return accent;
+            }
+        }
+        catch { }
+
+        if (OperatingSystem.IsLinux())
+        {
+            return ReadLinuxPortalAccentColor();
+        }
+
+        return null;
+    }
+
+    private static Color? ReadLinuxPortalAccentColor()
+    {
+        try
+        {
+            using Process? proc = Process.Start(new ProcessStartInfo
+            {
+                FileName = "gdbus",
+                Arguments = "call --session --dest org.freedesktop.portal.Desktop --object-path /org/freedesktop/portal/desktop --method org.freedesktop.portal.Settings.Read org.freedesktop.appearance accent-color",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+            if (proc is null)
+                return null;
+
+            string output = proc.StandardOutput.ReadToEnd();
+            proc.WaitForExit(1000);
+            if (proc.ExitCode != 0 || string.IsNullOrWhiteSpace(output))
+                return null;
+
+            Match match = Regex.Match(output, @"\(([0-9.]+),\s*([0-9.]+),\s*([0-9.]+)\)");
+            if (match.Success &&
+                double.TryParse(match.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out double r) &&
+                double.TryParse(match.Groups[2].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out double g) &&
+                double.TryParse(match.Groups[3].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out double b))
+            {
+                return Color.FromRgb(
+                    (byte)Math.Clamp(Math.Round(r * 255.0), 0, 255),
+                    (byte)Math.Clamp(Math.Round(g * 255.0), 0, 255),
+                    (byte)Math.Clamp(Math.Round(b * 255.0), 0, 255));
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
     private void HookSystemThemeChanges()
     {
         if (Application.Current?.PlatformSettings is { } settings)
@@ -689,6 +843,10 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
                     if (SyncThemeWithSystem)
                     {
                         ApplySystemThemeVariant(values.ThemeVariant);
+                    }
+                    if (UseSystemAccentColor)
+                    {
+                        SyncWithSystemAccentColor(values.AccentColor1);
                     }
                 });
             };
@@ -878,6 +1036,13 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         }
         else
         {
+            if (_useSystemAccentColor)
+            {
+                _useSystemAccentColor = false;
+                PersistUseSystemAccentColorSetting(false);
+                OnPropertyChanged(nameof(UseSystemAccentColor));
+            }
+
             if (IsColorAdjusted)
             {
                 CaptureAdjustmentBaseline();

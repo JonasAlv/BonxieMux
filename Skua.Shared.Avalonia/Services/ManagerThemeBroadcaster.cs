@@ -10,16 +10,38 @@ using System.Threading.Tasks;
 namespace Skua.Shared.Avalonia.Services;
 
 /// <summary>
-/// Broadcasts theme updates from BonxieMux Manager to any running BonxieMux host instances via IPC named pipes.
+/// Broadcasts theme updates between BonxieMux Manager and BonxieMux host instances via IPC named pipes.
 /// </summary>
 public static class ManagerThemeBroadcaster
 {
+    private static int _managerListenerStarted;
+
+    public static bool IsSyncEnabled(ISettingsService settingsService)
+    {
+        try
+        {
+            return settingsService.Get("syncTheme", false) || settingsService.GetShared().SyncManagerAndAppTheme;
+        }
+        catch
+        {
+            return settingsService.Get("syncTheme", false);
+        }
+    }
+
     public static void BroadcastIfEnabled(AvaloniaThemeService themeService, ISettingsService settingsService)
     {
-        if (!settingsService.Get("syncTheme", false))
+        if (!IsSyncEnabled(settingsService) || themeService.IsApplyingExternalTheme)
             return;
 
         Broadcast(themeService);
+    }
+
+    public static void BroadcastIfEnabledToManager(AvaloniaThemeService themeService, ISettingsService settingsService)
+    {
+        if (!IsSyncEnabled(settingsService) || themeService.IsApplyingExternalTheme)
+            return;
+
+        BroadcastToManager(themeService);
     }
 
     public static void Broadcast(AvaloniaThemeService themeService)
@@ -40,39 +62,115 @@ public static class ManagerThemeBroadcaster
                 }
             }
 
-            ThemeItem snapshot = new()
-            {
-                Name = "ManagerSync",
-                IsDarkTheme = themeService.IsDarkTheme,
-                PrimaryColor = themeService.PrimaryColor,
-                SecondaryColor = themeService.SecondaryColor,
-                PrimaryForegroundColor = themeService.PrimaryForegroundColor,
-                SecondaryForegroundColor = themeService.SecondaryForegroundColor,
-                UseColorAdjustment = false,
-                DesiredContrastRatio = themeService.DesiredContrastRatio,
-                ContrastValue = themeService.ContrastValue?.ToString() ?? "Medium",
-                ColorSelectionValue = themeService.ColorSelectionValue?.ToString() ?? "All"
-            };
-
-            bool useAccentOnMainTitleBar = themeService.UseAccentOnMainTitleBar;
-            string message = $"THEME|{useAccentOnMainTitleBar}|{snapshot.ConvertToString()}";
+            string message = BuildThemeMessage(themeService);
 
             foreach (string pipePath in targetPipes)
             {
-                _ = Task.Run(() =>
-                {
-                    try
-                    {
-                        using var client = new NamedPipeClientStream(".", pipePath, PipeDirection.Out);
-                        client.Connect(150);
-                        using StreamWriter sw = new(client);
-                        sw.WriteLine(message);
-                        sw.Flush();
-                    }
-                    catch { }
-                });
+                SendPipeMessageAsync(pipePath, message);
             }
         }
         catch { }
+    }
+
+    public static void BroadcastToManager(AvaloniaThemeService themeService)
+    {
+        try
+        {
+            string managerPipe = Path.Combine(ClientFileSources.TabsDIR, "manager-theme.pipe");
+            SendPipeMessageAsync(managerPipe, BuildThemeMessage(themeService));
+        }
+        catch { }
+    }
+
+    public static void StartManagerThemeListener(Action<ThemeItem, bool> onThemeReceived)
+    {
+        if (System.Threading.Interlocked.Exchange(ref _managerListenerStarted, 1) != 0)
+            return;
+
+        string pipePath = Path.Combine(ClientFileSources.TabsDIR, "manager-theme.pipe");
+        _ = Task.Run(async () =>
+        {
+            while (true)
+            {
+                NamedPipeServerStream? server = null;
+                try
+                {
+                    Directory.CreateDirectory(ClientFileSources.TabsDIR);
+                    server = new NamedPipeServerStream(
+                        pipePath,
+                        PipeDirection.In,
+                        NamedPipeServerStream.MaxAllowedServerInstances,
+                        PipeTransmissionMode.Byte,
+                        PipeOptions.Asynchronous);
+
+                    await server.WaitForConnectionAsync();
+                    using StreamReader reader = new(server);
+                    string? line = await reader.ReadLineAsync();
+                    if (!string.IsNullOrWhiteSpace(line) && line.StartsWith("THEME|", StringComparison.Ordinal))
+                    {
+                        string themePayload = line.Substring("THEME|".Length);
+                        bool useAccentOnMainTitleBar = true;
+                        string themeCsv = themePayload;
+                        int separatorIndex = themePayload.IndexOf('|');
+                        if (separatorIndex >= 0 &&
+                            bool.TryParse(themePayload[..separatorIndex], out bool parsedAccent))
+                        {
+                            useAccentOnMainTitleBar = parsedAccent;
+                            themeCsv = themePayload[(separatorIndex + 1)..];
+                        }
+
+                        ThemeItem? themeItem = ThemeItem.FromString(themeCsv);
+                        if (themeItem is not null)
+                        {
+                            Dispatcher.UIThread.Post(() => onThemeReceived(themeItem, useAccentOnMainTitleBar));
+                        }
+                    }
+                }
+                catch
+                {
+                    await Task.Delay(250);
+                }
+                finally
+                {
+                    server?.Dispose();
+                }
+            }
+        });
+    }
+
+    private static string BuildThemeMessage(AvaloniaThemeService themeService)
+    {
+        ThemeItem snapshot = new()
+        {
+            Name = "ManagerSync",
+            IsDarkTheme = themeService.IsDarkTheme,
+            PrimaryColor = themeService.PrimaryColor,
+            SecondaryColor = themeService.SecondaryColor,
+            PrimaryForegroundColor = themeService.PrimaryForegroundColor,
+            SecondaryForegroundColor = themeService.SecondaryForegroundColor,
+            UseColorAdjustment = false,
+            DesiredContrastRatio = themeService.DesiredContrastRatio,
+            ContrastValue = themeService.ContrastValue?.ToString() ?? "Medium",
+            ColorSelectionValue = themeService.ColorSelectionValue?.ToString() ?? "All"
+        };
+
+        bool useAccentOnMainTitleBar = themeService.UseAccentOnMainTitleBar;
+        return $"THEME|{useAccentOnMainTitleBar}|{snapshot.ConvertToString()}";
+    }
+
+    private static void SendPipeMessageAsync(string pipePath, string message)
+    {
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                using var client = new NamedPipeClientStream(".", pipePath, PipeDirection.Out);
+                client.Connect(150);
+                using StreamWriter sw = new(client);
+                sw.WriteLine(message);
+                sw.Flush();
+            }
+            catch { }
+        });
     }
 }

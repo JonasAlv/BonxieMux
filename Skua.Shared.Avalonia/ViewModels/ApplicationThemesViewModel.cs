@@ -88,23 +88,31 @@ public class ApplicationThemesViewModel : BotControlViewModelBase
     }
 
     /// <summary>
-    /// Controls whether changes to the Manager's theme automatically sync with BonxieMux.
-    /// Maps to the persistent "syncTheme" setting.
+    /// Controls whether changes to the Manager's or App's theme automatically sync with each other (two-way).
+    /// Maps to the persistent "syncTheme" and SharedSettings.SyncManagerAndAppTheme settings.
     /// </summary>
     public bool SyncThemeWithApp
     {
-        get => _settingsService.Get("syncTheme", false);
+        get => ManagerThemeBroadcaster.IsSyncEnabled(_settingsService);
         set
         {
-            if (_settingsService.Get("syncTheme", false) == value)
+            if (SyncThemeWithApp == value)
                 return;
 
             _settingsService.Set("syncTheme", value);
+            try
+            {
+                var shared = _settingsService.GetShared();
+                shared.SyncManagerAndAppTheme = value;
+                _settingsService.Set("SyncManagerAndAppTheme", value);
+            }
+            catch { }
             OnPropertyChanged();
 
             if (value && ThemeService is AvaloniaThemeService ats)
             {
                 ManagerThemeBroadcaster.Broadcast(ats);
+                ManagerThemeBroadcaster.BroadcastToManager(ats);
             }
         }
     }

@@ -219,6 +219,24 @@ public class SharedSettings
     [JsonPropertyName("SyncThemeWithSystem")]
     public bool SyncThemeWithSystem { get; set; } = true;
 
+    [JsonPropertyName("UseSystemAccentColor")]
+    public bool UseSystemAccentColor { get; set; } = false;
+
+    [JsonPropertyName("DarkAccentColor")]
+    public string? DarkAccentColor { get; set; } = null;
+
+    [JsonPropertyName("DarkTextOnAccentColor")]
+    public string? DarkTextOnAccentColor { get; set; } = null;
+
+    [JsonPropertyName("LightAccentColor")]
+    public string? LightAccentColor { get; set; } = null;
+
+    [JsonPropertyName("LightTextOnAccentColor")]
+    public string? LightTextOnAccentColor { get; set; } = null;
+
+    [JsonPropertyName("SyncManagerAndAppTheme")]
+    public bool SyncManagerAndAppTheme { get; set; } = false;
+
     [JsonPropertyName("StageQuality")]
     public string StageQuality { get; set; } = "MEDIUM";
 

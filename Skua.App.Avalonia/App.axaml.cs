@@ -568,6 +568,10 @@ public partial class App : Application
                     ats.UseAccentOnMainTitleBar ? ats.PrimaryForegroundColor : (Color?)null);
             }
             QueueHostThemeSync(ats);
+            if (!ats.IsApplyingExternalTheme)
+            {
+                ManagerThemeBroadcaster.BroadcastIfEnabledToManager(ats, Ioc.Default.GetRequiredService<ISettingsService>());
+            }
         }
         else
         {
@@ -607,6 +611,10 @@ public partial class App : Application
                     ats.UseAccentOnMainTitleBar ? ats.PrimaryForegroundColor : (Color?)null);
             }
             QueueHostThemeSync(ats);
+            if (!ats.IsApplyingExternalTheme)
+            {
+                ManagerThemeBroadcaster.BroadcastIfEnabledToManager(ats, Ioc.Default.GetRequiredService<ISettingsService>());
+            }
             return;
         }
 
