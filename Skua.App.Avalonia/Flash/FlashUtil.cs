@@ -399,13 +399,20 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         object[] args = msg["args"] is JArray arr ? arr.Select(FromJson).ToArray() : [];
         Dispatcher.UIThread.Post(() =>
         {
-            try
+            FlashCallHandler? subscribers = FlashCall;
+            if (subscribers is null)
+                return;
+
+            foreach (FlashCallHandler handler in subscribers.GetInvocationList().Cast<FlashCallHandler>())
             {
-                FlashCall?.Invoke(function, args);
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine($"Flash call handler for '{function}' failed: {ex}");
+                try
+                {
+                    handler(function, args);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"Flash call handler for '{function}' failed: {ex}");
+                }
             }
         });
     }

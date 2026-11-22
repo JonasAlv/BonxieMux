@@ -130,9 +130,11 @@ public class SkillItemViewModel : ObservableObject
             {
                 useRule = true;
                 pos += 2;
+                // Each check has its own comparison: one "MA>" must not turn the "MA<" checks after it into ">".
+                bool mauraGreater = false;
                 if (pos < rest.Length && rest[pos] == '>')
                 {
-                    auraGreater = true;
+                    mauraGreater = true;
                     pos++;
                 }
                 else if (pos < rest.Length && rest[pos] == '<')
@@ -142,7 +144,6 @@ public class SkillItemViewModel : ObservableObject
 
                 string mauraName = "";
                 float mauraVal = 0;
-                bool mauraGreater = auraGreater;
                 int mauraTargetIndex = 0;
 
                 if (pos < rest.Length && rest[pos] == '"')
@@ -174,15 +175,7 @@ public class SkillItemViewModel : ObservableObject
                 while (pos < rest.Length && rest[pos] == ' ')
                     pos++;
 
-                if (pos < rest.Length && char.IsLetter(rest[pos]))
-                {
-                    int targetEnd = pos;
-                    while (targetEnd < rest.Length && char.IsLetter(rest[targetEnd]))
-                        targetEnd++;
-                    if (rest[pos..targetEnd].Contains("TARGET", StringComparison.OrdinalIgnoreCase))
-                        mauraTargetIndex = 1;
-                    pos = targetEnd;
-                }
+                pos = ReadAuraTarget(rest, pos, ref mauraTargetIndex);
 
                 while (pos < rest.Length && rest[pos] == ' ')
                     pos++;
@@ -327,15 +320,7 @@ public class SkillItemViewModel : ObservableObject
                 while (pos < rest.Length && rest[pos] == ' ')
                     pos++;
 
-                if (pos < rest.Length && char.IsLetter(rest[pos]))
-                {
-                    int targetEnd = pos;
-                    while (targetEnd < rest.Length && char.IsLetter(rest[targetEnd]))
-                        targetEnd++;
-                    if (rest[pos..targetEnd].Contains("TARGET", StringComparison.OrdinalIgnoreCase))
-                        auraTargetIndex = 1;
-                    pos = targetEnd;
-                }
+                pos = ReadAuraTarget(rest, pos, ref auraTargetIndex);
 
                 while (pos < rest.Length && rest[pos] == ' ')
                     pos++;
@@ -401,6 +386,17 @@ public class SkillItemViewModel : ObservableObject
     {
         get => _displayString;
         set => SetProperty(ref _displayString, value);
+    }
+
+    private static int ReadAuraTarget(string rest, int pos, ref int targetIndex)
+    {
+        if (string.Compare(rest, pos, "TARGET", 0, 6, StringComparison.OrdinalIgnoreCase) == 0)
+        {
+            targetIndex = 1;
+            return pos + 6;
+        }
+
+        return string.Compare(rest, pos, "SELF", 0, 4, StringComparison.OrdinalIgnoreCase) == 0 ? pos + 4 : pos;
     }
 
     public override string ToString()

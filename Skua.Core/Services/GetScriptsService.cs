@@ -390,6 +390,7 @@ public partial class GetScriptsService : ObservableObject, IGetScriptsService
 
         info.CachedDownloaded = true;
         info.CachedLocalSize = scriptBytes.Length;
+        info.InvalidateLocalHash();
     }
 
     public async Task<int> DownloadAllWhereAsync(
@@ -397,7 +398,8 @@ public partial class GetScriptsService : ObservableObject, IGetScriptsService
         IProgress<string>? progress = null,
         CancellationToken token = default)
     {
-        List<ScriptInfo> toUpdate = _scripts.Where(pred).ToList();
+        List<ScriptInfo> scripts = _scripts.ToList();
+        List<ScriptInfo> toUpdate = await Task.Run(() => scripts.Where(pred).ToList(), token);
         if (toUpdate.Count == 0)
             return 0;
 
@@ -453,6 +455,7 @@ public partial class GetScriptsService : ObservableObject, IGetScriptsService
                     File.Delete(shaFile);
                 info.CachedDownloaded = false;
                 info.CachedLocalSize = 0;
+                info.InvalidateLocalHash();
             }
             catch { }
         });

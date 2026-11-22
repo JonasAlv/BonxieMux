@@ -73,9 +73,9 @@ public class ScriptInfo
 
     public int LocalSize => CachedLocalSize ?? (Downloaded ? (int)new FileInfo(LocalFile).Length : 0);
 
-    private string? _cachedSha256;
-    private long _cachedSha256Size = -1;
-    private DateTime _cachedSha256Time = DateTime.MinValue;
+    private sealed record LocalHashEntry(long Length, DateTime LastWriteUtc, string Hash);
+
+    private LocalHashEntry? _localHash;
 
     public string? LocalSha256
     {
@@ -84,22 +84,23 @@ public class ScriptInfo
             if (!Downloaded) return null;
             try
             {
-                var fileInfo = new FileInfo(LocalFile);
-                if (!fileInfo.Exists) return null;
-                if (_cachedSha256 != null && _cachedSha256Size == fileInfo.Length && _cachedSha256Time == fileInfo.LastWriteTimeUtc)
-                    return _cachedSha256;
+                FileInfo file = new(LocalFile);
+                if (!file.Exists) return null;
 
-                using SHA256 sha256 = System.Security.Cryptography.SHA256.Create();
-                using FileStream stream = File.OpenRead(LocalFile);
-                byte[] hash = sha256.ComputeHash(stream);
-                _cachedSha256 = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                _cachedSha256Size = fileInfo.Length;
-                _cachedSha256Time = fileInfo.LastWriteTimeUtc;
-                return _cachedSha256;
+                LocalHashEntry? cached = _localHash;
+                if (cached is not null && cached.Length == file.Length && cached.LastWriteUtc == file.LastWriteTimeUtc)
+                    return cached.Hash;
+
+                using FileStream stream = new(file.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                string hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(stream)).ToLowerInvariant();
+                _localHash = new(file.Length, file.LastWriteTimeUtc, hash);
+                return hash;
             }
             catch { return null; }
         }
     }
+
+    public void InvalidateLocalHash() => _localHash = null;
 
     public bool Outdated
     {

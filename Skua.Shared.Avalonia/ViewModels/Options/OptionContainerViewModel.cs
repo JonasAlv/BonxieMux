@@ -41,9 +41,15 @@ public partial class OptionContainerViewModel : ObservableObject, IOptionContain
             .ToList();
 
         SelectedOption = Options.FirstOrDefault();
+
+        if (container.ResetOptions.Count > 0)
+            ResetNotice = "These saved choices no longer exist and were reset:\n"
+                + string.Join("\n", container.ResetOptions)
+                + "\nCheck them, then close this window to save.";
     }
 
     public string Title { get; } = "Script Options";
+    public string? ResetNotice { get; }
     public IOptionContainer Container { get; set; }
     public List<IOptionContainerItemViewModel> Options { get; }
     public List<OptionCategoryGroup> GroupedOptions { get; }
