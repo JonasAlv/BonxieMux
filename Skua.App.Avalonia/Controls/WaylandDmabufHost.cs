@@ -167,6 +167,7 @@ internal sealed class DmabufSkiaRenderer
     private CachedDmabufImage? _fallbackEntry;
     private IntPtr _lastGrContextHandle;
     private long _lastSeq;
+    private ulong _lastNotifiedPresentedSeq;
     private bool _disposed;
 
     public DmabufSkiaRenderer(
@@ -317,10 +318,17 @@ internal sealed class DmabufSkiaRenderer
                     BonxieWaylandNative.AckFrame(_waylandHost, acquiredSeq);
                 }
             }
-            _onPresentedFrame(presentedSeq);
+            if (presentedSeq != _lastNotifiedPresentedSeq || (presentedSeq == 0 && acquiredSeq != 0))
+            {
+                _lastNotifiedPresentedSeq = presentedSeq;
+                _onPresentedFrame(presentedSeq);
+            }
 
-            ulong latestSeq = BonxieWaylandNative.FrameSeq(_waylandHost);
-            hasMore = latestSeq != 0 && latestSeq != presentedSeq;
+            if (acquiredSeq != 0)
+            {
+                ulong latestSeq = BonxieWaylandNative.FrameSeq(_waylandHost);
+                hasMore = latestSeq != 0 && latestSeq != presentedSeq;
+            }
         }
 
         if (hasMore)

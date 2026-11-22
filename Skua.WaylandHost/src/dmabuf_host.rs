@@ -167,15 +167,19 @@ impl DmabufHost {
 
     pub fn notify_frame_acquired(&self, serial: u64) {
         if serial > 0 {
-            self.acquired_serial.fetch_max(serial, Ordering::AcqRel);
-            self.wake_loop();
+            let prev = self.acquired_serial.fetch_max(serial, Ordering::AcqRel);
+            if serial > prev {
+                self.wake_loop();
+            }
         }
     }
 
     pub fn notify_presented_seq(&self, serial: u64) {
         if serial > 0 {
-            self.presented_serial.fetch_max(serial, Ordering::AcqRel);
-            self.wake_loop();
+            let prev = self.presented_serial.fetch_max(serial, Ordering::AcqRel);
+            if serial > prev {
+                self.wake_loop();
+            }
         }
     }
 
