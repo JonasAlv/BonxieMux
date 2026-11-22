@@ -55,6 +55,44 @@ public partial class TabbedHostWindow
     private void AccountQuickLaunchSearch_TextChanged(object? sender, TextChangedEventArgs e) =>
         RebuildQuickLaunchRows();
 
+    private void AccountQuickLaunchPopup_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            if (AccountLaunchToggle != null)
+                AccountLaunchToggle.IsChecked = false;
+            e.Handled = true;
+        }
+    }
+
+    private void AccountQuickLaunchSearch_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            if (AccountLaunchToggle != null)
+                AccountLaunchToggle.IsChecked = false;
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Enter)
+        {
+            if (_quickLaunchSelection.Count > 0)
+            {
+                LaunchQuickAccounts(_quickLaunchSelection.ToList(), inNewWindow: false);
+            }
+            else
+            {
+                List<QuickLaunchAccountEntry> available = GetFilteredQuickLaunchAccounts()
+                    .Where(a => !IsAccountOpenOrPending(a.Username))
+                    .ToList();
+                if (available.Count == 1)
+                    LaunchQuickAccounts([available[0].Username], inNewWindow: false);
+            }
+            e.Handled = true;
+        }
+    }
+
     private void AccountQuickLaunchSelectAll_Click(object? sender, RoutedEventArgs e)
     {
         foreach (QuickLaunchAccountEntry entry in GetFilteredQuickLaunchAccounts())

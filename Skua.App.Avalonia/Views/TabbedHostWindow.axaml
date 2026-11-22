@@ -317,7 +317,8 @@
                                    Placement="Bottom"
                                    IsLightDismissEnabled="True"
                                    IsOpen="{Binding IsChecked, ElementName=AccountLaunchToggle, Mode=TwoWay}"
-                                   PlacementTarget="{Binding ElementName=AccountLaunchToggle}">
+                                   PlacementTarget="{Binding ElementName=AccountLaunchToggle}"
+                                   KeyDown="AccountQuickLaunchPopup_KeyDown">
                                 <Border Width="340"
                                         Background="{DynamicResource SkuaSurfaceBrush}"
                                         BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -350,7 +351,8 @@
                                         <TextBox x:Name="AccountQuickLaunchSearch"
                                                  Height="34"
                                                  PlaceholderText="Search by username or display name"
-                                                 TextChanged="AccountQuickLaunchSearch_TextChanged" />
+                                                 TextChanged="AccountQuickLaunchSearch_TextChanged"
+                                                 KeyDown="AccountQuickLaunchSearch_KeyDown" />
                                         <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="5">
                                             <ComboBox x:Name="AccountQuickLaunchGroupCombo"
                                                       Grid.Column="0"
