@@ -33,8 +33,17 @@ public class FileDialogService : IFileDialogService
             try { Directory.CreateDirectory(initialDirectory); } catch { }
         }
 
+        bool pickerInvoked = false;
+        bool pickerUnavailable = false;
         string? result = RunOnUIThread(async provider =>
         {
+            pickerInvoked = true;
+            if (!provider.CanOpen)
+            {
+                pickerUnavailable = true;
+                return null;
+            }
+
             try
             {
                 IReadOnlyList<IStorageFile> files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
@@ -47,11 +56,12 @@ public class FileDialogService : IFileDialogService
             }
             catch
             {
+                pickerUnavailable = true;
                 return null;
             }
         });
 
-        if (!string.IsNullOrEmpty(result))
+        if (!string.IsNullOrEmpty(result) || (pickerInvoked && !pickerUnavailable))
             return result;
 
         // Fallback for Linux environments where desktop portal is unavailable
