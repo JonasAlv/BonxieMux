@@ -182,6 +182,7 @@ assemble_payload() {
     cp -f "$SCRIPT_DIR/Skua.Plugin.ButlerV5/bin/Release/net10.0"/ButlerV5.dll "$CURRENT_DIR/plugins/"
     cp -f "$SCRIPT_DIR/Skua.Plugin.Cosmetics/bin/Release/net10.0"/Skua.Plugin.Cosmetics.dll "$CURRENT_DIR/plugins/"
     cp -f "$SCRIPT_DIR/Skua.Plugin.PerfRecorder/bin/Release/net10.0"/Skua.Plugin.PerfRecorder.dll "$CURRENT_DIR/plugins/"
+    cp -f "$SCRIPT_DIR/Skua.Plugin.Omniscope/bin/Release/net10.0"/Skua.Plugin.Omniscope.dll "$CURRENT_DIR/plugins/"
 
     # Copy skua.swf
     cp -f "$SWF_SOURCE" "$CURRENT_DIR/skua.swf"
