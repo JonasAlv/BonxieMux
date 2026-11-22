@@ -39,15 +39,15 @@
         </Style>
         <Style Selector="Button.primary-action">
             <Setter Property="Background" Value="{DynamicResource SkuaAccentBrush}" />
-            <Setter Property="Foreground" Value="Black" />
-            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource SkuaAccentForegroundBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Height" Value="32" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="Button.primary-action /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SkuaAccentBrush}" />
-            <Setter Property="TextBlock.Foreground" Value="Black" />
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource SkuaAccentForegroundBrush}" />
         </Style>
         <Style Selector="Button.danger-action">
             <Setter Property="Background" Value="#E53935" />

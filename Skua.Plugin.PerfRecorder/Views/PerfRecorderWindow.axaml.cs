@@ -29,6 +29,7 @@ public partial class PerfRecorderWindow : Window
     {
         _service = service;
         InitializeComponent();
+        Skua.Shared.Avalonia.Services.ShellWindowHelper.ConfigureFramelessWindow(this);
         Skua.Shared.Avalonia.Services.WindowPlacementHelper.CenterOnActiveScreen(this);
 
         Opened += (_, _) =>

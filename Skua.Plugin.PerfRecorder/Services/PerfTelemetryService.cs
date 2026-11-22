@@ -44,6 +44,7 @@ public sealed class PerfTelemetryService : IDisposable
 
     private readonly object _lock = new();
     private readonly Dictionary<int, (ulong ProcTicks, long WallTicks)> _prevCpu = new();
+    private readonly Dictionary<string, (DateTime WriteUtc, object? Cached)> _jsonCache = new(StringComparer.Ordinal);
     private readonly List<PerfSampleRow> _samples = new();
     private readonly List<string> _recordedPerfLogs = new();
     private readonly HashSet<string> _seenLogLines = new(StringComparer.Ordinal);
@@ -255,8 +256,8 @@ public sealed class PerfTelemetryService : IDisposable
     private PerfLiveState SampleInternalLocked()
     {
         int childPid = Environment.ProcessId;
-        HostPerfSnapshot? hostSnap = ReadJsonFile<HostPerfSnapshot>(GetShmFilePath($"skua-host-perf-{childPid}.json"));
-        MugetsuPerfSnapshot? mugetsuSnap = ReadJsonFile<MugetsuPerfSnapshot>(GetShmFilePath($"skua-mugetsu-perf-{childPid}.json"));
+        HostPerfSnapshot? hostSnap = ReadJsonFileCached<HostPerfSnapshot>(GetShmFilePath($"skua-host-perf-{childPid}.json"));
+        MugetsuPerfSnapshot? mugetsuSnap = ReadJsonFileCached<MugetsuPerfSnapshot>(GetShmFilePath($"skua-mugetsu-perf-{childPid}.json"));
 
         if (hostSnap != null && (DateTime.UtcNow - hostSnap.UpdatedAtUtc).TotalSeconds > 3.0)
             hostSnap.HostPresentedFps = 0;
@@ -386,15 +387,34 @@ public sealed class PerfTelemetryService : IDisposable
             if (rparen < 0 || rparen + 2 >= stat.Length)
                 return false;
 
-            string[] fields = stat[(rparen + 2)..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (fields.Length <= 12)
-                return false;
-
-            if (ulong.TryParse(fields[11], NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong utime) &&
-                ulong.TryParse(fields[12], NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong stime))
+            ReadOnlySpan<char> span = stat.AsSpan(rparen + 2);
+            int field = 0;
+            int idx = 0;
+            ulong utime = 0;
+            while (idx < span.Length)
             {
-                totalTicks = utime + stime;
-                return true;
+                while (idx < span.Length && span[idx] == ' ')
+                    idx++;
+                if (idx >= span.Length)
+                    break;
+
+                int start = idx;
+                while (idx < span.Length && span[idx] != ' ')
+                    idx++;
+
+                if (field == 11)
+                {
+                    if (!ulong.TryParse(span[start..idx], NumberStyles.Integer, CultureInfo.InvariantCulture, out utime))
+                        return false;
+                }
+                else if (field == 12)
+                {
+                    if (!ulong.TryParse(span[start..idx], NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong stime))
+                        return false;
+                    totalTicks = utime + stime;
+                    return true;
+                }
+                field++;
             }
         }
         catch { }
@@ -405,14 +425,20 @@ public sealed class PerfTelemetryService : IDisposable
     {
         try
         {
-            foreach (string line in File.ReadLines($"/proc/{pid}/status"))
-            {
-                if (!line.StartsWith("VmRSS:", StringComparison.Ordinal))
-                    continue;
-                string num = new(line.Where(char.IsDigit).ToArray());
-                if (double.TryParse(num, NumberStyles.Float, CultureInfo.InvariantCulture, out double kb))
-                    return kb / 1024.0;
-            }
+            string statm = File.ReadAllText($"/proc/{pid}/statm");
+            int firstSpace = statm.IndexOf(' ');
+            if (firstSpace < 0)
+                return 0;
+
+            int start = firstSpace + 1;
+            while (start < statm.Length && statm[start] == ' ')
+                start++;
+            int end = start;
+            while (end < statm.Length && char.IsDigit(statm[end]))
+                end++;
+
+            if (end > start && long.TryParse(statm.AsSpan(start, end - start), NumberStyles.Integer, CultureInfo.InvariantCulture, out long rssPages))
+                return rssPages * (double)Environment.SystemPageSize / (1024.0 * 1024.0);
         }
         catch { }
         return 0;
@@ -421,14 +447,24 @@ public sealed class PerfTelemetryService : IDisposable
     private static string GetShmFilePath(string name) =>
         Path.Combine(Directory.Exists("/dev/shm") ? "/dev/shm" : Path.GetTempPath(), name);
 
-    private static T? ReadJsonFile<T>(string path) where T : class
+    private T? ReadJsonFileCached<T>(string path) where T : class
     {
         try
         {
             if (!File.Exists(path))
+            {
+                _jsonCache.Remove(path);
                 return null;
+            }
+
+            DateTime writeUtc = File.GetLastWriteTimeUtc(path);
+            if (_jsonCache.TryGetValue(path, out var entry) && entry.WriteUtc == writeUtc)
+                return entry.Cached as T;
+
             string json = File.ReadAllText(path);
-            return string.IsNullOrWhiteSpace(json) ? null : JsonSerializer.Deserialize<T>(json, JsonOpts);
+            T? parsed = string.IsNullOrWhiteSpace(json) ? null : JsonSerializer.Deserialize<T>(json, JsonOpts);
+            _jsonCache[path] = (writeUtc, parsed);
+            return parsed;
         }
         catch
         {
