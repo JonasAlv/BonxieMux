@@ -286,7 +286,17 @@ public partial class TabbedHostWindow : Window
             ? $"{lbl} — BonxieMux"
             : $"BonxieMux V{Skua.Core.Models.ClientFileSources.DisplayVersion}";
 
-        _hostGrid?.Children.Remove(viewport);
+        if (viewport.Parent is Panel parentPanel)
+            parentPanel.Children.Remove(viewport);
+        else
+            _viewportCanvas?.Children.Remove(viewport);
+
+        Canvas.SetLeft(viewport, 0);
+        Canvas.SetTop(viewport, 0);
+        viewport.Width = double.NaN;
+        viewport.Height = double.NaN;
+        viewport.HorizontalAlignment = HorizontalAlignment.Stretch;
+        viewport.VerticalAlignment = VerticalAlignment.Stretch;
 
         ContentControl viewportHost = new()
         {
@@ -411,11 +421,10 @@ public partial class TabbedHostWindow : Window
         }
 
         if (_viewports.TryGetValue(childHwnd, out GameHost? viewport) &&
-            _hostGrid != null &&
-            !_hostGrid.Children.Contains(viewport))
+            _viewportCanvas != null &&
+            !_viewportCanvas.Children.Contains(viewport))
         {
-            int insertIndex = Math.Max(0, _hostGrid.Children.Count - 1);
-            _hostGrid.Children.Insert(insertIndex, viewport);
+            _viewportCanvas.Children.Insert(0, viewport);
         }
 
         Dispatcher.UIThread.Post(() =>
@@ -444,6 +453,9 @@ public partial class TabbedHostWindow : Window
 
     private void PlatformMoveResizeChild(IntPtr childHwnd, int x, int y, int width, int height, bool focus = false)
     {
+        if (_detachedWindows.ContainsKey(childHwnd))
+            return;
+
         EnsureHostLayout();
         if (!_viewports.TryGetValue(childHwnd, out GameHost? viewport))
         {
@@ -537,6 +549,9 @@ public partial class TabbedHostWindow : Window
 
     private void PlatformHideChild(IntPtr childHwnd)
     {
+        if (_detachedWindows.ContainsKey(childHwnd))
+            return;
+
         if (!Dispatcher.UIThread.CheckAccess())
         {
             Dispatcher.UIThread.Post(() => PlatformHideChild(childHwnd));
@@ -555,6 +570,13 @@ public partial class TabbedHostWindow : Window
         {
             Dispatcher.UIThread.Post(() => PlatformUnmapChild(childHwnd));
             return;
+        }
+
+        if (_detachedViewportHosts.Remove(childHwnd, out ContentControl? detachedHost))
+            detachedHost.Content = null;
+        if (_detachedWindows.Remove(childHwnd, out Window? detachedWindow))
+        {
+            try { detachedWindow.Close(); } catch { }
         }
 
         if (_viewports.Remove(childHwnd, out GameHost? viewport))
