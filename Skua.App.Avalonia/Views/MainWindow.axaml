@@ -42,71 +42,77 @@
             <Menu x:Name="MainMenuControl"
                   Classes="top-toolbar"
                   VerticalAlignment="Center" />
-
-            <StackPanel Margin="6,0,0,0"
-                        Orientation="Horizontal"
-                        Spacing="2"
-                        VerticalAlignment="Center">
-              <ToggleButton x:Name="AutoToggle"
-                            Classes="top-nav-item"
-                            Height="24"
-                            Padding="6,0"
-                            ToolTip.Tip="Automated Combat &amp; Hunting Controls">
-                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                  <TextBlock Text="Auto"
-                             FontWeight="SemiBold"
-                             FontSize="11"
-                             VerticalAlignment="Center" />
-                  <Border Width="6" Height="6"
-                          CornerRadius="3"
-                          Background="#10B981"
-                          VerticalAlignment="Center"
-                          IsVisible="{Binding AutoViewModel.Auto.IsRunning}" />
-                </StackPanel>
-              </ToggleButton>
-              <Popup Placement="Bottom"
-                     IsLightDismissEnabled="True"
-                     IsOpen="{Binding IsChecked, ElementName=AutoToggle, Mode=TwoWay}"
-                     PlacementTarget="{Binding ElementName=AutoToggle}">
-                <sharedShell:TopbarPopupPanel>
-                  <uc:AutoUserControl DataContext="{Binding AutoViewModel}" />
-                </sharedShell:TopbarPopupPanel>
-              </Popup>
-
-              <ToggleButton x:Name="JumpToggle"
-                            Classes="top-nav-item"
-                            Height="24"
-                            Padding="6,0"
-                            ToolTip.Tip="Map &amp; Cell Fast Jump Controls">
-                <TextBlock Text="Jump"
-                           FontWeight="SemiBold"
-                           FontSize="11"
-                           VerticalAlignment="Center" />
-              </ToggleButton>
-              <Popup Placement="Bottom"
-                     IsLightDismissEnabled="True"
-                     IsOpen="{Binding IsChecked, ElementName=JumpToggle, Mode=TwoWay}"
-                     PlacementTarget="{Binding ElementName=JumpToggle}">
-                <sharedShell:TopbarPopupPanel>
-                  <uc:JumpUserControl DataContext="{Binding JumpViewModel}" />
-                </sharedShell:TopbarPopupPanel>
-              </Popup>
-
-              <Button Classes="top-nav-item"
-                      Width="24" Height="24"
-                      Padding="0"
-                      Command="{Binding ShowBotWindowCommand}"
-                      ToolTip.Tip="Show All Bot Windows &amp; Tools">
-                <materialIcons:MaterialIcon Kind="Plus"
-                                            Width="14" Height="14"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            Foreground="{DynamicResource SkuaAccentBrush}" />
-              </Button>
-            </StackPanel>
           </DockPanel>
         </Border>
       </sharedShell:WindowTitleBar.LeftContent>
+
+      <sharedShell:WindowTitleBar.RightContent>
+        <StackPanel DataContext="{Binding MainMenu}"
+                    Orientation="Horizontal"
+                    Spacing="2"
+                    VerticalAlignment="Center">
+          <ToggleButton x:Name="AutoToggle"
+                        Classes="titlebar"
+                        Width="26" Height="26"
+                        Padding="0"
+                        ToolTip.Tip="Automated Combat &amp; Hunting Controls">
+            <Panel>
+              <materialIcons:MaterialIcon Kind="RobotOutline"
+                                          Width="14" Height="14"
+                                          Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+              <Border Width="6" Height="6"
+                      CornerRadius="3"
+                      Background="#10B981"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Top"
+                      Margin="0,3,3,0"
+                      IsVisible="{Binding AutoViewModel.Auto.IsRunning}" />
+            </Panel>
+          </ToggleButton>
+          <Popup Placement="Bottom"
+                 IsLightDismissEnabled="True"
+                 IsOpen="{Binding IsChecked, ElementName=AutoToggle, Mode=TwoWay}"
+                 PlacementTarget="{Binding ElementName=AutoToggle}">
+            <sharedShell:TopbarPopupPanel>
+              <uc:AutoUserControl DataContext="{Binding AutoViewModel}" />
+            </sharedShell:TopbarPopupPanel>
+          </Popup>
+
+          <ToggleButton x:Name="JumpToggle"
+                        Classes="titlebar"
+                        Width="26" Height="26"
+                        Padding="0"
+                        ToolTip.Tip="Map &amp; Cell Fast Jump Controls">
+            <materialIcons:MaterialIcon Kind="RunFast"
+                                        Width="14" Height="14"
+                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center" />
+          </ToggleButton>
+          <Popup Placement="Bottom"
+                 IsLightDismissEnabled="True"
+                 IsOpen="{Binding IsChecked, ElementName=JumpToggle, Mode=TwoWay}"
+                 PlacementTarget="{Binding ElementName=JumpToggle}">
+            <sharedShell:TopbarPopupPanel>
+              <uc:JumpUserControl DataContext="{Binding JumpViewModel}" />
+            </sharedShell:TopbarPopupPanel>
+          </Popup>
+
+          <Button Classes="titlebar"
+                  Width="26" Height="26"
+                  Padding="0"
+                  Command="{Binding ShowBotWindowCommand}"
+                  ToolTip.Tip="Show All Bot Windows &amp; Tools">
+            <materialIcons:MaterialIcon Kind="Apps"
+                                        Width="14" Height="14"
+                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center" />
+          </Button>
+        </StackPanel>
+      </sharedShell:WindowTitleBar.RightContent>
     </sharedShell:WindowTitleBar>
 
     <Grid Grid.Row="1"

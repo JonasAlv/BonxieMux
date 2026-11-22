@@ -71,10 +71,19 @@ public partial class WindowTitleBar : UserControl
     public static readonly StyledProperty<object?> LeftContentProperty =
         AvaloniaProperty.Register<WindowTitleBar, object?>(nameof(LeftContent));
 
+    public static readonly StyledProperty<object?> RightContentProperty =
+        AvaloniaProperty.Register<WindowTitleBar, object?>(nameof(RightContent));
+
     public object? LeftContent
     {
         get => GetValue(LeftContentProperty);
         set => SetValue(LeftContentProperty, value);
+    }
+
+    public object? RightContent
+    {
+        get => GetValue(RightContentProperty);
+        set => SetValue(RightContentProperty, value);
     }
 
     public bool UseAccentBackground

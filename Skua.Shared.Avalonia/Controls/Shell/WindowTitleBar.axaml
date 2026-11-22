@@ -53,6 +53,11 @@
                 Height="30"
                 VerticalAlignment="Top"
                 Orientation="Horizontal">
+      <ContentPresenter x:Name="RightContentPresenter"
+                        Content="{Binding RightContent, ElementName=Root}"
+                        VerticalAlignment="Center"
+                        Margin="0,0,2,0"
+                        IsVisible="{Binding RightContent, ElementName=Root, Converter={x:Static ObjectConverters.IsNotNull}}" />
       <Button x:Name="DockButton"
               Classes="titlebar"
               IsVisible="False"
