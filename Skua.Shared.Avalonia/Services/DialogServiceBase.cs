@@ -385,13 +385,7 @@ public abstract class DialogServiceBase : IDialogService
         Border rootBorder = new()
         {
             BorderThickness = new Thickness(1),
-            Child = layout,
-            BoxShadow = new BoxShadows(new BoxShadow
-            {
-                Blur = 12,
-                Spread = 2,
-                Color = Color.FromArgb(140, 0, 0, 0)
-            })
+            Child = layout
         };
         rootBorder[!Border.BorderBrushProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaBorderBrush");
         rootBorder[!Border.BackgroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaPageBrush");

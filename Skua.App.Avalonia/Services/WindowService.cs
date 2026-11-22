@@ -235,13 +235,7 @@ public class WindowService : IWindowService
         Border rootBorder = new()
         {
             BorderThickness = new Thickness(1),
-            Child = root,
-            BoxShadow = new BoxShadows(new BoxShadow
-            {
-                Blur = 24,
-                Spread = 4,
-                Color = Color.FromArgb(180, 0, 0, 0)
-            })
+            Child = root
         };
         rootBorder[!Border.BorderBrushProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaBorderBrush");
         rootBorder[!Border.BackgroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaPageBrush");

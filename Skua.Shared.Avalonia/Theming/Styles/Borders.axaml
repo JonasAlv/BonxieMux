@@ -94,12 +94,6 @@
         <Setter Property="CornerRadius" Value="12" />
         <Setter Property="Padding" Value="8,1,8,1" />
         <Setter Property="Margin" Value="0,1,4,2" />
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
-                <BrushTransition Property="BorderBrush" Duration="0:0:0.12" Easing="CubicEaseOut" />
-            </Transitions>
-        </Setter>
     </Style>
 
     <Style Selector="Border.tag-chip:pointerover">

@@ -64,8 +64,7 @@
                                 BorderThickness="1"
                                 CornerRadius="8"
                                 Padding="4"
-                                Margin="0,2,0,0"
-                                BoxShadow="0 8 24 #30000000">
+                                Margin="0,2,0,0">
                             <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                                           VerticalScrollBarVisibility="Auto"
                                           MaxHeight="520">
@@ -210,8 +209,7 @@
                                 BorderThickness="1"
                                 CornerRadius="8"
                                 Padding="4"
-                                Margin="0"
-                                BoxShadow="0 8 24 #30000000">
+                                Margin="0">
                             <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                                           VerticalScrollBarVisibility="Auto"
                                           MaxHeight="520">

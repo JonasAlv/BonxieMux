@@ -77,8 +77,7 @@ public sealed class ToastHost : Panel
             Child = new StackPanel { Orientation = Orientation.Horizontal, Children = { bar, label } },
             Padding = new Thickness(14, 10), CornerRadius = new CornerRadius(10), BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom,
-            RenderTransform = shift, Opacity = 0,
-            BoxShadow = new BoxShadows(new BoxShadow { Blur = 16, OffsetY = 4, Color = Color.FromArgb(90, 0, 0, 0) })
+            RenderTransform = shift, Opacity = 0
         };
         card.Bind(Border.BackgroundProperty, this.GetResourceObservable("SkuaSurfaceBrush"));
         card.Bind(Border.BorderBrushProperty, this.GetResourceObservable("SkuaBorderBrush"));

@@ -78,8 +78,7 @@
                                 BorderThickness="1"
                                 CornerRadius="8"
                                 Padding="4"
-                                Margin="0,4,0,0"
-                                BoxShadow="0 8 24 #30000000">
+                                Margin="0,4,0,0">
                             <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                                           VerticalScrollBarVisibility="Auto">
                                 <ItemsPresenter x:Name="PART_ItemsPresenter"
