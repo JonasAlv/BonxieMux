@@ -79,33 +79,26 @@
                         Padding="10,4"
                         VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                        <materialIcons:MaterialIcon Kind="Account" Width="14" Height="14" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                        <TextBlock Text="{Binding CurrentPlayer, FallbackValue='Player'}"
+  <TextBlock Text="{Binding CurrentPlayer, FallbackValue='Player'}"
                                    FontWeight="Bold"
                                    FontSize="11"
                                    Foreground="{DynamicResource SkuaTextBrush}" />
-                    </StackPanel>
+</StackPanel>
                 </Border>
 
                 <Button Grid.Column="2"
                         Classes="skua-button"
                         Command="{Binding LoadCommand}"
                         ToolTip.Tip="Load CoreBots settings">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <materialIcons:MaterialIcon Kind="FolderOpen" Width="14" Height="14" />
-                        <TextBlock Text="Load" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
+  <TextBlock Text="Load" VerticalAlignment="Center" />
+</Button>
 
                 <Button Grid.Column="3"
                         Classes="skua-button skua-primary"
                         Command="{Binding SaveCommand}"
                         ToolTip.Tip="Save CoreBots settings">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <materialIcons:MaterialIcon Kind="ContentSave" Width="14" Height="14" />
-                        <TextBlock Text="Save" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
+  <TextBlock Text="Save" VerticalAlignment="Center" />
+</Button>
             </Grid>
         </Border>
 

@@ -51,12 +51,15 @@ fn main() {
         }
     }
 
-    let err = Command::new(&target)
-        .args(env::args_os().skip(1))
+    let mut cmd = Command::new(&target);
+    cmd.args(env::args_os().skip(1))
         .env("LD_LIBRARY_PATH", ld_library_path)
         .env("PATH", path_var)
-        .env("DOTNET_ROOT", current_dir.as_os_str())
-        .exec();
+        .env("DOTNET_ROOT", current_dir.as_os_str());
+    if env::var_os("RUST_LOG").is_none() {
+        cmd.env("RUST_LOG", "warn,ruffle_frontend_utils::backends::audio=off");
+    }
+    let err = cmd.exec();
 
     eprintln!("bonxie-launcher: exec({}) failed: {err}", target.display());
     exit(1);

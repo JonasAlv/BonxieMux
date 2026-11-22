@@ -21,11 +21,8 @@
               Classes="skua-button skua-primary w112"
               Command="{Binding GrabCommand}"
               IsEnabled="{Binding !IsBusy}">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="Refresh" Width="15" Height="15" />
-          <TextBlock Text="Grab" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Grab" VerticalAlignment="Center" />
+</Button>
       <TextBox Grid.Column="1"
                PlaceholderText="Search"
                Text="{Binding SearchText, Mode=TwoWay}">
@@ -39,11 +36,8 @@
                     IsVisible="{Binding SelectMultiple}"
                     IsChecked="{Binding IsMultipleSelection, Mode=TwoWay}"
                     ToolTip.Tip="Select several items at once">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="FormatListChecks" Width="15" Height="15" />
-          <TextBlock Text="Multi-select" VerticalAlignment="Center" />
-        </StackPanel>
-      </ToggleButton>
+  <TextBlock Text="Multi-select" VerticalAlignment="Center" />
+</ToggleButton>
     </Grid>
 
     <Grid Grid.Row="1" ColumnDefinitions="*,10,232" RowDefinitions="Auto,*" RowSpacing="8">

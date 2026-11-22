@@ -95,7 +95,10 @@ public class WindowService : IWindowService
 
         if (!window.IsVisible)
             ShowWithMainWindow(window);
+        if (window.WindowState == WindowState.Minimized)
+            window.WindowState = WindowState.Normal;
         window.Activate();
+        window.Focus();
 
         if (window.DataContext is ObservableRecipient r)
             r.IsActive = true;
@@ -265,7 +268,17 @@ public class WindowService : IWindowService
         {
             try
             {
+                window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                CenterRelativeTo(window, main);
                 window.Show(main);
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    if (window.IsVisible)
+                    {
+                        window.Activate();
+                        window.Focus();
+                    }
+                }, global::Avalonia.Threading.DispatcherPriority.Input);
                 return;
             }
             catch
@@ -273,5 +286,23 @@ public class WindowService : IWindowService
             }
         }
         window.Show();
+        window.Activate();
+        window.Focus();
+    }
+
+    private static void CenterRelativeTo(Window window, Window owner)
+    {
+        double scale = owner.RenderScaling > 0 ? owner.RenderScaling : 1.0;
+        double ownerW = owner.Bounds.Width > 0 ? owner.Bounds.Width : owner.Width;
+        double ownerH = owner.Bounds.Height > 0 ? owner.Bounds.Height : owner.Height;
+        double winW = window.Bounds.Width > 0 ? window.Bounds.Width : (window.Width > 0 ? window.Width : 600);
+        double winH = window.Bounds.Height > 0 ? window.Bounds.Height : (window.Height > 0 ? window.Height : 450);
+
+        if (double.IsNaN(ownerW) || double.IsNaN(ownerH) || ownerW <= 0 || ownerH <= 0)
+            return;
+
+        int x = owner.Position.X + (int)Math.Round((ownerW - winW) * scale / 2.0);
+        int y = owner.Position.Y + (int)Math.Round((ownerH - winH) * scale / 2.0);
+        window.Position = new PixelPoint(x, y);
     }
 }

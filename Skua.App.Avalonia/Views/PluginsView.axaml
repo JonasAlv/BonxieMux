@@ -11,11 +11,8 @@
         </TextBox.InnerLeftContent>
       </TextBox>
       <Button Grid.Column="1" Classes="skua-button skua-primary w112" Command="{Binding LoadPluginCommand}" ToolTip.Tip="Load a plugin DLL">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="15" Height="15" />
-          <TextBlock Text="Load..." VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Load..." VerticalAlignment="Center" />
+</Button>
     </Grid>
 
     <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="6">
@@ -24,11 +21,8 @@
         <TextBlock Text="{Binding Plugins.Count}" />
       </Border>
       <Button Grid.Column="3" Classes="skua-button small skua-danger-soft w112" Command="{Binding UnloadAllPluginsCommand}">
-        <StackPanel Orientation="Horizontal" Spacing="5">
-          <materialIcons:MaterialIcon Kind="Cancel" Width="14" Height="14" />
-          <TextBlock Text="Unload all" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Unload all" VerticalAlignment="Center" />
+</Button>
     </Grid>
 
     <ListBox Grid.Row="2" ItemsSource="{Binding Plugins}" Padding="4">
@@ -50,11 +44,8 @@
               </TextBlock>
             </StackPanel>
             <Button Grid.Column="2" Classes="skua-button small w84" IsEnabled="{Binding HasOptions}" Command="{Binding EditPluginOptionsCommand}">
-              <StackPanel Orientation="Horizontal" Spacing="5">
-                <materialIcons:MaterialIcon Kind="TuneVariant" Width="14" Height="14" />
-                <TextBlock Text="Options" VerticalAlignment="Center" />
-              </StackPanel>
-            </Button>
+  <TextBlock Text="Options" VerticalAlignment="Center" />
+</Button>
             <Button Grid.Column="3" Classes="skua-button small skua-danger-soft w84" Content="Unload" Command="{Binding UnloadCommand}" />
           </Grid>
         </DataTemplate>

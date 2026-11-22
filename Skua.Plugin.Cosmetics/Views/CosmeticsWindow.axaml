@@ -183,11 +183,8 @@
                             Margin="0,0,8,0"
                             ToolTip.Tip="Steal / copy the equipment and colors of your current targeted player"
                             Click="BtnCopyTarget_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <materialIcons:MaterialIcon Kind="AccountEye" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" />
-                            <TextBlock Text="Copy Target Look" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" />
-                        </StackPanel>
-                    </Button>
+  <TextBlock Text="Copy Target Look" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" />
+</Button>
 
                     <!-- Room Players Picker -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" Margin="0,0,12,0">
@@ -212,11 +209,8 @@
                             Padding="10,0"
                             ToolTip.Tip="Revert avatar back to your actual equipped inventory items"
                             Click="BtnResetRealGear_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <materialIcons:MaterialIcon Kind="Restore" Width="16" Height="16" Foreground="#FFB74D" />
-                            <TextBlock Text="Reset to Real Gear" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" />
-                        </StackPanel>
-                    </Button>
+  <TextBlock Text="Reset to Real Gear" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" />
+</Button>
 
                     <!-- Status Notification Text -->
                     <TextBlock Grid.Column="3"
@@ -257,9 +251,8 @@
                 <TabItem>
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <materialIcons:MaterialIcon Kind="TshirtCrew" Width="16" Height="16" />
-                            <TextBlock Text="Catalog" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        </StackPanel>
+  <TextBlock Text="Catalog" VerticalAlignment="Center" FontWeight="SemiBold" />
+</StackPanel>
                     </TabItem.Header>
 
                     <Grid RowDefinitions="Auto,Auto,*" Margin="0,8,0,0">
@@ -304,11 +297,8 @@
                                     Margin="6,0,0,0"
                                     ToolTip.Tip="Check for new cosmetics in background"
                                     Click="CheckCatalogUpdates_Click">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <materialIcons:MaterialIcon Kind="CloudSync" Width="16" Height="16" />
-                                    <TextBlock Text="Check Updates" VerticalAlignment="Center" FontSize="12" />
-                                </StackPanel>
-                            </Button>
+  <TextBlock Text="Check Updates" VerticalAlignment="Center" FontSize="12" />
+</Button>
 
                             <TextBlock Grid.Column="4"
                                        x:Name="CatalogStatusText"
@@ -355,11 +345,8 @@
                                     <Button x:Name="ChipPet" Classes="category-chip" Content="Pet" Click="CategoryChip_Click" Tag="Pet" />
                                     <Button x:Name="ChipRune" Classes="category-chip" Content="Ground Rune" Click="CategoryChip_Click" Tag="Rune" />
                                     <Button x:Name="ChipFav" Classes="category-chip" Click="CategoryChip_Click" Tag="Favorites">
-                                        <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <materialIcons:MaterialIcon Kind="Heart" Width="12" Height="12" Foreground="Red" />
-                                            <TextBlock Text="Favorites" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </Button>
+  <TextBlock Text="Favorites" VerticalAlignment="Center" />
+</Button>
                                 </StackPanel>
                             </ScrollViewer>
                         </DockPanel>
@@ -511,30 +498,21 @@
                                                     Classes="primary-action"
                                                     HorizontalAlignment="Stretch"
                                                     Click="BtnEquip_Click">
-                                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                                                    <materialIcons:MaterialIcon Kind="TshirtCrew" Width="16" Height="16" />
-                                                    <TextBlock Text="Equip Look" VerticalAlignment="Center" />
-                                                </StackPanel>
-                                            </Button>
+  <TextBlock Text="Equip Look" VerticalAlignment="Center" />
+</Button>
 
                                             <Button x:Name="BtnFavorite"
                                                     Height="32"
                                                     HorizontalAlignment="Stretch"
                                                     Click="BtnFavorite_Click">
-                                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                                                    <materialIcons:MaterialIcon x:Name="FavIcon" Kind="HeartOutline" Width="16" Height="16" />
-                                                    <TextBlock x:Name="FavBtnText" Text="Add to Favorites" VerticalAlignment="Center" FontSize="11" />
-                                                </StackPanel>
-                                            </Button>
+  <TextBlock x:Name="FavBtnText" Text="Add to Favorites" VerticalAlignment="Center" FontSize="11" />
+</Button>
 
                                             <Button Height="30"
                                                     HorizontalAlignment="Stretch"
                                                     Click="BtnWiki_Click">
-                                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                                                    <materialIcons:MaterialIcon Kind="OpenInNew" Width="14" Height="14" />
-                                                    <TextBlock Text="Open on AQW Wiki" VerticalAlignment="Center" FontSize="11" />
-                                                </StackPanel>
-                                            </Button>
+  <TextBlock Text="Open on AQW Wiki" VerticalAlignment="Center" FontSize="11" />
+</Button>
                                         </StackPanel>
                                     </StackPanel>
                                 </ScrollViewer>
@@ -547,9 +525,8 @@
                 <TabItem>
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <materialIcons:MaterialIcon Kind="Wardrobe" Width="16" Height="16" />
-                            <TextBlock Text="Outfits &amp; Inspector" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        </StackPanel>
+  <TextBlock Text="Outfits &amp; Inspector" VerticalAlignment="Center" FontWeight="SemiBold" />
+</StackPanel>
                     </TabItem.Header>
 
                     <Grid ColumnDefinitions="*,380" Margin="0,8,0,0">
@@ -557,11 +534,8 @@
                         <Grid Grid.Column="0" RowDefinitions="Auto,*" Margin="0,0,12,0">
                             <DockPanel Grid.Row="0" Margin="0,0,0,10">
                                 <Button Height="32" Padding="12,0" Classes="primary-action" DockPanel.Dock="Left" Click="CaptureLook_Click">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <materialIcons:MaterialIcon Kind="Camera" Width="16" Height="16" />
-                                        <TextBlock Text="Save Current Look" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
+  <TextBlock Text="Save Current Look" VerticalAlignment="Center" />
+</Button>
 
                                 <TextBlock x:Name="SetsCountText"
                                            Text="0 Outfits Saved"
@@ -732,22 +706,16 @@
                                                 Margin="0,0,4,0"
                                                 IsEnabled="False"
                                                 Click="EquipSelectedSet_Click">
-                                            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                                                <materialIcons:MaterialIcon Kind="CheckAll" Width="16" Height="16" />
-                                                <TextBlock Text="Equip Full Set" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
+  <TextBlock Text="Equip Full Set" VerticalAlignment="Center" />
+</Button>
 
                                         <Button x:Name="BtnInspectDelete"
                                                 Classes="danger-action"
                                                 Margin="4,0,0,0"
                                                 IsEnabled="False"
                                                 Click="DeleteSelectedSet_Click">
-                                            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                                                <materialIcons:MaterialIcon Kind="Delete" Width="16" Height="16" />
-                                                <TextBlock Text="Delete Set" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
+  <TextBlock Text="Delete Set" VerticalAlignment="Center" />
+</Button>
                                     </UniformGrid>
                                 </StackPanel>
                             </ScrollViewer>
@@ -759,9 +727,8 @@
                 <TabItem>
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <materialIcons:MaterialIcon Kind="Palette" Width="16" Height="16" />
-                            <TextBlock Text="Color Custom (CC)" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        </StackPanel>
+  <TextBlock Text="Color Custom (CC)" VerticalAlignment="Center" FontWeight="SemiBold" />
+</StackPanel>
                     </TabItem.Header>
 
                     <Grid ColumnDefinitions="*,340" Margin="0,8,0,0">
@@ -843,18 +810,12 @@
                                     <!-- Action Buttons -->
                                     <UniformGrid Columns="2">
                                         <Button Classes="primary-action" Margin="0,0,6,0" Click="ApplyColors_Click">
-                                            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                                                <materialIcons:MaterialIcon Kind="FormatColorFill" Width="16" Height="16" />
-                                                <TextBlock Text="Apply Palette" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
+  <TextBlock Text="Apply Palette" VerticalAlignment="Center" />
+</Button>
 
                                         <Button Height="34" Margin="6,0,0,0" Click="ReadCurrentColors_Click">
-                                            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                                                <materialIcons:MaterialIcon Kind="Eyedropper" Width="16" Height="16" />
-                                                <TextBlock Text="Read Avatar Colors" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
+  <TextBlock Text="Read Avatar Colors" VerticalAlignment="Center" />
+</Button>
                                     </UniformGrid>
 
                                     <TextBlock x:Name="CcStatusText" Text="" FontSize="11" HorizontalAlignment="Center" Foreground="{DynamicResource SkuaAccentBrush}" />
@@ -1005,9 +966,8 @@
                 <TabItem>
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <materialIcons:MaterialIcon Kind="CodeBraces" Width="16" Height="16" />
-                            <TextBlock Text="Manual SWF" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        </StackPanel>
+  <TextBlock Text="Manual SWF" VerticalAlignment="Center" FontWeight="SemiBold" />
+</StackPanel>
                     </TabItem.Header>
 
                     <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
@@ -1074,11 +1034,8 @@
                                         HorizontalAlignment="Stretch"
                                         Margin="0,8,0,0"
                                         Click="ManualInject_Click">
-                                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                                        <materialIcons:MaterialIcon Kind="Flash" Width="18" Height="18" />
-                                        <TextBlock Text="Inject SWF Onto Character" VerticalAlignment="Center" FontSize="13" />
-                                    </StackPanel>
-                                </Button>
+  <TextBlock Text="Inject SWF Onto Character" VerticalAlignment="Center" FontSize="13" />
+</Button>
 
                                 <TextBlock x:Name="ManualStatusText"
                                            Text=""

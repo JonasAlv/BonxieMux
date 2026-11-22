@@ -13,9 +13,8 @@
   <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="10">
     <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="10">
       <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-        <materialIcons:MaterialIcon Kind="AccountSwitchOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" />
-        <TextBlock Text="Account" VerticalAlignment="Center" />
-      </StackPanel>
+  <TextBlock Text="Account" VerticalAlignment="Center" />
+</StackPanel>
       <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Accounts}" SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
                 ToolTip.Tip="Pick another open account to see and change its game options" />
     </Grid>
@@ -84,25 +83,16 @@
 
     <Grid Grid.Row="4" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
       <Button Grid.Column="0" Classes="skua-button w84" Command="{Binding ResetDefaultOptionsCommand}" ToolTip.Tip="Reset to application default values">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="Restore" Width="15" Height="15" />
-          <TextBlock Text="Defaults" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Defaults" VerticalAlignment="Center" />
+</Button>
       <Button Grid.Column="1" Classes="skua-button w84" Command="{Binding ResetOptionsCommand}" ToolTip.Tip="Reset to saved user values">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="Undo" Width="15" Height="15" />
-          <TextBlock Text="Reset" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Reset" VerticalAlignment="Center" />
+</Button>
       <TextBlock Grid.Column="2" Text="{Binding FooterNote}" FontSize="11" HorizontalAlignment="Right"
                  VerticalAlignment="Center" Foreground="{DynamicResource SkuaMutedTextBrush}" />
       <Button Grid.Column="3" Classes="skua-button skua-primary w112" Command="{Binding SaveOptionsCommand}" ToolTip.Tip="Keep these options for next time">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="ContentSave" Width="15" Height="15" />
-          <TextBlock Text="Save" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Save" VerticalAlignment="Center" />
+</Button>
     </Grid>
   </Grid>
 </UserControl>

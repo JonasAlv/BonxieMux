@@ -36,11 +36,8 @@
                         Height="38"
                         Padding="16,0"
                         Command="{Binding LaunchSkuaCommand}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="18" Height="18" />
-                        <TextBlock Text="Launch Instance" VerticalAlignment="Center" FontWeight="Bold" FontSize="13" />
-                    </StackPanel>
-                </Button>
+  <TextBlock Text="Launch Instance" VerticalAlignment="Center" FontWeight="Bold" FontSize="13" />
+</Button>
             </Grid>
         </Border>
 
@@ -74,11 +71,8 @@
                         Classes="skua-button skua-danger"
                         Height="30"
                         Click="KillAll_Click">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <materialIcons:MaterialIcon Kind="CloseCircleOutline" Width="14" Height="14" />
-                        <TextBlock Text="Kill All Instances" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
+  <TextBlock Text="Kill All Instances" VerticalAlignment="Center" />
+</Button>
             </Grid>
         </Border>
 

@@ -105,11 +105,8 @@
                             Padding="12,0"
                             Margin="0,0,8,0"
                             Click="BtnToggleRecord_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <materialIcons:MaterialIcon x:Name="RecordBtnIcon" Kind="RecordCircleOutline" Width="16" Height="16" />
-                            <TextBlock x:Name="RecordBtnText" Text="Start Recording" VerticalAlignment="Center" FontSize="12" />
-                        </StackPanel>
-                    </Button>
+  <TextBlock x:Name="RecordBtnText" Text="Start Recording" VerticalAlignment="Center" FontSize="12" />
+</Button>
 
                     <Button Grid.Column="3"
                             Height="32"
@@ -117,22 +114,16 @@
                             Margin="0,0,8,0"
                             ToolTip.Tip="Save an immediate 1-sample .txt snapshot with current Mugetsu &amp; Host metrics"
                             Click="BtnSnapshot_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <materialIcons:MaterialIcon Kind="ContentSaveOutline" Width="15" Height="15" Foreground="{DynamicResource SkuaAccentBrush}" />
-                            <TextBlock Text="Snapshot .txt" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" />
-                        </StackPanel>
-                    </Button>
+  <TextBlock Text="Snapshot .txt" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" />
+</Button>
 
                     <Button Grid.Column="4"
                             Height="32"
                             Padding="10,0"
                             ToolTip.Tip="Open saved reports directory"
                             Click="BtnOpenFolder_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="15" Height="15" />
-                            <TextBlock Text="Reports" VerticalAlignment="Center" FontSize="11" />
-                        </StackPanel>
-                    </Button>
+  <TextBlock Text="Reports" VerticalAlignment="Center" FontSize="11" />
+</Button>
                 </Grid>
             </Border>
 
@@ -295,11 +286,8 @@
                             Padding="10,0"
                             IsVisible="False"
                             Click="BtnCopyPath_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <materialIcons:MaterialIcon Kind="ContentCopy" Width="13" Height="13" />
-                            <TextBlock Text="Copy Path" VerticalAlignment="Center" FontSize="11" />
-                        </StackPanel>
-                    </Button>
+  <TextBlock Text="Copy Path" VerticalAlignment="Center" FontSize="11" />
+</Button>
                 </Grid>
             </Border>
         </Grid>

@@ -9,12 +9,12 @@
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="CornerRadius" Value="6" />
     </Style>
 
     <Style Selector="ListBoxItem">
         <Setter Property="Padding" Value="6,4" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
@@ -101,7 +101,7 @@
         <Setter Property="MinWidth" Value="96" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="Margin" Value="0,0,4,0" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -112,7 +112,7 @@
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
     </Style>
     <Style Selector="ListBox.top-tabs ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.top-tabs-client ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -137,7 +137,7 @@
     <Style Selector="ListBox.segmented">
         <Setter Property="Height" Value="32" />
         <Setter Property="Padding" Value="2" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />

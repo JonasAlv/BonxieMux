@@ -97,11 +97,8 @@
                             Classes="skua-button"
                             Height="32"
                             Command="{Binding SavePacketLogsCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <materialIcons:MaterialIcon Kind="ContentSave" Width="14" Height="14" />
-                            <TextBlock Text="Save" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
+  <TextBlock Text="Save" VerticalAlignment="Center" />
+</Button>
                 </Grid>
             </Grid>
         </Border>

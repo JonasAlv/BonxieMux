@@ -19,20 +19,11 @@
       <ListBox.ContextMenu>
         <ContextMenu>
           <MenuItem Header="Copy Selected" Click="CopySelected_Click">
-            <MenuItem.Icon>
-              <materialIcons:MaterialIcon Kind="ContentCopy" Width="14" Height="14" />
-            </MenuItem.Icon>
           </MenuItem>
           <MenuItem Header="Copy All" Command="{Binding CopyLogCommand}">
-            <MenuItem.Icon>
-              <materialIcons:MaterialIcon Kind="SelectAll" Width="14" Height="14" />
-            </MenuItem.Icon>
           </MenuItem>
           <Separator />
           <MenuItem Header="Clear Logs" Command="{Binding ClearLogCommand}">
-            <MenuItem.Icon>
-              <materialIcons:MaterialIcon Kind="TrashCanOutline" Width="14" Height="14" />
-            </MenuItem.Icon>
           </MenuItem>
         </ContextMenu>
       </ListBox.ContextMenu>

@@ -68,17 +68,11 @@
         <TextBlock Text="{Binding FilteredFastTravelItems.Count}" />
       </Border>
       <Button Grid.Column="3" Classes="skua-button small skua-danger-soft w84" Command="{Binding ClearFastTravelsCommand}" ToolTip.Tip="Remove every destination">
-        <StackPanel Orientation="Horizontal" Spacing="5">
-          <materialIcons:MaterialIcon Kind="DeleteSweepOutline" Width="14" Height="14" />
-          <TextBlock Text="Clear" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Clear" VerticalAlignment="Center" />
+</Button>
       <Button Grid.Column="4" Classes="skua-button small w84" Command="{Binding SaveFastTravelsCommand}" ToolTip.Tip="Save the list">
-        <StackPanel Orientation="Horizontal" Spacing="5">
-          <materialIcons:MaterialIcon Kind="ContentSaveOutline" Width="14" Height="14" />
-          <TextBlock Text="Save" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Save" VerticalAlignment="Center" />
+</Button>
     </Grid>
 
     <ScrollViewer Grid.Row="2" Margin="-3" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
@@ -142,17 +136,11 @@
         <TextBox Grid.Column="2" Height="26" PlaceholderText="Cell" Text="{Binding Editor.Travel.Cell, Mode=TwoWay}" />
         <TextBox Grid.Column="3" Height="26" PlaceholderText="Pad" Text="{Binding Editor.Travel.Pad, Mode=TwoWay}" />
         <Button Grid.Column="4" Classes="skua-button small w112" Command="{Binding Editor.GetCurrentCommand}" ToolTip.Tip="Fill in the map, cell and pad you are in">
-          <StackPanel Orientation="Horizontal" Spacing="5">
-            <materialIcons:MaterialIcon Kind="CrosshairsGps" Width="14" Height="14" />
-            <TextBlock Text="Get current" VerticalAlignment="Center" />
-          </StackPanel>
-        </Button>
+  <TextBlock Text="Get current" VerticalAlignment="Center" />
+</Button>
         <Button Grid.Column="5" Classes="skua-button small skua-primary w84" Command="{Binding AddFastTravelCommand}">
-          <StackPanel Orientation="Horizontal" Spacing="5">
-            <materialIcons:MaterialIcon Kind="Plus" Width="14" Height="14" />
-            <TextBlock Text="Add" VerticalAlignment="Center" />
-          </StackPanel>
-        </Button>
+  <TextBlock Text="Add" VerticalAlignment="Center" />
+</Button>
       </Grid>
     </Border>
   </Grid>

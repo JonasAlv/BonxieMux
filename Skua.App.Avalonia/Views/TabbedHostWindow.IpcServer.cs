@@ -119,7 +119,8 @@ public partial class TabbedHostWindow
                     {
                         if (Ioc.Default.GetService<IThemeService>() is Skua.Shared.Avalonia.Services.AvaloniaThemeService themeService)
                         {
-                            themeService.ApplyExternalThemeSnapshot(isDark, primary, foreground, useAccentOnMainTitleBar);
+                            string? activeThemeName = parts.Length >= 5 ? parts[4] : null;
+                            themeService.ApplyExternalThemeSnapshot(isDark, primary, foreground, useAccentOnMainTitleBar, activeThemeName);
                             MainTitleBar.UseAccentBackground = useAccentOnMainTitleBar;
                         }
                     }

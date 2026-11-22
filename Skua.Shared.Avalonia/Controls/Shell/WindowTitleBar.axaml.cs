@@ -7,6 +7,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Styling;
+using Avalonia.VisualTree;
 using Material.Icons;
 using Material.Icons.Avalonia;
 using System;
@@ -67,6 +68,15 @@ public partial class WindowTitleBar : UserControl
     public static readonly StyledProperty<bool> UseAccentBackgroundProperty =
         AvaloniaProperty.Register<WindowTitleBar, bool>(nameof(UseAccentBackground), false);
 
+    public static readonly StyledProperty<object?> LeftContentProperty =
+        AvaloniaProperty.Register<WindowTitleBar, object?>(nameof(LeftContent));
+
+    public object? LeftContent
+    {
+        get => GetValue(LeftContentProperty);
+        set => SetValue(LeftContentProperty, value);
+    }
+
     public bool UseAccentBackground
     {
         get => GetValue(UseAccentBackgroundProperty);
@@ -93,10 +103,23 @@ public partial class WindowTitleBar : UserControl
         set => DockButton.IsVisible = value;
     }
 
+    public event EventHandler? TitleLayoutChanged;
+
+    public double CenteredTitleLeftEdge
+    {
+        get
+        {
+            double titleW = TitleTextBlock.Bounds.Width > 0 ? TitleTextBlock.Bounds.Width : 76.0;
+            return Math.Max(36.0, (Bounds.Width - titleW) / 2.0);
+        }
+    }
+
     public WindowTitleBar()
     {
         InitializeComponent();
         DockButton.Click += (s, e) => DockClicked?.Invoke(this, e);
+        SizeChanged += (_, _) => TitleLayoutChanged?.Invoke(this, EventArgs.Empty);
+        TitleTextBlock.SizeChanged += (_, _) => TitleLayoutChanged?.Invoke(this, EventArgs.Empty);
         ApplyThemeIcon();
         ActualThemeVariantChanged += (_, _) =>
         {
@@ -167,13 +190,15 @@ public partial class WindowTitleBar : UserControl
 
     private void ApplyAccentForeground()
     {
-        string resourceKey = UseAccentBackground ? "SkuaAccentForegroundBrush" : "SkuaAccentBrush";
-        var dyn = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(resourceKey);
-        TitleTextBlock[!TextBlock.ForegroundProperty] = dyn;
-        MinimizeButton[!Button.ForegroundProperty] = dyn;
-        MaximizeButton[!Button.ForegroundProperty] = dyn;
-        CloseButton[!Button.ForegroundProperty] = dyn;
-        DockButton[!Button.ForegroundProperty] = dyn;
+        string iconKey = UseAccentBackground ? "SkuaAccentForegroundBrush" : "SkuaAccentBrush";
+        string titleKey = UseAccentBackground ? "SkuaAccentForegroundBrush" : "SkuaTextBrush";
+        var iconDyn = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(iconKey);
+        var titleDyn = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(titleKey);
+        TitleTextBlock[!TextBlock.ForegroundProperty] = titleDyn;
+        MinimizeButton[!Button.ForegroundProperty] = iconDyn;
+        MaximizeButton[!Button.ForegroundProperty] = iconDyn;
+        CloseButton[!Button.ForegroundProperty] = iconDyn;
+        DockButton[!Button.ForegroundProperty] = iconDyn;
     }
 
     private void ApplyArtworkPath(string? path)
@@ -222,6 +247,9 @@ public partial class WindowTitleBar : UserControl
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed || TopLevel.GetTopLevel(this) is not Window window)
             return;
 
+        if (IsInteractiveSource(e.Source as Visual))
+            return;
+
         if (e.ClickCount == 2)
         {
             if (window.CanResize && MaximizeButton.IsVisible)
@@ -231,6 +259,16 @@ public partial class WindowTitleBar : UserControl
         }
 
         window.BeginMoveDrag(e);
+    }
+
+    private bool IsInteractiveSource(Visual? source)
+    {
+        for (Visual? cur = source; cur is not null && !ReferenceEquals(cur, this); cur = cur.GetVisualParent())
+        {
+            if (cur is Menu or MenuItem or Button or global::Avalonia.Controls.Primitives.ToggleButton or ComboBox or TextBox)
+                return true;
+        }
+        return false;
     }
 
     private void OnMinimizeClicked(object? sender, RoutedEventArgs e)

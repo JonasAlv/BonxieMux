@@ -24,11 +24,8 @@
         </TextBox.InnerLeftContent>
       </TextBox>
       <Button Grid.Column="1" Classes="skua-button skua-primary w84" Command="{Binding AddDropCommand}">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="Plus" Width="15" Height="15" />
-          <TextBlock Text="Add" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Add" VerticalAlignment="Center" />
+</Button>
     </Grid>
 
     <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="6">
@@ -83,11 +80,8 @@
         </NumericUpDown.InnerRightContent>
       </NumericUpDown>
       <Button Grid.Column="5" Classes="skua-button w84" Command="{Binding TestBeepCommand}" ToolTip.Tip="Play the alert">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="VolumeHigh" Width="15" Height="15" />
-          <TextBlock Text="Test" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Test" VerticalAlignment="Center" />
+</Button>
     </Grid>
   </Grid>
 </UserControl>

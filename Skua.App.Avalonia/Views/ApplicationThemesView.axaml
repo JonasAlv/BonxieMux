@@ -1,37 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:sharedTheming="clr-namespace:Skua.Shared.Avalonia.Controls.Theming;assembly=Skua.Shared.Avalonia"
-             xmlns:sharedViews="clr-namespace:Skua.Shared.Avalonia.ViewModels;assembly=Skua.Shared.Avalonia"
-             x:Class="Skua.App.Avalonia.Views.ApplicationThemesView"
-             x:DataType="sharedViews:ApplicationThemesViewModel">
-
-  <ScrollViewer Margin="12"
-                HorizontalScrollBarVisibility="Disabled"
-                VerticalScrollBarVisibility="Auto">
-    <Border Background="{DynamicResource SkuaSurfaceBrush}"
-            BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="1"
-            CornerRadius="8"
-            Padding="14">
-      <StackPanel Spacing="14">
-
-        <StackPanel Spacing="2">
-          <CheckBox Content="Use theme accent on the main title bar"
-                    IsChecked="{Binding UseAccentOnMainTitleBar, Mode=TwoWay}" />
-          <TextBlock Text="When enabled, the main BonxieMux window title bar follows the active theme accent. Turn it off to keep the normal surface color."
-                     FontSize="11"
-                     Foreground="{DynamicResource SkuaMutedTextBrush}"
-                     TextWrapping="Wrap" />
-        </StackPanel>
-
-        <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
-
-        <sharedTheming:AccentEditorPanel SeparatorBrush="{DynamicResource SkuaBorderBrush}" />
-
-        <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
-
-        <sharedTheming:SchemePreviewCard PreviewBorderBrush="{DynamicResource SkuaBorderBrush}" />
-      </StackPanel>
-    </Border>
-  </ScrollViewer>
+             xmlns:sharedViews="clr-namespace:Skua.Shared.Avalonia.Views;assembly=Skua.Shared.Avalonia"
+             x:Class="Skua.App.Avalonia.Views.ApplicationThemesView">
+  <sharedViews:ApplicationThemesSharedView IsManager="False" />
 </UserControl>

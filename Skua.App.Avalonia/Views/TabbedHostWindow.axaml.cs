@@ -70,6 +70,7 @@ public partial class TabbedHostWindow : Window
         public string AccountOrderKey { get; set; } = "";
         public StackPanel? HeaderPanel { get; set; }
         public MaterialIcon? Crown { get; set; }
+        public Border? FocusDot { get; set; }
     }
 
     private readonly string[] _initialArgs;
@@ -370,21 +371,12 @@ public partial class TabbedHostWindow : Window
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
 
-            var tabIcon = new MaterialIcon
-            {
-                Kind = MaterialIconKind.ShieldAccountOutline,
-                Width = 13,
-                Height = 13,
-                VerticalAlignment = VerticalAlignment.Center,
-                Foreground = new SolidColorBrush(Color.Parse("#38BDF8"))
-            };
-
             var titleRow = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(10, 0, 10, 0),
-                Children = { tabIcon, _titleText }
+                Children = { _titleText }
             };
 
             _bodyArea = new Border
@@ -940,15 +932,16 @@ public partial class TabbedHostWindow : Window
         _gameOnly = on;
         if (on)
         {
-            RootGrid.RowDefinitions = new RowDefinitions("0,0,*");
+            RootGrid.RowDefinitions = new RowDefinitions("0,*");
             HostContainer.Margin = new Thickness(0);
         }
         else
         {
-            RootGrid.RowDefinitions = new RowDefinitions("32,Auto,*");
-            HostContainer.Margin = new Thickness(7, 0, 7, 0);
+            RootGrid.RowDefinitions = new RowDefinitions("30,*");
+            HostContainer.Margin = new Thickness(0);
         }
         MainTitleBar.IsVisible = !on;
+        ActivityBarBorder.IsVisible = !on;
         TabBarBorder.IsVisible = !on;
         if (!on)
         {

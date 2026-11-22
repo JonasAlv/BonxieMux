@@ -19,7 +19,7 @@ namespace Skua.Shared.Avalonia.Services;
 
 public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
 {
-    private static readonly Color DefaultAccentColor = Color.Parse("#607D8B");
+    private static readonly Color DefaultAccentColor = Color.Parse("#0078D4");
 
     private static readonly Dictionary<string, Color> NamedColors = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -49,8 +49,16 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
     private bool _isDarkTheme = true;
     private bool _syncThemeWithSystem = true;
     private bool _useSystemAccentColor;
+    private bool _useThemeAccentColor = true;
     private bool _useAccentOnMainTitleBar;
     private bool _useAccentOnManagerTitleBar;
+    private string _activeThemeName = VsCodeThemeLoader.DarkModernName;
+    private string _preferredDarkTheme = VsCodeThemeLoader.DarkModernName;
+    private string _preferredLightTheme = VsCodeThemeLoader.LightModernName;
+    private VsCodeThemePalette _activePalette = VsCodeThemeLoader.DarkModern;
+    private IReadOnlyList<string> _availableThemes;
+    private IReadOnlyList<string> _availableDarkThemes;
+    private IReadOnlyList<string> _availableLightThemes;
     private Color _primaryColor = DefaultAccentColor;
     private Color _primaryForegroundColor = Colors.White;
     private Color _secondaryColor = DefaultAccentColor;
@@ -67,6 +75,8 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
     public AvaloniaThemeService(ISettingsService settingsService)
     {
         _settingsService = settingsService;
+        (_availableDarkThemes, _availableLightThemes) = VsCodeThemeLoader.DiscoverThemesByKind();
+        _availableThemes = VsCodeThemeLoader.DiscoverAvailableThemeNames();
         _useAccentOnMainTitleBar = ReadExtensionFlag("UseAccentOnMainTitleBar");
         _useAccentOnManagerTitleBar = ReadExtensionFlag("UseAccentOnManagerTitleBar");
         _syncThemeWithSystem = _settingsService.Get("SyncThemeWithSystem", true);
@@ -87,6 +97,8 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         };
 
         LoadProcessThemeFile();
+        _activeThemeName = _isDarkTheme ? _preferredDarkTheme : _preferredLightTheme;
+        _activePalette = VsCodeThemeLoader.LoadByName(_activeThemeName);
         SetSelectedColorSilently(GetColorForScheme(_activeScheme));
         HookSystemThemeChanges();
 
@@ -94,7 +106,17 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             SyncWithSystemTheme();
 
         if (_useSystemAccentColor)
+        {
+            _useThemeAccentColor = false;
             SyncWithSystemAccentColor();
+        }
+        else if (_useThemeAccentColor)
+        {
+            ApplyPaletteAccent(_activePalette, raiseEvents: false);
+        }
+
+        if (Application.Current is { } app)
+            ThemeResourceApplicator.ApplyVsCodePalette(app, _activePalette);
 
         SaveProcessThemeFile();
     }
@@ -115,14 +137,28 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             _isDarkTheme = value;
             OnPropertyChanged();
 
-            (Color nextAccent, Color nextTextOnAccent) = LoadModeColors(value);
-            if (!_useSystemAccentColor)
+            _activeThemeName = value ? _preferredDarkTheme : _preferredLightTheme;
+            _activePalette = VsCodeThemeLoader.LoadByName(_activeThemeName);
+            OnPropertyChanged(nameof(ActiveThemeName));
+
+            if (Application.Current is { } app)
+                ThemeResourceApplicator.ApplyVsCodePalette(app, _activePalette);
+
+            if (_useThemeAccentColor && !_useSystemAccentColor)
             {
-                _primaryColor = nextAccent;
-                _secondaryColor = nextAccent;
+                ApplyPaletteAccent(_activePalette, raiseEvents: false);
             }
-            _primaryForegroundColor = nextTextOnAccent;
-            _secondaryForegroundColor = nextTextOnAccent;
+            else
+            {
+                (Color nextAccent, Color nextTextOnAccent) = LoadModeColors(value);
+                if (!_useSystemAccentColor)
+                {
+                    _primaryColor = nextAccent;
+                    _secondaryColor = nextAccent;
+                }
+                _primaryForegroundColor = nextTextOnAccent;
+                _secondaryForegroundColor = nextTextOnAccent;
+            }
             SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
             SetSelectedColorSilently(GetColorForScheme(_activeScheme));
 
@@ -165,11 +201,128 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             try { _settingsService.GetShared().UseSystemAccentColor = value; } catch { }
             OnPropertyChanged();
 
+            if (value && _useThemeAccentColor)
+            {
+                _useThemeAccentColor = false;
+                OnPropertyChanged(nameof(UseThemeAccentColor));
+            }
+
             if (_useSystemAccentColor)
                 SyncWithSystemAccentColor();
 
             SaveProcessThemeFile();
         }
+    }
+
+    public bool UseThemeAccentColor
+    {
+        get => _useThemeAccentColor;
+        set
+        {
+            if (_useThemeAccentColor == value)
+                return;
+
+            _useThemeAccentColor = value;
+            OnPropertyChanged();
+
+            if (value)
+            {
+                if (_useSystemAccentColor)
+                {
+                    _useSystemAccentColor = false;
+                    _settingsService.Set("UseSystemAccentColor", false);
+                    try { _settingsService.GetShared().UseSystemAccentColor = false; } catch { }
+                    OnPropertyChanged(nameof(UseSystemAccentColor));
+                }
+
+                ApplyPaletteAccent(_activePalette, raiseEvents: true);
+            }
+
+            SaveProcessThemeFile();
+        }
+    }
+
+    public IReadOnlyList<string> AvailableThemes => _availableThemes;
+    public IReadOnlyList<string> AvailableDarkThemes => _availableDarkThemes;
+    public IReadOnlyList<string> AvailableLightThemes => _availableLightThemes;
+    public VsCodeThemePalette ActivePalette => _activePalette;
+
+    public void RefreshAvailableThemes()
+    {
+        (_availableDarkThemes, _availableLightThemes) = VsCodeThemeLoader.DiscoverThemesByKind();
+        _availableThemes = VsCodeThemeLoader.DiscoverAvailableThemeNames();
+        OnPropertyChanged(nameof(AvailableThemes));
+        OnPropertyChanged(nameof(AvailableDarkThemes));
+        OnPropertyChanged(nameof(AvailableLightThemes));
+    }
+
+    public string PreferredDarkTheme
+    {
+        get => _preferredDarkTheme;
+        set
+        {
+            string normalized = string.IsNullOrWhiteSpace(value) ? VsCodeThemeLoader.DarkModernName : value.Trim();
+            if (string.Equals(_preferredDarkTheme, normalized, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            _preferredDarkTheme = normalized;
+            OnPropertyChanged();
+            if (_isDarkTheme)
+                ApplyActiveThemeByName(normalized);
+            SaveProcessThemeFile();
+        }
+    }
+
+    public string PreferredLightTheme
+    {
+        get => _preferredLightTheme;
+        set
+        {
+            string normalized = string.IsNullOrWhiteSpace(value) ? VsCodeThemeLoader.LightModernName : value.Trim();
+            if (string.Equals(_preferredLightTheme, normalized, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            _preferredLightTheme = normalized;
+            OnPropertyChanged();
+            if (!_isDarkTheme)
+                ApplyActiveThemeByName(normalized);
+            SaveProcessThemeFile();
+        }
+    }
+
+    public string ActiveThemeName
+    {
+        get => _activeThemeName;
+        set
+        {
+            string normalized = string.IsNullOrWhiteSpace(value) ? VsCodeThemeLoader.DarkModernName : value.Trim();
+            if (string.Equals(_activeThemeName, normalized, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            ApplyActiveThemeByName(normalized);
+            SaveProcessThemeFile();
+        }
+    }
+
+    private void ApplyActiveThemeByName(string normalized)
+    {
+        _activeThemeName = normalized;
+        _activePalette = VsCodeThemeLoader.LoadByName(normalized);
+        OnPropertyChanged(nameof(ActiveThemeName));
+
+        if (Application.Current is { } app)
+            ThemeResourceApplicator.ApplyVsCodePalette(app, _activePalette);
+
+        if (_isDarkTheme != _activePalette.IsDark)
+        {
+            _isDarkTheme = _activePalette.IsDark;
+            OnPropertyChanged(nameof(IsDarkTheme));
+        }
+
+        if (_useThemeAccentColor && !_useSystemAccentColor)
+            ApplyPaletteAccent(_activePalette, raiseEvents: true);
+        else
+            ThemeChanged?.Invoke(_primaryColor);
     }
 
     public bool UseAccentOnMainTitleBar
@@ -274,10 +427,19 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         SaveProcessThemeFile();
     }
 
-    public void ApplyExternalThemeSnapshot(bool isDark, Color primary, Color foreground, bool useAccentOnMainTitleBar)
+    public void ApplyExternalThemeSnapshot(bool isDark, Color primary, Color foreground, bool useAccentOnMainTitleBar, string? activeThemeName = null)
     {
         _useAccentOnMainTitleBar = useAccentOnMainTitleBar;
         _isDarkTheme = isDark;
+        if (!string.IsNullOrWhiteSpace(activeThemeName))
+            _activeThemeName = activeThemeName;
+        else
+            _activeThemeName = isDark ? _preferredDarkTheme : _preferredLightTheme;
+
+        _activePalette = VsCodeThemeLoader.LoadByName(_activeThemeName);
+        if (Application.Current is { } app)
+            ThemeResourceApplicator.ApplyVsCodePalette(app, _activePalette);
+
         _primaryColor = primary;
         _secondaryColor = primary;
         _primaryForegroundColor = foreground;
@@ -285,6 +447,7 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         SetSelectedColorSilently(GetColorForScheme(_activeScheme));
         OnPropertyChanged(nameof(UseAccentOnMainTitleBar));
         OnPropertyChanged(nameof(IsDarkTheme));
+        OnPropertyChanged(nameof(ActiveThemeName));
         OnPropertyChanged(nameof(SelectedColor));
         ThemeChanged?.Invoke(_primaryColor);
         SchemeChanged?.Invoke(ColorScheme.Primary, _primaryColor);
@@ -308,11 +471,14 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             return;
 
         Color opaque = Color.FromArgb(255, accent.R, accent.G, accent.B);
-        if (_primaryColor == opaque && _secondaryColor == opaque)
+        Color fg = VsCodeThemeLoader.GetContrastForeground(opaque);
+        if (_primaryColor == opaque && _secondaryColor == opaque && _primaryForegroundColor == fg)
             return;
 
         _primaryColor = opaque;
         _secondaryColor = opaque;
+        _primaryForegroundColor = fg;
+        _secondaryForegroundColor = fg;
         if (_activeScheme is ColorScheme.Primary or ColorScheme.Secondary)
             SetSelectedColorSilently(opaque);
 
@@ -320,6 +486,25 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         ThemeChanged?.Invoke(_primaryColor);
         SchemeChanged?.Invoke(_activeScheme, GetColorForScheme(_activeScheme));
         SaveProcessThemeFile();
+    }
+
+    private void ApplyPaletteAccent(VsCodeThemePalette palette, bool raiseEvents)
+    {
+        _primaryColor = palette.Accent;
+        _secondaryColor = palette.Accent;
+        _primaryForegroundColor = palette.AccentForeground;
+        _secondaryForegroundColor = palette.AccentForeground;
+        if (_activeScheme is ColorScheme.Primary or ColorScheme.Secondary)
+            SetSelectedColorSilently(palette.Accent);
+        else
+            SetSelectedColorSilently(palette.AccentForeground);
+
+        SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
+        if (raiseEvents)
+        {
+            ThemeChanged?.Invoke(_primaryColor);
+            SchemeChanged?.Invoke(_activeScheme, GetColorForScheme(_activeScheme));
+        }
     }
 
     public void FlushPendingSave()
@@ -376,9 +561,17 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
                 try { _settingsService.GetShared().UseSystemAccentColor = false; } catch { }
                 OnPropertyChanged(nameof(UseSystemAccentColor));
             }
+            if (_useThemeAccentColor)
+            {
+                _useThemeAccentColor = false;
+                OnPropertyChanged(nameof(UseThemeAccentColor));
+            }
 
             _primaryColor = color;
             _secondaryColor = color;
+            Color contrastFg = VsCodeThemeLoader.GetContrastForeground(color);
+            _primaryForegroundColor = contrastFg;
+            _secondaryForegroundColor = contrastFg;
         }
 
         SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
@@ -574,6 +767,10 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         public bool IsDarkTheme { get; set; }
         public bool SyncThemeWithSystem { get; set; }
         public bool UseSystemAccentColor { get; set; }
+        public bool? UseThemeAccentColor { get; set; }
+        public string? ActiveThemeName { get; set; }
+        public string? PreferredDarkTheme { get; set; }
+        public string? PreferredLightTheme { get; set; }
         public bool UseAccentOnMainTitleBar { get; set; }
         public bool UseAccentOnManagerTitleBar { get; set; }
         public string? PrimaryColor { get; set; }
@@ -597,6 +794,13 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
 
             _syncThemeWithSystem = state.SyncThemeWithSystem;
             _useSystemAccentColor = state.UseSystemAccentColor;
+            _useThemeAccentColor = state.UseThemeAccentColor ?? !_useSystemAccentColor;
+            if (!string.IsNullOrWhiteSpace(state.ActiveThemeName))
+                _activeThemeName = state.ActiveThemeName;
+            if (!string.IsNullOrWhiteSpace(state.PreferredDarkTheme))
+                _preferredDarkTheme = state.PreferredDarkTheme;
+            if (!string.IsNullOrWhiteSpace(state.PreferredLightTheme))
+                _preferredLightTheme = state.PreferredLightTheme;
             _useAccentOnMainTitleBar = state.UseAccentOnMainTitleBar;
             _useAccentOnManagerTitleBar = state.UseAccentOnManagerTitleBar;
             _isDarkTheme = state.IsDarkTheme;
@@ -634,6 +838,10 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
                 IsDarkTheme = _isDarkTheme,
                 SyncThemeWithSystem = _syncThemeWithSystem,
                 UseSystemAccentColor = _useSystemAccentColor,
+                UseThemeAccentColor = _useThemeAccentColor,
+                ActiveThemeName = _activeThemeName,
+                PreferredDarkTheme = _preferredDarkTheme,
+                PreferredLightTheme = _preferredLightTheme,
                 UseAccentOnMainTitleBar = _useAccentOnMainTitleBar,
                 UseAccentOnManagerTitleBar = _useAccentOnManagerTitleBar,
                 PrimaryColor = PrimaryHex,

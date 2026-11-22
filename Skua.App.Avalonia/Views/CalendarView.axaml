@@ -119,20 +119,16 @@
               <TextBlock Classes="cal-heading" Text="BOOSTS" />
             </StackPanel>
             <Button Grid.Column="1" Classes="skua-button small" Command="{Binding RefreshCommand}">
-              <StackPanel Orientation="Horizontal" Spacing="5">
-                <materialIcons:MaterialIcon Kind="Refresh" Width="14" Height="14" />
-                <TextBlock Text="Refresh" VerticalAlignment="Center" />
-              </StackPanel>
-            </Button>
+  <TextBlock Text="Refresh" VerticalAlignment="Center" />
+</Button>
           </Grid>
           <TextBlock Text="{Binding UpdatedText}" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
           <TextBlock Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" Foreground="{DynamicResource SkuaWarningBrush}" FontSize="12" />
           <TextBlock Text="No boosts listed." IsVisible="{Binding HasNoBoosts}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
 
           <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,8,0,0" IsVisible="{Binding HasActive}">
-            <materialIcons:MaterialIcon Kind="PlayCircle" Width="15" Height="15" Foreground="{DynamicResource SkuaSuccessBrush}" />
-            <TextBlock Classes="cal-heading" Text="ACTIVE NOW" Foreground="{DynamicResource SkuaSuccessBrush}" />
-          </StackPanel>
+  <TextBlock Classes="cal-heading" Text="ACTIVE NOW" Foreground="{DynamicResource SkuaSuccessBrush}" />
+</StackPanel>
           <ItemsControl ItemsSource="{Binding ActiveBoosts}" IsVisible="{Binding HasActive}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vms:CalendarBoost">
@@ -155,9 +151,8 @@
           </ItemsControl>
 
           <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,8,0,0" IsVisible="{Binding HasUpcoming}">
-            <materialIcons:MaterialIcon Kind="ClockFast" Width="15" Height="15" Foreground="{DynamicResource SkuaWarningBrush}" />
-            <TextBlock Classes="cal-heading" Text="COMING UP" Foreground="{DynamicResource SkuaWarningBrush}" />
-          </StackPanel>
+  <TextBlock Classes="cal-heading" Text="COMING UP" Foreground="{DynamicResource SkuaWarningBrush}" />
+</StackPanel>
           <ItemsControl ItemsSource="{Binding UpcomingBoosts}" IsVisible="{Binding HasUpcoming}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vms:CalendarBoost">

@@ -14,13 +14,12 @@
             Padding="12,8">
       <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-          <materialIcons:MaterialIcon Kind="ShieldCrownOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
-          <TextBlock Text="Equipment Slots Per Combat Mode"
+  <TextBlock Text="Equipment Slots Per Combat Mode"
                      FontWeight="Bold"
                      FontSize="12"
                      Foreground="{DynamicResource SkuaTextBrush}"
                      VerticalAlignment="Center" />
-        </StackPanel>
+</StackPanel>
 
         <Button Grid.Column="1"
                 Classes="skua-button"
@@ -28,11 +27,8 @@
                 Padding="10,0"
                 Command="{Binding RefreshInventoryCommand}"
                 ToolTip.Tip="Refresh items from player inventory">
-          <StackPanel Orientation="Horizontal" Spacing="5">
-            <materialIcons:MaterialIcon Kind="Refresh" Width="13" Height="13" />
-            <TextBlock Text="Refresh Inventory" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-          </StackPanel>
-        </Button>
+  <TextBlock Text="Refresh Inventory" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+</Button>
       </Grid>
     </Border>
 
@@ -51,9 +47,8 @@
               Padding="14,12">
         <StackPanel Spacing="6">
           <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,0,2">
-            <materialIcons:MaterialIcon Kind="SwordCross" Width="15" Height="15" Foreground="{DynamicResource SkuaSuccessBrush}" />
-            <TextBlock Text="Solo Equipment" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
-          </StackPanel>
+  <TextBlock Text="Solo Equipment" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
 
           <Grid ColumnDefinitions="55,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4" ColumnSpacing="6">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Helm" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
@@ -86,9 +81,8 @@
               Padding="14,12">
         <StackPanel Spacing="6">
           <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,0,2">
-            <materialIcons:MaterialIcon Kind="SproutOutline" Width="15" Height="15" Foreground="{DynamicResource SkuaWarningBrush}" />
-            <TextBlock Text="Farm Equipment" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
-          </StackPanel>
+  <TextBlock Text="Farm Equipment" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
 
           <Grid ColumnDefinitions="55,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4" ColumnSpacing="6">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Helm" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
@@ -121,9 +115,8 @@
               Padding="14,12">
         <StackPanel Spacing="6">
           <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,0,2">
-            <materialIcons:MaterialIcon Kind="ShieldAccountOutline" Width="15" Height="15" Foreground="#60A5FA" />
-            <TextBlock Text="Dodge Equipment" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
-          </StackPanel>
+  <TextBlock Text="Dodge Equipment" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
 
           <Grid ColumnDefinitions="55,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4" ColumnSpacing="6">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Helm" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
@@ -156,9 +149,8 @@
               Padding="14,12">
         <StackPanel Spacing="6">
           <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,0,2">
-            <materialIcons:MaterialIcon Kind="CrownOutline" Width="15" Height="15" Foreground="#A78BFA" />
-            <TextBlock Text="Boss Equipment" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
-          </StackPanel>
+  <TextBlock Text="Boss Equipment" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
 
           <Grid ColumnDefinitions="55,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4" ColumnSpacing="6">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Helm" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />

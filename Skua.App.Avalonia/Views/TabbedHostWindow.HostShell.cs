@@ -36,7 +36,6 @@ public partial class TabbedHostWindow : Window
     private readonly Dictionary<IntPtr, bool> _autoHeadlessStates = new();
     private readonly Dictionary<IntPtr, long> _headlessSeq = new();
     private Grid? _hostGrid;
-    private Border? _dockedTopNavBorder;
     private Canvas? _viewportCanvas;
     private bool _hostInitialized;
 
@@ -57,15 +56,14 @@ public partial class TabbedHostWindow : Window
             Background = Brushes.Transparent
         };
 
-        _dockedTopNavBorder = BuildDockedTopNavBar();
+        MainTitleBar.LeftContent = BuildTopMenuBar();
+        BuildActivityBarControls();
 
         _hostGrid = new Grid
         {
-            RowDefinitions = new RowDefinitions("Auto,*")
+            RowDefinitions = new RowDefinitions("*")
         };
-        Grid.SetRow(_dockedTopNavBorder, 0);
-        Grid.SetRow(_viewportCanvas, 1);
-        _hostGrid.Children.Add(_dockedTopNavBorder);
+        Grid.SetRow(_viewportCanvas, 0);
         _hostGrid.Children.Add(_viewportCanvas);
 
         HostContainer.Child = _hostGrid;
@@ -271,14 +269,6 @@ public partial class TabbedHostWindow : Window
             viewport.IsVisible = false;
         if (_headlessOverlays.TryGetValue(childHwnd, out Border? overlay))
             overlay.IsVisible = false;
-
-        if (_dockedTopNavBorder != null &&
-            InstancesTabControl.SelectedItem is TabItem selected &&
-            _tabs.TryGetValue(selected, out TabInfo? selectedInfo) &&
-            selectedInfo.ChildHwnd == childHwnd)
-        {
-            _dockedTopNavBorder.IsVisible = false;
-        }
     }
 
     private void PlatformReattachChild(IntPtr childHwnd)
@@ -309,10 +299,7 @@ public partial class TabbedHostWindow : Window
                 return;
         }
 
-        if (_dockedTopNavBorder != null)
-            _dockedTopNavBorder.IsVisible = !_isGridViewEnabled && !_gameOnly;
-
-        double topNavH = (_dockedTopNavBorder?.IsVisible == true) ? DockedNavHeight : 0.0;
+        double topNavH = 0.0;
         Point? hostPos = HostContainer.TranslatePoint(new Point(0, 0), this);
         double hostX = hostPos?.X ?? 0.0;
         double hostY = Math.Max(hostPos?.Y ?? 0.0, 0.0);
@@ -336,10 +323,19 @@ public partial class TabbedHostWindow : Window
         }
         else if (_gameSize is null)
         {
-            left = 0.0;
-            top = 0.0;
-            targetW = canvasW;
-            targetH = canvasH;
+            const double aspect = 960.0 / 550.0;
+            if (canvasW / canvasH > aspect)
+            {
+                targetH = canvasH;
+                targetW = Math.Max(1.0, Math.Round(canvasH * aspect));
+            }
+            else
+            {
+                targetW = canvasW;
+                targetH = Math.Max(1.0, Math.Round(canvasW / aspect));
+            }
+            left = Math.Max(0.0, (canvasW - targetW) / 2.0);
+            top = Math.Max(0.0, (canvasH - targetH) / 2.0);
         }
         else
         {
@@ -432,8 +428,6 @@ public partial class TabbedHostWindow : Window
             return;
         }
 
-        if (_dockedTopNavBorder != null)
-            _dockedTopNavBorder.IsVisible = false;
         if (LoadingIndicator != null)
             LoadingIndicator.IsVisible = false;
         if (DetachedPlaceholder != null)

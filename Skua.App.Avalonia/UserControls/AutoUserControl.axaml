@@ -15,9 +15,8 @@
       
       <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-          <materialIcons:MaterialIcon Kind="RobotOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
-          <TextBlock Text="Combat Automation" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
-        </StackPanel>
+  <TextBlock Text="Combat Automation" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
 
         <Border Grid.Column="1"
                 CornerRadius="10"
@@ -27,9 +26,8 @@
                 BorderThickness="1"
                 IsVisible="{Binding Auto.IsRunning}">
           <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-            <materialIcons:MaterialIcon Kind="ProgressCheck" Width="12" Height="12" Foreground="#34D399" />
-            <TextBlock Text="RUNNING" FontSize="10" FontWeight="Bold" Foreground="#34D399" />
-          </StackPanel>
+  <TextBlock Text="RUNNING" FontSize="10" FontWeight="Bold" Foreground="#34D399" />
+</StackPanel>
         </Border>
       </Grid>
 
@@ -42,11 +40,8 @@
                 HorizontalAlignment="Stretch"
                 Command="{Binding StartAutoAttackCommand}"
                 IsVisible="{Binding !Auto.IsRunning}">
-          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6" VerticalAlignment="Center">
-            <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="15" Height="15" VerticalAlignment="Center" />
-            <TextBlock Text="Auto Attack" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
-          </StackPanel>
-        </Button>
+  <TextBlock Text="Auto Attack" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
+</Button>
 
         <Button Grid.Column="1"
                 Classes="skua-button"
@@ -54,11 +49,8 @@
                 HorizontalAlignment="Stretch"
                 Command="{Binding StartAutoHuntCommand}"
                 IsVisible="{Binding !Auto.IsRunning}">
-          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6" VerticalAlignment="Center">
-            <materialIcons:MaterialIcon Kind="CrosshairsGps" Width="15" Height="15" VerticalAlignment="Center" />
-            <TextBlock Text="Auto Hunt" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
-          </StackPanel>
-        </Button>
+  <TextBlock Text="Auto Hunt" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
+</Button>
 
         <Button Grid.Column="0"
                 Grid.ColumnSpan="2"
@@ -67,11 +59,8 @@
                 HorizontalAlignment="Stretch"
                 Command="{Binding StopAutoAsyncCommand}"
                 IsVisible="{Binding Auto.IsRunning}">
-          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6" VerticalAlignment="Center">
-            <materialIcons:MaterialIcon Kind="StopCircleOutline" Width="15" Height="15" VerticalAlignment="Center" />
-            <TextBlock Text="Stop Automation" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
-          </StackPanel>
-        </Button>
+  <TextBlock Text="Stop Automation" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+</Button>
       </Grid>
 
       <Grid ColumnDefinitions="*,*" ColumnSpacing="8">

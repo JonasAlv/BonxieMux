@@ -1,0 +1,207 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:sharedTheming="clr-namespace:Skua.Shared.Avalonia.Controls.Theming"
+             xmlns:sharedViews="clr-namespace:Skua.Shared.Avalonia.ViewModels"
+             x:Class="Skua.Shared.Avalonia.Views.ApplicationThemesSharedView"
+             x:DataType="sharedViews:ApplicationThemesViewModel"
+             x:Name="Root"
+             Background="{DynamicResource SkuaPageBrush}">
+
+  <Grid Margin="12" RowDefinitions="Auto,*" RowSpacing="10">
+    <ListBox Grid.Row="0"
+             Classes="top-tabs-client"
+             ItemsSource="{Binding ThemeSections}"
+             SelectedItem="{Binding SelectedThemeSection, Mode=TwoWay}"
+             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+             ScrollViewer.VerticalScrollBarVisibility="Disabled">
+      <ListBox.ItemsPanel>
+        <ItemsPanelTemplate>
+          <StackPanel Orientation="Horizontal" />
+        </ItemsPanelTemplate>
+      </ListBox.ItemsPanel>
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <TextBlock Text="{Binding}" VerticalAlignment="Center" Margin="12,0" />
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <ScrollViewer Grid.Row="1"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+      <Panel>
+        <Border IsVisible="{Binding IsThemesSection}"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="14"
+                VerticalAlignment="Top">
+          <StackPanel Spacing="14">
+            <StackPanel Spacing="2" IsVisible="{Binding !IsManager, ElementName=Root}">
+              <CheckBox Content="Use theme accent on the main title bar"
+                        IsChecked="{Binding UseAccentOnMainTitleBar, Mode=TwoWay}" />
+              <TextBlock Text="When enabled, the main BonxieMux window title bar follows the active theme accent. Turn it off to keep the normal surface color."
+                         FontSize="11"
+                         Foreground="{DynamicResource SkuaMutedTextBrush}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+
+            <StackPanel Spacing="2" IsVisible="{Binding IsManager, ElementName=Root}">
+              <CheckBox Content="Use theme accent on the Manager title bar"
+                        IsChecked="{Binding UseAccentOnManagerTitleBar, Mode=TwoWay}" />
+              <TextBlock Text="When enabled, the Manager window title bar follows the active theme accent. Turn it off to keep the normal surface color."
+                         FontSize="11"
+                         Foreground="{DynamicResource SkuaMutedTextBrush}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
+
+            <sharedTheming:AccentEditorPanel SeparatorBrush="{DynamicResource SkuaBorderBrush}" />
+          </StackPanel>
+        </Border>
+
+        <Border IsVisible="{Binding IsDiscoverSection}"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="14"
+                VerticalAlignment="Top">
+          <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+              <TextBox Grid.Column="0"
+                       Text="{Binding ThemeSearchQuery, Mode=TwoWay}"
+                       PlaceholderText="Search Open VSX themes (e.g. catppuccin, gruvbox, tokyo night)..." />
+              <Button Grid.Column="1"
+                      Content="Search"
+                      Classes="skua-button skua-primary w90"
+                      Command="{Binding SearchThemesCommand}"
+                      IsEnabled="{Binding !IsSearchingThemes}" />
+            </Grid>
+
+            <TextBlock Text="{Binding ThemeDiscoveryStatus}"
+                       FontSize="11"
+                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                       TextWrapping="Wrap" />
+
+            <ItemsControl ItemsSource="{Binding DiscoveredThemes}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="sharedViews:OpenVsxThemeItemViewModel">
+                  <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
+                          BorderBrush="{DynamicResource SkuaBorderBrush}"
+                          BorderThickness="1"
+                          CornerRadius="4"
+                          Padding="10,8"
+                          Margin="0,0,0,6">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                      <Border Grid.Column="0"
+                              Width="36" Height="36"
+                              CornerRadius="4"
+                              Background="{DynamicResource SkuaSurfaceBrush}"
+                              BorderBrush="{DynamicResource SkuaBorderBrush}"
+                              BorderThickness="1"
+                              VerticalAlignment="Center">
+                        <materialIcons:MaterialIcon Kind="PaletteOutline" Width="18" Height="18"
+                                                    Foreground="{DynamicResource SkuaAccentBrush}"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+
+                      <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DisplayName}"
+                                   FontSize="12.5"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource SkuaTextBrush}" />
+                        <TextBlock Text="{Binding Description}"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxLines="1" />
+                        <TextBlock Text="{Binding Metadata}"
+                                   FontSize="10.5"
+                                   Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                      </StackPanel>
+
+                      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Button Content="Install"
+                                Classes="skua-button skua-primary small w84"
+                                IsVisible="{Binding !IsInstalled}"
+                                IsEnabled="{Binding !IsBusy}"
+                                Command="{Binding $parent[UserControl].((sharedViews:ApplicationThemesViewModel)DataContext).InstallThemeCommand}"
+                                CommandParameter="{Binding}" />
+                        <Button Content="Uninstall"
+                                Classes="skua-button skua-danger-soft small w84"
+                                IsVisible="{Binding IsInstalled}"
+                                IsEnabled="{Binding !IsBusy}"
+                                Command="{Binding $parent[UserControl].((sharedViews:ApplicationThemesViewModel)DataContext).UninstallThemeCommand}"
+                                CommandParameter="{Binding}" />
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <Border IsVisible="{Binding IsInstalledSection}"
+                Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="14"
+                VerticalAlignment="Top">
+          <ItemsControl ItemsSource="{Binding InstalledThemes}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="sharedViews:InstalledThemeItemViewModel">
+                <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
+                        BorderBrush="{DynamicResource SkuaBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="10,8"
+                        Margin="0,0,0,6">
+                  <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                    <Border Grid.Column="0"
+                            Width="32" Height="32"
+                            CornerRadius="4"
+                            Background="{DynamicResource SkuaSurfaceBrush}"
+                            BorderBrush="{DynamicResource SkuaBorderBrush}"
+                            BorderThickness="1"
+                            VerticalAlignment="Center">
+                      <materialIcons:MaterialIcon Kind="PaletteOutline" Width="16" Height="16"
+                                                  Foreground="{DynamicResource SkuaAccentBrush}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Name}"
+                                 FontSize="12"
+                                 FontWeight="SemiBold"
+                                 Foreground="{DynamicResource SkuaTextBrush}" />
+                      <TextBlock Text="{Binding Subtitle}"
+                                 FontSize="11"
+                                 Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                      <Border Classes="chip" IsVisible="{Binding IsBuiltIn}">
+                        <TextBlock Text="Built-in" />
+                      </Border>
+                      <Button Content="Uninstall"
+                              Classes="skua-button skua-danger-soft small w84"
+                              IsVisible="{Binding !IsBuiltIn}"
+                              Command="{Binding $parent[UserControl].((sharedViews:ApplicationThemesViewModel)DataContext).UninstallInstalledThemeCommand}"
+                              CommandParameter="{Binding}" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Border>
+      </Panel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

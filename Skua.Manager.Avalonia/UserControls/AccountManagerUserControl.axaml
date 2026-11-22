@@ -80,11 +80,8 @@
                                 VerticalAlignment="Center"
                                 Command="{Binding SelectAllCommand}"
                                 ToolTip.Tip="Select All Accounts">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <materialIcons:MaterialIcon Kind="SelectAll" Width="14" Height="14" VerticalAlignment="Center" />
-                                <TextBlock Text="Select All" FontSize="11" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
+  <TextBlock Text="Select All" FontSize="11" VerticalAlignment="Center" />
+</Button>
 
                         <TextBlock Grid.Column="1"
                                    Margin="0,0,8,0"
@@ -103,11 +100,8 @@
                                 Command="{Binding DeselectAllCommand}"
                                 ToolTip.Tip="Unselect Selected"
                                 IsVisible="{Binding SelectedAccountQuant, Converter={StaticResource IntGreaterThanZeroConverter}}">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <materialIcons:MaterialIcon Kind="SelectOff" Width="14" Height="14" VerticalAlignment="Center" />
-                                <TextBlock Text="Unselect Selected" FontSize="11" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
+  <TextBlock Text="Unselect Selected" FontSize="11" VerticalAlignment="Center" />
+</Button>
 
                         <Button Grid.Column="3"
                                 Classes="skua-button"
@@ -118,11 +112,8 @@
                                 Command="{Binding RemoveAccountsCommand}"
                                 ToolTip.Tip="Remove Selected"
                                 IsVisible="{Binding SelectedAccountQuant, Converter={StaticResource IntGreaterThanZeroConverter}}">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <materialIcons:MaterialIcon Kind="DeleteOutline" Width="14" Height="14" VerticalAlignment="Center" />
-                                <TextBlock Text="Remove Selected" FontSize="11" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
+  <TextBlock Text="Remove Selected" FontSize="11" VerticalAlignment="Center" />
+</Button>
 
                         <Button Grid.Column="4"
                                 Classes="icon"
@@ -169,11 +160,8 @@
                                 VerticalAlignment="Center"
                                 Click="ShowAddAccountButton_Click"
                                 ToolTip.Tip="Add Account">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <materialIcons:MaterialIcon Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" />
-                                <TextBlock Text="Add Account" FontSize="11" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
+  <TextBlock Text="Add Account" FontSize="11" VerticalAlignment="Center" />
+</Button>
 
                         <ComboBox Grid.Column="8"
                                   Classes="columns-picker"
@@ -292,15 +280,9 @@
                                       IsChecked="{Binding ShowTags}"
                                       Margin="0"
                                       ToolTip.Tip="Toggle group tag visibility">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <materialIcons:MaterialIcon Kind="Tag"
-                                                            Width="14"
-                                                            Height="14"
-                                                            VerticalAlignment="Center" />
-                                <TextBlock Text="Tags"
+  <TextBlock Text="Tags"
                                            VerticalAlignment="Center" />
-                            </StackPanel>
-                        </ToggleButton>
+</ToggleButton>
                         <Button DockPanel.Dock="Left"
                                 Classes="icon header-gap"
                                 HorizontalContentAlignment="Center"
@@ -359,11 +341,8 @@
                         Classes="skua-button skua-primary"
                         Command="{Binding StartAccountsCommand}"
                         ToolTip.Tip="Launch and login all the accounts with the checkbox marked">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="16" Height="16" VerticalAlignment="Center" />
-                        <TextBlock Text="Start Selected" FontWeight="Bold" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
+  <TextBlock Text="Start Selected" FontWeight="Bold" VerticalAlignment="Center" />
+</Button>
                 <Button Grid.Column="2" Height="34" VerticalAlignment="Center" Classes="icon" Command="{Binding StartAccountsInNewWindowCommand}" ToolTip.Tip="Start selected accounts in a separate window">
                     <materialIcons:MaterialIcon Kind="OpenInNew" Width="16" Height="16" />
                 </Button>
@@ -373,11 +352,8 @@
                         Classes="skua-button"
                         Command="{Binding StartAllAccountsCommand}"
                         ToolTip.Tip="Launch all saved accounts">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <materialIcons:MaterialIcon Kind="PlayCircle" Width="16" Height="16" VerticalAlignment="Center" />
-                        <TextBlock Text="Start All" FontWeight="SemiBold" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
+  <TextBlock Text="Start All" FontWeight="SemiBold" VerticalAlignment="Center" />
+</Button>
                 <Button Grid.Column="4" Height="34" VerticalAlignment="Center" Classes="icon" Command="{Binding StartAllAccountsInNewWindowCommand}" ToolTip.Tip="Start all accounts in a separate window">
                     <materialIcons:MaterialIcon Kind="OpenInNew" Width="16" Height="16" />
                 </Button>
@@ -453,11 +429,8 @@
                         Command="{Binding EditScriptOptionsCommand}"
                         IsVisible="{Binding HasScriptPath}"
                         ToolTip.Tip="Edit the selected script's shared options">
-                    <StackPanel Orientation="Horizontal" Spacing="5">
-                        <materialIcons:MaterialIcon Kind="TuneVertical" Width="15" Height="15" />
-                        <TextBlock Text="Edit Options" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
+  <TextBlock Text="Edit Options" VerticalAlignment="Center" />
+</Button>
 
                 <Button Grid.Column="3"
                         Height="34"

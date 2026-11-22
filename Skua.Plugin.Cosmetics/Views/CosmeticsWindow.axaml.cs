@@ -439,14 +439,10 @@ public partial class CosmeticsWindow : Window
 
         if (item.IsFavorite)
         {
-            FavIcon.Kind = MaterialIconKind.Heart;
-            FavIcon.Foreground = Brushes.Red;
             FavBtnText.Text = "Remove Favorite";
         }
         else
         {
-            FavIcon.Kind = MaterialIconKind.HeartOutline;
-            FavIcon.Foreground = Brushes.White;
             FavBtnText.Text = "Add to Favorites";
         }
     }

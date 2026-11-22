@@ -19,7 +19,7 @@
         <Setter Property="MinHeight" Value="0" />
         <Setter Property="MinWidth" Value="56" />
         <Setter Property="Padding" Value="10,0" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
@@ -71,9 +71,9 @@
                            MinWidth="{Binding Bounds.Width, ElementName=PART_RootBorder}"
                            MaxHeight="260">
                         <Border Background="{DynamicResource SkuaSurfaceBrush}"
-                                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                                BorderBrush="{DynamicResource SkuaBorderStrongBrush}"
                                 BorderThickness="1"
-                                CornerRadius="8"
+                                CornerRadius="4"
                                 Padding="4"
                                 Margin="0,4,0,0">
                             <ScrollViewer HorizontalScrollBarVisibility="Disabled"

@@ -10,9 +10,8 @@
 
     <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" ColumnSpacing="8" Margin="0,0,0,10">
       <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-        <materialIcons:MaterialIcon Kind="AccountSwitchOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" />
-        <TextBlock Text="Account" VerticalAlignment="Center" />
-      </StackPanel>
+  <TextBlock Text="Account" VerticalAlignment="Center" />
+</StackPanel>
       <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Accounts}" SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
                 ToolTip.Tip="Pick another open account: the script you load or start here goes to that account" />
     </Grid>
@@ -84,11 +83,8 @@
                     HorizontalContentAlignment="Center"
                     Command="{Binding LoadScriptForAccountCommand}"
                     ToolTip.Tip="Select and load a script for the active account">
-                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                    <materialIcons:MaterialIcon Kind="FolderOpen" Width="15" Height="15" />
-                    <TextBlock Text="Load Script" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+  <TextBlock Text="Load Script" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+</Button>
             
             <Button Grid.Row="0" Grid.Column="1"
                     Classes="skua-button"
@@ -98,11 +94,8 @@
                     HorizontalContentAlignment="Center"
                     Command="{Binding OpenVSCodeCommand}"
                     ToolTip.Tip="Open the local scripts folder in Visual Studio Code">
-                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                    <materialIcons:MaterialIcon Kind="MicrosoftVisualStudioCode" Width="15" Height="15" />
-                    <TextBlock Text="Open VSCode" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+  <TextBlock Text="Open VSCode" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+</Button>
             
             <Button Grid.Row="1" Grid.Column="0"
                     Classes="skua-button"
@@ -112,11 +105,8 @@
                     HorizontalContentAlignment="Center"
                     Command="{Binding EditScriptCommand}"
                     ToolTip.Tip="Open the loaded script in VSCode (or system text editor)">
-                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                    <materialIcons:MaterialIcon Kind="FileEdit" Width="15" Height="15" />
-                    <TextBlock Text="Edit Script" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+  <TextBlock Text="Edit Script" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+</Button>
             
             <Button Grid.Row="1" Grid.Column="1"
                     Classes="skua-button"
@@ -125,11 +115,8 @@
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Center"
                     Command="{Binding OpenScriptRepoCommand}">
-                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                    <materialIcons:MaterialIcon Kind="FolderSearch" Width="15" Height="15" />
-                    <TextBlock Text="Search Scripts" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+  <TextBlock Text="Search Scripts" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+</Button>
             
             <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
                     Classes="skua-button"
@@ -139,11 +126,8 @@
                     HorizontalContentAlignment="Center"
                     Command="{Binding EditScriptConfigCommand}"
                     IsEnabled="{Binding CanEditOptionsShown}">
-                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                    <materialIcons:MaterialIcon Kind="Cog" Width="15" Height="15" />
-                    <TextBlock Text="Edit Script Options" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+  <TextBlock Text="Edit Script Options" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+</Button>
             
             <Button Grid.Row="3" Grid.Column="0"
                     Classes="skua-button"
@@ -176,11 +160,8 @@
                     HorizontalContentAlignment="Center"
                     Command="{Binding TogglePauseScriptCommand}"
                     IsEnabled="{Binding CanPauseShown}">
-                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                    <materialIcons:MaterialIcon Kind="{Binding TogglePauseScriptIcon}" Width="15" Height="15" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding TogglePauseScriptText}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+  <TextBlock Text="{Binding TogglePauseScriptText}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+</Button>
         </Grid>
         
         <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="6">

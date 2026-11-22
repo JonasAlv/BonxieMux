@@ -153,7 +153,8 @@ public partial class TabbedHostWindow
 
     private void UpdateGameSizeButton()
     {
-        GameSizeText.Text = _gameSize is { } s ? $"Size: {s.W}x{s.H}" : "Size: Auto";
+        string sizeLabel = _gameSize is { } s ? $"Size: {s.W}x{s.H}" : "Size: Auto";
+        ToolTip.SetTip(GameSizeBorder, $"Game Viewport {sizeLabel} (click to cycle)");
         ToolTip.SetTip(GameSizeBorder, _gameSize is { } t
             ? $"Game size: {t.W} x {t.H}. Click for the next size."
             : "Game size: fills the window. Click to play at a fixed size (centred, never larger than the window).");
@@ -171,14 +172,12 @@ public partial class TabbedHostWindow
 
     private void UpdateGridLayoutButton()
     {
-        (string text, MaterialIconKind icon, string tip) = _gridLayout switch
+        (string _, string tip) = _gridLayout switch
         {
-            "vertical" => ("Stacked", MaterialIconKind.ViewAgendaOutline, "Grid View layout: stacked top to bottom. Click for side by side."),
-            "horizontal" => ("Side by side", MaterialIconKind.ViewColumnOutline, "Grid View layout: side by side. Click for automatic."),
-            _ => ("Auto", MaterialIconKind.ViewDashboardOutline, "Grid View layout: automatic grid. Click to stack the accounts top to bottom."),
+            "vertical" => ("Stacked", "Grid View layout: stacked top to bottom. Click for side by side."),
+            "horizontal" => ("Side by side", "Grid View layout: side by side. Click for automatic."),
+            _ => ("Auto", "Grid View layout: automatic grid. Click to stack the accounts top to bottom."),
         };
-        GridLayoutText.Text = text;
-        GridLayoutIcon.Kind = icon;
         ToolTip.SetTip(GridLayoutBorder, tip);
     }
 
@@ -223,7 +222,7 @@ public partial class TabbedHostWindow
     private void GridViewBorder_PointerExited(object? sender, PointerEventArgs e)
     {
         if (!_isGridViewEnabled)
-            GridViewBorder[!Border.BackgroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaSurfaceAltBrush");
+            GridViewBorder.Background = Brushes.Transparent;
     }
 
     private void AddTabButton_Click(object? sender, RoutedEventArgs e)
@@ -297,10 +296,21 @@ public partial class TabbedHostWindow
         }, DispatcherPriority.Loaded);
     }
 
+    private void UpdateTabFocusDots()
+    {
+        TabItem? selected = InstancesTabControl.SelectedItem as TabItem;
+        foreach (KeyValuePair<TabItem, TabInfo> kvp in _tabs)
+        {
+            if (kvp.Value.FocusDot != null)
+                kvp.Value.FocusDot.IsVisible = !_isGridViewEnabled && ReferenceEquals(kvp.Key, selected);
+        }
+    }
+
     private void InstancesTabControl_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (e.Source != InstancesTabControl || _ignoreSelectionChange) return;
 
+        UpdateTabFocusDots();
         CloseHostDropdowns();
 
         if (_isGridViewEnabled && InstancesTabControl.SelectedItem != null)
@@ -349,10 +359,31 @@ public partial class TabbedHostWindow
         global::Avalonia.Controls.Primitives.FlyoutBase.GetAttachedFlyout(GlobeBorder)?.Hide();
     }
 
+    private bool _isArmyFlyoutOpen;
+    private bool _armyFlyoutHooked;
+
     private void GlobeBorder_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
         e.Handled = true;
-        global::Avalonia.Controls.Primitives.FlyoutBase.ShowAttachedFlyout(GlobeBorder);
+        if (global::Avalonia.Controls.Primitives.FlyoutBase.GetAttachedFlyout(GlobeBorder) is { } flyout)
+        {
+            if (!_armyFlyoutHooked)
+            {
+                _armyFlyoutHooked = true;
+                flyout.Opened += (_, _) =>
+                {
+                    _isArmyFlyoutOpen = true;
+                    GlobeBorder[!Border.BackgroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaNavHoverBrush");
+                };
+                flyout.Closed += (_, _) =>
+                {
+                    _isArmyFlyoutOpen = false;
+                    if (!GlobeBorder.IsPointerOver)
+                        GlobeBorder.Background = Brushes.Transparent;
+                };
+            }
+            flyout.ShowAt(GlobeBorder);
+        }
     }
 
     private void GlobeBorder_PointerEntered(object? sender, PointerEventArgs e)
@@ -362,7 +393,8 @@ public partial class TabbedHostWindow
 
     private void GlobeBorder_PointerExited(object? sender, PointerEventArgs e)
     {
-        GlobeBorder[!Border.BackgroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaSurfaceAltBrush");
+        if (!_isArmyFlyoutOpen)
+            GlobeBorder.Background = Brushes.Transparent;
     }
 
     private void Options_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -398,23 +430,22 @@ public partial class TabbedHostWindow
 
     private void UpdateGridViewBorderColor()
     {
+        UpdateTabFocusDots();
         if (GridLayoutBorder != null)
             GridLayoutBorder.IsVisible = _isGridViewEnabled;
         if (GameSizeBorder != null)
             GameSizeBorder.IsVisible = !_isGridViewEnabled;
         if (_isGridViewEnabled)
         {
-            GridViewBorder[!Border.BackgroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaSelectionBrush");
-            GridViewBorder[!Border.BorderBrushProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaAccentBrush");
-            if (GridViewText != null) GridViewText[!TextBlock.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaAccentBrush");
+            GridViewBorder[!Border.BackgroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaNavHoverBrush");
+            if (GridViewActiveBar != null) GridViewActiveBar.IsVisible = true;
             if (GridViewIcon != null) GridViewIcon[!MaterialIcon.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaAccentBrush");
         }
         else
         {
-            GridViewBorder[!Border.BackgroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaSurfaceAltBrush");
-            GridViewBorder[!Border.BorderBrushProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaBorderBrush");
-            if (GridViewText != null) GridViewText[!TextBlock.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaTextBrush");
-            if (GridViewIcon != null) GridViewIcon[!MaterialIcon.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaTextBrush");
+            GridViewBorder.Background = Brushes.Transparent;
+            if (GridViewActiveBar != null) GridViewActiveBar.IsVisible = false;
+            if (GridViewIcon != null) GridViewIcon[!MaterialIcon.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaMutedTextBrush");
         }
     }
 

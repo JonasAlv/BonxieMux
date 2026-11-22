@@ -14,9 +14,8 @@
     <StackPanel Spacing="10">
       
       <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-        <materialIcons:MaterialIcon Kind="RunFast" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
-        <TextBlock Text="Fast Map Jump" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
-      </StackPanel>
+  <TextBlock Text="Fast Map Jump" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
 
       <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
 
@@ -46,22 +45,16 @@
                 Height="34"
                 HorizontalAlignment="Stretch"
                 Command="{Binding GetCurrentCommand}">
-          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6" VerticalAlignment="Center">
-            <materialIcons:MaterialIcon Kind="MapMarkerOutline" Width="14" Height="14" VerticalAlignment="Center" />
-            <TextBlock Text="Current" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
-          </StackPanel>
-        </Button>
+  <TextBlock Text="Current" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+</Button>
 
         <Button Grid.Column="1"
                 Classes="skua-button skua-primary"
                 Height="34"
                 HorizontalAlignment="Stretch"
                 Command="{Binding JumpToCommand}">
-          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6" VerticalAlignment="Center">
-            <materialIcons:MaterialIcon Kind="RunFast" Width="15" Height="15" VerticalAlignment="Center" />
-            <TextBlock Text="Jump" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
-          </StackPanel>
-        </Button>
+  <TextBlock Text="Jump" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+</Button>
       </Grid>
     </StackPanel>
   </Border>

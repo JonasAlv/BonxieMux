@@ -23,29 +23,17 @@
                 </ListBox.ItemTemplate>
             </ListBox>
             <Button Grid.Column="1" Classes="skua-button small w84" Click="CopyButton_Click" ToolTip.Tip="Copy the selected lines (or all)">
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                    <materialIcons:MaterialIcon Kind="ContentCopy" Width="14" Height="14" />
-                    <TextBlock Text="Copy" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+  <TextBlock Text="Copy" VerticalAlignment="Center" />
+</Button>
             <Button Grid.Column="2" Classes="skua-button small w84" Click="DeselectButton_Click" ToolTip.Tip="Clear the selected lines">
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                    <materialIcons:MaterialIcon Kind="SelectionRemove" Width="14" Height="14" />
-                    <TextBlock Text="Deselect" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+  <TextBlock Text="Deselect" VerticalAlignment="Center" />
+</Button>
             <Button Grid.Column="3" Classes="skua-button small w84" Command="{Binding SelectedTab.SaveLogCommand}" ToolTip.Tip="Save this log to a file">
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                    <materialIcons:MaterialIcon Kind="ContentSaveOutline" Width="14" Height="14" />
-                    <TextBlock Text="Save" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+  <TextBlock Text="Save" VerticalAlignment="Center" />
+</Button>
             <Button Grid.Column="4" Classes="skua-button small skua-danger-soft w84" Command="{Binding SelectedTab.ClearLogCommand}" ToolTip.Tip="Clear this log">
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                    <materialIcons:MaterialIcon Kind="TrashCanOutline" Width="14" Height="14" />
-                    <TextBlock Text="Clear" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+  <TextBlock Text="Clear" VerticalAlignment="Center" />
+</Button>
         </Grid>
 
         <ContentControl Grid.Row="1" x:Name="TabContent" Content="{Binding SelectedTab}" />

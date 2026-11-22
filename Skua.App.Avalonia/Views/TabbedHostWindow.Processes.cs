@@ -411,15 +411,16 @@ public partial class TabbedHostWindow
         #region Tab Header UI
         StackPanel headerPanel = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Background = Brushes.Transparent };
         
-        MaterialIcon tabIcon = new MaterialIcon
+        Border focusDot = new Border
         {
-            Kind = MaterialIconKind.ShieldAccountOutline,
-            Width = 13,
-            Height = 13,
+            Width = 6,
+            Height = 6,
+            CornerRadius = new CornerRadius(3),
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 6, 0)
+            Margin = new Thickness(0, 0, 6, 0),
+            IsVisible = false
         };
-        tabIcon[!MaterialIcon.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaAccentBrush");
+        focusDot[!Border.BackgroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaAccentBrush");
 
         TextBox editTitle = new TextBox
         {
@@ -495,7 +496,7 @@ public partial class TabbedHostWindow
         ToolTip.SetTip(detachedIcon, "Window Mode: click to focus, double-click to dock into tabs");
 
         Grid iconHost = new Grid { VerticalAlignment = VerticalAlignment.Center };
-        iconHost.Children.Add(tabIcon);
+        iconHost.Children.Add(focusDot);
         iconHost.Children.Add(crown);
         headerPanel.Children.Add(iconHost);
         headerPanel.Children.Add(detachedIcon);
@@ -513,7 +514,8 @@ public partial class TabbedHostWindow
             AccountOrderKey = AccountKey(clientArgs ?? Array.Empty<string>()),
             HeaderPanel = headerPanel,
             Crown = crown,
-            DetachedIcon = detachedIcon
+            DetachedIcon = detachedIcon,
+            FocusDot = focusDot
         };
         
         Action closeEditMode = () =>
@@ -775,8 +777,7 @@ public partial class TabbedHostWindow
 
         MenuItem toggleWindowItem = new MenuItem
         {
-            Header = "Detach to Window",
-            Icon = new MaterialIcon { Kind = MaterialIconKind.DockWindow, Width = 14, Height = 14 }
+            Header = "Detach to Window"
         };
         toggleWindowItem.Click += (s, ev) =>
         {
@@ -798,8 +799,7 @@ public partial class TabbedHostWindow
 
         MenuItem addToGroupItem = new MenuItem
         {
-            Header = "Add to Group",
-            Icon = new MaterialIcon { Kind = MaterialIconKind.AccountMultiplePlus, Width = 14, Height = 14 }
+            Header = "Add to Group"
         };
         ctx.Items.Add(addToGroupItem);
 
@@ -912,8 +912,7 @@ public partial class TabbedHostWindow
         {
             MenuItem notLoggedInItem = new MenuItem
             {
-                Header = "Please log in first",
-                Icon = new MaterialIcon { Kind = MaterialIconKind.AlertCircleOutline, Width = 14, Height = 14 }
+                Header = "Please log in first"
             };
             notLoggedInItem.Click += (s, ev) =>
             {
@@ -938,7 +937,8 @@ public partial class TabbedHostWindow
                 MenuItem groupItem = new MenuItem
                 {
                     Header = group.Name,
-                    Icon = alreadyInGroup ? new MaterialIcon { Kind = MaterialIconKind.Check, Width = 14, Height = 14 } : null
+                    ToggleType = MenuItemToggleType.CheckBox,
+                    IsChecked = alreadyInGroup
                 };
                 groupItem.Click += (s, ev) =>
                 {
@@ -957,8 +957,7 @@ public partial class TabbedHostWindow
 
         MenuItem newGroupItem = new MenuItem
         {
-            Header = "+ New Group...",
-            Icon = new MaterialIcon { Kind = MaterialIconKind.Plus, Width = 14, Height = 14 }
+            Header = "+ New Group..."
         };
         newGroupItem.Click += (s, ev) =>
         {

@@ -129,11 +129,11 @@ public static class ThemeResourceApplicator
         string? accentForegroundHex = null,
         string? secondaryHex = null,
         string? secondaryForegroundHex = null,
-        string fallbackAccentHex = "#10B981",
+        string fallbackAccentHex = "#0078D4",
         bool? isDarkTheme = null)
     {
         Color primary = ParseColorSafe(accentHex, GetResourceColor(app, "SkuaAccentColor", fallbackAccentHex));
-        Color primaryForeground = ParseColorSafe(accentForegroundHex, GetResourceColor(app, "SkuaAccentForegroundColor", "#FF000000"));
+        Color primaryForeground = ParseColorSafe(accentForegroundHex, GetResourceColor(app, "SkuaAccentForegroundColor", "#FFFFFFFF"));
         Color secondary = ParseColorSafe(secondaryHex, primary);
         Color secondaryForeground = ParseColorSafe(secondaryForegroundHex, primaryForeground);
 
@@ -364,6 +364,54 @@ public static class ThemeResourceApplicator
     {
         byte D(byte c) => (byte)Math.Clamp(c * (1 - amount), 0, 255);
         return Color.FromArgb(color.A, D(color.R), D(color.G), D(color.B));
+    }
+
+    public static void ApplyVsCodePalette(Application app, VsCodeThemePalette palette)
+    {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(() => ApplyVsCodePalette(app, palette));
+            return;
+        }
+
+        ThemeVariant targetVariant = palette.IsDark ? ThemeVariant.Dark : ThemeVariant.Light;
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaPageBrush", palette.Page);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaSurfaceBrush", palette.Surface);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaSurfaceAltBrush", palette.SurfaceAlt);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaSurfaceSubtleBrush", palette.SurfaceSubtle);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaNavHoverBrush", palette.NavHover);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaPressedBrush", palette.Pressed);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaSelectionBrush", palette.Selection);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaBorderBrush", palette.Border);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaBorderStrongBrush", palette.BorderStrong);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaWindowBorderBrush", palette.WindowBorder);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaTextBrush", palette.Text);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaMutedTextBrush", palette.MutedText);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaSuccessBrush", palette.Success);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaWarningBrush", palette.Warning);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaScrollThumbBrush", palette.ScrollThumb);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaScrollThumbHoverBrush", palette.ScrollThumbHover);
+        SetOrUpdateThemeBrush(app, targetVariant, "SkuaScrollThumbPressedBrush", palette.ScrollThumbPressed);
+
+        SetOrUpdateBrush(app.Resources, "SkuaDangerBrush", palette.Danger);
+        SetOrUpdateBrush(app.Resources, "SkuaDangerHoverBrush", Darken(palette.Danger, 0.12));
+        SetOrUpdateBrush(app.Resources, "SkuaDangerPressedBrush", Darken(palette.Danger, 0.22));
+    }
+
+    private static void SetOrUpdateThemeBrush(Application app, ThemeVariant variant, string key, Color color)
+    {
+        if (app.TryGetResource(key, variant, out object? res) && res is SolidColorBrush brush)
+        {
+            if (brush.Color != color)
+                brush.Color = color;
+            return;
+        }
+
+        if (app.Resources.ThemeDictionaries.TryGetValue(variant, out IThemeVariantProvider? provider) &&
+            provider is IResourceDictionary dict)
+        {
+            SetOrUpdateBrush(dict, key, color);
+        }
     }
 
     private static Color ParseColorSafe(string? hex, Color fallback)

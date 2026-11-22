@@ -62,11 +62,8 @@
                             Height="36"
                             Command="{Binding ChangeDownloadPathCommand}"
                             Classes="skua-button">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <materialIcons:MaterialIcon Kind="FolderOpen" Width="14" Height="14" />
-                            <TextBlock Text="Change Path" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
+  <TextBlock Text="Change Path" VerticalAlignment="Center" />
+</Button>
                 </Grid>
             </StackPanel>
         </Border>

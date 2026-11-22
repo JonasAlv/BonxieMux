@@ -33,102 +33,188 @@ public partial class TabbedHostWindow
     private ComboBox? _jumpCellBox;
     private ComboBox? _jumpPadBox;
     private bool _suppressPopupSync;
+    private Menu? _topMenuBar;
+    private MenuItem? _overflowMenuItem;
+    private readonly List<(TopMenuSpec Spec, MenuItem Item, double Width)> _topMenuEntries = new();
+    private int _lastOverflowShownCount = -2;
+    private bool _overflowHooked;
 
-    private Border BuildDockedTopNavBar()
+    private sealed record TopMenuSpec(string Header, Action? DirectClick, string[] SubLabels, bool IsPlugins = false);
+
+    private Menu BuildTopMenuBar()
     {
-        Border navBorder = new()
+        Menu menu = new() { VerticalAlignment = VerticalAlignment.Center };
+        menu.Classes.Add("top-toolbar");
+        _topMenuBar = menu;
+        _topMenuEntries.Clear();
+        _lastOverflowShownCount = -2;
+
+        TopMenuSpec[] specs =
+        [
+            new("Scripts", null, ["Script Loader", "Scheduler"]),
+            new("Options", null, ["Game", "Watch Dog", "Application", "CoreBots", "Application Themes", "HotKeys"]),
+            new("Tools & Helpers", null, ["Loadouts Manager", "Fast Travel", "Loader", "Grabber", "Current Drops", "Junk Items", "Ultra Wiki", "Calendar"]),
+            new("Combat", null, ["Skills", "Stats", "Runtime"]),
+            new("Bank", () => SendActiveChildCommand("BANK"), []),
+            new("Diagnostics", null, ["Logs", "Console", "Spammer", "Logger", "Interceptor"]),
+            new("Plugins", null, ["View Plugins", "ButlerV5 Avalonia", "Daily Tracker", "Cosmetics", "Perf Recorder"], IsPlugins: true)
+        ];
+
+        foreach (TopMenuSpec spec in specs)
         {
-            Height = DockedNavHeight,
-            Padding = new Thickness(4, 0),
-            BorderThickness = new Thickness(0, 0, 0, 1)
-        };
-        navBorder[!Border.BackgroundProperty] = new DynamicResourceExtension("SkuaSurfaceBrush");
-        navBorder[!Border.BorderBrushProperty] = new DynamicResourceExtension("SkuaBorderBrush");
+            MenuItem item = BuildTopMenuItemFromSpec(spec);
+            double estW = Math.Max(48.0, spec.Header.Length * 7.2 + 20.0);
+            int idx = _topMenuEntries.Count;
+            _topMenuEntries.Add((spec, item, estW));
+            item.SizeChanged += (_, e) =>
+            {
+                if (e.NewSize.Width > 1 && idx < _topMenuEntries.Count)
+                {
+                    var cur = _topMenuEntries[idx];
+                    if (Math.Abs(cur.Width - e.NewSize.Width) > 0.5)
+                    {
+                        _topMenuEntries[idx] = (cur.Spec, cur.Item, e.NewSize.Width);
+                        _lastOverflowShownCount = -2;
+                        UpdateTopMenuOverflow();
+                    }
+                }
+            };
+            menu.Items.Add(item);
+        }
 
-        DockPanel dock = new() { LastChildFill = true };
-
-        StackPanel rightTools = new()
+        _overflowMenuItem = new MenuItem
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 4,
-            Margin = new Thickness(0, 0, 4, 0),
-            VerticalAlignment = VerticalAlignment.Center
+            Header = CreateNavIcon(MaterialIconKind.DotsHorizontal, 16, "SkuaTextBrush"),
+            Padding = new Thickness(7, 0),
+            IsVisible = false
         };
-        DockPanel.SetDock(rightTools, Dock.Right);
+        _overflowMenuItem.Classes.Add("top-nav-item");
+        menu.Items.Add(_overflowMenuItem);
 
-        var (autoToggle, autoPopup) = BuildAutoControls();
-        var (jumpToggle, jumpPopup) = BuildJumpControls();
-
-        Border sep = new()
+        if (!_overflowHooked)
         {
-            Width = 1,
-            Height = 16,
-            Margin = new Thickness(2, 0),
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        sep[!Border.BackgroundProperty] = new DynamicResourceExtension("SkuaBorderBrush");
+            _overflowHooked = true;
+            MainTitleBar.TitleLayoutChanged += (_, _) => UpdateTopMenuOverflow();
+        }
+        global::Avalonia.Threading.Dispatcher.UIThread.Post(
+            UpdateTopMenuOverflow,
+            global::Avalonia.Threading.DispatcherPriority.Render);
+
+        return menu;
+    }
+
+    private MenuItem BuildTopMenuItemFromSpec(TopMenuSpec spec)
+    {
+        if (spec.IsPlugins)
+            return BuildPluginsMenuItem();
+
+        if (spec.DirectClick is { } direct)
+        {
+            MenuItem item = CreateTopMenuItem(spec.Header);
+            item.Click += (_, _) => direct();
+            return item;
+        }
+
+        return CreateMenuGroup(spec.Header, spec.SubLabels);
+    }
+
+    private void UpdateTopMenuOverflow()
+    {
+        if (_topMenuBar is null || _overflowMenuItem is null || _topMenuEntries.Count == 0)
+            return;
+
+        double titleBarW = MainTitleBar.Bounds.Width;
+        if (titleBarW <= 1)
+            return;
+
+        // Reserve space for the 36px left app icon and centered title so menus never collide with it.
+        double titleLeft = MainTitleBar.CenteredTitleLeftEdge;
+        double rightControlsEdge = Math.Max(36.0, titleBarW - 140.0);
+        double available = Math.Max(0.0, Math.Min(titleLeft, rightControlsEdge) - 36.0 - 16.0);
+
+        const double overflowBtnWidth = 34.0;
+        double currentSize = 0.0;
+        int numShown = 0;
+
+        foreach (var (_, _, w) in _topMenuEntries)
+        {
+            if (currentSize + w <= available)
+            {
+                currentSize += w;
+                numShown++;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (numShown < _topMenuEntries.Count)
+        {
+            while (numShown > 0 && currentSize + overflowBtnWidth > available)
+            {
+                numShown--;
+                currentSize -= _topMenuEntries[numShown].Width;
+            }
+        }
+
+        if (numShown == _lastOverflowShownCount)
+            return;
+        _lastOverflowShownCount = numShown;
+
+        for (int i = 0; i < _topMenuEntries.Count; i++)
+            _topMenuEntries[i].Item.IsVisible = i < numShown;
+
+        if (numShown == _topMenuEntries.Count)
+        {
+            _overflowMenuItem.IsVisible = false;
+            _overflowMenuItem.Items.Clear();
+            return;
+        }
+
+        bool compactHamburger = numShown == 0;
+        _overflowMenuItem.Header = CreateNavIcon(
+            compactHamburger ? MaterialIconKind.Menu : MaterialIconKind.DotsHorizontal,
+            16,
+            "SkuaTextBrush");
+        ToolTip.SetTip(_overflowMenuItem, compactHamburger ? "Application Menu" : "More");
+
+        _overflowMenuItem.Items.Clear();
+        for (int i = numShown; i < _topMenuEntries.Count; i++)
+        {
+            TopMenuSpec spec = _topMenuEntries[i].Spec;
+            MenuItem sub = BuildTopMenuItemFromSpec(spec);
+            sub.Classes.Remove("top-nav-item");
+            _overflowMenuItem.Items.Add(sub);
+        }
+        _overflowMenuItem.IsVisible = true;
+    }
+
+    private void BuildActivityBarControls()
+    {
+        var (autoToggle, autoPopup) = BuildAutoControls(PlacementMode.RightEdgeAlignedTop);
+        var (jumpToggle, jumpPopup) = BuildJumpControls(PlacementMode.RightEdgeAlignedTop);
+
+        ActivityAutoHost.Content = new Panel { Children = { autoToggle, autoPopup } };
+        ActivityJumpHost.Content = new Panel { Children = { jumpToggle, jumpPopup } };
 
         Button botWinBtn = new()
         {
-            Width = 28,
-            Height = 28,
-            Padding = new Thickness(0),
-            Content = CreateNavIcon(MaterialIconKind.Plus, 15, "SkuaAccentBrush")
+            Content = CreateNavIcon(MaterialIconKind.Apps, 16, "SkuaMutedTextBrush")
         };
-        botWinBtn.Classes.Add("top-nav-item");
+        botWinBtn.Classes.Add("activity-item");
         ToolTip.SetTip(botWinBtn, "Show All Bot Windows & Tools");
         botWinBtn.Click += (_, _) => SendActiveChildCommand("BOT_WINDOW");
+        ActivityBotWinHost.Content = botWinBtn;
 
-        rightTools.Children.Add(autoToggle);
-        rightTools.Children.Add(autoPopup);
-        rightTools.Children.Add(jumpToggle);
-        rightTools.Children.Add(jumpPopup);
-        rightTools.Children.Add(sep);
-        rightTools.Children.Add(botWinBtn);
-
-        Menu menu = new() { VerticalAlignment = VerticalAlignment.Center };
-        menu.Classes.Add("top-toolbar");
-
-        menu.Items.Add(CreateMenuGroup("Scripts", MaterialIconKind.ScriptTextOutline,
-            ("Script Loader", MaterialIconKind.ScriptOutline),
-            ("Scheduler", MaterialIconKind.CalendarClock)));
-        menu.Items.Add(CreateMenuGroup("Options", MaterialIconKind.CogOutline,
-            ("Game", MaterialIconKind.GamepadVariantOutline),
-            ("Watch Dog", MaterialIconKind.ShieldCheckOutline),
-            ("Application", MaterialIconKind.ApplicationCogOutline),
-            ("CoreBots", MaterialIconKind.RobotOutline),
-            ("Application Themes", MaterialIconKind.PaletteOutline),
-            ("HotKeys", MaterialIconKind.KeyboardOutline)));
-        menu.Items.Add(CreateMenuGroup("Tools & Helpers", MaterialIconKind.WrenchOutline,
-            ("Loadouts Manager", MaterialIconKind.AccountSwitchOutline),
-            ("Fast Travel", MaterialIconKind.CompassOutline),
-            ("Loader", MaterialIconKind.DownloadOutline),
-            ("Grabber", MaterialIconKind.HandBackRightOutline),
-            ("Current Drops", MaterialIconKind.GiftOutline),
-            ("Junk Items", MaterialIconKind.DeleteSweepOutline),
-            ("Ultra Wiki", MaterialIconKind.CompassOutline),
-            ("Calendar", MaterialIconKind.CalendarMonthOutline)));
-        menu.Items.Add(CreateMenuGroup("Combat", MaterialIconKind.SwordCross,
-            ("Skills", MaterialIconKind.LightningBoltOutline),
-            ("Stats", MaterialIconKind.ChartLine),
-            ("Runtime", MaterialIconKind.PlayNetworkOutline)));
-
-        MenuItem bankItem = CreateTopMenuItem("Bank", MaterialIconKind.BankOutline);
-        bankItem.Click += (_, _) => SendActiveChildCommand("BANK");
-        menu.Items.Add(bankItem);
-
-        menu.Items.Add(CreateMenuGroup("Diagnostics", MaterialIconKind.BugOutline,
-            ("Logs", MaterialIconKind.FileDocumentOutline),
-            ("Console", MaterialIconKind.Console),
-            ("Spammer", MaterialIconKind.SendClockOutline),
-            ("Logger", MaterialIconKind.TextSearch),
-            ("Interceptor", MaterialIconKind.ShieldBugOutline)));
-        menu.Items.Add(BuildPluginsMenuItem());
-
-        dock.Children.Add(rightTools);
-        dock.Children.Add(menu);
-        navBorder.Child = dock;
-        return navBorder;
+        Button settingsBtn = new()
+        {
+            Content = CreateNavIcon(MaterialIconKind.CogOutline, 16, "SkuaMutedTextBrush")
+        };
+        settingsBtn.Classes.Add("activity-item");
+        ToolTip.SetTip(settingsBtn, "Application Themes & Appearance");
+        settingsBtn.Click += (_, _) => SendActiveChildCommand("MENU|Application Themes");
+        ActivitySettingsHost.Content = settingsBtn;
     }
 
     private static MaterialIcon CreateNavIcon(MaterialIconKind kind, double size, string brushKey)
@@ -144,26 +230,11 @@ public partial class TabbedHostWindow
         return icon;
     }
 
-    private static MenuItem CreateTopMenuItem(string header, MaterialIconKind kind)
+    private static MenuItem CreateTopMenuItem(string header)
     {
         MenuItem item = new()
         {
-            Header = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 6,
-                Children =
-                {
-                    CreateNavIcon(kind, 14, "SkuaAccentBrush"),
-                    new TextBlock
-                    {
-                        Text = header,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        FontWeight = FontWeight.SemiBold,
-                        FontSize = 12
-                    }
-                }
-            }
+            Header = header
         };
         item.Classes.Add("top-nav-item");
         return item;
@@ -171,12 +242,13 @@ public partial class TabbedHostWindow
 
     private MenuItem BuildPluginsMenuItem()
     {
-        MenuItem parent = CreateMenuGroup("Plugins", MaterialIconKind.PuzzleOutline,
-            ("View Plugins", MaterialIconKind.PuzzleOutline),
-            ("ButlerV5 Avalonia", MaterialIconKind.RobotOutline),
-            ("Daily Tracker", MaterialIconKind.CalendarCheckOutline),
-            ("Cosmetics", MaterialIconKind.PaletteOutline),
-            ("Perf Recorder", MaterialIconKind.ChartTimelineVariant));
+        MenuItem parent = CreateMenuGroup(
+            "Plugins",
+            "View Plugins",
+            "ButlerV5 Avalonia",
+            "Daily Tracker",
+            "Cosmetics",
+            "Perf Recorder");
 
         parent.SubmenuOpened += (_, _) =>
         {
@@ -196,8 +268,7 @@ public partial class TabbedHostWindow
                 string targetHeader = btn.Header;
                 MenuItem extra = new()
                 {
-                    Header = targetHeader,
-                    Icon = CreateNavIcon(MaterialIconKind.PuzzleOutline, 14, "SkuaAccentBrush")
+                    Header = targetHeader
                 };
                 extra.Click += (_, _) => SendActiveChildCommand("MENU|" + targetHeader);
                 parent.Items.Add(extra);
@@ -207,15 +278,14 @@ public partial class TabbedHostWindow
         return parent;
     }
 
-    private MenuItem CreateMenuGroup(string header, MaterialIconKind kind, params (string Label, MaterialIconKind Icon)[] subItems)
+    private MenuItem CreateMenuGroup(string header, params string[] subItems)
     {
-        MenuItem parent = CreateTopMenuItem(header, kind);
-        foreach ((string label, MaterialIconKind subKind) in subItems)
+        MenuItem parent = CreateTopMenuItem(header);
+        foreach (string label in subItems)
         {
             MenuItem sub = new()
             {
-                Header = label,
-                Icon = CreateNavIcon(subKind, 14, "SkuaAccentBrush")
+                Header = label
             };
             sub.Click += (_, _) => SendActiveChildCommand("MENU|" + label);
             parent.Items.Add(sub);
@@ -251,7 +321,7 @@ public partial class TabbedHostWindow
             TabIpc.SendCommand(pid, command);
     }
 
-    private (ToggleButton, Popup) BuildAutoControls()
+    private (ToggleButton, Popup) BuildAutoControls(PlacementMode placement = PlacementMode.Bottom)
     {
         _autoActiveDot = new Border
         {
@@ -259,55 +329,59 @@ public partial class TabbedHostWindow
             Height = 6,
             CornerRadius = new CornerRadius(3),
             Background = Brush.Parse("#10B981"),
-            Margin = new Thickness(2, 0, 0, 0),
-            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new Thickness(0, 4, 4, 0),
             IsVisible = false
         };
-        StackPanel autoContent = CreateNavContent(MaterialIconKind.RobotOutline, "Auto");
-        autoContent.Children.Add(_autoActiveDot);
-        ToggleButton toggle = CreateNavToggle(autoContent, "Automated Combat & Hunting Controls");
+        Panel autoContent = new()
+        {
+            Width = 28,
+            Height = 28,
+            Children =
+            {
+                CreateNavIcon(MaterialIconKind.RobotOutline, 16, "SkuaMutedTextBrush"),
+                _autoActiveDot
+            }
+        };
+        ToggleButton toggle = new()
+        {
+            Content = autoContent
+        };
+        toggle.Classes.Add("activity-item");
+        ToolTip.SetTip(toggle, "Automated Combat & Hunting Controls");
         _autoToggle = toggle;
 
         _autoRunningBadge = new Border
         {
-            CornerRadius = new CornerRadius(10),
+            CornerRadius = new CornerRadius(4),
             Padding = new Thickness(8, 2),
             Background = Brush.Parse("#064E3B"),
             BorderBrush = Brush.Parse("#059669"),
             BorderThickness = new Thickness(1),
             IsVisible = false,
-            Child = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 4,
-                VerticalAlignment = VerticalAlignment.Center,
-                Children =
-                {
-                    new MaterialIcon { Kind = MaterialIconKind.ProgressCheck, Width = 12, Height = 12, Foreground = Brush.Parse("#34D399") },
-                    new TextBlock { Text = "RUNNING", FontSize = 10, FontWeight = FontWeight.Bold, Foreground = Brush.Parse("#34D399") }
-                }
-            }
+            Child = new TextBlock { Text = "RUNNING", FontSize = 10, FontWeight = FontWeight.Bold, Foreground = Brush.Parse("#34D399") }
         };
         Grid.SetColumn(_autoRunningBadge, 1);
 
         Grid headerGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,Auto"), VerticalAlignment = VerticalAlignment.Center };
-        headerGrid.Children.Add(CreatePopupHeader(MaterialIconKind.RobotOutline, "Combat Automation"));
+        headerGrid.Children.Add(CreatePopupHeader("Combat Automation"));
         headerGrid.Children.Add(_autoRunningBadge);
 
-        _autoAttackBtn = CreatePopupButton(MaterialIconKind.PlayCircleOutline, "Auto Attack", true, "skua-primary", () =>
+        _autoAttackBtn = CreatePopupButton("Auto Attack", true, "skua-primary", () =>
         {
             SendActiveChildCommand("AUTO_ATTACK");
             if (_autoToggle != null) _autoToggle.IsChecked = false;
         });
 
-        _autoHuntBtn = CreatePopupButton(MaterialIconKind.CrosshairsGps, "Auto Hunt", true, null, () =>
+        _autoHuntBtn = CreatePopupButton("Auto Hunt", true, null, () =>
         {
             SendActiveChildCommand("AUTO_HUNT");
             if (_autoToggle != null) _autoToggle.IsChecked = false;
         });
         Grid.SetColumn(_autoHuntBtn, 1);
 
-        _autoStopBtn = CreatePopupButton(MaterialIconKind.StopCircleOutline, "Stop Automation", true, "skua-danger", () =>
+        _autoStopBtn = CreatePopupButton("Stop Automation", true, "skua-danger", () =>
         {
             SendActiveChildCommand("AUTO_STOP");
             if (_autoToggle != null) _autoToggle.IsChecked = false;
@@ -350,18 +424,23 @@ public partial class TabbedHostWindow
         {
             Spacing = 10,
             Children = { headerGrid, CreatePopupSeparator(), actionsGrid, classModeGrid, _autoMapIdsBox }
-        });
+        }, placement);
 
         BindPopupToggle(toggle, popup, () => _jumpToggle, "GET_AUTO_STATE");
         return (toggle, popup);
     }
 
-    private (ToggleButton, Popup) BuildJumpControls()
+    private (ToggleButton, Popup) BuildJumpControls(PlacementMode placement = PlacementMode.Bottom)
     {
-        ToggleButton toggle = CreateNavToggle(CreateNavContent(MaterialIconKind.RunFast, "Jump"), "Map & Cell Fast Jump Controls");
+        ToggleButton toggle = new()
+        {
+            Content = CreateNavIcon(MaterialIconKind.RunFast, 16, "SkuaMutedTextBrush")
+        };
+        toggle.Classes.Add("activity-item");
+        ToolTip.SetTip(toggle, "Map & Cell Fast Jump Controls");
         _jumpToggle = toggle;
 
-        StackPanel header = CreatePopupHeader(MaterialIconKind.RunFast, "Fast Map Jump");
+        StackPanel header = CreatePopupHeader("Fast Map Jump");
 
         _jumpCellBox = new ComboBox { Height = 34, MinWidth = 140, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Cell..." };
         _jumpPadBox = new ComboBox { Height = 34, MinWidth = 140, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Pad..." };
@@ -383,8 +462,8 @@ public partial class TabbedHostWindow
         selectGrid.Children.Add(_jumpCellBox);
         selectGrid.Children.Add(_jumpPadBox);
 
-        Button currentBtn = CreatePopupButton(MaterialIconKind.MapMarkerOutline, "Current", false, null, () => SendActiveChildCommand("JUMP_CURRENT"));
-        Button jumpBtn = CreatePopupButton(MaterialIconKind.RunFast, "Jump", true, "skua-primary", () =>
+        Button currentBtn = CreatePopupButton("Current", false, null, () => SendActiveChildCommand("JUMP_CURRENT"));
+        Button jumpBtn = CreatePopupButton("Jump", true, "skua-primary", () =>
         {
             string cell = _jumpCellBox?.SelectedItem as string ?? string.Empty;
             string pad = _jumpPadBox?.SelectedItem as string ?? string.Empty;
@@ -401,39 +480,30 @@ public partial class TabbedHostWindow
         {
             Spacing = 10,
             Children = { header, CreatePopupSeparator(), selectGrid, actionsGrid }
-        });
+        }, placement);
 
         BindPopupToggle(toggle, popup, () => _autoToggle, "GET_JUMP_STATE");
         return (toggle, popup);
     }
 
-    private static ToggleButton CreateNavToggle(object content, string tooltip)
-    {
-        ToggleButton toggle = new() { Content = content };
-        toggle.Classes.Add("top-nav-item");
-        ToolTip.SetTip(toggle, tooltip);
-        return toggle;
-    }
-
-    private static StackPanel CreatePopupHeader(MaterialIconKind kind, string title) => new()
+    private static StackPanel CreatePopupHeader(string title) => new()
     {
         Orientation = Orientation.Horizontal,
         Spacing = 6,
         VerticalAlignment = VerticalAlignment.Center,
         Children =
         {
-            CreateNavIcon(kind, 16, "SkuaAccentBrush"),
             CreateNavTitle(title)
         }
     };
 
-    private static Button CreatePopupButton(MaterialIconKind kind, string text, bool bold, string? accentClass, Action onClick)
+    private static Button CreatePopupButton(string text, bool bold, string? accentClass, Action onClick)
     {
         Button btn = new()
         {
             Height = 34,
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            Content = CreatePopupButtonContent(kind, text, bold)
+            Content = CreatePopupButtonContent(text, bold)
         };
         btn.Classes.Add("skua-button");
         if (!string.IsNullOrEmpty(accentClass))
@@ -449,13 +519,13 @@ public partial class TabbedHostWindow
         return sep;
     }
 
-    private static Popup CreatePopupCard(Control target, double width, Control body)
+    private static Popup CreatePopupCard(Control target, double width, Control body, PlacementMode placement = PlacementMode.Bottom)
     {
         Border card = new()
         {
             BorderThickness = new Thickness(1),
             Padding = new Thickness(12),
-            CornerRadius = new CornerRadius(8),
+            CornerRadius = new CornerRadius(6),
             MinWidth = width,
             Width = width,
             Child = body
@@ -465,7 +535,7 @@ public partial class TabbedHostWindow
 
         return new Popup
         {
-            Placement = PlacementMode.Bottom,
+            Placement = placement,
             IsLightDismissEnabled = true,
             PlacementTarget = target,
             Child = new TopbarPopupPanel { Content = card }
@@ -486,18 +556,6 @@ public partial class TabbedHostWindow
         popup.Closed += (_, _) => toggle.IsChecked = false;
     }
 
-    private static StackPanel CreateNavContent(MaterialIconKind kind, string text) => new()
-    {
-        Orientation = Orientation.Horizontal,
-        Spacing = 5,
-        VerticalAlignment = VerticalAlignment.Center,
-        Children =
-        {
-            CreateNavIcon(kind, 13, "SkuaAccentBrush"),
-            new TextBlock { Text = text, FontWeight = FontWeight.SemiBold, FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
-        }
-    };
-
     private static TextBlock CreateNavTitle(string text)
     {
         TextBlock tb = new() { Text = text, FontWeight = FontWeight.Bold, FontSize = 13, VerticalAlignment = VerticalAlignment.Center };
@@ -505,17 +563,13 @@ public partial class TabbedHostWindow
         return tb;
     }
 
-    private static StackPanel CreatePopupButtonContent(MaterialIconKind kind, string text, bool bold) => new()
+    private static TextBlock CreatePopupButtonContent(string text, bool bold) => new()
     {
-        Orientation = Orientation.Horizontal,
-        HorizontalAlignment = HorizontalAlignment.Center,
-        Spacing = 6,
+        Text = text,
+        FontWeight = bold ? FontWeight.Bold : FontWeight.SemiBold,
+        FontSize = 11,
         VerticalAlignment = VerticalAlignment.Center,
-        Children =
-        {
-            new MaterialIcon { Kind = kind, Width = 15, Height = 15, VerticalAlignment = VerticalAlignment.Center },
-            new TextBlock { Text = text, FontWeight = bold ? FontWeight.Bold : FontWeight.SemiBold, FontSize = 11, VerticalAlignment = VerticalAlignment.Center }
-        }
+        HorizontalAlignment = HorizontalAlignment.Center
     };
 
     private void ApplyChildAutoState(int childPid, string json)

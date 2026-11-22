@@ -24,8 +24,8 @@
     <Style Selector="CheckBox, RadioButton, ToggleSwitch, Slider, TabItem">
         <Setter Property="FocusAdorner">
             <FocusAdornerTemplate>
-                <Border BorderThickness="2" BorderBrush="{DynamicResource SkuaAccentBrush}" CornerRadius="6">
-                    <Border BorderThickness="1" BorderBrush="{DynamicResource SkuaPageBrush}" CornerRadius="5" />
+                <Border BorderThickness="2" BorderBrush="{DynamicResource SkuaAccentBrush}" CornerRadius="4">
+                    <Border BorderThickness="1" BorderBrush="{DynamicResource SkuaPageBrush}" CornerRadius="3" />
                 </Border>
             </FocusAdornerTemplate>
         </Setter>
@@ -35,7 +35,7 @@
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="SemiBold" />
@@ -72,7 +72,7 @@
         <Setter Property="Padding" Value="0" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -88,7 +88,7 @@
     <Style Selector="Button.danger-icon /template/ ContentPresenter#PART_ContentPresenter, Button.icon /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="CornerRadius" Value="4" />
     </Style>
     <Style Selector="Button.danger-icon:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
@@ -130,7 +130,7 @@
     <Style Selector="Button.skua-button">
         <Setter Property="Height" Value="32" />
         <Setter Property="Padding" Value="12,0" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
@@ -256,7 +256,7 @@
         <Setter Property="Padding" Value="10,0" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -283,7 +283,7 @@
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="FontSize" Value="12" />
     </Style>
     <Style Selector="Button.top-nav-item /template/ ContentPresenter, ToggleButton.top-nav-item /template/ ContentPresenter">
@@ -308,8 +308,8 @@
     <Style Selector="Button.titlebar:pressed">
     </Style>
     <Style Selector="Button.titlebar">
-        <Setter Property="Width" Value="36" />
-        <Setter Property="Height" Value="32" />
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="30" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="CornerRadius" Value="0" />
         <Setter Property="Background" Value="Transparent" />

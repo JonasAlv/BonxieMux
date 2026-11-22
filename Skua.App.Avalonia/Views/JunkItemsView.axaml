@@ -59,11 +59,8 @@
                 FontWeight="SemiBold"
                 ToolTip.Tip="Select or clear all shown items" />
       <Button Grid.Column="2" Classes="skua-button small w112" Command="{Binding MarkAsJunkCommand}">
-        <StackPanel Orientation="Horizontal" Spacing="5">
-          <materialIcons:MaterialIcon Kind="TagOutline" Width="14" Height="14" />
-          <TextBlock Text="Mark as junk" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Mark as junk" VerticalAlignment="Center" />
+</Button>
       <Button Grid.Column="3" Classes="skua-button small w84" Content="Unmark" Command="{Binding UnmarkAsJunkCommand}" />
     </Grid>
 
@@ -111,17 +108,11 @@
                 VerticalAlignment="Center" />
       <Button Grid.Column="2" Classes="skua-button w112" Content="Unmark all" Command="{Binding UnmarkAllJunkCommand}" />
       <Button Grid.Column="3" Classes="skua-button skua-danger-soft w112" Command="{Binding SellSelectedCommand}">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="CurrencyUsd" Width="15" Height="15" />
-          <TextBlock Text="Sell selected" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Sell selected" VerticalAlignment="Center" />
+</Button>
       <Button Grid.Column="4" Classes="skua-button skua-danger w140" Command="{Binding SellAllJunkCommand}">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="DeleteSweepOutline" Width="15" Height="15" />
-          <TextBlock Text="{Binding TotalJunk, StringFormat='Sell all junk ({0})'}" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="{Binding TotalJunk, StringFormat='Sell all junk ({0})'}" VerticalAlignment="Center" />
+</Button>
     </Grid>
   </Grid>
 </UserControl>

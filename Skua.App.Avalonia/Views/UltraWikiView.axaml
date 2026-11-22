@@ -99,23 +99,14 @@
               <TextBlock Text="TEAM BUILDER" Classes="caption" Margin="0" VerticalAlignment="Center" />
               <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                 <Button Classes="skua-button" Height="30" Command="{Binding UseRecommendedCommand}">
-                  <StackPanel Orientation="Horizontal" Spacing="6">
-                    <materialIcons:MaterialIcon Kind="AccountGroupOutline" Width="14" Height="14" />
-                    <TextBlock Text="Recommended" VerticalAlignment="Center" />
-                  </StackPanel>
-                </Button>
+  <TextBlock Text="Recommended" VerticalAlignment="Center" />
+</Button>
                 <Button Classes="skua-button skua-primary" Height="30" Command="{Binding SuggestBestCommand}">
-                  <StackPanel Orientation="Horizontal" Spacing="6">
-                    <materialIcons:MaterialIcon Kind="AutoFix" Width="14" Height="14" />
-                    <TextBlock Text="Best team" VerticalAlignment="Center" />
-                  </StackPanel>
-                </Button>
+  <TextBlock Text="Best team" VerticalAlignment="Center" />
+</Button>
                 <Button Classes="skua-button" Height="30" Command="{Binding ClearTeamCommand}">
-                  <StackPanel Orientation="Horizontal" Spacing="6">
-                    <materialIcons:MaterialIcon Kind="Eraser" Width="14" Height="14" />
-                    <TextBlock Text="Clear" VerticalAlignment="Center" />
-                  </StackPanel>
-                </Button>
+  <TextBlock Text="Clear" VerticalAlignment="Center" />
+</Button>
               </StackPanel>
             </Grid>
 

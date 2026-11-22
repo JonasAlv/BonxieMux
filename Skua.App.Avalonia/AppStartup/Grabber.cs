@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.DependencyInjection;
-using Material.Icons;
 using Microsoft.Extensions.DependencyInjection;
 using Skua.App.Avalonia.ViewModels.Grabber;
 using Skua.Core.Interfaces;
@@ -54,16 +53,16 @@ internal class Grabber
         };
         return new List<GrabberListViewModel>()
         {
-            new("Shop Items", grabberService, GrabberTypes.Shop_Items, new GrabberTaskViewModel("Buy", grabberService.BuyItems), true) { Group = "SHOPS", Icon = MaterialIconKind.StorefrontOutline },
-            new("Shop IDs", grabberService, GrabberTypes.Shop_IDs, new GrabberTaskViewModel("Load Shop", grabberService.LoadShop), false) { Group = "SHOPS", Icon = MaterialIconKind.Pound },
-            new("Quests", grabberService, GrabberTypes.Quests, questCommands, true) { Group = "QUESTS", Icon = MaterialIconKind.ClipboardTextOutline },
-            new("GetMap Item IDs", grabberService, GrabberTypes.GetMap_Item_IDs, mapItemCommands, true) { Group = "QUESTS", Icon = MaterialIconKind.MapMarkerOutline },
-            new("Inventory", grabberService, GrabberTypes.Inventory_Items, inventoryCommands, true) { Group = "ITEMS", Icon = MaterialIconKind.BagPersonalOutline },
-            new("House Inventory", grabberService, GrabberTypes.House_Inventory_Items, new GrabberTaskViewModel("To Bank", grabberService.HouseInvToBank), true) { Group = "ITEMS", Icon = MaterialIconKind.HomeOutline },
-            new("Temp Inventory", grabberService, GrabberTypes.Temp_Inventory_Items, false) { Group = "ITEMS", Icon = MaterialIconKind.TimerSandEmpty },
-            new("Bank Items", grabberService, GrabberTypes.Bank_Items, new GrabberTaskViewModel("To Inventory", grabberService.BankToInv), true) { Group = "ITEMS", Icon = MaterialIconKind.BankOutline },
-            new("Cell Monsters", grabberService, GrabberTypes.Cell_Monsters, new GrabberTaskViewModel("Kill", grabberService.KillMonster), true) { Group = "MONSTERS", Icon = MaterialIconKind.Target },
-            new("Map Monsters", grabberService, GrabberTypes.Map_Monsters, mapMonstersCommands, true) { Group = "MONSTERS", Icon = MaterialIconKind.MapOutline }
+            new("Shop Items", grabberService, GrabberTypes.Shop_Items, new GrabberTaskViewModel("Buy", grabberService.BuyItems), true) { Group = "SHOPS" },
+            new("Shop IDs", grabberService, GrabberTypes.Shop_IDs, new GrabberTaskViewModel("Load Shop", grabberService.LoadShop), false) { Group = "SHOPS" },
+            new("Quests", grabberService, GrabberTypes.Quests, questCommands, true) { Group = "QUESTS" },
+            new("GetMap Item IDs", grabberService, GrabberTypes.GetMap_Item_IDs, mapItemCommands, true) { Group = "QUESTS" },
+            new("Inventory", grabberService, GrabberTypes.Inventory_Items, inventoryCommands, true) { Group = "ITEMS" },
+            new("House Inventory", grabberService, GrabberTypes.House_Inventory_Items, new GrabberTaskViewModel("To Bank", grabberService.HouseInvToBank), true) { Group = "ITEMS" },
+            new("Temp Inventory", grabberService, GrabberTypes.Temp_Inventory_Items, false) { Group = "ITEMS" },
+            new("Bank Items", grabberService, GrabberTypes.Bank_Items, new GrabberTaskViewModel("To Inventory", grabberService.BankToInv), true) { Group = "ITEMS" },
+            new("Cell Monsters", grabberService, GrabberTypes.Cell_Monsters, new GrabberTaskViewModel("Kill", grabberService.KillMonster), true) { Group = "MONSTERS" },
+            new("Map Monsters", grabberService, GrabberTypes.Map_Monsters, mapMonstersCommands, true) { Group = "MONSTERS" }
         };
     }
 }

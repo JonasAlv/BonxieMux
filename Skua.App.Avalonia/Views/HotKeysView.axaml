@@ -72,11 +72,8 @@
               Classes="skua-button skua-primary w84"
               Command="{Binding AddCustomCommand}"
               ToolTip.Tip="Add the chosen action to your hotkeys">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="Plus" Width="15" Height="15" />
-          <TextBlock Text="Add" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Add" VerticalAlignment="Center" />
+</Button>
     </Grid>
 
     <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,200" ColumnSpacing="6">

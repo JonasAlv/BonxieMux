@@ -3,8 +3,10 @@
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Name="Root"
              x:Class="Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar">
-  <Grid Height="32"
-        Background="{DynamicResource SkuaSurfaceAltBrush}">
+  <Border BorderBrush="{DynamicResource SkuaBorderBrush}"
+          BorderThickness="0,0,0,1"
+          Background="{DynamicResource SkuaSurfaceBrush}">
+  <Grid Height="30">
     <Border Grid.ColumnSpan="3"
             Background="{DynamicResource SkuaAccentBrush}"
             IsVisible="{Binding UseAccentBackground, ElementName=Root}"
@@ -12,39 +14,43 @@
     <Image x:Name="ArtworkImage" Grid.ColumnSpan="3" Stretch="UniformToFill" Opacity="0.62" IsHitTestVisible="False" />
     <Border Grid.ColumnSpan="3" Background="{DynamicResource SkuaTitleBarOverlayBrush}" IsHitTestVisible="False" />
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="Auto" />
+      <ColumnDefinition Width="36" />
       <ColumnDefinition Width="*" />
       <ColumnDefinition Width="Auto" />
     </Grid.ColumnDefinitions>
 
-    <Grid Grid.Column="0"
-          Width="30"
-          Height="30"
-          Margin="6,0"
-          HorizontalAlignment="Center">
-      <Border Width="30"
-              Height="30"
-              Classes="titlebar-app-badge"
-              CornerRadius="15" />
-      <Image Source="{Binding IconSource, ElementName=Root}"
-             Width="30"
-             Height="30"
-             Stretch="Uniform"
-             RenderOptions.BitmapInterpolationMode="HighQuality"
-             HorizontalAlignment="Center"
-             VerticalAlignment="Center" />
-    </Grid>
+    <Image Grid.Column="0"
+           Source="{Binding IconSource, ElementName=Root}"
+           Width="16"
+           Height="16"
+           Stretch="Uniform"
+           RenderOptions.BitmapInterpolationMode="HighQuality"
+           HorizontalAlignment="Center"
+           VerticalAlignment="Center"
+           IsHitTestVisible="False" />
+
+    <ContentPresenter x:Name="LeftContentPresenter"
+                      Grid.Column="1"
+                      Content="{Binding LeftContent, ElementName=Root}"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Center"
+                      Margin="0,0,8,0"
+                      IsVisible="{Binding LeftContent, ElementName=Root, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
     <TextBlock x:Name="TitleTextBlock"
-               Grid.Column="1"
-               Margin="6,0,8,0"
+               Grid.Column="0"
+               Grid.ColumnSpan="3"
+               Margin="90,0,104,0"
+               HorizontalAlignment="Center"
                VerticalAlignment="Center"
+               FontSize="12"
                Text="{Binding TitleText, ElementName=Root}"
                TextTrimming="CharacterEllipsis"
+               IsHitTestVisible="False"
                Classes="titlebar-title" />
 
     <StackPanel Grid.Column="2"
-                Height="28"
+                Height="30"
                 VerticalAlignment="Top"
                 Orientation="Horizontal">
       <Button x:Name="DockButton"
@@ -63,5 +69,6 @@
               Content="{materialIcons:MaterialIconExt Kind=WindowClose, IconSize=12}" />
     </StackPanel>
   </Grid>
+  </Border>
 </UserControl>
 

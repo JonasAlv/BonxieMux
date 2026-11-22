@@ -54,10 +54,6 @@
                           Classes="top-nav-item"
                           ToolTip.Tip="Automated Combat &amp; Hunting Controls">
               <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                <materialIcons:MaterialIcon Kind="RobotOutline"
-                                            Width="13" Height="13"
-                                            VerticalAlignment="Center"
-                                            Foreground="{DynamicResource SkuaAccentBrush}" />
                 <TextBlock Text="Auto"
                            FontWeight="SemiBold"
                            FontSize="12"
@@ -82,16 +78,10 @@
             <ToggleButton x:Name="JumpToggle"
                           Classes="top-nav-item"
                           ToolTip.Tip="Map &amp; Cell Fast Jump Controls">
-              <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                <materialIcons:MaterialIcon Kind="RunFast"
-                                            Width="13" Height="13"
-                                            VerticalAlignment="Center"
-                                            Foreground="{DynamicResource SkuaAccentBrush}" />
-                <TextBlock Text="Jump"
-                           FontWeight="SemiBold"
-                           FontSize="12"
-                           VerticalAlignment="Center" />
-              </StackPanel>
+              <TextBlock Text="Jump"
+                         FontWeight="SemiBold"
+                         FontSize="12"
+                         VerticalAlignment="Center" />
             </ToggleButton>
             <Popup Placement="Bottom"
                    IsLightDismissEnabled="True"

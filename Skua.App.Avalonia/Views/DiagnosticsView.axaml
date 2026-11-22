@@ -29,19 +29,13 @@
                     <Button Classes="skua-button"
                             Height="34"
                             Command="{Binding RefreshCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <materialIcons:MaterialIcon Kind="Refresh" Width="14" Height="14" />
-                            <TextBlock Text="Refresh" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
+  <TextBlock Text="Refresh" VerticalAlignment="Center" />
+</Button>
                     <Button Classes="skua-button outline"
                             Height="34"
                             Command="{Binding ExportCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <materialIcons:MaterialIcon Kind="Export" Width="14" Height="14" />
-                            <TextBlock Text="Export JSON" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
+  <TextBlock Text="Export JSON" VerticalAlignment="Center" />
+</Button>
                 </StackPanel>
             </Grid>
         </Border>

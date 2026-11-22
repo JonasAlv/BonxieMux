@@ -537,6 +537,7 @@ public partial class App : Application
 
         if (themeService is AvaloniaThemeService ats)
         {
+            ThemeResourceApplicator.ApplyVsCodePalette(this, ats.ActivePalette);
             ThemeResourceApplicator.ApplyTitleBarTheme(this, themeService.IsDarkTheme, ats.PrimaryColor, ats.PrimaryForegroundColor);
             ThemeResourceApplicator.ApplyAccentBrushes(
                 this,
@@ -676,7 +677,7 @@ public partial class App : Application
     {
         try
         {
-            string message = $"THEME|{themeService.UseAccentOnMainTitleBar}|{themeService.IsDarkTheme}|{themeService.PrimaryHex}|{themeService.ForegroundHex}";
+            string message = $"THEME|{themeService.UseAccentOnMainTitleBar}|{themeService.IsDarkTheme}|{themeService.PrimaryHex}|{themeService.ForegroundHex}|{themeService.ActiveThemeName}";
             _ = Task.Run(() =>
             {
                 for (int attempt = 0; attempt < 5; attempt++)

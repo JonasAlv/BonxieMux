@@ -135,6 +135,7 @@ public partial class App : Application
         ThemeResourceApplicator.ApplyTitleBarTheme(this, themeService.IsDarkTheme);
         if (themeService is AvaloniaThemeService ats)
         {
+            ThemeResourceApplicator.ApplyVsCodePalette(this, ats.ActivePalette);
             ThemeResourceApplicator.ApplyAccentBrushes(
                 this,
                 ats.PrimaryColor,
@@ -160,6 +161,7 @@ public partial class App : Application
 
         if (themeService is AvaloniaThemeService ats)
         {
+            ThemeResourceApplicator.ApplyVsCodePalette(this, ats.ActivePalette);
             ThemeResourceApplicator.ApplyAccentBrushes(
                 this,
                 ats.PrimaryColor,
@@ -183,6 +185,7 @@ public partial class App : Application
         ThemeResourceApplicator.ApplyTitleBarTheme(this, isDark);
         if (themeService is AvaloniaThemeService ats)
         {
+            ThemeResourceApplicator.ApplyVsCodePalette(this, ats.ActivePalette);
             ThemeResourceApplicator.ApplyAccentBrushes(
                 this,
                 ats.PrimaryColor,

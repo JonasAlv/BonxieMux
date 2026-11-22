@@ -22,11 +22,8 @@
         </TextBox.InnerLeftContent>
       </TextBox>
       <Button Grid.Column="2" Classes="skua-button skua-primary w84" Command="{Binding LoadCommand}">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="Download" Width="15" Height="15" />
-          <TextBlock Text="Load" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Load" VerticalAlignment="Center" />
+</Button>
     </Grid>
 
     <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,240" ColumnSpacing="6">
@@ -76,11 +73,8 @@
                    IsVisible="{Binding !IsLoading}" />
         <Button Grid.Column="1" Classes="skua-button small w112" Click="UpdateMissing_Click" IsVisible="{Binding !IsLoading}"
                 ToolTip.Tip="Keep the quests already cached and add new ones">
-          <StackPanel Orientation="Horizontal" Spacing="5">
-            <materialIcons:MaterialIcon Kind="Plus" Width="14" Height="14" />
-            <TextBlock Text="Add missing" VerticalAlignment="Center" />
-          </StackPanel>
-        </Button>
+  <TextBlock Text="Add missing" VerticalAlignment="Center" />
+</Button>
         <Button Grid.Column="2" Classes="skua-button small w84" Content="Rebuild all" Click="UpdateAll_Click" IsVisible="{Binding !IsLoading}"
                 ToolTip.Tip="Replace every quest in the cache" />
         <StackPanel Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsLoading}" VerticalAlignment="Center">
@@ -111,17 +105,11 @@
       </Button>
       <Button Grid.Column="2" Classes="skua-button w112" Command="{Binding UpdateSelectedQuestCommand}" CommandParameter="{Binding SelectedQuest}"
               ToolTip.Tip="Send a quest-complete packet to the client">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="CheckAll" Width="15" Height="15" />
-          <TextBlock Text="Fake complete" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Fake complete" VerticalAlignment="Center" />
+</Button>
       <Button Grid.Column="3" Classes="skua-button skua-primary w140" Click="LoadSelected_Click" ToolTip.Tip="Load the selected quests in game">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <materialIcons:MaterialIcon Kind="Download" Width="15" Height="15" />
-          <TextBlock Text="Load selected" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Load selected" VerticalAlignment="Center" />
+</Button>
     </Grid>
   </Grid>
 </UserControl>

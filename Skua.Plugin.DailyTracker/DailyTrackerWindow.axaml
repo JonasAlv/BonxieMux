@@ -33,11 +33,8 @@
                             Height="32"
                             Padding="12,0"
                             Click="Refresh_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon Kind="Refresh" Width="16" Height="16" />
-                            <TextBlock x:Name="RefreshText" Text="Refresh" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12"/>
-                        </StackPanel>
-                    </Button>
+  <TextBlock x:Name="RefreshText" Text="Refresh" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12"/>
+</Button>
                 </DockPanel>
 
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">

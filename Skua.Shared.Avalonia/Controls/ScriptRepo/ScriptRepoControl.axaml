@@ -77,31 +77,19 @@
                                           CommandParameter="{Binding SelectedItem}"
                                           Header="Pin / Unpin Script"
                                           IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                    <MenuItem.Icon>
-                                        <materialIcons:MaterialIcon Kind="Pin" Width="14" Height="14" Foreground="{DynamicResource SkuaWarningBrush}" />
-                                    </MenuItem.Icon>
                                 </MenuItem>
                                 <Separator />
                                 <MenuItem Command="{Binding DownloadCommand}"
                                           Header="Download Script"
                                           IsEnabled="{Binding SelectedItem.Downloaded, Converter={x:Static ObjectConverters.IsNull}, FallbackValue=True}">
-                                    <MenuItem.Icon>
-                                        <materialIcons:MaterialIcon Kind="Download" Width="14" Height="14" />
-                                    </MenuItem.Icon>
                                 </MenuItem>
                                 <MenuItem Command="{Binding DeleteCommand}"
                                           Header="Delete Script"
                                           IsEnabled="{Binding SelectedItem.Downloaded, FallbackValue=False}">
-                                    <MenuItem.Icon>
-                                        <materialIcons:MaterialIcon Kind="TrashCanOutline" Width="14" Height="14" Foreground="{DynamicResource SkuaDangerBrush}" />
-                                    </MenuItem.Icon>
                                 </MenuItem>
                                 <MenuItem Command="{Binding OpenScriptCommand}"
                                           Header="Open in VS Code"
                                           IsEnabled="{Binding SelectedItem.Downloaded, FallbackValue=False}">
-                                    <MenuItem.Icon>
-                                        <materialIcons:MaterialIcon Kind="MicrosoftVisualStudioCode" Width="14" Height="14" />
-                                    </MenuItem.Icon>
                                 </MenuItem>
                             </ContextMenu>
                         </ListBox.ContextMenu>
@@ -155,27 +143,18 @@
                                                 IsVisible="{Binding #Root.((scriptRepo:ScriptRepoViewModel)DataContext).ShowStartButton}"
                                                 Command="{Binding StartScriptCommand}" CommandParameter="{Binding .}"
                                                 IsEnabled="{Binding Downloaded}" ToolTip.Tip="Start this script now">
-                                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                                <materialIcons:MaterialIcon Kind="Play" Width="15" Height="15" />
-                                                <TextBlock Text="Start" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
+  <TextBlock Text="Start" VerticalAlignment="Center" />
+</Button>
                                         <Button Classes="skua-button w90" Height="30" MinHeight="30"
                                                 Command="{Binding LoadScriptCommand}" CommandParameter="{Binding .}"
                                                 IsEnabled="{Binding Downloaded}" ToolTip.Tip="Load into the Script Loader">
-                                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                                <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="15" Height="15" />
-                                                <TextBlock Text="Load" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
+  <TextBlock Text="Load" VerticalAlignment="Center" />
+</Button>
                                         <Button Classes="skua-button w90" Height="30" MinHeight="30"
                                                 Command="{Binding QueueScriptCommand}" CommandParameter="{Binding .}"
                                                 IsEnabled="{Binding Downloaded}" ToolTip.Tip="Add to the Scheduler queue">
-                                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                                <materialIcons:MaterialIcon Kind="PlaylistPlus" Width="15" Height="15" />
-                                                <TextBlock Text="Queue" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
+  <TextBlock Text="Queue" VerticalAlignment="Center" />
+</Button>
                                         <Button Classes="skua-button" Width="30" Height="30" MinHeight="30" Padding="0" HorizontalContentAlignment="Center"
                                                 ToolTip.Tip="Pin, download, update, VS Code, delete">
                                             <materialIcons:MaterialIcon Kind="DotsHorizontal" Width="16" Height="16" />
@@ -183,35 +162,20 @@
                                                 <MenuFlyout Placement="BottomEdgeAlignedRight">
                                                     <MenuItem Header="{Binding PinToolTip}"
                                                               Command="{Binding #Root.((scriptRepo:ScriptRepoViewModel)DataContext).TogglePinCommand}" CommandParameter="{Binding .}">
-                                                        <MenuItem.Icon>
-                                                            <materialIcons:MaterialIcon Kind="{Binding PinIcon}" Width="14" Height="14" Foreground="{Binding PinColor}" />
-                                                        </MenuItem.Icon>
                                                     </MenuItem>
                                                     <Separator />
                                                     <MenuItem Header="Download" IsVisible="{Binding !Downloaded}"
                                                               Command="{Binding #Root.((scriptRepo:ScriptRepoViewModel)DataContext).DownloadCommand}" CommandParameter="{Binding .}">
-                                                        <MenuItem.Icon>
-                                                            <materialIcons:MaterialIcon Kind="Download" Width="14" Height="14" />
-                                                        </MenuItem.Icon>
                                                     </MenuItem>
                                                     <MenuItem Header="Update" IsVisible="{Binding Downloaded}" IsEnabled="{Binding CanUpdate}"
                                                               Command="{Binding #Root.((scriptRepo:ScriptRepoViewModel)DataContext).DownloadCommand}" CommandParameter="{Binding .}">
-                                                        <MenuItem.Icon>
-                                                            <materialIcons:MaterialIcon Kind="Update" Width="14" Height="14" />
-                                                        </MenuItem.Icon>
                                                     </MenuItem>
                                                     <MenuItem Header="Open in VS Code" IsEnabled="{Binding Downloaded}"
                                                               Command="{Binding #Root.((scriptRepo:ScriptRepoViewModel)DataContext).OpenScriptCommand}" CommandParameter="{Binding .}">
-                                                        <MenuItem.Icon>
-                                                            <materialIcons:MaterialIcon Kind="MicrosoftVisualStudioCode" Width="14" Height="14" />
-                                                        </MenuItem.Icon>
                                                     </MenuItem>
                                                     <Separator />
                                                     <MenuItem Header="Delete" IsEnabled="{Binding Downloaded}"
                                                               Command="{Binding #Root.((scriptRepo:ScriptRepoViewModel)DataContext).DeleteCommand}" CommandParameter="{Binding .}">
-                                                        <MenuItem.Icon>
-                                                            <materialIcons:MaterialIcon Kind="TrashCanOutline" Width="14" Height="14" Foreground="{DynamicResource SkuaDangerBrush}" />
-                                                        </MenuItem.Icon>
                                                     </MenuItem>
                                                 </MenuFlyout>
                                             </Button.Flyout>
@@ -241,11 +205,8 @@
                             <TextBlock Text="Nothing matches the search or category." FontSize="12" Foreground="{DynamicResource SkuaMutedTextBrush}"
                                        HorizontalAlignment="Center" />
                             <Button Classes="skua-button w140" HorizontalAlignment="Center" Command="{Binding ClearSearchCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <materialIcons:MaterialIcon Kind="FilterRemoveOutline" Width="15" Height="15" />
-                                    <TextBlock Text="Clear search" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+  <TextBlock Text="Clear search" VerticalAlignment="Center" />
+</Button>
                         </StackPanel>
                     </Panel>
                 </Grid>
@@ -269,11 +230,8 @@
                                    TextAlignment="Center"
                                    TextWrapping="Wrap" />
                         <Button Classes="skua-button skua-danger w112" HorizontalAlignment="Center" Command="{Binding CancelTaskCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <materialIcons:MaterialIcon Kind="Cancel" Width="14" Height="14" />
-                                <TextBlock Text="Cancel" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
+  <TextBlock Text="Cancel" VerticalAlignment="Center" />
+</Button>
                     </StackPanel>
                 </Border>
             </Border>
@@ -292,18 +250,12 @@
             </TextBlock>
             <Button Grid.Column="1" Classes="skua-button small w112" Command="{Binding UpdateAllCommand}"
                     ToolTip.Tip="Download every script that has an update">
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                    <materialIcons:MaterialIcon Kind="Update" Width="14" Height="14" />
-                    <TextBlock Text="Update all" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+  <TextBlock Text="Update all" VerticalAlignment="Center" />
+</Button>
             <Button Grid.Column="2" Classes="skua-button small w112" Command="{Binding DownloadAllCommand}"
                     ToolTip.Tip="Download every script you don't have, and every update">
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                    <materialIcons:MaterialIcon Kind="DownloadMultiple" Width="14" Height="14" />
-                    <TextBlock Text="Download all" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+  <TextBlock Text="Download all" VerticalAlignment="Center" />
+</Button>
             <Button Grid.Column="3" Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
                     Command="{Binding RefreshScriptsCommand}" ToolTip.Tip="Fetch the latest script list from the repo">
                 <materialIcons:MaterialIcon Kind="Refresh" Width="14" Height="14" />
@@ -314,31 +266,16 @@
                 <Button.Flyout>
                     <MenuFlyout Placement="TopEdgeAlignedRight">
                         <MenuItem Header="Update dates from Git" Command="{Binding UpdateDatesCommand}">
-                            <MenuItem.Icon>
-                                <materialIcons:MaterialIcon Kind="CalendarSyncOutline" Width="14" Height="14" />
-                            </MenuItem.Icon>
                         </MenuItem>
                         <Separator />
                         <MenuItem Header="Set custom scripts folder..." Command="{Binding AddCustomFolderCommand}">
-                            <MenuItem.Icon>
-                                <materialIcons:MaterialIcon Kind="FolderPlus" Width="14" Height="14" />
-                            </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem Header="Clear custom scripts folder" Command="{Binding ClearCustomFolderCommand}">
-                            <MenuItem.Icon>
-                                <materialIcons:MaterialIcon Kind="FolderRemove" Width="14" Height="14" />
-                            </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem Header="Load a script file..." Command="{Binding LoadLocalScriptCommand}">
-                            <MenuItem.Icon>
-                                <materialIcons:MaterialIcon Kind="FileDocumentPlus" Width="14" Height="14" />
-                            </MenuItem.Icon>
                         </MenuItem>
                         <Separator />
                         <MenuItem Header="Open the Scripts folder in VS Code" Command="{Binding OpenScriptFolderCommand}">
-                            <MenuItem.Icon>
-                                <materialIcons:MaterialIcon Kind="MicrosoftVisualStudioCode" Width="14" Height="14" />
-                            </MenuItem.Icon>
                         </MenuItem>
                     </MenuFlyout>
                 </Button.Flyout>

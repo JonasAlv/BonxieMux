@@ -158,90 +158,10 @@ public partial class MainWindow : Window
         if (isTopLevel)
         {
             menuItem.Classes.Add("top-nav-item");
-            MaterialIconKind? iconKind = viewModel.Header switch
-            {
-                "Scripts" => MaterialIconKind.ScriptTextOutline,
-                "Options" => MaterialIconKind.CogOutline,
-                "Tools & Helpers" => MaterialIconKind.WrenchOutline,
-                "Combat" => MaterialIconKind.SwordCross,
-                "Bank" => MaterialIconKind.BankOutline,
-                "Diagnostics" => MaterialIconKind.BugOutline,
-                "Plugins" => MaterialIconKind.PuzzleOutline,
-                _ => null
-            };
-
-            if (iconKind.HasValue)
-            {
-                var icon = new MaterialIcon
-                {
-                    Kind = iconKind.Value,
-                    Width = 14,
-                    Height = 14,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-                icon[!MaterialIcon.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaAccentBrush");
-
-                var text = new TextBlock
-                {
-                    Text = viewModel.Header,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    FontWeight = FontWeight.SemiBold,
-                    FontSize = 12
-                };
-                menuItem.Header = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 6,
-                    Children = { icon, text }
-                };
-            }
-            else
-            {
-                menuItem.Header = viewModel.Header;
-            }
+            menuItem.Header = viewModel.Header;
         }
         else
         {
-            MaterialIconKind? subIconKind = viewModel.Header switch
-            {
-                "Script Loader" => MaterialIconKind.ScriptOutline,
-                "Scheduler" => MaterialIconKind.CalendarClock,
-                "Game" => MaterialIconKind.GamepadVariantOutline,
-                "Watch Dog" => MaterialIconKind.ShieldCheckOutline,
-                "Application" => MaterialIconKind.ApplicationCogOutline,
-                "CoreBots" => MaterialIconKind.RobotOutline,
-                "Application Themes" => MaterialIconKind.PaletteOutline,
-                "HotKeys" => MaterialIconKind.KeyboardOutline,
-                "Loadouts Manager" => MaterialIconKind.AccountSwitchOutline,
-                "Fast Travel" => MaterialIconKind.CompassOutline,
-                "Loader" => MaterialIconKind.DownloadOutline,
-                "Grabber" => MaterialIconKind.HandBackRightOutline,
-                "Current Drops" => MaterialIconKind.GiftOutline,
-                "Junk Items" => MaterialIconKind.DeleteSweepOutline,
-                "Calendar" => MaterialIconKind.CalendarMonthOutline,
-                "Skills" => MaterialIconKind.LightningBoltOutline,
-                "Stats" => MaterialIconKind.ChartLine,
-                "Runtime" => MaterialIconKind.PlayNetworkOutline,
-                "Logs" => MaterialIconKind.FileDocumentOutline,
-                "Console" => MaterialIconKind.Console,
-                "Spammer" => MaterialIconKind.SendClockOutline,
-                "Logger" => MaterialIconKind.TextSearch,
-                "Interceptor" => MaterialIconKind.ShieldBugOutline,
-                _ => null
-            };
-
-            if (subIconKind.HasValue)
-            {
-                var subIcon = new MaterialIcon
-                {
-                    Kind = subIconKind.Value,
-                    Width = 14,
-                    Height = 14,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-                subIcon[!MaterialIcon.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaMutedTextBrush");
-                menuItem.Icon = subIcon;
-            }
             menuItem.Header = viewModel.Header;
         }
 

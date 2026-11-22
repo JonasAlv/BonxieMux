@@ -44,7 +44,7 @@
 
     <Style Selector="ToggleButton.app-toggle, ToggleButton.option-chip">
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
@@ -55,7 +55,7 @@
     <Style Selector="ToggleButton.app-toggle /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.option-chip /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
     </Style>
     <Style Selector="ToggleButton.app-toggle:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.option-chip:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -99,7 +99,7 @@
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
     </Style>
     <Style Selector="ToggleButton.compare">

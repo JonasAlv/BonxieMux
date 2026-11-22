@@ -1182,6 +1182,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         {
             long version;
             bool isHeadless;
+            bool shouldMute;
             bool isReduced;
             bool shouldDebounceReduced;
             RenderSyncKey key;
@@ -1192,11 +1193,12 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             {
                 version = _renderDesiredVersion;
                 isHeadless = IsHeadlessNow();
+                shouldMute = isHeadless || !_isForegroundFocused;
                 isReduced = isHeadless || _isBackgroundThrottled;
                 bool allowFullQuality = !isReduced && _isForegroundFocused;
 
                 int targetFps = isReduced ? 2 : (SetFPS > 2 ? SetFPS : 24);
-                double targetVolume = isHeadless ? 0.0 : (_mutedByHeadless ? 1.0 : -1.0);
+                double targetVolume = shouldMute ? 0.0 : (_mutedByHeadless ? 1.0 : -1.0);
 
                 bool isAuto = string.Equals(StageQuality, "AUTO", StringComparison.OrdinalIgnoreCase);
                 string prefQuality = !allowFullQuality && isAuto ? "LOW" : StageQuality;
@@ -1275,7 +1277,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
                 retriesForVersion = 0;
             }
 
-            if (isHeadless)
+            if (shouldMute)
             {
                 lock (_renderLock)
                     _mutedByHeadless = true;
@@ -1322,7 +1324,7 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
                     _lastAppliedRenderKey = key;
                     if (key.ShouldFlush)
                         _renderFlushGamePrefPending = false;
-                    if (!isHeadless && key.TargetVolume >= 0)
+                    if (!shouldMute && key.TargetVolume >= 0)
                         _mutedByHeadless = false;
                 }
                 else

@@ -74,7 +74,6 @@ public partial class GrabberListViewModel : ObservableRecipient
     public bool SelectMultiple { get; }
 
     public string Group { get; init; } = string.Empty;
-    public Material.Icons.MaterialIconKind Icon { get; init; }
     public bool IsSelectable => true;
 
     [ObservableProperty]

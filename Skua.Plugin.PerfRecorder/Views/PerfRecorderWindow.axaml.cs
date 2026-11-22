@@ -144,7 +144,6 @@ public partial class PerfRecorderWindow : Window
             RecordingStatusText.Text = $"REC {elapsed:mm\\:ss} ({samples}s)";
             RecordingStatusText.Foreground = Brushes.OrangeRed;
             RecordBtnText.Text = "Stop & Save .txt";
-            RecordBtnIcon.Kind = MaterialIconKind.StopCircleOutline;
             BtnToggleRecord.Classes.Set("primary-action", false);
             BtnToggleRecord.Classes.Set("danger-action", true);
         }
@@ -153,7 +152,6 @@ public partial class PerfRecorderWindow : Window
             RecordingStatusText.Text = "IDLE";
             RecordingStatusText.Foreground = Brushes.Gray;
             RecordBtnText.Text = "Start Recording";
-            RecordBtnIcon.Kind = MaterialIconKind.RecordCircleOutline;
             BtnToggleRecord.Classes.Set("danger-action", false);
             BtnToggleRecord.Classes.Set("primary-action", true);
         }

@@ -43,65 +43,56 @@
                  FontWeight="SemiBold" VerticalAlignment="Center" />
       <TextBlock Grid.Column="2" Text="script time" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
       <Button Grid.Column="4" Classes="skua-button small w84" Command="{Binding ResetStatsCommand}" ToolTip.Tip="Reset all combat and drop counters">
-        <StackPanel Orientation="Horizontal" Spacing="5">
-          <materialIcons:MaterialIcon Kind="Restore" Width="14" Height="14" />
-          <TextBlock Text="Reset" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Reset" VerticalAlignment="Center" />
+</Button>
     </Grid>
 
     <UniformGrid Grid.Row="1" Columns="3" Margin="-3">
       <Border Classes="stat-tile" Margin="3">
         <StackPanel Spacing="2">
           <StackPanel Orientation="Horizontal" Spacing="5">
-            <materialIcons:MaterialIcon Kind="Sword" Width="13" Height="13" Foreground="{DynamicResource SkuaSuccessBrush}" />
-            <TextBlock Classes="section-label" Text="KILLS" />
-          </StackPanel>
+  <TextBlock Classes="section-label" Text="KILLS" />
+</StackPanel>
           <TextBlock Classes="stat-value" Text="{Binding ScriptStats.Kills, StringFormat={}{0:N0}}" />
         </StackPanel>
       </Border>
       <Border Classes="stat-tile" Margin="3">
         <StackPanel Spacing="2">
           <StackPanel Orientation="Horizontal" Spacing="5">
-            <materialIcons:MaterialIcon Kind="SkullOutline" Width="13" Height="13" Foreground="{DynamicResource SkuaDangerBrush}" />
-            <TextBlock Classes="section-label" Text="DEATHS" />
-          </StackPanel>
+  <TextBlock Classes="section-label" Text="DEATHS" />
+</StackPanel>
           <TextBlock Classes="stat-value" Text="{Binding ScriptStats.Deaths, StringFormat={}{0:N0}}" />
         </StackPanel>
       </Border>
       <Border Classes="stat-tile" Margin="3">
         <StackPanel Spacing="2">
           <StackPanel Orientation="Horizontal" Spacing="5">
-            <materialIcons:MaterialIcon Kind="GiftOutline" Width="13" Height="13" Foreground="{DynamicResource SkuaWarningBrush}" />
-            <TextBlock Classes="section-label" Text="PICKUPS" />
-          </StackPanel>
+  <TextBlock Classes="section-label" Text="PICKUPS" />
+</StackPanel>
           <TextBlock Classes="stat-value" Text="{Binding ScriptStats.Drops, StringFormat={}{0:N0}}" />
         </StackPanel>
       </Border>
       <Border Classes="stat-tile" Margin="3">
         <StackPanel Spacing="2">
           <StackPanel Orientation="Horizontal" Spacing="5">
-            <materialIcons:MaterialIcon Kind="ClipboardCheckOutline" Width="13" Height="13" Foreground="#60A5FA" />
-            <TextBlock Classes="section-label" Text="ACCEPTED" />
-          </StackPanel>
+  <TextBlock Classes="section-label" Text="ACCEPTED" />
+</StackPanel>
           <TextBlock Classes="stat-value" Text="{Binding ScriptStats.QuestsAccepted, StringFormat={}{0:N0}}" />
         </StackPanel>
       </Border>
       <Border Classes="stat-tile" Margin="3">
         <StackPanel Spacing="2">
           <StackPanel Orientation="Horizontal" Spacing="5">
-            <materialIcons:MaterialIcon Kind="CheckCircleOutline" Width="13" Height="13" Foreground="{DynamicResource SkuaSuccessBrush}" />
-            <TextBlock Classes="section-label" Text="COMPLETED" />
-          </StackPanel>
+  <TextBlock Classes="section-label" Text="COMPLETED" />
+</StackPanel>
           <TextBlock Classes="stat-value" Text="{Binding ScriptStats.QuestsCompleted, StringFormat={}{0:N0}}" />
         </StackPanel>
       </Border>
       <Border Classes="stat-tile" Margin="3">
         <StackPanel Spacing="2">
           <StackPanel Orientation="Horizontal" Spacing="5">
-            <materialIcons:MaterialIcon Kind="Reload" Width="13" Height="13" Foreground="#A78BFA" />
-            <TextBlock Classes="section-label" Text="RE-LOGINS" />
-          </StackPanel>
+  <TextBlock Classes="section-label" Text="RE-LOGINS" />
+</StackPanel>
           <TextBlock Classes="stat-value" Text="{Binding ScriptStats.Relogins, StringFormat={}{0:N0}}" />
         </StackPanel>
       </Border>
@@ -110,11 +101,8 @@
     <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" Margin="0,2,0,0">
       <TextBlock Grid.Column="0" Classes="section-label" Text="STORAGE" />
       <Button Grid.Column="2" Classes="skua-button small w112" Command="{Binding GetSpaceCommand}" ToolTip.Tip="Refresh inventory and bank space">
-        <StackPanel Orientation="Horizontal" Spacing="5">
-          <materialIcons:MaterialIcon Kind="Refresh" Width="14" Height="14" />
-          <TextBlock Text="Get space" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
+  <TextBlock Text="Get space" VerticalAlignment="Center" />
+</Button>
     </Grid>
 
     <Border Grid.Row="3"
@@ -125,9 +113,8 @@
             Padding="10,8">
       <Grid ColumnDefinitions="84,*,70" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="9">
         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="5">
-          <materialIcons:MaterialIcon Kind="BagPersonalOutline" Width="14" Height="14" Foreground="{DynamicResource SkuaSuccessBrush}" VerticalAlignment="Center" />
-          <TextBlock Text="Inventory" FontSize="11" VerticalAlignment="Center" />
-        </StackPanel>
+  <TextBlock Text="Inventory" FontSize="11" VerticalAlignment="Center" />
+</StackPanel>
         <ProgressBar Grid.Row="0" Grid.Column="1" Classes="storage" Foreground="{DynamicResource SkuaSuccessBrush}"
                      Maximum="{Binding ScriptStats.InventorySpace, Converter={StaticResource AtLeastOneConverter}}" Value="{Binding ScriptStats.InventoryFilledSpace}" />
         <TextBlock Grid.Row="0" Grid.Column="2" FontSize="11" FontFamily="Cascadia Mono,Consolas,Courier New,monospace" HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -140,9 +127,8 @@
         </TextBlock>
 
         <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="5">
-          <materialIcons:MaterialIcon Kind="BankOutline" Width="14" Height="14" Foreground="{DynamicResource SkuaWarningBrush}" VerticalAlignment="Center" />
-          <TextBlock Text="Bank" FontSize="11" VerticalAlignment="Center" />
-        </StackPanel>
+  <TextBlock Text="Bank" FontSize="11" VerticalAlignment="Center" />
+</StackPanel>
         <ProgressBar Grid.Row="1" Grid.Column="1" Classes="storage" Foreground="{DynamicResource SkuaWarningBrush}"
                      Maximum="{Binding ScriptStats.BankSpace, Converter={StaticResource AtLeastOneConverter}}" Value="{Binding ScriptStats.BankFilledSpace}" />
         <TextBlock Grid.Row="1" Grid.Column="2" FontSize="11" FontFamily="Cascadia Mono,Consolas,Courier New,monospace" HorizontalAlignment="Right" VerticalAlignment="Center">
