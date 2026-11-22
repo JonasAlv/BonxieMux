@@ -15,6 +15,7 @@ namespace Skua.Shared.Avalonia.Services;
 public static class ManagerThemeBroadcaster
 {
     private static int _managerListenerStarted;
+    private static int _appListenerStarted;
 
     public static bool IsSyncEnabled(ISettingsService settingsService)
     {
@@ -60,6 +61,15 @@ public static class ManagerThemeBroadcaster
                 {
                     targetPipes.Add(pipePath);
                 }
+
+                string selfAppPipe = $"app-theme-{Environment.ProcessId}.pipe";
+                foreach (string pipePath in Directory.GetFiles(tabsDir, "app-theme-*.pipe"))
+                {
+                    if (!string.Equals(Path.GetFileName(pipePath), selfAppPipe, StringComparison.OrdinalIgnoreCase))
+                    {
+                        targetPipes.Add(pipePath);
+                    }
+                }
             }
 
             string message = BuildThemeMessage(themeService);
@@ -88,6 +98,20 @@ public static class ManagerThemeBroadcaster
             return;
 
         string pipePath = Path.Combine(ClientFileSources.TabsDIR, "manager-theme.pipe");
+        StartPipeListener(ref _managerListenerStarted, pipePath, onThemeReceived);
+    }
+
+    public static void StartAppThemeListener(Action<ThemeItem, bool> onThemeReceived)
+    {
+        string pipePath = Path.Combine(ClientFileSources.TabsDIR, $"app-theme-{Environment.ProcessId}.pipe");
+        StartPipeListener(ref _appListenerStarted, pipePath, onThemeReceived);
+    }
+
+    private static void StartPipeListener(ref int startedFlag, string pipePath, Action<ThemeItem, bool> onThemeReceived)
+    {
+        if (System.Threading.Interlocked.Exchange(ref startedFlag, 1) != 0)
+            return;
+
         _ = Task.Run(async () =>
         {
             while (true)
@@ -96,6 +120,10 @@ public static class ManagerThemeBroadcaster
                 try
                 {
                     Directory.CreateDirectory(ClientFileSources.TabsDIR);
+                    if (File.Exists(pipePath))
+                    {
+                        try { File.Delete(pipePath); } catch { }
+                    }
                     server = new NamedPipeServerStream(
                         pipePath,
                         PipeDirection.In,

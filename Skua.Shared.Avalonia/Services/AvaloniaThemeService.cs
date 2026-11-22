@@ -10,7 +10,9 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace Skua.Shared.Avalonia.Services;
@@ -119,6 +121,7 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         }
 
         ApplyThemeItem(current);
+        LoadFromSharedThemeFile();
         HookSystemThemeChanges();
         if (_syncThemeWithSystem)
         {
@@ -128,6 +131,8 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         {
             SyncWithSystemAccentColor();
         }
+        SaveToSharedThemeFile();
+        StartThemeFileWatcher();
     }
 
     public event ThemeChangedEventHandler? ThemeChanged;
@@ -592,7 +597,12 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         IsApplyingExternalTheme = true;
         try
         {
-            ApplyThemeItem(displaySnapshot);
+            ApplyThemeItem(displaySnapshot, ignoreSystemSync: true);
+            if (ManagerThemeBroadcaster.IsSyncEnabled(_settingsService))
+            {
+                SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
+                SaveCurrentThemeSnapshot(item.Name);
+            }
             ThemeChanged?.Invoke(_primaryColor);
             SchemeChanged?.Invoke(ColorScheme.Primary, _primaryColor);
         }
@@ -853,9 +863,9 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         }
     }
 
-    private void ApplyThemeItem(ThemeItem item)
+    private void ApplyThemeItem(ThemeItem item, bool ignoreSystemSync = false)
     {
-        if (_syncThemeWithSystem && Application.Current?.PlatformSettings is { } settings)
+        if (!ignoreSystemSync && _syncThemeWithSystem && Application.Current?.PlatformSettings is { } settings)
         {
             var variant = settings.GetColorValues().ThemeVariant;
             _isDarkTheme = variant != PlatformThemeVariant.Light;
@@ -1153,6 +1163,155 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         string themeName = !string.IsNullOrWhiteSpace(name) ? name : "Skua";
         ThemeItem snapshot = BuildThemeSnapshot(themeName);
         _settingsService.Set("CurrentTheme", snapshot.ConvertToString());
+        SaveToSharedThemeFile();
+    }
+
+    private static string SharedThemeFilePath => Path.Combine(ClientFileSources.SkuaDIR, "theme.json");
+    private FileSystemWatcher? _themeFileWatcher;
+    private long _ignoreWatcherUntilUtcTicks;
+
+    private sealed class SharedThemeFileState
+    {
+        public bool IsDarkTheme { get; set; }
+        public bool SyncThemeWithSystem { get; set; }
+        public bool UseSystemAccentColor { get; set; }
+        public bool UseAccentOnMainTitleBar { get; set; }
+        public bool UseAccentOnManagerTitleBar { get; set; }
+        public string? PrimaryColor { get; set; }
+        public string? TextOnAccentColor { get; set; }
+        public string? DarkAccentColor { get; set; }
+        public string? DarkTextOnAccentColor { get; set; }
+        public string? LightAccentColor { get; set; }
+        public string? LightTextOnAccentColor { get; set; }
+    }
+
+    private void LoadFromSharedThemeFile(bool raiseEvents = false)
+    {
+        try
+        {
+            if (!File.Exists(SharedThemeFilePath))
+                return;
+
+            string json = File.ReadAllText(SharedThemeFilePath);
+            SharedThemeFileState? state = JsonSerializer.Deserialize<SharedThemeFileState>(json);
+            if (state is null)
+                return;
+
+            _syncThemeWithSystem = state.SyncThemeWithSystem;
+            _useSystemAccentColor = state.UseSystemAccentColor;
+            _useAccentOnMainTitleBar = state.UseAccentOnMainTitleBar;
+            _useAccentOnManagerTitleBar = state.UseAccentOnManagerTitleBar;
+            _isDarkTheme = state.IsDarkTheme;
+
+            if (!string.IsNullOrWhiteSpace(state.DarkAccentColor))
+                _settingsService.Set("DarkAccentColor", state.DarkAccentColor);
+            if (!string.IsNullOrWhiteSpace(state.DarkTextOnAccentColor))
+                _settingsService.Set("DarkTextOnAccentColor", state.DarkTextOnAccentColor);
+            if (!string.IsNullOrWhiteSpace(state.LightAccentColor))
+                _settingsService.Set("LightAccentColor", state.LightAccentColor);
+            if (!string.IsNullOrWhiteSpace(state.LightTextOnAccentColor))
+                _settingsService.Set("LightTextOnAccentColor", state.LightTextOnAccentColor);
+
+            if (!string.IsNullOrWhiteSpace(state.PrimaryColor))
+            {
+                Color accent = ResolveAccentColor(state.PrimaryColor);
+                _primaryColor = accent;
+                _secondaryColor = accent;
+            }
+            if (!string.IsNullOrWhiteSpace(state.TextOnAccentColor))
+            {
+                Color fg = ResolveAccentColor(state.TextOnAccentColor);
+                _primaryForegroundColor = fg;
+                _secondaryForegroundColor = fg;
+            }
+
+            SetSelectedColorSilently(GetColorForScheme(ActiveScheme));
+            OnPropertyChanged(nameof(SyncThemeWithSystem));
+            OnPropertyChanged(nameof(UseSystemAccentColor));
+            OnPropertyChanged(nameof(UseAccentOnMainTitleBar));
+            OnPropertyChanged(nameof(UseAccentOnManagerTitleBar));
+            OnPropertyChanged(nameof(IsDarkTheme));
+            OnPropertyChanged(nameof(SelectedColor));
+
+            if (raiseEvents)
+            {
+                ThemeChanged?.Invoke(_primaryColor);
+                SchemeChanged?.Invoke(ActiveScheme, GetColorForScheme(ActiveScheme));
+            }
+        }
+        catch { }
+    }
+
+    private void SaveToSharedThemeFile()
+    {
+        if (IsApplyingExternalTheme)
+            return;
+
+        try
+        {
+            Directory.CreateDirectory(ClientFileSources.SkuaDIR);
+            SharedThemeFileState state = new()
+            {
+                IsDarkTheme = _isDarkTheme,
+                SyncThemeWithSystem = _syncThemeWithSystem,
+                UseSystemAccentColor = _useSystemAccentColor,
+                UseAccentOnMainTitleBar = _useAccentOnMainTitleBar,
+                UseAccentOnManagerTitleBar = _useAccentOnManagerTitleBar,
+                PrimaryColor = PrimaryHex,
+                TextOnAccentColor = ForegroundHex,
+                DarkAccentColor = _settingsService.Get<string?>("DarkAccentColor", null),
+                DarkTextOnAccentColor = _settingsService.Get<string?>("DarkTextOnAccentColor", null),
+                LightAccentColor = _settingsService.Get<string?>("LightAccentColor", null),
+                LightTextOnAccentColor = _settingsService.Get<string?>("LightTextOnAccentColor", null)
+            };
+
+            string json = JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true });
+            string tmpPath = SharedThemeFilePath + $".{Environment.ProcessId}.tmp";
+            System.Threading.Interlocked.Exchange(ref _ignoreWatcherUntilUtcTicks, DateTime.UtcNow.AddMilliseconds(400).Ticks);
+            File.WriteAllText(tmpPath, json);
+            File.Move(tmpPath, SharedThemeFilePath, overwrite: true);
+        }
+        catch { }
+    }
+
+    private void StartThemeFileWatcher()
+    {
+        try
+        {
+            Directory.CreateDirectory(ClientFileSources.SkuaDIR);
+            _themeFileWatcher = new FileSystemWatcher(ClientFileSources.SkuaDIR, "theme.json")
+            {
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.FileName,
+                EnableRaisingEvents = true
+            };
+
+            FileSystemEventHandler onChanged = (_, _) =>
+            {
+                if (DateTime.UtcNow.Ticks < System.Threading.Interlocked.Read(ref _ignoreWatcherUntilUtcTicks))
+                    return;
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (!ManagerThemeBroadcaster.IsSyncEnabled(_settingsService))
+                        return;
+
+                    IsApplyingExternalTheme = true;
+                    try
+                    {
+                        LoadFromSharedThemeFile(raiseEvents: true);
+                    }
+                    finally
+                    {
+                        IsApplyingExternalTheme = false;
+                    }
+                });
+            };
+
+            _themeFileWatcher.Changed += onChanged;
+            _themeFileWatcher.Created += onChanged;
+            _themeFileWatcher.Renamed += (_, _) => onChanged(this, new FileSystemEventArgs(WatcherChangeTypes.Changed, ClientFileSources.SkuaDIR, "theme.json"));
+        }
+        catch { }
     }
 
     private void CaptureAdjustmentBaseline()

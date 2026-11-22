@@ -126,6 +126,19 @@ public partial class App : Application
         themeService.ThemeChanged += OnThemeChanged;
         themeService.SchemeChanged += OnSchemeChanged;
         ApplyThemeFromService(themeService);
+        ManagerThemeBroadcaster.StartAppThemeListener((themeItem, useAccentOnMainTitleBar) =>
+        {
+            if (Ioc.Default.GetService<IThemeService>() is AvaloniaThemeService ats &&
+                ManagerThemeBroadcaster.IsSyncEnabled(Ioc.Default.GetRequiredService<ISettingsService>()))
+            {
+                ats.ApplyExternalThemeSnapshot(themeItem, useAccentOnMainTitleBar);
+                if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
+                    desktop.MainWindow is Views.TabbedHostWindow hostWindow)
+                {
+                    hostWindow.MainTitleBar.UseAccentBackground = useAccentOnMainTitleBar;
+                }
+            }
+        });
 
         string[] args = Environment.GetCommandLineArgs();
         bool hasEmbedFlag = false;
@@ -570,7 +583,9 @@ public partial class App : Application
             QueueHostThemeSync(ats);
             if (!ats.IsApplyingExternalTheme)
             {
-                ManagerThemeBroadcaster.BroadcastIfEnabledToManager(ats, Ioc.Default.GetRequiredService<ISettingsService>());
+                ISettingsService settingsService = Ioc.Default.GetRequiredService<ISettingsService>();
+                ManagerThemeBroadcaster.BroadcastIfEnabled(ats, settingsService);
+                ManagerThemeBroadcaster.BroadcastIfEnabledToManager(ats, settingsService);
             }
         }
         else
@@ -613,7 +628,9 @@ public partial class App : Application
             QueueHostThemeSync(ats);
             if (!ats.IsApplyingExternalTheme)
             {
-                ManagerThemeBroadcaster.BroadcastIfEnabledToManager(ats, Ioc.Default.GetRequiredService<ISettingsService>());
+                ISettingsService settingsService = Ioc.Default.GetRequiredService<ISettingsService>();
+                ManagerThemeBroadcaster.BroadcastIfEnabled(ats, settingsService);
+                ManagerThemeBroadcaster.BroadcastIfEnabledToManager(ats, settingsService);
             }
             return;
         }
