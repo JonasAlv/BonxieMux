@@ -50,10 +50,8 @@ public class HotKeyService : IHotKeyService, IDisposable
 
         _settingsService.ReloadSettings();
         StringCollection hotkeys = _settingsService.Get<StringCollection>("HotKeys") ?? new StringCollection();
-        int initialCount = hotkeys.Count;
         EnsureDefaultBindingsExist(hotkeys);
-        if (hotkeys.Count != initialCount)
-            _settingsService.Set("HotKeys", hotkeys);
+        _settingsService.Set("HotKeys", hotkeys);
 
         AttachMainWindow();
         List<HotKeyBinding> bindings = [];
@@ -114,16 +112,13 @@ public class HotKeyService : IHotKeyService, IDisposable
             if (!_hotKeys.ContainsKey(binding) && !registeredActions.ContainsKey(binding))
                 continue;
 
-            if (!string.IsNullOrWhiteSpace(gesture) && !gesture.Equals("Unassigned", StringComparison.OrdinalIgnoreCase))
+            cleaned.Add($"{binding}|{(string.IsNullOrWhiteSpace(gesture) ? "Unassigned" : gesture)}");
+            parsed.Add(new()
             {
-                cleaned.Add($"{binding}|{gesture}");
-                parsed.Add(new()
-                {
-                    Binding = binding,
-                    Title = global::Skua.Core.AppStartup.HotKeys.GetFormattedTitle(binding),
-                    KeyGesture = gesture
-                });
-            }
+                Binding = binding,
+                Title = global::Skua.Core.AppStartup.HotKeys.GetFormattedTitle(binding),
+                KeyGesture = string.IsNullOrWhiteSpace(gesture) ? "Unassigned" : gesture
+            });
         }
 
         if (parsed.Count == 0)
@@ -149,6 +144,11 @@ public class HotKeyService : IHotKeyService, IDisposable
         _settingsService.Set("HotKeys", cleaned);
         return parsed;
     }
+
+    public List<string> GetAvailableHotKeyBindings() => _hotKeys.Keys
+        .Concat(global::Skua.Core.AppStartup.HotKeys.GetRegistry().Keys)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
 
     public HotKey? ParseToHotKey(string keyGesture)
     {
