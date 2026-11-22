@@ -153,7 +153,6 @@ public partial class TabbedHostWindow
         if (info.ChildHwnd != IntPtr.Zero)
         {
             PlatformDetachChild(info.ChildHwnd, screenX, screenY, clientWidth, clientHeight);
-            PostChildMessage(info.ChildHwnd, SkuaIpcMessages.Detach, new IntPtr(screenX), new IntPtr(screenY));
         }
 
         DoReposition();
@@ -183,7 +182,6 @@ public partial class TabbedHostWindow
         if (info.ChildHwnd != IntPtr.Zero)
         {
             PlatformReattachChild(info.ChildHwnd);
-            PostChildMessage(info.ChildHwnd, SkuaIpcMessages.Dock, IntPtr.Zero, IntPtr.Zero);
         }
 
         InstancesTabControl.SelectedItem = tab;

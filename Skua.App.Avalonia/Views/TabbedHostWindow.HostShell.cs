@@ -263,25 +263,178 @@ public partial class TabbedHostWindow : Window
         }
     }
 
+    private readonly Dictionary<IntPtr, Window> _detachedWindows = new();
+    private readonly Dictionary<IntPtr, ContentControl> _detachedViewportHosts = new();
+
     private void PlatformDetachChild(IntPtr childHwnd, int screenX, int screenY, int width, int height)
     {
-        if (_viewports.TryGetValue(childHwnd, out GameHost? viewport))
-            viewport.IsVisible = false;
+        if (_detachedWindows.TryGetValue(childHwnd, out Window? existing))
+        {
+            existing.Activate();
+            return;
+        }
+
+        if (!_viewports.TryGetValue(childHwnd, out GameHost? viewport))
+            return;
+
         if (_headlessOverlays.TryGetValue(childHwnd, out Border? overlay))
             overlay.IsVisible = false;
+
+        TabInfo? info = _tabs.Values.FirstOrDefault(t => t.ChildHwnd == childHwnd);
+        int childPid = info?.Process?.Id ?? (int)childHwnd;
+        string title = info?.LastCharacterName is { Length: > 0 } lbl
+            ? $"{lbl} — BonxieMux"
+            : $"BonxieMux V{Skua.Core.Models.ClientFileSources.DisplayVersion}";
+
+        _hostGrid?.Children.Remove(viewport);
+
+        ContentControl viewportHost = new()
+        {
+            Content = viewport,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch
+        };
+        _detachedViewportHosts[childHwnd] = viewportHost;
+
+        Menu detachedMenu = new()
+        {
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        detachedMenu.Classes.Add("top-toolbar");
+        MenuItem rootMenuItem = new()
+        {
+            Header = CreateNavIcon(Material.Icons.MaterialIconKind.Menu, 16, "SkuaTextBrush")
+        };
+        rootMenuItem.Classes.Add("top-nav-item");
+        ToolTip.SetTip(rootMenuItem, "Application Menu");
+        foreach (var entry in _topMenuEntries)
+        {
+            MenuItem sub = BuildTopMenuItemFromSpec(entry.Spec, childPid);
+            sub.Classes.Remove("top-nav-item");
+            rootMenuItem.Items.Add(sub);
+        }
+        detachedMenu.Items.Add(rootMenuItem);
+
+        Button autoBtn = CreateDetachedTitleButton(Material.Icons.MaterialIconKind.RobotOutline, "Auto Attack / Stop", () =>
+            Skua.App.Avalonia.Services.TabIpc.SendCommand(childPid, "AUTO_ATTACK"));
+        Button jumpBtn = CreateDetachedTitleButton(Material.Icons.MaterialIconKind.RunFast, "Map & Cell Jump", () =>
+            Skua.App.Avalonia.Services.TabIpc.SendCommand(childPid, "JUMP_WINDOW"));
+        Button botWinBtn = CreateDetachedTitleButton(Material.Icons.MaterialIconKind.Apps, "Show All Bot Windows & Tools", () =>
+            Skua.App.Avalonia.Services.TabIpc.SendCommand(childPid, "BOT_WINDOW"));
+        Button optionsBtn = CreateDetachedTitleButton(Material.Icons.MaterialIconKind.CogOutline, "Application Options", () =>
+            Skua.App.Avalonia.Services.TabIpc.SendCommand(childPid, "MENU|Application Options"));
+
+        StackPanel rightButtons = new()
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 2,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { autoBtn, jumpBtn, botWinBtn, optionsBtn }
+        };
+
+        var titleBar = new Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar
+        {
+            TitleText = title,
+            CanDock = true,
+            LeftContent = detachedMenu,
+            RightContent = rightButtons
+        };
+        titleBar.DockClicked += (_, _) => DockChildInstance(childPid);
+
+        Grid layout = new() { RowDefinitions = new RowDefinitions("30,*") };
+        Grid.SetRow(titleBar, 0);
+        Grid.SetRow(viewportHost, 1);
+        layout.Children.Add(titleBar);
+        layout.Children.Add(viewportHost);
+
+        Border frame = new() { Child = layout };
+        frame.Classes.Add("window-frame");
+
+        Window detachedWindow = new()
+        {
+            Title = title,
+            Width = Math.Max(640, width),
+            Height = Math.Max(420, height),
+            Position = new PixelPoint(screenX, screenY),
+            WindowStartupLocation = WindowStartupLocation.Manual,
+            CanResize = true,
+            Icon = Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar.DefaultWindowIcon,
+            Content = frame
+        };
+        Skua.Shared.Avalonia.Services.ShellWindowHelper.ConfigureFramelessWindow(detachedWindow);
+
+        detachedWindow.Closing += (_, e) =>
+        {
+            if (_detachedWindows.ContainsKey(childHwnd))
+            {
+                e.Cancel = true;
+                DockChildInstance(childPid);
+            }
+        };
+
+        _detachedWindows[childHwnd] = detachedWindow;
+        detachedWindow.Show();
+        detachedWindow.Activate();
+
+        viewport.IsVisible = true;
+        viewport.SetHostedVisible(true);
+        Dispatcher.UIThread.Post(() => viewport.ForceRefreshFrame(), DispatcherPriority.Render);
+    }
+
+    private static Button CreateDetachedTitleButton(Material.Icons.MaterialIconKind kind, string tooltip, Action onClick)
+    {
+        Button btn = new()
+        {
+            Width = 26,
+            Height = 26,
+            Padding = new Thickness(0),
+            Content = CreateNavIcon(kind, 14, "SkuaMutedTextBrush")
+        };
+        btn.Classes.Add("titlebar");
+        ToolTip.SetTip(btn, tooltip);
+        btn.Click += (_, _) => onClick();
+        return btn;
     }
 
     private void PlatformReattachChild(IntPtr childHwnd)
     {
+        if (_detachedViewportHosts.TryGetValue(childHwnd, out ContentControl? viewportHost))
+        {
+            viewportHost.Content = null;
+            _detachedViewportHosts.Remove(childHwnd);
+        }
+
+        if (_detachedWindows.TryGetValue(childHwnd, out Window? detachedWindow))
+        {
+            _detachedWindows.Remove(childHwnd);
+            try { detachedWindow.Close(); } catch { }
+        }
+
+        if (_viewports.TryGetValue(childHwnd, out GameHost? viewport) &&
+            _hostGrid != null &&
+            !_hostGrid.Children.Contains(viewport))
+        {
+            int insertIndex = Math.Max(0, _hostGrid.Children.Count - 1);
+            _hostGrid.Children.Insert(insertIndex, viewport);
+        }
+
         Dispatcher.UIThread.Post(() =>
         {
             _lastActiveHwnd = IntPtr.Zero;
             DoReposition();
+            if (_viewports.TryGetValue(childHwnd, out GameHost? vp) && vp.IsVisible)
+                vp.ForceRefreshFrame();
         }, DispatcherPriority.Background);
     }
 
     private void PlatformRaiseChild(IntPtr childHwnd)
     {
+        if (_detachedWindows.TryGetValue(childHwnd, out Window? detachedWindow))
+        {
+            if (detachedWindow.WindowState == WindowState.Minimized)
+                detachedWindow.WindowState = WindowState.Normal;
+            detachedWindow.Activate();
+        }
     }
 
     public static (int rootX, int rootY) GetGlobalPointerPosition()

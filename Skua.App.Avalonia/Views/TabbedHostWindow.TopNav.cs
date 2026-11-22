@@ -103,10 +103,10 @@ public partial class TabbedHostWindow
         return menu;
     }
 
-    private MenuItem BuildTopMenuItemFromSpec(TopMenuSpec spec)
+    private MenuItem BuildTopMenuItemFromSpec(TopMenuSpec spec, int targetPid = 0)
     {
         if (spec.IsPlugins)
-            return BuildPluginsMenuItem();
+            return BuildPluginsMenuItem(targetPid);
 
         if (spec.DirectClick is { } direct)
         {
@@ -115,7 +115,7 @@ public partial class TabbedHostWindow
             return item;
         }
 
-        return CreateMenuGroup(spec.Header, spec.SubLabels);
+        return CreateMenuGroup(spec.Header, targetPid, spec.SubLabels);
     }
 
     private void UpdateTopMenuOverflow()
@@ -240,10 +240,11 @@ public partial class TabbedHostWindow
         return item;
     }
 
-    private MenuItem BuildPluginsMenuItem()
+    private MenuItem BuildPluginsMenuItem(int targetPid = 0)
     {
         MenuItem parent = CreateMenuGroup(
             "Plugins",
+            targetPid,
             "View Plugins",
             "ButlerV5 Avalonia",
             "Daily Tracker",
@@ -270,7 +271,13 @@ public partial class TabbedHostWindow
                 {
                     Header = targetHeader
                 };
-                extra.Click += (_, _) => SendActiveChildCommand("MENU|" + targetHeader);
+                extra.Click += (_, _) =>
+                {
+                    if (targetPid > 0)
+                        Skua.App.Avalonia.Services.TabIpc.SendCommand(targetPid, "MENU|" + targetHeader);
+                    else
+                        SendActiveChildCommand("MENU|" + targetHeader);
+                };
                 parent.Items.Add(extra);
             }
         };
@@ -279,6 +286,9 @@ public partial class TabbedHostWindow
     }
 
     private MenuItem CreateMenuGroup(string header, params string[] subItems)
+        => CreateMenuGroup(header, 0, subItems);
+
+    private MenuItem CreateMenuGroup(string header, int targetPid, params string[] subItems)
     {
         MenuItem parent = CreateTopMenuItem(header);
         foreach (string label in subItems)
@@ -287,7 +297,13 @@ public partial class TabbedHostWindow
             {
                 Header = label
             };
-            sub.Click += (_, _) => SendActiveChildCommand("MENU|" + label);
+            sub.Click += (_, _) =>
+            {
+                if (targetPid > 0)
+                    Skua.App.Avalonia.Services.TabIpc.SendCommand(targetPid, "MENU|" + label);
+                else
+                    SendActiveChildCommand("MENU|" + label);
+            };
             parent.Items.Add(sub);
         }
         return parent;
