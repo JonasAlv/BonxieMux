@@ -7,9 +7,42 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using Skua.App.Avalonia.Views;
+using Skua.Core.AppStartup;
 using Skua.Core.Models;
 
 namespace Skua.App.Avalonia.Services;
+
+/// <summary>
+/// Centralized IPC message IDs shared between TabbedHostWindow, MainWindow, and ScriptLoaderViewModel.
+/// </summary>
+public static class SkuaIpcMessages
+{
+    public const int GridView = 0x0400 + 444;
+    public const int StartScript = 0x0400 + 445;
+    public const int StopScript = 0x0400 + 446;
+    public const int Login = 0x0400 + 447;
+    public const int Logout = 0x0400 + 448;
+    public const int JumpMap = 0x0400 + 449;
+    public const int SetOption = 0x0400 + 450;
+    public const int Throttle = 0x0400 + 452;
+    public const int LoadScript = 0x0400 + 453;
+    public const int ArmyScheduler = 0x0400 + 454;
+    public const int ArmySchedulerStop = 0x0400 + 455;
+    public const int CheckLogin = 0x0400 + 456;
+    public const int JumpPlayer = 0x0400 + 457;
+    public const int AcceptQuest = 0x0400 + 458;
+    public const int AutoAttack = 0x0400 + 459;
+    public const int OpenBank = HotKeys.WM_SKUA_OPEN_BANK;
+    public const int ReloadHotkeys = HotKeys.WM_SKUA_RELOAD_HOTKEYS;
+    public const int ExecuteHotkey = HotKeys.WM_SKUA_EXECUTE_HOTKEY;
+    public const int Focus = HotKeys.WM_SKUA_FOCUS;
+    public const int JumpHouse = HotKeys.WM_SKUA_JUMP_HOUSE;
+    public const int Visibility = HotKeys.WM_SKUA_VISIBILITY;
+    public const int ChangeServer = 0x0400 + 467;
+    public const int GameOnly = HotKeys.WM_SKUA_GAMEONLY;
+    public const int Detach = 0x0400 + 470;
+    public const int Dock = 0x0400 + 471;
+}
 
 /// <summary>
 /// Cross-platform lightweight IPC between TabbedHostWindow (host) and MainWindow (child instances)

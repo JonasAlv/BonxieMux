@@ -37,7 +37,7 @@ public partial class TabbedHostWindow : Window
 {
     private IntPtr SendChildMessage(TabInfo info, uint msg, IntPtr wParam, IntPtr lParam)
     {
-        if (msg == (uint)WM_SKUA_CHECK_LOGIN)
+        if (msg == (uint)SkuaIpcMessages.CheckLogin)
         {
             int pid = info.Process?.Id ?? 0;
             if (pid != 0)
@@ -244,9 +244,9 @@ public partial class TabbedHostWindow : Window
             if (_isGridViewEnabled)
                 foreach (var info in _tabs.Values)
                     if (info.ChildHwnd != IntPtr.Zero)
-                        PostChildMessage(info.ChildHwnd, (uint)HotKeys.WM_SKUA_FOCUS, new IntPtr(1), IntPtr.Zero);
+                        PostChildMessage(info.ChildHwnd, (uint)SkuaIpcMessages.Focus, new IntPtr(1), IntPtr.Zero);
             else if (HotKeys.ActiveChildHwnd != IntPtr.Zero)
-                PostChildMessage(HotKeys.ActiveChildHwnd, (uint)HotKeys.WM_SKUA_FOCUS, new IntPtr(1), IntPtr.Zero);
+                PostChildMessage(HotKeys.ActiveChildHwnd, (uint)SkuaIpcMessages.Focus, new IntPtr(1), IntPtr.Zero);
         };
         StartGridFocusTracking();
         Deactivated += (s, e) =>
@@ -256,13 +256,13 @@ public partial class TabbedHostWindow : Window
             foreach (var info in _tabs.Values)
             {
                 if (info.ChildHwnd != IntPtr.Zero)
-                    PostChildMessage(info.ChildHwnd, (uint)HotKeys.WM_SKUA_FOCUS, IntPtr.Zero, IntPtr.Zero);
+                    PostChildMessage(info.ChildHwnd, (uint)SkuaIpcMessages.Focus, IntPtr.Zero, IntPtr.Zero);
             }
         };
         Closing += OnWindowClosing;
         Closed += OnWindowClosed;
 
-        StrongReferenceMessenger.Default.Register<TabbedHostWindow, LoadScriptMessage, int>(this, (int)MessageChannels.ScriptStatus, (r, m) => r.BroadcastScriptAction(m.Path, WM_SKUA_LOAD_SCRIPT));
+        StrongReferenceMessenger.Default.Register<TabbedHostWindow, LoadScriptMessage, int>(this, (int)MessageChannels.ScriptStatus, (r, m) => r.BroadcastScriptAction(m.Path, SkuaIpcMessages.LoadScript));
         StrongReferenceMessenger.Default.Register<TabbedHostWindow, ScriptSchedulerViewModel.ArmySchedulerMessage>(this, (r, m) => r.OnArmySchedulerStart(m));
         StrongReferenceMessenger.Default.Register<TabbedHostWindow, ScriptSchedulerViewModel.ArmySchedulerStopMessage>(this, (r, m) => r.OnArmySchedulerStop(m));
         StrongReferenceMessenger.Default.Register<TabbedHostWindow, Skua.App.Avalonia.AppStartup.AppSettingChangedMessage>(this, (r, m) =>
@@ -273,7 +273,7 @@ public partial class TabbedHostWindow : Window
             {
                 foreach (var info in r._tabs.Values)
                     if (info.ChildHwnd != IntPtr.Zero)
-                        r.PostChildMessage(info.ChildHwnd, WM_SKUA_SET_OPTION, new IntPtr(11), new IntPtr(b ? 1 : 0));
+                        r.PostChildMessage(info.ChildHwnd, SkuaIpcMessages.SetOption, new IntPtr(11), new IntPtr(b ? 1 : 0));
             }
         });
 
@@ -830,14 +830,14 @@ public partial class TabbedHostWindow : Window
             {
                 if (actionName == "OpenBank")
                 {
-                    PostChildMessage(childHwnd, HotKeys.WM_SKUA_OPEN_BANK, IntPtr.Zero, IntPtr.Zero);
+                    PostChildMessage(childHwnd, SkuaIpcMessages.OpenBank, IntPtr.Zero, IntPtr.Zero);
                     return;
                 }
 
                 int actionId = HotKeys.GetActionId(actionName);
                 if (actionId >= 0)
                 {
-                    PostChildMessage(childHwnd, HotKeys.WM_SKUA_EXECUTE_HOTKEY, new IntPtr(actionId), IntPtr.Zero);
+                    PostChildMessage(childHwnd, SkuaIpcMessages.ExecuteHotkey, new IntPtr(actionId), IntPtr.Zero);
                 }
             }
         };
@@ -857,7 +857,7 @@ public partial class TabbedHostWindow : Window
             {
                 if (info.ChildHwnd != IntPtr.Zero)
                 {
-                    PostChildMessage(info.ChildHwnd, HotKeys.WM_SKUA_RELOAD_HOTKEYS, IntPtr.Zero, IntPtr.Zero);
+                    PostChildMessage(info.ChildHwnd, SkuaIpcMessages.ReloadHotkeys, IntPtr.Zero, IntPtr.Zero);
                 }
             }
         };
@@ -976,7 +976,7 @@ public partial class TabbedHostWindow : Window
 
         foreach (var info in _tabs.Values)
             if (info.ChildHwnd != IntPtr.Zero && !info.IsDetached)
-                PostChildMessage(info.ChildHwnd, (uint)HotKeys.WM_SKUA_GAMEONLY, new IntPtr(on ? 1 : 0), IntPtr.Zero);
+                PostChildMessage(info.ChildHwnd, (uint)SkuaIpcMessages.GameOnly, new IntPtr(on ? 1 : 0), IntPtr.Zero);
 
         _lastX = int.MinValue;
         _lastY = int.MinValue;
@@ -997,7 +997,7 @@ public partial class TabbedHostWindow : Window
         PlatformReparentChild(childHwnd);
 
         if (_gameOnly)
-            PostChildMessage(childHwnd, (uint)HotKeys.WM_SKUA_GAMEONLY, new IntPtr(1), IntPtr.Zero);
+            PostChildMessage(childHwnd, (uint)SkuaIpcMessages.GameOnly, new IntPtr(1), IntPtr.Zero);
 
         TabItem? selectedTab = InstancesTabControl.SelectedItem as TabItem;
         bool isSelected = (selectedTab != null && _tabs.TryGetValue(selectedTab, out var selInfo) && selInfo == info);
@@ -1005,8 +1005,8 @@ public partial class TabbedHostWindow : Window
         if (_isGridViewEnabled)
         {
             info.IsThrottled = false;
-            PostChildMessage(childHwnd, WM_SKUA_GRIDVIEW, new IntPtr(1), IntPtr.Zero);
-            PostChildMessage(childHwnd, WM_SKUA_THROTTLE, IntPtr.Zero, IntPtr.Zero);
+            PostChildMessage(childHwnd, SkuaIpcMessages.GridView, new IntPtr(1), IntPtr.Zero);
+            PostChildMessage(childHwnd, SkuaIpcMessages.Throttle, IntPtr.Zero, IntPtr.Zero);
             DoReposition();
         }
         else if (isSelected)
@@ -1020,8 +1020,8 @@ public partial class TabbedHostWindow : Window
             // Inactive tab: ensure it stays unmapped, offscreen and throttled so it never shows over active tab
             info.IsThrottled = true;
             PlatformHideChild(childHwnd);
-            PostChildMessage(childHwnd, WM_SKUA_THROTTLE, new IntPtr(1), IntPtr.Zero);
-            PostChildMessage(childHwnd, (uint)HotKeys.WM_SKUA_FOCUS, IntPtr.Zero, IntPtr.Zero);
+            PostChildMessage(childHwnd, SkuaIpcMessages.Throttle, new IntPtr(1), IntPtr.Zero);
+            PostChildMessage(childHwnd, (uint)SkuaIpcMessages.Focus, IntPtr.Zero, IntPtr.Zero);
         }
 
         if (info.Process != null && !info.IsLoaded)
@@ -1430,22 +1430,6 @@ public partial class TabbedHostWindow : Window
     #endregion
 
     #region Tab Switching & Positioning
-    private const int WM_SKUA_GRIDVIEW = 0x0400 + 444;
-    private const int WM_SKUA_START_SCRIPT = 0x0400 + 445;
-    private const int WM_SKUA_STOP_SCRIPT = 0x0400 + 446;
-    private const int WM_SKUA_LOGIN = 0x0400 + 447;
-    private const int WM_SKUA_LOGOUT = 0x0400 + 448;
-    private const int WM_SKUA_JUMP_MAP = 0x0400 + 449;
-    private const int WM_SKUA_SET_OPTION = 0x0400 + 450;
-    private const int WM_SKUA_THROTTLE = 0x0400 + 452;
-    private const int WM_SKUA_LOAD_SCRIPT = 0x0400 + 453;
-    private const int WM_SKUA_ARMY_SCHEDULER = 0x0400 + 454;
-    private const int WM_SKUA_ARMY_SCHEDULER_STOP = 0x0400 + 455;
-    private const int WM_SKUA_CHECK_LOGIN = 0x0400 + 456;
-    private const int WM_SKUA_JUMP_PLAYER = 0x0400 + 457;
-    private const int WM_SKUA_AUTO_ATTACK = 0x0400 + 459;
-    private const int WM_SKUA_DETACH = 0x0400 + 470;
-    private const int WM_SKUA_DOCK = 0x0400 + 471;
 
     private void OnArmySchedulerStart(ScriptSchedulerViewModel.ArmySchedulerMessage m)
     {
@@ -1459,7 +1443,7 @@ public partial class TabbedHostWindow : Window
             {
                 if (info.ChildHwnd != IntPtr.Zero)
                 {
-                    IntPtr res = SendChildMessage(info, (uint)WM_SKUA_CHECK_LOGIN, IntPtr.Zero, IntPtr.Zero);
+                    IntPtr res = SendChildMessage(info, (uint)SkuaIpcMessages.CheckLogin, IntPtr.Zero, IntPtr.Zero);
                     if (res.ToInt32() == 0)
                         notLoggedInCount++;
                 }
@@ -1477,7 +1461,7 @@ public partial class TabbedHostWindow : Window
             
             foreach (var info in _tabs.Values)
                 if (info.ChildHwnd != IntPtr.Zero)
-                    PostChildMessage(info.ChildHwnd, WM_SKUA_ARMY_SCHEDULER, IntPtr.Zero, IntPtr.Zero);
+                    PostChildMessage(info.ChildHwnd, SkuaIpcMessages.ArmyScheduler, IntPtr.Zero, IntPtr.Zero);
                     
             dialogService.ShowMessageBox("Army Scheduler payload has been broadcasted. All active accounts will now seamlessly rebuild their queues and begin executing the playlist.", "Army Scheduler Started");
         }
@@ -1491,7 +1475,7 @@ public partial class TabbedHostWindow : Window
         {
             foreach (var info in _tabs.Values)
                 if (info.ChildHwnd != IntPtr.Zero)
-                    PostChildMessage(info.ChildHwnd, WM_SKUA_ARMY_SCHEDULER_STOP, IntPtr.Zero, IntPtr.Zero);
+                    PostChildMessage(info.ChildHwnd, SkuaIpcMessages.ArmySchedulerStop, IntPtr.Zero, IntPtr.Zero);
                     
             var dialogService = Ioc.Default.GetRequiredService<IDialogService>();
             dialogService.ShowMessageBox("Stop signal has been successfully broadcasted. All accounts are now halting their schedulers.", "Army Scheduler Stopped");
@@ -1551,8 +1535,8 @@ public partial class TabbedHostWindow : Window
                 if (info.ChildHwnd != IntPtr.Zero && !info.IsDetached)
                 {
                     info.IsThrottled = false;
-                    PostChildMessage(info.ChildHwnd, WM_SKUA_GRIDVIEW, new IntPtr(1), IntPtr.Zero);
-                    PostChildMessage(info.ChildHwnd, WM_SKUA_THROTTLE, IntPtr.Zero, IntPtr.Zero);
+                    PostChildMessage(info.ChildHwnd, SkuaIpcMessages.GridView, new IntPtr(1), IntPtr.Zero);
+                    PostChildMessage(info.ChildHwnd, SkuaIpcMessages.Throttle, IntPtr.Zero, IntPtr.Zero);
                 }
             }
         }
@@ -1592,7 +1576,7 @@ public partial class TabbedHostWindow : Window
             {
                 if (info.ChildHwnd != IntPtr.Zero && !info.IsDetached)
                 {
-                    PostChildMessage(info.ChildHwnd, WM_SKUA_GRIDVIEW, IntPtr.Zero, IntPtr.Zero);
+                    PostChildMessage(info.ChildHwnd, SkuaIpcMessages.GridView, IntPtr.Zero, IntPtr.Zero);
                 }
             }
         }
@@ -1886,7 +1870,7 @@ public partial class TabbedHostWindow : Window
         {
             foreach (var info in _tabs.Values)
                 if (info.ChildHwnd != IntPtr.Zero)
-                    PostChildMessage(info.ChildHwnd, WM_SKUA_SET_OPTION, new IntPtr(optionId), new IntPtr(val ? 1 : 0));
+                    PostChildMessage(info.ChildHwnd, SkuaIpcMessages.SetOption, new IntPtr(optionId), new IntPtr(val ? 1 : 0));
         }
     }
 
@@ -1897,7 +1881,7 @@ public partial class TabbedHostWindow : Window
         
         foreach (var info in _tabs.Values)
             if (info.ChildHwnd != IntPtr.Zero)
-                PostChildMessage(info.ChildHwnd, WM_SKUA_SET_OPTION, new IntPtr(99), new IntPtr(1));
+                PostChildMessage(info.ChildHwnd, SkuaIpcMessages.SetOption, new IntPtr(99), new IntPtr(1));
         
         await Task.Delay(2000);
         
@@ -1912,7 +1896,7 @@ public partial class TabbedHostWindow : Window
         
         foreach (var info in _tabs.Values)
             if (info.ChildHwnd != IntPtr.Zero)
-                PostChildMessage(info.ChildHwnd, WM_SKUA_SET_OPTION, new IntPtr(99), new IntPtr(0));
+                PostChildMessage(info.ChildHwnd, SkuaIpcMessages.SetOption, new IntPtr(99), new IntPtr(0));
         
         await Task.Delay(4000);
         
@@ -1927,7 +1911,7 @@ public partial class TabbedHostWindow : Window
 
         foreach (var info in _tabs.Values)
             if (info.ChildHwnd != IntPtr.Zero)
-                PostChildMessage(info.ChildHwnd, WM_SKUA_AUTO_ATTACK, new IntPtr(1), IntPtr.Zero);
+                PostChildMessage(info.ChildHwnd, SkuaIpcMessages.AutoAttack, new IntPtr(1), IntPtr.Zero);
 
         await Task.Delay(2000);
 
@@ -1942,7 +1926,7 @@ public partial class TabbedHostWindow : Window
 
         foreach (var info in _tabs.Values)
             if (info.ChildHwnd != IntPtr.Zero)
-                PostChildMessage(info.ChildHwnd, WM_SKUA_AUTO_ATTACK, new IntPtr(0), IntPtr.Zero);
+                PostChildMessage(info.ChildHwnd, SkuaIpcMessages.AutoAttack, new IntPtr(0), IntPtr.Zero);
 
         await Task.Delay(2000);
 
@@ -1989,7 +1973,7 @@ public partial class TabbedHostWindow : Window
             if (info.ChildHwnd != IntPtr.Zero)
             {
                 if (menuItem != null) menuItem.Header = $"Logging in... ({count}/{total})";
-                PostChildMessage(info.ChildHwnd, WM_SKUA_LOGIN, IntPtr.Zero, IntPtr.Zero);
+                PostChildMessage(info.ChildHwnd, SkuaIpcMessages.Login, IntPtr.Zero, IntPtr.Zero);
                 await Task.Delay(2000);
                 count++;
             }
@@ -2006,7 +1990,7 @@ public partial class TabbedHostWindow : Window
     {
         foreach (var info in _tabs.Values)
             if (info.ChildHwnd != IntPtr.Zero)
-                PostChildMessage(info.ChildHwnd, WM_SKUA_LOGOUT, IntPtr.Zero, IntPtr.Zero);
+                PostChildMessage(info.ChildHwnd, SkuaIpcMessages.Logout, IntPtr.Zero, IntPtr.Zero);
     }
 
     private string _lastJumpMap = "";
@@ -2321,7 +2305,7 @@ public partial class TabbedHostWindow : Window
 
         foreach (var info in _tabs.Values)
             if (info.ChildHwnd != IntPtr.Zero)
-                PostChildMessage(info.ChildHwnd, WM_SKUA_JUMP_MAP, IntPtr.Zero, IntPtr.Zero);
+                PostChildMessage(info.ChildHwnd, SkuaIpcMessages.JumpMap, IntPtr.Zero, IntPtr.Zero);
     }
 
     private async void MenuItem_JumpMapHistory_Click(object? sender, RoutedEventArgs e)
@@ -2649,7 +2633,7 @@ public partial class TabbedHostWindow : Window
 
         foreach (var info in _tabs.Values)
             if (info.ChildHwnd != IntPtr.Zero)
-                PostChildMessage(info.ChildHwnd, WM_SKUA_JUMP_PLAYER, IntPtr.Zero, IntPtr.Zero);
+                PostChildMessage(info.ChildHwnd, SkuaIpcMessages.JumpPlayer, IntPtr.Zero, IntPtr.Zero);
     }
 
     private string GetTabTitle(TabItem tab)
@@ -2668,12 +2652,9 @@ public partial class TabbedHostWindow : Window
     {
         foreach (var info in _tabs.Values)
             if (info.ChildHwnd != IntPtr.Zero)
-                PostChildMessage(info.ChildHwnd, WM_SKUA_JUMP_HOUSE, IntPtr.Zero, IntPtr.Zero);
+                PostChildMessage(info.ChildHwnd, SkuaIpcMessages.JumpHouse, IntPtr.Zero, IntPtr.Zero);
     }
 
-    private const int WM_SKUA_JUMP_HOUSE = 0x0400 + 465;
-    private const int WM_SKUA_CHANGE_SERVER = 0x0400 + 467;
-    private const int WM_SKUA_ACCEPT_QUEST = 0x0400 + 458;
     private string _lastAcceptQuestId = "";
 
     private async void MenuItem_ChangeServerAll_Click(object? sender, RoutedEventArgs e)
@@ -2746,7 +2727,7 @@ public partial class TabbedHostWindow : Window
             {
                 if (info.ChildHwnd != IntPtr.Zero)
                 {
-                    PostChildMessage(info.ChildHwnd, WM_SKUA_CHANGE_SERVER, IntPtr.Zero, IntPtr.Zero);
+                    PostChildMessage(info.ChildHwnd, SkuaIpcMessages.ChangeServer, IntPtr.Zero, IntPtr.Zero);
                     sentCount++;
                 }
             }
@@ -2777,7 +2758,7 @@ public partial class TabbedHostWindow : Window
                 
                 foreach (var info in _tabs.Values)
                     if (info.ChildHwnd != IntPtr.Zero)
-                        PostChildMessage(info.ChildHwnd, WM_SKUA_ACCEPT_QUEST, IntPtr.Zero, IntPtr.Zero);
+                        PostChildMessage(info.ChildHwnd, SkuaIpcMessages.AcceptQuest, IntPtr.Zero, IntPtr.Zero);
             }
         }
     }
@@ -2938,7 +2919,7 @@ public partial class TabbedHostWindow : Window
                         if (!info.IsLoaded || info.LastVisibility != 4)
                         {
                             info.LastVisibility = 4;
-                            PostChildMessage(info.ChildHwnd, HotKeys.WM_SKUA_VISIBILITY, new IntPtr(4), IntPtr.Zero);
+                            PostChildMessage(info.ChildHwnd, SkuaIpcMessages.Visibility, new IntPtr(4), IntPtr.Zero);
                         }
                     }
                 }
@@ -3050,9 +3031,9 @@ public partial class TabbedHostWindow : Window
                     if (activeWindows[i].IsThrottled)
                     {
                         activeWindows[i].IsThrottled = false;
-                        PostChildMessage(activeWindows[i].ChildHwnd, WM_SKUA_THROTTLE, new IntPtr(0), IntPtr.Zero);
+                        PostChildMessage(activeWindows[i].ChildHwnd, SkuaIpcMessages.Throttle, new IntPtr(0), IntPtr.Zero);
                     }
-                    PostChildMessage(activeWindows[i].ChildHwnd, (uint)HotKeys.WM_SKUA_FOCUS, new IntPtr(IsActive ? 1 : 0), IntPtr.Zero);
+                    PostChildMessage(activeWindows[i].ChildHwnd, (uint)SkuaIpcMessages.Focus, new IntPtr(IsActive ? 1 : 0), IntPtr.Zero);
                 }
                 _lastX = x;
                 _lastY = y;
@@ -3105,9 +3086,9 @@ public partial class TabbedHostWindow : Window
                         if (activeInfo != null)
                         {
                             activeInfo.IsThrottled = false;
-                            PostChildMessage(activeChildHwnd, WM_SKUA_THROTTLE, new IntPtr(0), IntPtr.Zero);
+                            PostChildMessage(activeChildHwnd, SkuaIpcMessages.Throttle, new IntPtr(0), IntPtr.Zero);
                         }
-                        PostChildMessage(activeChildHwnd, (uint)HotKeys.WM_SKUA_FOCUS, new IntPtr(IsActive ? 1 : 0), IntPtr.Zero);
+                        PostChildMessage(activeChildHwnd, (uint)SkuaIpcMessages.Focus, new IntPtr(IsActive ? 1 : 0), IntPtr.Zero);
                     }
                     else
                     {
@@ -3125,9 +3106,9 @@ public partial class TabbedHostWindow : Window
                     if (!info.IsThrottled)
                     {
                         info.IsThrottled = true;
-                        PostChildMessage(info.ChildHwnd, WM_SKUA_THROTTLE, new IntPtr(1), IntPtr.Zero);
+                        PostChildMessage(info.ChildHwnd, SkuaIpcMessages.Throttle, new IntPtr(1), IntPtr.Zero);
                     }
-                    PostChildMessage(info.ChildHwnd, (uint)HotKeys.WM_SKUA_FOCUS, IntPtr.Zero, IntPtr.Zero);
+                    PostChildMessage(info.ChildHwnd, (uint)SkuaIpcMessages.Focus, IntPtr.Zero, IntPtr.Zero);
 
                     PlatformHideChild(info.ChildHwnd);
                 }
@@ -3166,7 +3147,7 @@ public partial class TabbedHostWindow : Window
             if (!info.IsLoaded || info.LastVisibility != visibility)
             {
                 info.LastVisibility = visibility;
-                PostChildMessage(info.ChildHwnd, HotKeys.WM_SKUA_VISIBILITY, new IntPtr(visibility), IntPtr.Zero);
+                PostChildMessage(info.ChildHwnd, SkuaIpcMessages.Visibility, new IntPtr(visibility), IntPtr.Zero);
             }
         }
     }
@@ -3237,7 +3218,7 @@ public partial class TabbedHostWindow : Window
         if (info.ChildHwnd != IntPtr.Zero)
         {
             PlatformDetachChild(info.ChildHwnd, screenX, screenY, clientWidth, clientHeight);
-            PostChildMessage(info.ChildHwnd, WM_SKUA_DETACH, new IntPtr(screenX), new IntPtr(screenY));
+            PostChildMessage(info.ChildHwnd, SkuaIpcMessages.Detach, new IntPtr(screenX), new IntPtr(screenY));
         }
 
         DoReposition();
@@ -3267,7 +3248,7 @@ public partial class TabbedHostWindow : Window
         if (info.ChildHwnd != IntPtr.Zero)
         {
             PlatformReattachChild(info.ChildHwnd);
-            PostChildMessage(info.ChildHwnd, WM_SKUA_DOCK, IntPtr.Zero, IntPtr.Zero);
+            PostChildMessage(info.ChildHwnd, SkuaIpcMessages.Dock, IntPtr.Zero, IntPtr.Zero);
         }
 
         InstancesTabControl.SelectedItem = tab;
@@ -3961,7 +3942,7 @@ public partial class TabbedHostWindow : Window
                 {
                     if (tInfo.ChildHwnd != IntPtr.Zero && !tInfo.IsDetached)
                     {
-                        PostChildMessage(tInfo.ChildHwnd, WM_SKUA_GRIDVIEW, IntPtr.Zero, IntPtr.Zero);
+                        PostChildMessage(tInfo.ChildHwnd, SkuaIpcMessages.GridView, IntPtr.Zero, IntPtr.Zero);
                     }
                 }
                 DoReposition();

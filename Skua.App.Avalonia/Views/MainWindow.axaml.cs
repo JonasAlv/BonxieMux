@@ -414,7 +414,7 @@ public partial class MainWindow : Window
         catch { }
 
         Focusable = true;
-        InitializeLinuxInput();
+        InitializeInput();
 
         if (FlashHost != null)
         {

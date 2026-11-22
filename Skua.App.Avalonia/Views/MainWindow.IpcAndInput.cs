@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Messaging;
+using Skua.App.Avalonia.Services;
 using Skua.App.Avalonia.ViewModels;
 using Skua.Core.AppStartup;
 using Skua.Core.Interfaces;
@@ -21,21 +22,6 @@ namespace Skua.App.Avalonia.Views;
 
 public partial class MainWindow : Window
 {
-    private const int WM_SKUA_JUMP_MAP = 0x0400 + 449;
-    private const int WM_SKUA_SET_OPTION = 0x0400 + 450;
-    private const int WM_SKUA_LOAD_SCRIPT = 0x0400 + 453;
-    private const int WM_SKUA_ARMY_SCHEDULER = 0x0400 + 454;
-    private const int WM_SKUA_ARMY_SCHEDULER_STOP = 0x0400 + 455;
-    private const int WM_SKUA_CHECK_LOGIN = 0x0400 + 456;
-    private const int WM_SKUA_JUMP_PLAYER = 0x0400 + 457;
-    private const int WM_SKUA_JUMP_HOUSE = 0x0400 + 465;
-    private const int WM_SKUA_LOGIN = 0x0400 + 447;
-    private const int WM_SKUA_GRIDVIEW = 0x0400 + 444;
-    private const int WM_SKUA_AUTO_ATTACK = 0x0400 + 459;
-    private const int WM_SKUA_OPEN_BANK = 0x0400 + 460;
-    private const int WM_SKUA_CHANGE_SERVER = 0x0400 + 467;
-    private const int WM_SKUA_DETACH = 0x0400 + 470;
-    private const int WM_SKUA_DOCK = 0x0400 + 471;
 
     private bool _isInGridView = false;
     private int _tabVisibility;
@@ -67,12 +53,12 @@ public partial class MainWindow : Window
         MainMenuControl?.Close();
     }
 
-    private void InitializeLinuxInput()
+    private void InitializeInput()
     {
-        AddHandler(InputElement.KeyDownEvent, OnLinuxKeyDown, RoutingStrategies.Tunnel);
-        AddHandler(InputElement.KeyUpEvent, OnLinuxKeyUp, RoutingStrategies.Tunnel);
-        Skua.App.Avalonia.Controls.GameHost.GameClicked -= OnLinuxGameClicked;
-        Skua.App.Avalonia.Controls.GameHost.GameClicked += OnLinuxGameClicked;
+        AddHandler(InputElement.KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
+        AddHandler(InputElement.KeyUpEvent, OnKeyUp, RoutingStrategies.Tunnel);
+        Skua.App.Avalonia.Controls.GameHost.GameClicked -= OnGameClicked;
+        Skua.App.Avalonia.Controls.GameHost.GameClicked += OnGameClicked;
 
         Activated += (s, e) =>
         {
@@ -133,7 +119,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnLinuxGameClicked()
+    private void OnGameClicked()
     {
         if (AutoToggle != null)
             AutoToggle.IsChecked = false;
@@ -200,7 +186,7 @@ public partial class MainWindow : Window
         Skua.App.Avalonia.Controls.GameHost.ForwardClearKeys();
     }
 
-    private void OnLinuxKeyDown(object? sender, global::Avalonia.Input.KeyEventArgs e)
+    private void OnKeyDown(object? sender, global::Avalonia.Input.KeyEventArgs e)
     {
         if (FocusManager?.GetFocusedElement() is TextBox)
             return;
@@ -216,20 +202,20 @@ public partial class MainWindow : Window
         }
 
         _pressedKeys.Add(e.Key);
-        ForwardLinuxKeyEvent(true, e);
+        ForwardKeyEvent(true, e);
     }
 
-    private void OnLinuxKeyUp(object? sender, global::Avalonia.Input.KeyEventArgs e)
+    private void OnKeyUp(object? sender, global::Avalonia.Input.KeyEventArgs e)
     {
         _pressedKeys.Remove(e.Key);
 
         if (FocusManager?.GetFocusedElement() is TextBox)
             return;
 
-        ForwardLinuxKeyEvent(false, e);
+        ForwardKeyEvent(false, e);
     }
 
-    public static void ForwardLinuxKeyEvent(bool down, global::Avalonia.Input.KeyEventArgs e)
+    public static void ForwardKeyEvent(bool down, global::Avalonia.Input.KeyEventArgs e)
     {
         bool ctrl = e.KeyModifiers.HasFlag(global::Avalonia.Input.KeyModifiers.Control);
         bool shift = e.KeyModifiers.HasFlag(global::Avalonia.Input.KeyModifiers.Shift);
@@ -516,7 +502,7 @@ public partial class MainWindow : Window
 
     public IntPtr HandleIpcMessage(uint uMsg, IntPtr wParam, IntPtr lParam)
     {
-        if (uMsg == HotKeys.WM_SKUA_GAMEONLY)
+        if (uMsg == SkuaIpcMessages.GameOnly)
         {
             if (HotKeys.IsDetachedMode)
                 return IntPtr.Zero;
@@ -525,7 +511,7 @@ public partial class MainWindow : Window
             return IntPtr.Zero;
         }
 
-        if (uMsg == WM_SKUA_GRIDVIEW)
+        if (uMsg == SkuaIpcMessages.GridView)
         {
             bool isGrid = wParam.ToInt32() == 1;
             _isInGridView = isGrid;
@@ -572,7 +558,7 @@ public partial class MainWindow : Window
                 Dispatcher.UIThread.Post(ApplyGridViewState);
             return IntPtr.Zero;
         }
-        else if (uMsg == HotKeys.WM_SKUA_VISIBILITY)
+        else if (uMsg == SkuaIpcMessages.Visibility)
         {
             _tabVisibility = wParam.ToInt32();
             void ApplyVisibilityState()
@@ -598,7 +584,7 @@ public partial class MainWindow : Window
                 Dispatcher.UIThread.Post(ApplyVisibilityState);
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_LOGIN)
+        else if (uMsg == SkuaIpcMessages.Login)
         {
             Task.Run(() => 
             {
@@ -609,12 +595,12 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == 0x0400 + 448) // WM_SKUA_LOGOUT
+        else if (uMsg == SkuaIpcMessages.Logout) // WM_SKUA_LOGOUT
         {
             Ioc.Default.GetRequiredService<IScriptServers>().Logout();
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_JUMP_MAP)
+        else if (uMsg == SkuaIpcMessages.JumpMap)
         {
             Task.Run(() => 
             {
@@ -645,7 +631,7 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_JUMP_PLAYER)
+        else if (uMsg == SkuaIpcMessages.JumpPlayer)
         {
             Task.Run(() => 
             {
@@ -662,7 +648,7 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_CHANGE_SERVER)
+        else if (uMsg == SkuaIpcMessages.ChangeServer)
         {
             Task.Run(() =>
             {
@@ -679,7 +665,7 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_JUMP_HOUSE)
+        else if (uMsg == SkuaIpcMessages.JumpHouse)
         {
             Task.Run(() =>
             {
@@ -693,7 +679,7 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_LOAD_SCRIPT)
+        else if (uMsg == SkuaIpcMessages.LoadScript)
         {
             Task.Run(() => 
             {
@@ -717,7 +703,7 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_SET_OPTION)
+        else if (uMsg == SkuaIpcMessages.SetOption)
         {
             int optionId = wParam.ToInt32();
             bool value = lParam.ToInt32() == 1;
@@ -760,7 +746,7 @@ public partial class MainWindow : Window
             }
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_ARMY_SCHEDULER)
+        else if (uMsg == SkuaIpcMessages.ArmyScheduler)
         {
             Task.Run(() => 
             {
@@ -797,7 +783,7 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_ARMY_SCHEDULER_STOP)
+        else if (uMsg == SkuaIpcMessages.ArmySchedulerStop)
         {
             Dispatcher.UIThread.Post(() =>
             {
@@ -807,12 +793,12 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_CHECK_LOGIN)
+        else if (uMsg == SkuaIpcMessages.CheckLogin)
         {
             var bot = Ioc.Default.GetRequiredService<IScriptInterface>();
             return new IntPtr(bot.Player.LoggedIn ? 1 : 0);
         }
-        else if (uMsg == 0x0400 + 458) // WM_SKUA_ACCEPT_QUEST
+        else if (uMsg == SkuaIpcMessages.AcceptQuest) // WM_SKUA_ACCEPT_QUEST
         {
             Task.Run(() => 
             {
@@ -835,7 +821,7 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_AUTO_ATTACK)
+        else if (uMsg == SkuaIpcMessages.AutoAttack)
         {
             bool start = wParam.ToInt32() == 1;
             Dispatcher.UIThread.Post(() =>
@@ -848,13 +834,13 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == 0x0400 + 452) // WM_SKUA_THROTTLE
+        else if (uMsg == SkuaIpcMessages.Throttle) // WM_SKUA_THROTTLE
         {
             bool throttle = wParam.ToInt32() == 1;
             UpdateBackgroundThrottleState(throttle);
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_OPEN_BANK)
+        else if (uMsg == SkuaIpcMessages.OpenBank)
         {
             Dispatcher.UIThread.Post(() =>
             {
@@ -866,7 +852,7 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == HotKeys.WM_SKUA_EXECUTE_HOTKEY)
+        else if (uMsg == SkuaIpcMessages.ExecuteHotkey)
         {
             int actionId = wParam.ToInt32();
             string? actionName = HotKeys.GetActionNameById(actionId);
@@ -886,7 +872,7 @@ public partial class MainWindow : Window
             }
             return IntPtr.Zero;
         }
-        else if (uMsg == HotKeys.WM_SKUA_FOCUS)
+        else if (uMsg == SkuaIpcMessages.Focus)
         {
             bool focused = wParam != IntPtr.Zero;
             _isWindowFocused = focused;
@@ -903,7 +889,7 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == HotKeys.WM_SKUA_RELOAD_HOTKEYS)
+        else if (uMsg == SkuaIpcMessages.ReloadHotkeys)
         {
             Dispatcher.UIThread.Post(() =>
             {
@@ -915,7 +901,7 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_DETACH)
+        else if (uMsg == SkuaIpcMessages.Detach)
         {
             Dispatcher.UIThread.Post(() =>
             {
@@ -961,7 +947,7 @@ public partial class MainWindow : Window
             });
             return IntPtr.Zero;
         }
-        else if (uMsg == WM_SKUA_DOCK)
+        else if (uMsg == SkuaIpcMessages.Dock)
         {
             Dispatcher.UIThread.Post(() =>
             {

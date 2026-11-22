@@ -18,9 +18,6 @@ namespace Skua.App.Avalonia.ViewModels;
 /// </summary>
 public partial class ScriptLoaderViewModel
 {
-    private const int WM_SKUA_SET_OPTION = 0x0400 + 450;
-    private const int WM_SKUA_LOAD_SCRIPT = 0x0400 + 453;
-
     private DispatcherTimer? _accountsTimer;
     private bool _syncingAccounts;
     private AccountChoice _selectedAccount = new(Environment.ProcessId, "This client", true);
@@ -186,7 +183,7 @@ public partial class ScriptLoaderViewModel
             _dialogService.ShowMessageBox($"No script is loaded on {_selectedAccount.Name}. Load one first.", "Scripts");
             return;
         }
-        Skua.App.Avalonia.Services.TabIpc.SendMessage(_selectedAccount.ProcessId, WM_SKUA_SET_OPTION, new IntPtr(99), new IntPtr(_remoteRunning ? 0 : 1));
+        Skua.App.Avalonia.Services.TabIpc.SendMessage(_selectedAccount.ProcessId, Skua.App.Avalonia.Services.SkuaIpcMessages.SetOption, new IntPtr(99), new IntPtr(_remoteRunning ? 0 : 1));
         // The account reports its new state within a moment; show the intent right away.
         _remoteRunning = !_remoteRunning;
         RaiseShown();
@@ -196,7 +193,7 @@ public partial class ScriptLoaderViewModel
     {
         // The target reads the path from this shared file when the message reaches it.
         File.WriteAllText(Path.Combine(Skua.Core.Models.ClientFileSources.TabsDIR, "skua_global_script.txt"), path);
-        Skua.App.Avalonia.Services.TabIpc.SendMessage(_selectedAccount.ProcessId, WM_SKUA_LOAD_SCRIPT, IntPtr.Zero, IntPtr.Zero);
+        Skua.App.Avalonia.Services.TabIpc.SendMessage(_selectedAccount.ProcessId, Skua.App.Avalonia.Services.SkuaIpcMessages.LoadScript, IntPtr.Zero, IntPtr.Zero);
         _remoteScriptPath = path;
         RaiseShown();
     }

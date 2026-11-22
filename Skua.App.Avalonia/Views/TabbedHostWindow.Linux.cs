@@ -96,14 +96,14 @@ public partial class TabbedHostWindow : Window
             return;
         if (e.Key == Key.Escape && (_gameOnly || WindowState == WindowState.FullScreen))
             return;
-        MainWindow.ForwardLinuxKeyEvent(true, e);
+        MainWindow.ForwardKeyEvent(true, e);
     }
 
     private void OnHostKeyUp(object? sender, KeyEventArgs e)
     {
         if (FocusManager?.GetFocusedElement() is TextBox)
             return;
-        MainWindow.ForwardLinuxKeyEvent(false, e);
+        MainWindow.ForwardKeyEvent(false, e);
     }
 
     private Border BuildDockedTopNavBar()
