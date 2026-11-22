@@ -240,7 +240,7 @@ public partial class TabbedHostWindow : Window
             _lastGridViewState = false;
             ScheduleReposition();
             UpdateTabScrollButtons();
-            RefreshLinuxHeadlessOverlays();
+            RefreshHeadlessOverlays();
             if (_isGridViewEnabled)
                 foreach (var info in _tabs.Values)
                     if (info.ChildHwnd != IntPtr.Zero)
@@ -252,7 +252,7 @@ public partial class TabbedHostWindow : Window
         Deactivated += (s, e) =>
         {
             CloseHostDropdowns();
-            RefreshLinuxHeadlessOverlays();
+            RefreshHeadlessOverlays();
             foreach (var info in _tabs.Values)
             {
                 if (info.ChildHwnd != IntPtr.Zero)
@@ -1343,7 +1343,7 @@ public partial class TabbedHostWindow : Window
                                             var hostOpts = Ioc.Default.GetRequiredService<IScriptOption>();
                                             Skua.Core.Services.OptionSharing.Apply(hostOpts, new Skua.Core.Services.SharedOptionCommand("set", name, val));
                                             if (name.StartsWith("AutoHeadless", StringComparison.Ordinal))
-                                                RefreshLinuxHeadlessOverlays();
+                                                RefreshHeadlessOverlays();
                                         }
                                         catch { }
                                     });

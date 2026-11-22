@@ -30,40 +30,40 @@ public partial class TabbedHostWindow : Window
 {
     private const double DockedNavHeight = 34.0;
 
-    private readonly Dictionary<IntPtr, GameHost> _linuxViewports = new();
-    private readonly Dictionary<IntPtr, Border> _linuxHeadlessOverlays = new();
-    private readonly Dictionary<IntPtr, bool> _linuxManualHeadlessStates = new();
-    private readonly Dictionary<IntPtr, bool> _linuxAutoHeadlessStates = new();
-    private readonly Dictionary<IntPtr, long> _linuxHeadlessSeq = new();
-    private Grid? _linuxHostGrid;
+    private readonly Dictionary<IntPtr, GameHost> _viewports = new();
+    private readonly Dictionary<IntPtr, Border> _headlessOverlays = new();
+    private readonly Dictionary<IntPtr, bool> _manualHeadlessStates = new();
+    private readonly Dictionary<IntPtr, bool> _autoHeadlessStates = new();
+    private readonly Dictionary<IntPtr, long> _headlessSeq = new();
+    private Grid? _hostGrid;
     private Border? _dockedTopNavBorder;
     private Canvas? _viewportCanvas;
-    private bool _linuxHostInitialized;
+    private bool _hostInitialized;
 
-    private ToggleButton? _linuxAutoToggle;
-    private ToggleButton? _linuxJumpToggle;
-    private Border? _linuxAutoActiveDot;
-    private Border? _linuxAutoRunningBadge;
-    private Button? _linuxAutoAttackBtn;
-    private Button? _linuxAutoHuntBtn;
-    private Button? _linuxAutoStopBtn;
-    private ComboBox? _linuxAutoClassBox;
-    private ComboBox? _linuxAutoModeBox;
-    private TextBox? _linuxAutoMapIdsBox;
-    private ComboBox? _linuxJumpCellBox;
-    private ComboBox? _linuxJumpPadBox;
-    private bool _suppressLinuxPopupSync;
+    private ToggleButton? _autoToggle;
+    private ToggleButton? _jumpToggle;
+    private Border? _autoActiveDot;
+    private Border? _autoRunningBadge;
+    private Button? _autoAttackBtn;
+    private Button? _autoHuntBtn;
+    private Button? _autoStopBtn;
+    private ComboBox? _autoClassBox;
+    private ComboBox? _autoModeBox;
+    private TextBox? _autoMapIdsBox;
+    private ComboBox? _jumpCellBox;
+    private ComboBox? _jumpPadBox;
+    private bool _suppressPopupSync;
 
     private void StartGridFocusTracking()
     {
-        EnsureLinuxHostLayout();
+        EnsureHostLayout();
     }
 
-    private void EnsureLinuxHostLayout()
+    private void EnsureHostLayout()
     {
-        if (_linuxHostInitialized)
+        if (_hostInitialized)
             return;
-        _linuxHostInitialized = true;
+        _hostInitialized = true;
 
         _viewportCanvas = new Canvas
         {
@@ -73,16 +73,16 @@ public partial class TabbedHostWindow : Window
 
         _dockedTopNavBorder = BuildDockedTopNavBar();
 
-        _linuxHostGrid = new Grid
+        _hostGrid = new Grid
         {
             RowDefinitions = new RowDefinitions("Auto,*")
         };
         Grid.SetRow(_dockedTopNavBorder, 0);
         Grid.SetRow(_viewportCanvas, 1);
-        _linuxHostGrid.Children.Add(_dockedTopNavBorder);
-        _linuxHostGrid.Children.Add(_viewportCanvas);
+        _hostGrid.Children.Add(_dockedTopNavBorder);
+        _hostGrid.Children.Add(_viewportCanvas);
 
-        HostContainer.Child = _linuxHostGrid;
+        HostContainer.Child = _hostGrid;
 
         AddHandler(InputElement.KeyDownEvent, OnHostKeyDown, RoutingStrategies.Tunnel);
         AddHandler(InputElement.KeyUpEvent, OnHostKeyUp, RoutingStrategies.Tunnel);
@@ -128,8 +128,8 @@ public partial class TabbedHostWindow : Window
         };
         DockPanel.SetDock(rightTools, Dock.Right);
 
-        var (autoToggle, autoPopup) = BuildLinuxAutoControls();
-        var (jumpToggle, jumpPopup) = BuildLinuxJumpControls();
+        var (autoToggle, autoPopup) = BuildAutoControls();
+        var (jumpToggle, jumpPopup) = BuildJumpControls();
 
         Border sep = new()
         {
@@ -362,8 +362,8 @@ public partial class TabbedHostWindow : Window
 
     private void PlatformReparentChild(IntPtr childHwnd)
     {
-        EnsureLinuxHostLayout();
-        if (_viewportCanvas == null || _linuxViewports.ContainsKey(childHwnd))
+        EnsureHostLayout();
+        if (_viewportCanvas == null || _viewports.ContainsKey(childHwnd))
             return;
 
         TabInfo? tab = _tabs.Values.FirstOrDefault(t => t.ChildHwnd == childHwnd);
@@ -394,11 +394,11 @@ public partial class TabbedHostWindow : Window
                 }
             }
         }, RoutingStrategies.Tunnel, handledEventsToo: true);
-        _linuxViewports[childHwnd] = viewport;
+        _viewports[childHwnd] = viewport;
         _viewportCanvas.Children.Add(viewport);
 
         Border headlessOverlay = CreateHeadlessOverlay();
-        _linuxHeadlessOverlays[childHwnd] = headlessOverlay;
+        _headlessOverlays[childHwnd] = headlessOverlay;
         _viewportCanvas.Children.Add(headlessOverlay);
     }
 
@@ -457,18 +457,18 @@ public partial class TabbedHostWindow : Window
             return;
 
         IntPtr childHwnd = tab.ChildHwnd;
-        if (_linuxHeadlessSeq.TryGetValue(childHwnd, out long prevSeq) && seq < prevSeq)
+        if (_headlessSeq.TryGetValue(childHwnd, out long prevSeq) && seq < prevSeq)
             return;
 
-        _linuxHeadlessSeq[childHwnd] = seq;
-        _linuxManualHeadlessStates[childHwnd] = manual;
-        _linuxAutoHeadlessStates[childHwnd] = auto;
+        _headlessSeq[childHwnd] = seq;
+        _manualHeadlessStates[childHwnd] = manual;
+        _autoHeadlessStates[childHwnd] = auto;
 
         if (tab.IsDetached)
             return;
 
-        if (_linuxViewports.TryGetValue(childHwnd, out GameHost? viewport) &&
-            _linuxHeadlessOverlays.TryGetValue(childHwnd, out Border? overlay))
+        if (_viewports.TryGetValue(childHwnd, out GameHost? viewport) &&
+            _headlessOverlays.TryGetValue(childHwnd, out Border? overlay))
         {
             bool shownInHost = viewport.IsVisible || overlay.IsVisible;
             if (shownInHost)
@@ -486,7 +486,7 @@ public partial class TabbedHostWindow : Window
 
     private bool PredictEffectiveHeadless(IntPtr childHwnd, bool isGrid, bool isShownTile)
     {
-        bool manual = _linuxManualHeadlessStates.TryGetValue(childHwnd, out bool m) && m;
+        bool manual = _manualHeadlessStates.TryGetValue(childHwnd, out bool m) && m;
         bool auto = false;
         try
         {
@@ -502,17 +502,17 @@ public partial class TabbedHostWindow : Window
             }
         }
         catch { }
-        _linuxAutoHeadlessStates[childHwnd] = auto;
+        _autoHeadlessStates[childHwnd] = auto;
         return manual || auto;
     }
 
-    private void RefreshLinuxHeadlessOverlays()
+    private void RefreshHeadlessOverlays()
     {
-        foreach (KeyValuePair<IntPtr, GameHost> kvp in _linuxViewports)
+        foreach (KeyValuePair<IntPtr, GameHost> kvp in _viewports)
         {
             IntPtr childHwnd = kvp.Key;
             GameHost viewport = kvp.Value;
-            if (!_linuxHeadlessOverlays.TryGetValue(childHwnd, out Border? overlay))
+            if (!_headlessOverlays.TryGetValue(childHwnd, out Border? overlay))
                 continue;
             if (!viewport.IsVisible && !overlay.IsVisible)
                 continue;
@@ -527,9 +527,9 @@ public partial class TabbedHostWindow : Window
 
     private void PlatformDetachChild(IntPtr childHwnd, int screenX, int screenY, int width, int height)
     {
-        if (_linuxViewports.TryGetValue(childHwnd, out GameHost? viewport))
+        if (_viewports.TryGetValue(childHwnd, out GameHost? viewport))
             viewport.IsVisible = false;
-        if (_linuxHeadlessOverlays.TryGetValue(childHwnd, out Border? overlay))
+        if (_headlessOverlays.TryGetValue(childHwnd, out Border? overlay))
             overlay.IsVisible = false;
 
         if (_dockedTopNavBorder != null &&
@@ -561,11 +561,11 @@ public partial class TabbedHostWindow : Window
 
     private void PlatformMoveResizeChild(IntPtr childHwnd, int x, int y, int width, int height, bool focus = false)
     {
-        EnsureLinuxHostLayout();
-        if (!_linuxViewports.TryGetValue(childHwnd, out GameHost? viewport))
+        EnsureHostLayout();
+        if (!_viewports.TryGetValue(childHwnd, out GameHost? viewport))
         {
             PlatformReparentChild(childHwnd);
-            if (!_linuxViewports.TryGetValue(childHwnd, out viewport))
+            if (!_viewports.TryGetValue(childHwnd, out viewport))
                 return;
         }
 
@@ -611,12 +611,12 @@ public partial class TabbedHostWindow : Window
 
         if (!_isGridViewEnabled)
         {
-            foreach (KeyValuePair<IntPtr, GameHost> kvp in _linuxViewports)
+            foreach (KeyValuePair<IntPtr, GameHost> kvp in _viewports)
             {
                 if (kvp.Key != childHwnd)
                     kvp.Value.IsVisible = false;
             }
-            foreach (KeyValuePair<IntPtr, Border> kvp in _linuxHeadlessOverlays)
+            foreach (KeyValuePair<IntPtr, Border> kvp in _headlessOverlays)
             {
                 if (kvp.Key != childHwnd)
                     kvp.Value.IsVisible = false;
@@ -631,7 +631,7 @@ public partial class TabbedHostWindow : Window
         viewport.Height = targetH;
         viewport.IsVisible = !isHeadless;
 
-        if (_linuxHeadlessOverlays.TryGetValue(childHwnd, out Border? overlay))
+        if (_headlessOverlays.TryGetValue(childHwnd, out Border? overlay))
         {
             Canvas.SetLeft(overlay, left);
             Canvas.SetTop(overlay, top);
@@ -654,9 +654,9 @@ public partial class TabbedHostWindow : Window
             return;
         }
 
-        if (_linuxViewports.TryGetValue(childHwnd, out GameHost? viewport))
+        if (_viewports.TryGetValue(childHwnd, out GameHost? viewport))
             viewport.IsVisible = false;
-        if (_linuxHeadlessOverlays.TryGetValue(childHwnd, out Border? overlay))
+        if (_headlessOverlays.TryGetValue(childHwnd, out Border? overlay))
             overlay.IsVisible = false;
     }
 
@@ -668,20 +668,20 @@ public partial class TabbedHostWindow : Window
             return;
         }
 
-        if (_linuxViewports.Remove(childHwnd, out GameHost? viewport))
+        if (_viewports.Remove(childHwnd, out GameHost? viewport))
         {
             viewport.IsVisible = false;
             _viewportCanvas?.Children.Remove(viewport);
             viewport.DisposeResources();
         }
-        if (_linuxHeadlessOverlays.Remove(childHwnd, out Border? overlay))
+        if (_headlessOverlays.Remove(childHwnd, out Border? overlay))
         {
             overlay.IsVisible = false;
             _viewportCanvas?.Children.Remove(overlay);
         }
-        _linuxManualHeadlessStates.Remove(childHwnd);
-        _linuxAutoHeadlessStates.Remove(childHwnd);
-        _linuxHeadlessSeq.Remove(childHwnd);
+        _manualHeadlessStates.Remove(childHwnd);
+        _autoHeadlessStates.Remove(childHwnd);
+        _headlessSeq.Remove(childHwnd);
     }
 
     private void PlatformClearAllViewports()
@@ -699,22 +699,22 @@ public partial class TabbedHostWindow : Window
         if (DetachedPlaceholder != null)
             DetachedPlaceholder.IsVisible = false;
 
-        foreach (GameHost viewport in _linuxViewports.Values)
+        foreach (GameHost viewport in _viewports.Values)
         {
             viewport.IsVisible = false;
             _viewportCanvas?.Children.Remove(viewport);
             viewport.DisposeResources();
         }
-        _linuxViewports.Clear();
-        foreach (Border overlay in _linuxHeadlessOverlays.Values)
+        _viewports.Clear();
+        foreach (Border overlay in _headlessOverlays.Values)
         {
             overlay.IsVisible = false;
             _viewportCanvas?.Children.Remove(overlay);
         }
-        _linuxHeadlessOverlays.Clear();
-        _linuxManualHeadlessStates.Clear();
-        _linuxAutoHeadlessStates.Clear();
-        _linuxHeadlessSeq.Clear();
+        _headlessOverlays.Clear();
+        _manualHeadlessStates.Clear();
+        _autoHeadlessStates.Clear();
+        _headlessSeq.Clear();
         HotKeys.ActiveChildHwnd = IntPtr.Zero;
     }
 
@@ -791,9 +791,9 @@ public partial class TabbedHostWindow : Window
         }
         catch { }
     }
-    private (ToggleButton, Popup) BuildLinuxAutoControls()
+    private (ToggleButton, Popup) BuildAutoControls()
     {
-        _linuxAutoActiveDot = new Border
+        _autoActiveDot = new Border
         {
             Width = 6,
             Height = 6,
@@ -804,16 +804,16 @@ public partial class TabbedHostWindow : Window
             IsVisible = false
         };
         StackPanel autoContent = CreateNavContent(MaterialIconKind.RobotOutline, "Auto");
-        autoContent.Children.Add(_linuxAutoActiveDot);
+        autoContent.Children.Add(_autoActiveDot);
         ToggleButton toggle = new()
         {
             Content = autoContent
         };
         toggle.Classes.Add("top-nav-item");
         ToolTip.SetTip(toggle, "Automated Combat & Hunting Controls");
-        _linuxAutoToggle = toggle;
+        _autoToggle = toggle;
 
-        _linuxAutoRunningBadge = new Border
+        _autoRunningBadge = new Border
         {
             CornerRadius = new CornerRadius(10),
             Padding = new Thickness(8, 2),
@@ -833,7 +833,7 @@ public partial class TabbedHostWindow : Window
                 }
             }
         };
-        Grid.SetColumn(_linuxAutoRunningBadge, 1);
+        Grid.SetColumn(_autoRunningBadge, 1);
 
         Grid headerGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,Auto"), VerticalAlignment = VerticalAlignment.Center };
         headerGrid.Children.Add(new StackPanel
@@ -847,65 +847,65 @@ public partial class TabbedHostWindow : Window
                 CreateNavTitle("Combat Automation")
             }
         });
-        headerGrid.Children.Add(_linuxAutoRunningBadge);
+        headerGrid.Children.Add(_autoRunningBadge);
 
-        _linuxAutoAttackBtn = new Button { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, Content = CreatePopupButtonContent(MaterialIconKind.PlayCircleOutline, "Auto Attack", true) };
-        _linuxAutoAttackBtn.Classes.Add("skua-button");
-        _linuxAutoAttackBtn.Classes.Add("skua-primary");
-        _linuxAutoAttackBtn.Click += (_, _) =>
+        _autoAttackBtn = new Button { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, Content = CreatePopupButtonContent(MaterialIconKind.PlayCircleOutline, "Auto Attack", true) };
+        _autoAttackBtn.Classes.Add("skua-button");
+        _autoAttackBtn.Classes.Add("skua-primary");
+        _autoAttackBtn.Click += (_, _) =>
         {
             SendActiveChildCommand("AUTO_ATTACK");
-            if (_linuxAutoToggle != null) _linuxAutoToggle.IsChecked = false;
+            if (_autoToggle != null) _autoToggle.IsChecked = false;
         };
 
-        _linuxAutoHuntBtn = new Button { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, Content = CreatePopupButtonContent(MaterialIconKind.CrosshairsGps, "Auto Hunt", true) };
-        _linuxAutoHuntBtn.Classes.Add("skua-button");
-        _linuxAutoHuntBtn.Click += (_, _) =>
+        _autoHuntBtn = new Button { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, Content = CreatePopupButtonContent(MaterialIconKind.CrosshairsGps, "Auto Hunt", true) };
+        _autoHuntBtn.Classes.Add("skua-button");
+        _autoHuntBtn.Click += (_, _) =>
         {
             SendActiveChildCommand("AUTO_HUNT");
-            if (_linuxAutoToggle != null) _linuxAutoToggle.IsChecked = false;
+            if (_autoToggle != null) _autoToggle.IsChecked = false;
         };
-        Grid.SetColumn(_linuxAutoHuntBtn, 1);
+        Grid.SetColumn(_autoHuntBtn, 1);
 
-        _linuxAutoStopBtn = new Button { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, IsVisible = false, Content = CreatePopupButtonContent(MaterialIconKind.StopCircleOutline, "Stop Automation", true) };
-        _linuxAutoStopBtn.Classes.Add("skua-button");
-        _linuxAutoStopBtn.Classes.Add("skua-danger");
-        Grid.SetColumnSpan(_linuxAutoStopBtn, 2);
-        _linuxAutoStopBtn.Click += (_, _) =>
+        _autoStopBtn = new Button { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, IsVisible = false, Content = CreatePopupButtonContent(MaterialIconKind.StopCircleOutline, "Stop Automation", true) };
+        _autoStopBtn.Classes.Add("skua-button");
+        _autoStopBtn.Classes.Add("skua-danger");
+        Grid.SetColumnSpan(_autoStopBtn, 2);
+        _autoStopBtn.Click += (_, _) =>
         {
             SendActiveChildCommand("AUTO_STOP");
-            if (_linuxAutoToggle != null) _linuxAutoToggle.IsChecked = false;
+            if (_autoToggle != null) _autoToggle.IsChecked = false;
         };
 
         Grid actionsGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
-        actionsGrid.Children.Add(_linuxAutoAttackBtn);
-        actionsGrid.Children.Add(_linuxAutoHuntBtn);
-        actionsGrid.Children.Add(_linuxAutoStopBtn);
+        actionsGrid.Children.Add(_autoAttackBtn);
+        actionsGrid.Children.Add(_autoHuntBtn);
+        actionsGrid.Children.Add(_autoStopBtn);
 
-        _linuxAutoClassBox = new ComboBox { Height = 34, MinWidth = 160, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Class..." };
-        _linuxAutoClassBox.SelectionChanged += (_, _) =>
+        _autoClassBox = new ComboBox { Height = 34, MinWidth = 160, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Class..." };
+        _autoClassBox.SelectionChanged += (_, _) =>
         {
-            if (!_suppressLinuxPopupSync && _linuxAutoClassBox.SelectedItem is string cls)
+            if (!_suppressPopupSync && _autoClassBox.SelectedItem is string cls)
                 SendActiveChildCommand("AUTO_CLASS|" + cls);
         };
 
-        _linuxAutoModeBox = new ComboBox { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Mode..." };
-        Grid.SetColumn(_linuxAutoModeBox, 1);
-        _linuxAutoModeBox.SelectionChanged += (_, _) =>
+        _autoModeBox = new ComboBox { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Mode..." };
+        Grid.SetColumn(_autoModeBox, 1);
+        _autoModeBox.SelectionChanged += (_, _) =>
         {
-            if (!_suppressLinuxPopupSync && _linuxAutoModeBox.SelectedItem is string mode)
+            if (!_suppressPopupSync && _autoModeBox.SelectedItem is string mode)
                 SendActiveChildCommand("AUTO_MODE|" + mode);
         };
 
         Grid classModeGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
-        classModeGrid.Children.Add(_linuxAutoClassBox);
-        classModeGrid.Children.Add(_linuxAutoModeBox);
+        classModeGrid.Children.Add(_autoClassBox);
+        classModeGrid.Children.Add(_autoModeBox);
 
-        _linuxAutoMapIdsBox = new TextBox { Height = 32, FontSize = 12, Watermark = "Manual MapIDs (optional, e.g. 1, 2)" };
-        _linuxAutoMapIdsBox.LostFocus += (_, _) =>
+        _autoMapIdsBox = new TextBox { Height = 32, FontSize = 12, Watermark = "Manual MapIDs (optional, e.g. 1, 2)" };
+        _autoMapIdsBox.LostFocus += (_, _) =>
         {
-            if (!_suppressLinuxPopupSync)
-                SendActiveChildCommand("AUTO_MAPS|" + (_linuxAutoMapIdsBox.Text ?? string.Empty));
+            if (!_suppressPopupSync)
+                SendActiveChildCommand("AUTO_MAPS|" + (_autoMapIdsBox.Text ?? string.Empty));
         };
 
         Border sep = new() { Height = 1 };
@@ -921,7 +921,7 @@ public partial class TabbedHostWindow : Window
             Child = new StackPanel
             {
                 Spacing = 10,
-                Children = { headerGrid, sep, actionsGrid, classModeGrid, _linuxAutoMapIdsBox }
+                Children = { headerGrid, sep, actionsGrid, classModeGrid, _autoMapIdsBox }
             }
         };
         card[!Border.BackgroundProperty] = new DynamicResourceExtension("SkuaSurfaceBrush");
@@ -938,8 +938,8 @@ public partial class TabbedHostWindow : Window
         toggle.IsCheckedChanged += (_, _) =>
         {
             bool open = toggle.IsChecked == true;
-            if (open && _linuxJumpToggle != null)
-                _linuxJumpToggle.IsChecked = false;
+            if (open && _jumpToggle != null)
+                _jumpToggle.IsChecked = false;
             popup.IsOpen = open;
             if (open)
                 SendActiveChildCommand("GET_AUTO_STATE");
@@ -949,7 +949,7 @@ public partial class TabbedHostWindow : Window
         return (toggle, popup);
     }
 
-    private (ToggleButton, Popup) BuildLinuxJumpControls()
+    private (ToggleButton, Popup) BuildJumpControls()
     {
         ToggleButton toggle = new()
         {
@@ -957,7 +957,7 @@ public partial class TabbedHostWindow : Window
         };
         toggle.Classes.Add("top-nav-item");
         ToolTip.SetTip(toggle, "Map & Cell Fast Jump Controls");
-        _linuxJumpToggle = toggle;
+        _jumpToggle = toggle;
 
         StackPanel header = new()
         {
@@ -971,25 +971,25 @@ public partial class TabbedHostWindow : Window
             }
         };
 
-        _linuxJumpCellBox = new ComboBox { Height = 34, MinWidth = 140, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Cell..." };
-        _linuxJumpPadBox = new ComboBox { Height = 34, MinWidth = 140, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Pad..." };
-        Grid.SetColumn(_linuxJumpPadBox, 1);
+        _jumpCellBox = new ComboBox { Height = 34, MinWidth = 140, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Cell..." };
+        _jumpPadBox = new ComboBox { Height = 34, MinWidth = 140, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Pad..." };
+        Grid.SetColumn(_jumpPadBox, 1);
 
-        _linuxJumpCellBox.SelectionChanged += (_, _) =>
+        _jumpCellBox.SelectionChanged += (_, _) =>
         {
-            if (_suppressLinuxPopupSync || _linuxJumpCellBox.SelectedItem is not string cell || string.IsNullOrEmpty(cell))
+            if (_suppressPopupSync || _jumpCellBox.SelectedItem is not string cell || string.IsNullOrEmpty(cell))
                 return;
             if (cell == "Enter")
-                _linuxJumpPadBox.SelectedItem = "Spawn";
-            else if (_linuxJumpPadBox.SelectedItem is not string p || string.IsNullOrEmpty(p))
-                _linuxJumpPadBox.SelectedItem = "Left";
-            string pad = _linuxJumpPadBox.SelectedItem as string ?? "Spawn";
+                _jumpPadBox.SelectedItem = "Spawn";
+            else if (_jumpPadBox.SelectedItem is not string p || string.IsNullOrEmpty(p))
+                _jumpPadBox.SelectedItem = "Left";
+            string pad = _jumpPadBox.SelectedItem as string ?? "Spawn";
             SendActiveChildCommand($"JUMP_TO|{cell}|{pad}");
         };
 
         Grid selectGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
-        selectGrid.Children.Add(_linuxJumpCellBox);
-        selectGrid.Children.Add(_linuxJumpPadBox);
+        selectGrid.Children.Add(_jumpCellBox);
+        selectGrid.Children.Add(_jumpPadBox);
 
         Button currentBtn = new() { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, Content = CreatePopupButtonContent(MaterialIconKind.MapMarkerOutline, "Current", false) };
         currentBtn.Classes.Add("skua-button");
@@ -1001,8 +1001,8 @@ public partial class TabbedHostWindow : Window
         Grid.SetColumn(jumpBtn, 1);
         jumpBtn.Click += (_, _) =>
         {
-            string cell = _linuxJumpCellBox?.SelectedItem as string ?? string.Empty;
-            string pad = _linuxJumpPadBox?.SelectedItem as string ?? string.Empty;
+            string cell = _jumpCellBox?.SelectedItem as string ?? string.Empty;
+            string pad = _jumpPadBox?.SelectedItem as string ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(cell) && !string.IsNullOrWhiteSpace(pad))
                 SendActiveChildCommand($"JUMP_TO|{cell}|{pad}");
         };
@@ -1041,8 +1041,8 @@ public partial class TabbedHostWindow : Window
         toggle.IsCheckedChanged += (_, _) =>
         {
             bool open = toggle.IsChecked == true;
-            if (open && _linuxAutoToggle != null)
-                _linuxAutoToggle.IsChecked = false;
+            if (open && _autoToggle != null)
+                _autoToggle.IsChecked = false;
             popup.IsOpen = open;
             if (open)
                 SendActiveChildCommand("GET_JUMP_STATE");
@@ -1094,33 +1094,33 @@ public partial class TabbedHostWindow : Window
         try
         {
             JObject obj = JObject.Parse(json);
-            _suppressLinuxPopupSync = true;
+            _suppressPopupSync = true;
             bool isRunning = obj.Value<bool>("isRunning");
-            if (_linuxAutoActiveDot != null) _linuxAutoActiveDot.IsVisible = isRunning;
-            if (_linuxAutoRunningBadge != null) _linuxAutoRunningBadge.IsVisible = isRunning;
-            if (_linuxAutoAttackBtn != null) _linuxAutoAttackBtn.IsVisible = !isRunning;
-            if (_linuxAutoHuntBtn != null) _linuxAutoHuntBtn.IsVisible = !isRunning;
-            if (_linuxAutoStopBtn != null) _linuxAutoStopBtn.IsVisible = isRunning;
+            if (_autoActiveDot != null) _autoActiveDot.IsVisible = isRunning;
+            if (_autoRunningBadge != null) _autoRunningBadge.IsVisible = isRunning;
+            if (_autoAttackBtn != null) _autoAttackBtn.IsVisible = !isRunning;
+            if (_autoHuntBtn != null) _autoHuntBtn.IsVisible = !isRunning;
+            if (_autoStopBtn != null) _autoStopBtn.IsVisible = isRunning;
 
-            if (_linuxAutoClassBox != null)
+            if (_autoClassBox != null)
             {
-                _linuxAutoClassBox.ItemsSource = obj["classes"]?.ToObject<List<string>>() ?? new List<string>();
-                _linuxAutoClassBox.SelectedItem = obj.Value<string?>("selectedClass");
+                _autoClassBox.ItemsSource = obj["classes"]?.ToObject<List<string>>() ?? new List<string>();
+                _autoClassBox.SelectedItem = obj.Value<string?>("selectedClass");
             }
-            if (_linuxAutoModeBox != null)
+            if (_autoModeBox != null)
             {
-                _linuxAutoModeBox.ItemsSource = obj["modes"]?.ToObject<List<string>>() ?? new List<string>();
-                _linuxAutoModeBox.SelectedItem = obj.Value<string?>("selectedMode");
+                _autoModeBox.ItemsSource = obj["modes"]?.ToObject<List<string>>() ?? new List<string>();
+                _autoModeBox.SelectedItem = obj.Value<string?>("selectedMode");
             }
-            if (_linuxAutoMapIdsBox != null)
+            if (_autoMapIdsBox != null)
             {
-                _linuxAutoMapIdsBox.Text = obj.Value<string?>("manualMapIds") ?? string.Empty;
+                _autoMapIdsBox.Text = obj.Value<string?>("manualMapIds") ?? string.Empty;
             }
         }
         catch { }
         finally
         {
-            _suppressLinuxPopupSync = false;
+            _suppressPopupSync = false;
         }
     }
 
@@ -1134,22 +1134,22 @@ public partial class TabbedHostWindow : Window
         try
         {
             JObject obj = JObject.Parse(json);
-            _suppressLinuxPopupSync = true;
-            if (_linuxJumpCellBox != null)
+            _suppressPopupSync = true;
+            if (_jumpCellBox != null)
             {
-                _linuxJumpCellBox.ItemsSource = obj["cells"]?.ToObject<List<string>>() ?? new List<string>();
-                _linuxJumpCellBox.SelectedItem = obj.Value<string?>("selectedCell");
+                _jumpCellBox.ItemsSource = obj["cells"]?.ToObject<List<string>>() ?? new List<string>();
+                _jumpCellBox.SelectedItem = obj.Value<string?>("selectedCell");
             }
-            if (_linuxJumpPadBox != null)
+            if (_jumpPadBox != null)
             {
-                _linuxJumpPadBox.ItemsSource = obj["pads"]?.ToObject<List<string>>() ?? new List<string>();
-                _linuxJumpPadBox.SelectedItem = obj.Value<string?>("selectedPad");
+                _jumpPadBox.ItemsSource = obj["pads"]?.ToObject<List<string>>() ?? new List<string>();
+                _jumpPadBox.SelectedItem = obj.Value<string?>("selectedPad");
             }
         }
         catch { }
         finally
         {
-            _suppressLinuxPopupSync = false;
+            _suppressPopupSync = false;
         }
     }
 
