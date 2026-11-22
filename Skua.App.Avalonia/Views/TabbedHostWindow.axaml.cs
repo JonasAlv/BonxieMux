@@ -1247,35 +1247,29 @@ public partial class TabbedHostWindow : Window
                             }
                             else if (line.StartsWith("THEME|", StringComparison.Ordinal))
                             {
-                                string themePayload = line.Substring("THEME|".Length);
-                                bool useAccentOnMainTitleBar = true;
-                                string themeCsv = themePayload;
-                                int separatorIndex = themePayload.IndexOf('|');
-                                if (separatorIndex >= 0 &&
-                                    bool.TryParse(themePayload[..separatorIndex], out bool parsedAccentSetting))
+                                string[] parts = line.Substring("THEME|".Length).Split('|');
+                                if (parts.Length >= 4 &&
+                                    bool.TryParse(parts[0], out bool useAccentOnMainTitleBar) &&
+                                    bool.TryParse(parts[1], out bool isDark) &&
+                                    Color.TryParse(parts[2], out Color primary) &&
+                                    Color.TryParse(parts[3], out Color foreground))
                                 {
-                                    useAccentOnMainTitleBar = parsedAccentSetting;
-                                    themeCsv = themePayload[(separatorIndex + 1)..];
-                                }
-
-                                Dispatcher.UIThread.Post(() =>
-                                {
-                                    try
+                                    Dispatcher.UIThread.Post(() =>
                                     {
-                                        Skua.Shared.Avalonia.Services.ThemeItem? themeItem =
-                                            Skua.Shared.Avalonia.Services.ThemeItem.FromString(themeCsv);
-                                        if (themeItem is not null &&
-                                            Ioc.Default.GetService<IThemeService>() is Skua.Shared.Avalonia.Services.AvaloniaThemeService themeService)
+                                        try
                                         {
-                                            themeService.ApplyExternalThemeSnapshot(themeItem, useAccentOnMainTitleBar);
-                                            MainTitleBar.UseAccentBackground = useAccentOnMainTitleBar;
+                                            if (Ioc.Default.GetService<IThemeService>() is Skua.Shared.Avalonia.Services.AvaloniaThemeService themeService)
+                                            {
+                                                themeService.ApplyExternalThemeSnapshot(isDark, primary, foreground, useAccentOnMainTitleBar);
+                                                MainTitleBar.UseAccentBackground = useAccentOnMainTitleBar;
+                                            }
                                         }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Trace.WriteLine($"BonxieMux theme sync failed: {ex.GetType().Name}: {ex.Message}");
-                                    }
-                                });
+                                        catch (Exception ex)
+                                        {
+                                            Trace.WriteLine($"BonxieMux theme sync failed: {ex.GetType().Name}: {ex.Message}");
+                                        }
+                                    });
+                                }
                             }
                             else if (line.StartsWith("DOCK|", StringComparison.Ordinal))
                             {

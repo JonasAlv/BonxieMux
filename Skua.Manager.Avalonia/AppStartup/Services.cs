@@ -13,9 +13,7 @@ public static class Services
     public static IServiceCollection AddSkuaManagerViewModels(this IServiceCollection services)
     {
         services.AddSingleton<ApplicationThemesViewModel>();
-        services.AddSingleton<ThemeSettingsViewModel>();
         services.AddSingleton<ColorSchemeEditorViewModel>();
-        services.AddSingleton<BackgroundThemeViewModel>();
         
         services.AddSingleton<AccountManagerViewModel>();
         services.AddSingleton<ArmyQueueViewModel>();

@@ -12,16 +12,9 @@ public interface IThemeService
 
     event SchemeChangedEventHandler SchemeChanged;
 
-    List<object> Presets { get; }
-    List<object> UserThemes { get; }
-    IEnumerable<object> ColorSelectionValues { get; }
-    object ColorSelectionValue { get; set; }
-    IEnumerable<object> ContrastValues { get; }
-    object ContrastValue { get; set; }
-    float DesiredContrastRatio { get; set; }
-    bool IsColorAdjusted { get; set; }
     bool IsDarkTheme { get; set; }
     bool SyncThemeWithSystem { get; set; }
+    bool UseSystemAccentColor { get; set; }
     object? SelectedColor { get; set; }
     ColorScheme ActiveScheme { get; set; }
 
@@ -31,9 +24,5 @@ public interface IThemeService
 
     void ChangeScheme(ColorScheme scheme);
 
-    void SaveTheme(string name);
-
     void SetCurrentTheme(object? theme);
-
-    void RemoveTheme(object? theme);
 }

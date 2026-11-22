@@ -6,11 +6,11 @@ using Skua.Core.Interfaces;
 using Skua.Core.Models;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -19,118 +19,83 @@ namespace Skua.Shared.Avalonia.Services;
 
 public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
 {
-    private readonly DispatcherTimer _applyThrottleTimer;
-    private readonly DispatcherTimer _saveDebounceTimer;
+    private static readonly Color DefaultAccentColor = Color.Parse("#607D8B");
 
-    private const string ColorSelectionNone = "None";
-    private const string ColorSelectionPrimary = "Primary";
-    private const string ColorSelectionSecondary = "Secondary";
-    private const string ColorSelectionAll = "All";
-
-    private const string ContrastNone = "None";
-    private const string ContrastLow = "Low";
-    private const string ContrastMedium = "Medium";
-    private const string ContrastHigh = "High";
-
-    private readonly ISettingsService _settingsService;
-    private static readonly Dictionary<string, Color> AccentMap = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, Color> NamedColors = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["Default"] = Color.Parse("#10B981"),
-        ["Pink"] = Color.Parse("#C9479A"),
-        ["Ocean"] = Color.Parse("#2E6DD8"),
-        ["Forest"] = Color.Parse("#2E9D57"),
-        ["Crimson"] = Color.Parse("#C94747"),
-        ["Blue"] = Color.Parse("#2E6DD8"),
-        ["Green"] = Color.Parse("#2E9D57"),
+        ["Teal"] = Color.Parse("#10B981"),
+        ["Blue"] = Color.Parse("#2563EB"),
+        ["BlueGray"] = Color.Parse("#607D8B"),
+        ["Amber"] = Color.Parse("#D97706"),
+        ["Purple"] = Color.Parse("#7C3AED"),
+        ["Pink"] = Color.Parse("#DB2777"),
+        ["Green"] = Color.Parse("#16A34A"),
         ["Orange"] = Color.Parse("#D8842E"),
         ["Red"] = Color.Parse("#C94747"),
         ["Gray"] = Color.Parse("#6E7685")
     };
 
+    private static bool IsManagerProcess =>
+        Assembly.GetEntryAssembly()?.GetName().Name?.Contains("Manager", StringComparison.OrdinalIgnoreCase) ?? false;
+
+    private static string ProcessThemeFilePath => IsManagerProcess
+        ? Path.Combine(ClientFileSources.ManagerDIR, "manager-theme.json")
+        : Path.Combine(ClientFileSources.SkuaDIR, "app-theme.json");
+
+    private readonly ISettingsService _settingsService;
+    private readonly DispatcherTimer _applyThrottleTimer;
+    private readonly DispatcherTimer _saveDebounceTimer;
+
+    private bool _isDarkTheme = true;
+    private bool _syncThemeWithSystem = true;
+    private bool _useSystemAccentColor;
+    private bool _useAccentOnMainTitleBar;
+    private bool _useAccentOnManagerTitleBar;
+    private Color _primaryColor = DefaultAccentColor;
+    private Color _primaryForegroundColor = Colors.White;
+    private Color _secondaryColor = DefaultAccentColor;
+    private Color _secondaryForegroundColor = Colors.White;
+    private Color _selectedColor = DefaultAccentColor;
+    private ColorScheme _activeScheme = ColorScheme.Primary;
+    private bool _suppressSelectedColorApply;
+
+    private string? _darkAccentColorHex;
+    private string? _darkTextOnAccentColorHex;
+    private string? _lightAccentColorHex;
+    private string? _lightTextOnAccentColorHex;
+
     public AvaloniaThemeService(ISettingsService settingsService)
     {
         _settingsService = settingsService;
-        _useAccentOnMainTitleBar = ReadUseAccentOnMainTitleBarSetting();
-        _useAccentOnManagerTitleBar = ReadUseAccentOnManagerTitleBarSetting();
-        _syncThemeWithSystem = ReadSyncThemeWithSystemSetting();
-        _useSystemAccentColor = ReadUseSystemAccentColorSetting();
+        _useAccentOnMainTitleBar = ReadExtensionFlag("UseAccentOnMainTitleBar");
+        _useAccentOnManagerTitleBar = ReadExtensionFlag("UseAccentOnManagerTitleBar");
+        _syncThemeWithSystem = _settingsService.Get("SyncThemeWithSystem", true);
+        _useSystemAccentColor = _settingsService.Get("UseSystemAccentColor", false);
 
-        _applyThrottleTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(20)
-        };
-        _applyThrottleTimer.Tick += (s, e) =>
+        _applyThrottleTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(20) };
+        _applyThrottleTimer.Tick += (_, _) =>
         {
             _applyThrottleTimer.Stop();
             FlushColorChange();
         };
 
-        _saveDebounceTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(500)
-        };
-        _saveDebounceTimer.Tick += (s, e) =>
+        _saveDebounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _saveDebounceTimer.Tick += (_, _) =>
         {
             _saveDebounceTimer.Stop();
-            SaveCurrentThemeSnapshot();
+            SaveProcessThemeFile();
         };
 
-        // These keys are shared with WPF theme snapshots, so we keep one storage shape
-        // across both UI stacks (see ThemeItem.FromString/ConvertToString).
-        // Related files:
-        // - Skua.Shared.Avalonia/Services/ThemeItem.cs
-        // - Skua.Shared.Avalonia/Services/ThemeResourceApplicator.cs
-        StringCollection? defaultThemesColl = _settingsService.Get<StringCollection>("DefaultThemes");
-        if (defaultThemesColl is null || defaultThemesColl.Count == 0)
-        {
-            defaultThemesColl = BuildDefaultThemesCollection();
-            _settingsService.Set("DefaultThemes", defaultThemesColl);
-        }
-        else if (EnsureBuiltInDefaultThemes(defaultThemesColl))
-        {
-            _settingsService.Set("DefaultThemes", defaultThemesColl);
-        }
-        foreach (string? csv in defaultThemesColl)
-        {
-            ThemeItem? t = ThemeItem.FromString(csv);
-            if (t is not null)
-                Presets.Add(t);
-        }
-
-        // Load UserThemes
-        StringCollection? userThemesColl = _settingsService.Get<StringCollection>("UserThemes");
-        if (userThemesColl is not null)
-        {
-            foreach (string? csv in userThemesColl)
-            {
-                ThemeItem? t = ThemeItem.FromString(csv);
-                if (t is not null)
-                    UserThemes.Add(t);
-            }
-        }
-
-        // Load current theme or fall back to first default
-        string? currentThemeCsv = _settingsService.Get<string>("CurrentTheme");
-        ThemeItem? current = ThemeItem.FromString(currentThemeCsv);
-
-        if (current is null)
-        {
-            string? firstDefault = defaultThemesColl.Count > 0 ? defaultThemesColl[0] : null;
-            current = ThemeItem.FromString(firstDefault) ?? new ThemeItem();
-            _settingsService.Set("CurrentTheme", current.ConvertToString());
-        }
-
-        ApplyThemeItem(current);
         LoadProcessThemeFile();
+        SetSelectedColorSilently(GetColorForScheme(_activeScheme));
         HookSystemThemeChanges();
+
         if (_syncThemeWithSystem)
-        {
             SyncWithSystemTheme();
-        }
+
         if (_useSystemAccentColor)
-        {
             SyncWithSystemAccentColor();
-        }
+
         SaveProcessThemeFile();
     }
 
@@ -138,106 +103,6 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
     public event SchemeChangedEventHandler? SchemeChanged;
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public List<object> Presets { get; } = [];
-    public List<object> UserThemes { get; } = [];
-    public IEnumerable<object> ColorSelectionValues { get; } = [ColorSelectionNone, ColorSelectionPrimary, ColorSelectionSecondary, ColorSelectionAll];
-    private object _colorSelectionValue = ColorSelectionAll;
-    public object ColorSelectionValue
-    {
-        get => _colorSelectionValue;
-        set
-        {
-            string normalized = NormalizeColorSelectionValue(value);
-            if (Equals(_colorSelectionValue, normalized))
-                return;
-            _colorSelectionValue = normalized;
-            OnPropertyChanged();
-            if (IsColorAdjusted)
-                ApplyColorAdjustmentIfEnabled();
-            else
-                SaveCurrentThemeSnapshot();
-        }
-    }
-    public IEnumerable<object> ContrastValues { get; } = [ContrastNone, ContrastLow, ContrastMedium, ContrastHigh];
-    private object _contrastValue = ContrastMedium;
-    public object ContrastValue
-    {
-        get => _contrastValue;
-        set
-        {
-            string normalized = NormalizeContrastValue(value);
-            if (Equals(_contrastValue, normalized))
-                return;
-            _contrastValue = normalized;
-            OnPropertyChanged();
-
-            // Keep slider and preset aligned in UI.
-            float presetRatio = normalized switch
-            {
-                ContrastNone => 1f,
-                ContrastLow => 3f,
-                ContrastHigh => 7f,
-                _ => 4.5f
-            };
-            if (Math.Abs(_desiredContrastRatio - presetRatio) > 0.001f)
-            {
-                _desiredContrastRatio = presetRatio;
-                OnPropertyChanged(nameof(DesiredContrastRatio));
-            }
-
-            if (IsColorAdjusted)
-                ApplyColorAdjustmentIfEnabled();
-            SaveCurrentThemeSnapshot();
-        }
-    }
-
-    private float _desiredContrastRatio = 4.5f;
-    public float DesiredContrastRatio
-    {
-        get => _desiredContrastRatio;
-        set
-        {
-            if (Math.Abs(_desiredContrastRatio - value) < 0.001f)
-                return;
-            _desiredContrastRatio = value;
-            OnPropertyChanged();
-            if (IsColorAdjusted)
-            {
-                ComputeColorAdjustments();
-                if (!_applyThrottleTimer.IsEnabled)
-                    _applyThrottleTimer.Start();
-            }
-            _saveDebounceTimer.Stop();
-            _saveDebounceTimer.Start();
-        }
-    }
-
-    private bool _isColorAdjusted;
-    public bool IsColorAdjusted
-    {
-        get => _isColorAdjusted;
-        set
-        {
-            if (_isColorAdjusted == value)
-                return;
-            _isColorAdjusted = value;
-            OnPropertyChanged();
-            if (_isColorAdjusted)
-            {
-                CaptureAdjustmentBaseline();
-                ApplyColorAdjustmentIfEnabled();
-            }
-            else
-            {
-                RestoreAdjustmentBaseline();
-                ThemeChanged?.Invoke(_primaryColor);
-                SchemeChanged?.Invoke(ActiveScheme, GetColorForScheme(ActiveScheme));
-            }
-            SaveCurrentThemeSnapshot();
-        }
-    }
-
-    private bool _isDarkTheme;
     public bool IsDarkTheme
     {
         get => _isDarkTheme;
@@ -246,13 +111,10 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             if (_isDarkTheme == value)
                 return;
 
-            // Remember outgoing mode's Accent & Text-on-Accent colors before switching
             SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
-
             _isDarkTheme = value;
             OnPropertyChanged();
 
-            // Restore incoming mode's remembered Accent & Text-on-Accent colors
             (Color nextAccent, Color nextTextOnAccent) = LoadModeColors(value);
             if (!_useSystemAccentColor)
             {
@@ -262,21 +124,292 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             _primaryForegroundColor = nextTextOnAccent;
             _secondaryForegroundColor = nextTextOnAccent;
             SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
-            SetSelectedColorSilently(
-                ActiveScheme == ColorScheme.PrimaryForeground || ActiveScheme == ColorScheme.SecondaryForeground
-                    ? _primaryForegroundColor
-                    : _primaryColor);
+            SetSelectedColorSilently(GetColorForScheme(_activeScheme));
 
             ThemeChanged?.Invoke(_primaryColor);
-            SchemeChanged?.Invoke(ActiveScheme, GetColorForScheme(ActiveScheme));
-            SaveCurrentThemeSnapshot();
+            SchemeChanged?.Invoke(_activeScheme, GetColorForScheme(_activeScheme));
+            SaveProcessThemeFile();
         }
+    }
+
+    public bool SyncThemeWithSystem
+    {
+        get => _syncThemeWithSystem;
+        set
+        {
+            if (_syncThemeWithSystem == value)
+                return;
+
+            _syncThemeWithSystem = value;
+            _settingsService.Set("SyncThemeWithSystem", value);
+            try { _settingsService.GetShared().SyncThemeWithSystem = value; } catch { }
+            OnPropertyChanged();
+
+            if (_syncThemeWithSystem)
+                SyncWithSystemTheme();
+
+            SaveProcessThemeFile();
+        }
+    }
+
+    public bool UseSystemAccentColor
+    {
+        get => _useSystemAccentColor;
+        set
+        {
+            if (_useSystemAccentColor == value)
+                return;
+
+            _useSystemAccentColor = value;
+            _settingsService.Set("UseSystemAccentColor", value);
+            try { _settingsService.GetShared().UseSystemAccentColor = value; } catch { }
+            OnPropertyChanged();
+
+            if (_useSystemAccentColor)
+                SyncWithSystemAccentColor();
+
+            SaveProcessThemeFile();
+        }
+    }
+
+    public bool UseAccentOnMainTitleBar
+    {
+        get => _useAccentOnMainTitleBar;
+        set
+        {
+            if (_useAccentOnMainTitleBar == value)
+                return;
+
+            _useAccentOnMainTitleBar = value;
+            PersistExtensionFlag("UseAccentOnMainTitleBar", value);
+            OnPropertyChanged();
+            ThemeChanged?.Invoke(_primaryColor);
+            SaveProcessThemeFile();
+        }
+    }
+
+    public bool UseAccentOnManagerTitleBar
+    {
+        get => _useAccentOnManagerTitleBar;
+        set
+        {
+            if (_useAccentOnManagerTitleBar == value)
+                return;
+
+            _useAccentOnManagerTitleBar = value;
+            PersistExtensionFlag("UseAccentOnManagerTitleBar", value);
+            OnPropertyChanged();
+            ThemeChanged?.Invoke(_primaryColor);
+            SaveProcessThemeFile();
+        }
+    }
+
+    public ColorScheme ActiveScheme
+    {
+        get => _activeScheme;
+        set
+        {
+            if (_activeScheme == value)
+                return;
+
+            _activeScheme = value;
+            OnPropertyChanged();
+            SetSelectedColorSilently(GetColorForScheme(value));
+        }
+    }
+
+    public object? SelectedColor
+    {
+        get => _selectedColor;
+        set
+        {
+            Color color = ResolveAccentColor(value);
+            if (_selectedColor == color)
+                return;
+
+            _selectedColor = color;
+            OnPropertyChanged();
+            if (!_suppressSelectedColorApply)
+                ApplyColorToActiveScheme(color, immediate: false);
+        }
+    }
+
+    public Color PrimaryColor => _primaryColor;
+    public Color PrimaryForegroundColor => _primaryForegroundColor;
+    public Color SecondaryColor => _secondaryColor;
+    public Color SecondaryForegroundColor => _secondaryForegroundColor;
+
+    public string PrimaryHex => ToHex(_primaryColor);
+    public string ForegroundHex => ToHex(_primaryForegroundColor);
+    public string SecondaryHex => ToHex(_secondaryColor);
+    public string SecondaryForegroundHex => ToHex(_secondaryForegroundColor);
+
+    public void ApplyBaseTheme(bool isDark) => IsDarkTheme = isDark;
+
+    public void ChangeCustomColor(object? obj)
+    {
+        Color color = ResolveAccentColor(obj);
+        SetSelectedColorSilently(color);
+        ApplyColorToActiveScheme(color, immediate: true);
+    }
+
+    public void ChangeScheme(ColorScheme scheme)
+    {
+        ActiveScheme = scheme;
+        SetSelectedColorSilently(GetColorForScheme(scheme));
+    }
+
+    public void SetCurrentTheme(object? theme)
+    {
+        if (theme is null)
+            return;
+
+        Color resolved = ResolveAccentColor(theme);
+        _primaryColor = resolved;
+        _secondaryColor = resolved;
+        SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
+        SetSelectedColorSilently(GetColorForScheme(_activeScheme));
+        ThemeChanged?.Invoke(_primaryColor);
+        SchemeChanged?.Invoke(_activeScheme, GetColorForScheme(_activeScheme));
+        SaveProcessThemeFile();
+    }
+
+    public void ApplyExternalThemeSnapshot(bool isDark, Color primary, Color foreground, bool useAccentOnMainTitleBar)
+    {
+        _useAccentOnMainTitleBar = useAccentOnMainTitleBar;
+        _isDarkTheme = isDark;
+        _primaryColor = primary;
+        _secondaryColor = primary;
+        _primaryForegroundColor = foreground;
+        _secondaryForegroundColor = foreground;
+        SetSelectedColorSilently(GetColorForScheme(_activeScheme));
+        OnPropertyChanged(nameof(UseAccentOnMainTitleBar));
+        OnPropertyChanged(nameof(IsDarkTheme));
+        OnPropertyChanged(nameof(SelectedColor));
+        ThemeChanged?.Invoke(_primaryColor);
+        SchemeChanged?.Invoke(ColorScheme.Primary, _primaryColor);
+    }
+
+    public void SyncWithSystemTheme()
+    {
+        if (!_syncThemeWithSystem || Application.Current?.PlatformSettings is not { } platformSettings)
+            return;
+
+        ApplySystemThemeVariant(platformSettings.GetColorValues().ThemeVariant);
+    }
+
+    public void SyncWithSystemAccentColor(Color? knownAccent = null)
+    {
+        if (!_useSystemAccentColor)
+            return;
+
+        Color? systemAccent = knownAccent is { A: > 0 } ? knownAccent : ReadSystemAccentColor();
+        if (systemAccent is not { A: > 0 } accent)
+            return;
+
+        Color opaque = Color.FromArgb(255, accent.R, accent.G, accent.B);
+        if (_primaryColor == opaque && _secondaryColor == opaque)
+            return;
+
+        _primaryColor = opaque;
+        _secondaryColor = opaque;
+        if (_activeScheme is ColorScheme.Primary or ColorScheme.Secondary)
+            SetSelectedColorSilently(opaque);
+
+        SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
+        ThemeChanged?.Invoke(_primaryColor);
+        SchemeChanged?.Invoke(_activeScheme, GetColorForScheme(_activeScheme));
+        SaveProcessThemeFile();
+    }
+
+    public void FlushPendingSave()
+    {
+        if (_applyThrottleTimer.IsEnabled)
+        {
+            _applyThrottleTimer.Stop();
+            FlushColorChange();
+        }
+        if (_saveDebounceTimer.IsEnabled)
+        {
+            _saveDebounceTimer.Stop();
+            SaveProcessThemeFile();
+        }
+    }
+
+    private void ApplySystemThemeVariant(PlatformThemeVariant variant)
+    {
+        bool isDark = variant != PlatformThemeVariant.Light;
+        if (IsDarkTheme != isDark)
+            ApplyBaseTheme(isDark);
+    }
+
+    private void HookSystemThemeChanges()
+    {
+        if (Application.Current?.PlatformSettings is not { } settings)
+            return;
+
+        settings.ColorValuesChanged += (_, values) =>
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (SyncThemeWithSystem)
+                    ApplySystemThemeVariant(values.ThemeVariant);
+                if (UseSystemAccentColor)
+                    SyncWithSystemAccentColor(values.AccentColor1);
+            });
+        };
+    }
+
+    private void ApplyColorToActiveScheme(Color color, bool immediate)
+    {
+        if (_activeScheme is ColorScheme.PrimaryForeground or ColorScheme.SecondaryForeground)
+        {
+            _primaryForegroundColor = color;
+            _secondaryForegroundColor = color;
+        }
+        else
+        {
+            if (_useSystemAccentColor)
+            {
+                _useSystemAccentColor = false;
+                _settingsService.Set("UseSystemAccentColor", false);
+                try { _settingsService.GetShared().UseSystemAccentColor = false; } catch { }
+                OnPropertyChanged(nameof(UseSystemAccentColor));
+            }
+
+            _primaryColor = color;
+            _secondaryColor = color;
+        }
+
+        SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
+
+        if (immediate)
+        {
+            _applyThrottleTimer.Stop();
+            _saveDebounceTimer.Stop();
+            FlushColorChange();
+            SaveProcessThemeFile();
+        }
+        else
+        {
+            if (!_applyThrottleTimer.IsEnabled)
+                _applyThrottleTimer.Start();
+
+            _saveDebounceTimer.Stop();
+            _saveDebounceTimer.Start();
+        }
+    }
+
+    private void FlushColorChange()
+    {
+        ThemeChanged?.Invoke(_primaryColor);
+        SchemeChanged?.Invoke(_activeScheme, GetColorForScheme(_activeScheme));
     }
 
     private void SaveModeColors(bool isDark, Color accent, Color textOnAccent)
     {
-        string accentHex = $"#{accent.A:X2}{accent.R:X2}{accent.G:X2}{accent.B:X2}";
-        string textHex = $"#{textOnAccent.A:X2}{textOnAccent.R:X2}{textOnAccent.G:X2}{textOnAccent.B:X2}";
+        string accentHex = ToHex(accent);
+        string textHex = ToHex(textOnAccent);
         if (isDark)
         {
             _darkAccentColorHex = accentHex;
@@ -313,496 +446,49 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         return (accent, textOnAccent);
     }
 
-    private Color _primaryColor;
-    private Color _primaryForegroundColor;
-    private Color _secondaryColor;
-    private Color _secondaryForegroundColor;
-    private bool _hasAdjustmentBaseline;
-    private Color _baselinePrimaryColor;
-    private Color _baselinePrimaryForegroundColor;
-    private Color _baselineSecondaryColor;
-    private Color _baselineSecondaryForegroundColor;
-    private Color _selectedColor;
-    private bool _suppressSelectedColorApply;
-
-    public object? SelectedColor
+    private Color GetColorForScheme(ColorScheme scheme) => scheme switch
     {
-        get => _selectedColor;
-        set
-        {
-            Color color = ResolveAccentColor(value);
-            if (_selectedColor == color)
-                return;
+        ColorScheme.Primary => _primaryColor,
+        ColorScheme.Secondary => _secondaryColor,
+        ColorScheme.PrimaryForeground => _primaryForegroundColor,
+        ColorScheme.SecondaryForeground => _secondaryForegroundColor,
+        _ => _primaryColor
+    };
 
-            _selectedColor = color;
-            OnPropertyChanged();
-            if (_suppressSelectedColorApply)
-                return;
-
-            ApplyColorToActiveScheme(color, immediate: false);
-        }
-    }
-
-    private ColorScheme _activeScheme = ColorScheme.Primary;
-    public ColorScheme ActiveScheme
+    private void SetSelectedColorSilently(Color color)
     {
-        get => _activeScheme;
-        set
-        {
-            if (_activeScheme == value)
-                return;
-            _activeScheme = value;
-            OnPropertyChanged();
-        }
-    }
-
-    private bool _useAccentOnMainTitleBar;
-
-    /// <summary>
-    /// Gets or sets whether the main BonxieMux host title bar follows the active theme's primary accent.
-    /// </summary>
-    public bool UseAccentOnMainTitleBar
-    {
-        get => _useAccentOnMainTitleBar;
-        set
-        {
-            if (_useAccentOnMainTitleBar == value)
-                return;
-
-            _useAccentOnMainTitleBar = value;
-            PersistUseAccentOnMainTitleBarSetting(value);
-            OnPropertyChanged();
-            ThemeChanged?.Invoke(_primaryColor);
-        }
-    }
-
-    private bool _useAccentOnManagerTitleBar;
-
-    /// <summary>
-    /// Gets or sets whether the BonxieMux Manager title bar follows the active theme's primary accent.
-    /// </summary>
-    public bool UseAccentOnManagerTitleBar
-    {
-        get => _useAccentOnManagerTitleBar;
-        set
-        {
-            if (_useAccentOnManagerTitleBar == value)
-                return;
-
-            _useAccentOnManagerTitleBar = value;
-            PersistUseAccentOnManagerTitleBarSetting(value);
-            OnPropertyChanged();
-            ThemeChanged?.Invoke(_primaryColor);
-        }
-    }
-
-    private bool _syncThemeWithSystem = true;
-
-    /// <summary>
-    /// Gets or sets whether the application's dark/light theme mode automatically syncs with the desktop OS theme.
-    /// </summary>
-    public bool SyncThemeWithSystem
-    {
-        get => _syncThemeWithSystem;
-        set
-        {
-            if (_syncThemeWithSystem == value)
-                return;
-
-            _syncThemeWithSystem = value;
-            PersistSyncThemeWithSystemSetting(value);
-            OnPropertyChanged();
-
-            if (_syncThemeWithSystem)
-            {
-                SyncWithSystemTheme();
-            }
-        }
-    }
-
-    private bool _useSystemAccentColor;
-
-    /// <summary>
-    /// Gets or sets whether the application's accent color automatically syncs with the desktop OS accent color (KDE, GNOME, COSMIC, Windows).
-    /// </summary>
-    public bool UseSystemAccentColor
-    {
-        get => _useSystemAccentColor;
-        set
-        {
-            if (_useSystemAccentColor == value)
-                return;
-
-            _useSystemAccentColor = value;
-            PersistUseSystemAccentColorSetting(value);
-            OnPropertyChanged();
-
-            if (_useSystemAccentColor)
-            {
-                SyncWithSystemAccentColor();
-            }
-        }
-    }
-
-    public bool IsApplyingExternalTheme { get; private set; }
-
-    public Color PrimaryColor => _primaryColor;
-    public Color PrimaryForegroundColor => _primaryForegroundColor;
-    public Color SecondaryColor => _secondaryColor;
-    public Color SecondaryForegroundColor => _secondaryForegroundColor;
-
-    /// <summary>Returns the current accent foreground color as a hex string for use by ThemeResourceApplicator.</summary>
-    public string PrimaryHex => $"#{_primaryColor.A:X2}{_primaryColor.R:X2}{_primaryColor.G:X2}{_primaryColor.B:X2}";
-    public string ForegroundHex => $"#{_primaryForegroundColor.A:X2}{_primaryForegroundColor.R:X2}{_primaryForegroundColor.G:X2}{_primaryForegroundColor.B:X2}";
-    public string SecondaryHex => $"#{_secondaryColor.A:X2}{_secondaryColor.R:X2}{_secondaryColor.G:X2}{_secondaryColor.B:X2}";
-    public string SecondaryForegroundHex => $"#{_secondaryForegroundColor.A:X2}{_secondaryForegroundColor.R:X2}{_secondaryForegroundColor.G:X2}{_secondaryForegroundColor.B:X2}";
-
-    public void ApplyBaseTheme(bool isDark)
-    {
-        IsDarkTheme = isDark;
-    }
-
-    public void ChangeCustomColor(object? obj)
-    {
-        Color color = ResolveAccentColor(obj);
-        SetSelectedColorSilently(color);
-        ApplyColorToActiveScheme(color, immediate: true);
-    }
-
-    public void ChangeScheme(ColorScheme scheme)
-    {
-        ActiveScheme = scheme;
-        Color selected = scheme switch
-        {
-            ColorScheme.Primary => _primaryColor,
-            ColorScheme.Secondary => _secondaryColor,
-            ColorScheme.PrimaryForeground => _primaryForegroundColor,
-            ColorScheme.SecondaryForeground => _secondaryForegroundColor,
-            _ => _primaryColor
-        };
-        SetSelectedColorSilently(selected);
-        SchemeChanged?.Invoke(scheme, selected);
-    }
-
-    public void SaveTheme(string name)
-    {
-        if (string.IsNullOrWhiteSpace(name))
+        if (_selectedColor == color)
             return;
 
-        ThemeItem snapshot = BuildThemeSnapshot(name);
-        string csv = snapshot.ConvertToString();
-
-        // Update UserThemes StringCollection in settings
-        StringCollection coll = _settingsService.Get<StringCollection>("UserThemes") ?? new StringCollection();
-        StringCollection updated = new();
-        foreach (string? entry in coll)
-        {
-            if (entry is null) continue;
-            ThemeItem? existing = ThemeItem.FromString(entry);
-            if (existing is not null && string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase))
-                continue;
-            updated.Add(entry);
-        }
-        updated.Add(csv);
-        _settingsService.Set("UserThemes", updated);
-
-        // Update in-memory list
-        UserThemes.RemoveAll(t => ThemeNameEquals(t, name));
-        UserThemes.Add(snapshot);
-
-        // Write CurrentTheme with the name
-        SaveCurrentThemeSnapshot(name);
-    }
-
-    public void SetCurrentTheme(object? theme)
-    {
-        if (theme is null)
-            return;
-
-        if (theme is ThemeItem themeItem)
-        {
-            ApplyThemeItem(themeItem);
-            SaveCurrentThemeSnapshot(themeItem.Name);
-            ThemeChanged?.Invoke(_primaryColor);
-            SchemeChanged?.Invoke(ColorScheme.Primary, _primaryColor);
-            return;
-        }
-
-        if (theme is string themeString)
-        {
-            // Try to resolve by name from UserThemes or DefaultThemes
-            string? resolved = FindThemeCsvByName(themeString);
-            if (resolved is not null && TryApplySerializedTheme(resolved))
-                return;
-
-            // Try as raw CSV
-            if (TryApplySerializedTheme(themeString))
-                return;
-        }
-
-        Color resolved2 = ResolveAccentColor(theme);
-        // Direct color picks come in without a full serialized theme; keep primary/secondary
-        // in lockstep here so runtime resources stay coherent until a named theme is loaded/saved.
-        _primaryColor = resolved2;
-        _secondaryColor = resolved2;
-        _hasAdjustmentBaseline = false;
-        if (IsColorAdjusted)
-        {
-            CaptureAdjustmentBaseline();
-            ApplyColorAdjustmentIfEnabled();
-        }
-        else if (ActiveScheme == ColorScheme.Primary)
-        {
-            SetSelectedColorSilently(resolved2);
-        }
-        SaveCurrentThemeSnapshot();
-
-        ThemeChanged?.Invoke(resolved2);
-        SchemeChanged?.Invoke(ColorScheme.Primary, resolved2);
-    }
-
-    public void RemoveTheme(object? theme)
-    {
-        if (theme is null)
-            return;
-
-        string? name = GetThemeName(theme);
-        if (string.IsNullOrWhiteSpace(name))
-            return;
-
-        // Remove from UserThemes StringCollection in settings
-        StringCollection coll = _settingsService.Get<StringCollection>("UserThemes") ?? new StringCollection();
-        StringCollection updated = new();
-        foreach (string? entry in coll)
-        {
-            if (entry is null) continue;
-            ThemeItem? existing = ThemeItem.FromString(entry);
-            if (existing is not null && string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase))
-                continue;
-            updated.Add(entry);
-        }
-        _settingsService.Set("UserThemes", updated);
-
-        UserThemes.RemoveAll(t => ThemeNameEquals(t, name));
-    }
-
-    /// <summary>
-    /// Applies a live theme snapshot received from the tab host or an embedded client without
-    /// writing it back to shared settings. Snapshot colors are already adjusted for display.
-    /// </summary>
-    public void ApplyExternalThemeSnapshot(ThemeItem item, bool useAccentOnMainTitleBar)
-    {
-        if (item is null)
-            return;
-
-        if (_useAccentOnMainTitleBar != useAccentOnMainTitleBar)
-        {
-            _useAccentOnMainTitleBar = useAccentOnMainTitleBar;
-            OnPropertyChanged(nameof(UseAccentOnMainTitleBar));
-        }
-        SetUseAccentOnMainTitleBarSettingInMemory(useAccentOnMainTitleBar);
-
-        ThemeItem displaySnapshot = new()
-        {
-            Name = item.Name,
-            IsDarkTheme = item.IsDarkTheme,
-            PrimaryColor = item.PrimaryColor,
-            SecondaryColor = item.SecondaryColor,
-            PrimaryForegroundColor = item.PrimaryForegroundColor,
-            SecondaryForegroundColor = item.SecondaryForegroundColor,
-            UseColorAdjustment = false,
-            DesiredContrastRatio = item.DesiredContrastRatio,
-            ContrastValue = item.ContrastValue,
-            ColorSelectionValue = item.ColorSelectionValue
-        };
-
-        IsApplyingExternalTheme = true;
+        _suppressSelectedColorApply = true;
         try
         {
-            ApplyThemeItem(displaySnapshot, ignoreSystemSync: true);
-            if (ManagerThemeBroadcaster.IsSyncEnabled(_settingsService))
-            {
-                SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
-                SaveCurrentThemeSnapshot(item.Name);
-            }
-            ThemeChanged?.Invoke(_primaryColor);
-            SchemeChanged?.Invoke(ColorScheme.Primary, _primaryColor);
+            _selectedColor = color;
+            OnPropertyChanged(nameof(SelectedColor));
         }
         finally
         {
-            IsApplyingExternalTheme = false;
+            _suppressSelectedColorApply = false;
         }
     }
 
-    private bool ReadUseAccentOnMainTitleBarSetting()
+    private static string ToHex(Color c) => $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
+
+    private static Color ResolveAccentColor(object? value)
     {
-        try
+        if (value is Color c)
+            return c;
+
+        if (value is string s && !string.IsNullOrWhiteSpace(s))
         {
-            System.Collections.Generic.Dictionary<string, object>? extensionData = _settingsService.GetShared().ExtensionData;
-            if (extensionData is not null &&
-                extensionData.TryGetValue("UseAccentOnMainTitleBar", out object? value) &&
-                bool.TryParse(value?.ToString(), out bool enabled))
-            {
-                return enabled;
-            }
-        }
-        catch
-        {
-            // Off by default (the title bar keeps its surface colour) if this setting is unavailable or malformed.
+            string trimmed = s.Trim();
+            if (Color.TryParse(trimmed, out Color parsed))
+                return parsed;
+            if (NamedColors.TryGetValue(trimmed, out Color named))
+                return named;
         }
 
-        return false;
-    }
-
-    private void SetUseAccentOnMainTitleBarSettingInMemory(bool enabled)
-    {
-        Skua.Core.Models.SharedSettings sharedSettings = _settingsService.GetShared();
-        sharedSettings.ExtensionData ??= new System.Collections.Generic.Dictionary<string, object>();
-        sharedSettings.ExtensionData["UseAccentOnMainTitleBar"] = enabled;
-    }
-
-    private void PersistUseAccentOnMainTitleBarSetting(bool enabled)
-    {
-        try
-        {
-            SetUseAccentOnMainTitleBarSettingInMemory(enabled);
-            Skua.Core.Models.SharedSettings sharedSettings = _settingsService.GetShared();
-
-            // Set a known property to invoke the existing settings persistence path.
-            _settingsService.Set("TitleBarArtworkPath", sharedSettings.TitleBarArtworkPath);
-        }
-        catch
-        {
-            // The setting still applies for this session if persistence is unavailable.
-        }
-    }
-
-    private bool ReadUseAccentOnManagerTitleBarSetting()
-    {
-        try
-        {
-            System.Collections.Generic.Dictionary<string, object>? extensionData = _settingsService.GetShared().ExtensionData;
-            if (extensionData is not null &&
-                extensionData.TryGetValue("UseAccentOnManagerTitleBar", out object? value) &&
-                bool.TryParse(value?.ToString(), out bool enabled))
-            {
-                return enabled;
-            }
-        }
-        catch
-        {
-            // Off by default (the title bar keeps its surface colour) if this setting is unavailable or malformed.
-        }
-
-        return false;
-    }
-
-    private void PersistUseAccentOnManagerTitleBarSetting(bool enabled)
-    {
-        try
-        {
-            Skua.Core.Models.SharedSettings sharedSettings = _settingsService.GetShared();
-            sharedSettings.ExtensionData ??= new System.Collections.Generic.Dictionary<string, object>();
-            sharedSettings.ExtensionData["UseAccentOnManagerTitleBar"] = enabled;
-            _settingsService.Set("TitleBarArtworkPath", sharedSettings.TitleBarArtworkPath);
-        }
-        catch
-        {
-            // The setting still applies for this session if persistence is unavailable.
-        }
-    }
-
-    private bool ReadSyncThemeWithSystemSetting()
-    {
-        try
-        {
-            return _settingsService.Get<bool>("SyncThemeWithSystem", true);
-        }
-        catch
-        {
-            return true;
-        }
-    }
-
-    private void PersistSyncThemeWithSystemSetting(bool enabled)
-    {
-        try
-        {
-            _settingsService.Set("SyncThemeWithSystem", enabled);
-            var shared = _settingsService.GetShared();
-            shared.SyncThemeWithSystem = enabled;
-        }
-        catch { }
-    }
-
-    public void SyncWithSystemTheme()
-    {
-        if (!_syncThemeWithSystem)
-            return;
-
-        var platformSettings = Application.Current?.PlatformSettings;
-        if (platformSettings is null)
-            return;
-
-        ApplySystemThemeVariant(platformSettings.GetColorValues().ThemeVariant);
-    }
-
-    private void ApplySystemThemeVariant(PlatformThemeVariant variant)
-    {
-        bool isDark = variant != PlatformThemeVariant.Light;
-        if (IsDarkTheme != isDark)
-        {
-            ApplyBaseTheme(isDark);
-        }
-    }
-
-    private bool ReadUseSystemAccentColorSetting()
-    {
-        try
-        {
-            return _settingsService.Get<bool>("UseSystemAccentColor", false);
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private void PersistUseSystemAccentColorSetting(bool enabled)
-    {
-        try
-        {
-            _settingsService.Set("UseSystemAccentColor", enabled);
-            var shared = _settingsService.GetShared();
-            shared.UseSystemAccentColor = enabled;
-        }
-        catch { }
-    }
-
-    public void SyncWithSystemAccentColor(Color? knownAccent = null)
-    {
-        if (!_useSystemAccentColor)
-            return;
-
-        Color? systemAccent = knownAccent is { A: > 0 } ? knownAccent : ReadSystemAccentColor();
-        if (systemAccent is not { A: > 0 } accent)
-            return;
-
-        Color opaqueAccent = Color.FromArgb(255, accent.R, accent.G, accent.B);
-        if (_primaryColor == opaqueAccent && _secondaryColor == opaqueAccent)
-            return;
-
-        _primaryColor = opaqueAccent;
-        _secondaryColor = opaqueAccent;
-        if (ActiveScheme == ColorScheme.Primary || ActiveScheme == ColorScheme.Secondary)
-        {
-            SetSelectedColorSilently(opaqueAccent);
-        }
-
-        SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
-        ThemeChanged?.Invoke(_primaryColor);
-        SchemeChanged?.Invoke(ActiveScheme, GetColorForScheme(ActiveScheme));
-        SaveCurrentThemeSnapshot();
+        return DefaultAccentColor;
     }
 
     private static Color? ReadSystemAccentColor()
@@ -818,12 +504,7 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         }
         catch { }
 
-        if (OperatingSystem.IsLinux())
-        {
-            return ReadLinuxPortalAccentColor();
-        }
-
-        return null;
+        return OperatingSystem.IsLinux() ? ReadLinuxPortalAccentColor() : null;
     }
 
     private static Color? ReadLinuxPortalAccentColor()
@@ -864,344 +545,29 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         return null;
     }
 
-    private void HookSystemThemeChanges()
+    private bool ReadExtensionFlag(string key)
     {
-        if (Application.Current?.PlatformSettings is { } settings)
+        try
         {
-            settings.ColorValuesChanged += (_, values) =>
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    if (SyncThemeWithSystem)
-                    {
-                        ApplySystemThemeVariant(values.ThemeVariant);
-                    }
-                    if (UseSystemAccentColor)
-                    {
-                        SyncWithSystemAccentColor(values.AccentColor1);
-                    }
-                });
-            };
+            Dictionary<string, object>? ext = _settingsService.GetShared().ExtensionData;
+            if (ext is not null && ext.TryGetValue(key, out object? val) && bool.TryParse(val?.ToString(), out bool b))
+                return b;
         }
+        catch { }
+        return false;
     }
 
-    private void ApplyThemeItem(ThemeItem item, bool ignoreSystemSync = false)
+    private void PersistExtensionFlag(string key, bool enabled)
     {
-        if (!ignoreSystemSync && _syncThemeWithSystem && Application.Current?.PlatformSettings is { } settings)
+        try
         {
-            var variant = settings.GetColorValues().ThemeVariant;
-            _isDarkTheme = variant != PlatformThemeVariant.Light;
+            SharedSettings shared = _settingsService.GetShared();
+            shared.ExtensionData ??= new Dictionary<string, object>();
+            shared.ExtensionData[key] = enabled;
+            _settingsService.Set("TitleBarArtworkPath", shared.TitleBarArtworkPath);
         }
-        else
-        {
-            _isDarkTheme = item.IsDarkTheme;
-        }
-        _isColorAdjusted = item.UseColorAdjustment;
-        _desiredContrastRatio = item.DesiredContrastRatio;
-        _contrastValue = NormalizeContrastValue(item.ContrastValue);
-        _colorSelectionValue = NormalizeColorSelectionValue(item.ColorSelectionValue);
-        _primaryColor = item.PrimaryColor;
-        _secondaryColor = item.SecondaryColor;
-        _primaryForegroundColor = item.PrimaryForegroundColor;
-        _secondaryForegroundColor = item.SecondaryForegroundColor;
-        _hasAdjustmentBaseline = false;
-        if (_isColorAdjusted)
-        {
-            CaptureAdjustmentBaseline();
-            ComputeColorAdjustments();
-        }
-        ActiveScheme = ColorScheme.Primary;
-        SetSelectedColorSilently(_primaryColor);
-        OnPropertyChanged(nameof(IsDarkTheme));
-        OnPropertyChanged(nameof(IsColorAdjusted));
-        OnPropertyChanged(nameof(DesiredContrastRatio));
-        OnPropertyChanged(nameof(ContrastValue));
-        OnPropertyChanged(nameof(ColorSelectionValue));
-        OnPropertyChanged(nameof(SelectedColor));
+        catch { }
     }
-
-    private void LegacyDevNoOp()
-    {
-        // Intentionally empty.
-        // Note: ISettingsService has no Remove — old keys are left in ExtensionData and ignored going forward.
-    }
-
-    private string? FindThemeCsvByName(string name)
-    {
-        StringCollection? userThemes = _settingsService.Get<StringCollection>("UserThemes");
-        if (userThemes is not null)
-        {
-            foreach (string? csv in userThemes)
-            {
-                ThemeItem? t = ThemeItem.FromString(csv);
-                if (t is not null && string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase))
-                    return csv;
-            }
-        }
-
-        StringCollection? defaultThemes = _settingsService.Get<StringCollection>("DefaultThemes");
-        if (defaultThemes is not null)
-        {
-            foreach (string? csv in defaultThemes)
-            {
-                ThemeItem? t = ThemeItem.FromString(csv);
-                if (t is not null && string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase))
-                    return csv;
-            }
-        }
-
-        return null;
-    }
-
-    private static StringCollection BuildDefaultThemesCollection()
-    {
-        return new StringCollection
-        {
-            "Skua,Dark,#FF607D8B,#FF607D8B,#FF000000,#FF000000,true,4.5,Medium,All",
-            "RBot,Light,#FF9C934E,#FF9C934E,#FF000000,#FF000000",
-            "Grimoire,Dark,#FFCC1F41,#FFCC1F41,#FFFFFFFF,#FFFFFFFF",
-            "Purple,Dark,#FF9651D6,#FF9651D6,#FFFFFFFF,#FFFFFFFF,true,4.5,Medium,All",
-            "Phonk,Dark,#FFFE27D7,#FF607D8B,#FF000000,#FF000000,true,4.5,Medium,All",
-            "Arrow,Dark,#ffeaeaea,#ff607d8b,#ff000000,#ff000000"
-        };
-    }
-
-    private static bool EnsureBuiltInDefaultThemes(StringCollection defaults)
-    {
-        bool changed = false;
-        StringCollection builtIns = BuildDefaultThemesCollection();
-        foreach (string csv in builtIns)
-        {
-            ThemeItem? builtIn = ThemeItem.FromString(csv);
-            if (builtIn is null)
-                continue;
-
-            bool exists = false;
-            foreach (string? existingCsv in defaults)
-            {
-                ThemeItem? existing = ThemeItem.FromString(existingCsv);
-                if (existing is null)
-                    continue;
-
-                if (string.Equals(existing.Name, builtIn.Name, StringComparison.OrdinalIgnoreCase))
-                {
-                    exists = true;
-                    break;
-                }
-            }
-
-            if (!exists)
-            {
-                defaults.Add(csv);
-                changed = true;
-            }
-        }
-
-        return changed;
-    }
-
-    private ThemeItem BuildThemeSnapshot(string name)
-    {
-        // Snapshot stores both adjusted and baseline-aware values so toggling color adjustment
-        // can round-trip back to the original theme colors when disabled.
-        return new ThemeItem
-        {
-            Name = name,
-            IsDarkTheme = _isDarkTheme,
-            PrimaryColor = _hasAdjustmentBaseline ? _baselinePrimaryColor : _primaryColor,
-            SecondaryColor = _hasAdjustmentBaseline ? _baselineSecondaryColor : _secondaryColor,
-            PrimaryForegroundColor = _hasAdjustmentBaseline ? _baselinePrimaryForegroundColor : _primaryForegroundColor,
-            SecondaryForegroundColor = _hasAdjustmentBaseline ? _baselineSecondaryForegroundColor : _secondaryForegroundColor,
-            UseColorAdjustment = _isColorAdjusted,
-            DesiredContrastRatio = _desiredContrastRatio,
-            ContrastValue = NormalizeContrastValue(_contrastValue),
-            ColorSelectionValue = NormalizeColorSelectionValue(_colorSelectionValue)
-        };
-    }
-
-    private static Color ResolveAccentColor(object? obj)
-    {
-        if (obj is Color c)
-            return c;
-
-        if (obj is string s)
-        {
-            if (AccentMap.TryGetValue(s, out Color mapped))
-                return mapped;
-            try
-            {
-                return Color.Parse(s);
-            }
-            catch
-            {
-                return Color.FromRgb(0x60, 0x7D, 0x8B);
-            }
-        }
-
-        return Color.FromRgb(0x60, 0x7D, 0x8B);
-    }
-
-    private void SetSelectedColorSilently(Color color)
-    {
-        _suppressSelectedColorApply = true;
-        _selectedColor = color;
-        _suppressSelectedColorApply = false;
-        OnPropertyChanged(nameof(SelectedColor));
-    }
-
-    private void ApplyColorToActiveScheme(Color color, bool immediate = false)
-    {
-        if (ActiveScheme == ColorScheme.PrimaryForeground || ActiveScheme == ColorScheme.SecondaryForeground)
-        {
-            if (IsColorAdjusted)
-            {
-                CaptureAdjustmentBaseline();
-                _baselinePrimaryForegroundColor = color;
-                _baselineSecondaryForegroundColor = color;
-                ComputeColorAdjustments();
-            }
-            else
-            {
-                _primaryForegroundColor = color;
-                _secondaryForegroundColor = color;
-            }
-        }
-        else
-        {
-            if (_useSystemAccentColor)
-            {
-                _useSystemAccentColor = false;
-                PersistUseSystemAccentColorSetting(false);
-                OnPropertyChanged(nameof(UseSystemAccentColor));
-            }
-
-            if (IsColorAdjusted)
-            {
-                CaptureAdjustmentBaseline();
-                _baselinePrimaryColor = color;
-                _baselineSecondaryColor = color;
-                ComputeColorAdjustments();
-            }
-            else
-            {
-                _primaryColor = color;
-                _secondaryColor = color;
-            }
-        }
-
-        SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
-
-        if (immediate)
-        {
-            _applyThrottleTimer.Stop();
-            _saveDebounceTimer.Stop();
-            FlushColorChange();
-            SaveCurrentThemeSnapshot();
-        }
-        else
-        {
-            if (!_applyThrottleTimer.IsEnabled)
-                _applyThrottleTimer.Start();
-
-            _saveDebounceTimer.Stop();
-            _saveDebounceTimer.Start();
-        }
-    }
-
-    private void FlushColorChange()
-    {
-        if (ActiveScheme == ColorScheme.Primary)
-            ThemeChanged?.Invoke(_primaryColor);
-        else
-            SchemeChanged?.Invoke(ActiveScheme, GetColorForScheme(ActiveScheme));
-    }
-
-    private void ComputeColorAdjustments()
-    {
-        if (!_isColorAdjusted)
-            return;
-
-        CaptureAdjustmentBaseline();
-        _primaryColor = ShouldAdjustPrimaryColor() ? GetAdjustedBackgroundColor(_baselinePrimaryColor) : _baselinePrimaryColor;
-        _secondaryColor = ShouldAdjustSecondaryColor() ? GetAdjustedBackgroundColor(_baselineSecondaryColor) : _baselineSecondaryColor;
-        if (ShouldAdjustPrimaryForeground())
-            _primaryForegroundColor = GetAdjustedForegroundColor(_primaryColor);
-        else
-            _primaryForegroundColor = _baselinePrimaryForegroundColor;
-        if (ShouldAdjustSecondaryForeground())
-            _secondaryForegroundColor = GetAdjustedForegroundColor(_secondaryColor);
-        else
-            _secondaryForegroundColor = _baselineSecondaryForegroundColor;
-
-        Color currentSchemeColor = GetColorForScheme(ActiveScheme);
-        if (_selectedColor != currentSchemeColor)
-            SetSelectedColorSilently(currentSchemeColor);
-    }
-
-    private void ApplyColorAdjustmentIfEnabled(bool forceRefreshWhenOff = false)
-    {
-        if (IsColorAdjusted)
-        {
-            ComputeColorAdjustments();
-            ThemeChanged?.Invoke(_primaryColor);
-            SchemeChanged?.Invoke(ActiveScheme, GetColorForScheme(ActiveScheme));
-        }
-        else if (forceRefreshWhenOff)
-        {
-            ThemeChanged?.Invoke(_primaryColor);
-        }
-    }
-
-    public void FlushPendingSave()
-    {
-        if (_applyThrottleTimer.IsEnabled)
-        {
-            _applyThrottleTimer.Stop();
-            FlushColorChange();
-        }
-        if (_saveDebounceTimer.IsEnabled)
-        {
-            _saveDebounceTimer.Stop();
-            SaveCurrentThemeSnapshot();
-        }
-    }
-
-    private bool TryApplySerializedTheme(string value)
-    {
-        ThemeItem? item = ThemeItem.FromString(value);
-        if (item is null)
-            return false;
-
-        ApplyThemeItem(item);
-        SaveCurrentThemeSnapshot(item.Name);
-
-        ThemeChanged?.Invoke(_primaryColor);
-        SchemeChanged?.Invoke(ColorScheme.Primary, _primaryColor);
-        return true;
-    }
-
-    private void SaveCurrentThemeSnapshot(string? name = null)
-    {
-        string themeName = !string.IsNullOrWhiteSpace(name) ? name : "Skua";
-        ThemeItem snapshot = BuildThemeSnapshot(themeName);
-        if (!IsManagerProcess)
-        {
-            _settingsService.Set("CurrentTheme", snapshot.ConvertToString());
-        }
-        SaveProcessThemeFile();
-    }
-
-    private static bool IsManagerProcess =>
-        System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name?.Contains("Manager", StringComparison.OrdinalIgnoreCase) ?? false;
-
-    private static string ProcessThemeFilePath => IsManagerProcess
-        ? Path.Combine(ClientFileSources.ManagerDIR, "manager-theme.json")
-        : Path.Combine(ClientFileSources.SkuaDIR, "app-theme.json");
-
-    private string? _darkAccentColorHex;
-    private string? _darkTextOnAccentColorHex;
-    private string? _lightAccentColorHex;
-    private string? _lightTextOnAccentColorHex;
 
     private sealed class ProcessThemeFileState
     {
@@ -1225,8 +591,7 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             if (!File.Exists(ProcessThemeFilePath))
                 return;
 
-            string json = File.ReadAllText(ProcessThemeFilePath);
-            ProcessThemeFileState? state = JsonSerializer.Deserialize<ProcessThemeFileState>(json);
+            ProcessThemeFileState? state = JsonSerializer.Deserialize<ProcessThemeFileState>(File.ReadAllText(ProcessThemeFilePath));
             if (state is null)
                 return;
 
@@ -1235,7 +600,6 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             _useAccentOnMainTitleBar = state.UseAccentOnMainTitleBar;
             _useAccentOnManagerTitleBar = state.UseAccentOnManagerTitleBar;
             _isDarkTheme = state.IsDarkTheme;
-
             _darkAccentColorHex = state.DarkAccentColor;
             _darkTextOnAccentColorHex = state.DarkTextOnAccentColor;
             _lightAccentColorHex = state.LightAccentColor;
@@ -1253,23 +617,12 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
                 _primaryForegroundColor = fg;
                 _secondaryForegroundColor = fg;
             }
-
-            SetSelectedColorSilently(GetColorForScheme(ActiveScheme));
-            OnPropertyChanged(nameof(SyncThemeWithSystem));
-            OnPropertyChanged(nameof(UseSystemAccentColor));
-            OnPropertyChanged(nameof(UseAccentOnMainTitleBar));
-            OnPropertyChanged(nameof(UseAccentOnManagerTitleBar));
-            OnPropertyChanged(nameof(IsDarkTheme));
-            OnPropertyChanged(nameof(SelectedColor));
         }
         catch { }
     }
 
     private void SaveProcessThemeFile()
     {
-        if (IsApplyingExternalTheme)
-            return;
-
         try
         {
             string? dir = Path.GetDirectoryName(ProcessThemeFilePath);
@@ -1299,201 +652,6 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         catch { }
     }
 
-    private void CaptureAdjustmentBaseline()
-    {
-        if (_hasAdjustmentBaseline)
-            return;
-
-        _baselinePrimaryColor = _primaryColor;
-        _baselinePrimaryForegroundColor = _primaryForegroundColor;
-        _baselineSecondaryColor = _secondaryColor;
-        _baselineSecondaryForegroundColor = _secondaryForegroundColor;
-        _hasAdjustmentBaseline = true;
-    }
-
-    private void RestoreAdjustmentBaseline()
-    {
-        if (!_hasAdjustmentBaseline)
-            return;
-
-        _primaryColor = _baselinePrimaryColor;
-        _primaryForegroundColor = _baselinePrimaryForegroundColor;
-        _secondaryColor = _baselineSecondaryColor;
-        _secondaryForegroundColor = _baselineSecondaryForegroundColor;
-        _hasAdjustmentBaseline = false;
-        SetSelectedColorSilently(GetColorForScheme(ActiveScheme));
-    }
-
-    private Color GetColorForScheme(ColorScheme scheme)
-    {
-        return scheme switch
-        {
-            ColorScheme.Primary => _primaryColor,
-            ColorScheme.Secondary => _secondaryColor,
-            ColorScheme.PrimaryForeground => _primaryForegroundColor,
-            ColorScheme.SecondaryForeground => _secondaryForegroundColor,
-            _ => _primaryColor
-        };
-    }
-
-    private bool ShouldAdjustPrimaryForeground()
-    {
-        string selection = NormalizeColorSelectionValue(_colorSelectionValue);
-        return selection is ColorSelectionPrimary or ColorSelectionAll;
-    }
-
-    private bool ShouldAdjustSecondaryForeground()
-    {
-        string selection = NormalizeColorSelectionValue(_colorSelectionValue);
-        return selection is ColorSelectionSecondary or ColorSelectionAll;
-    }
-
-    private bool ShouldAdjustPrimaryColor()
-    {
-        string selection = NormalizeColorSelectionValue(_colorSelectionValue);
-        return selection is ColorSelectionPrimary or ColorSelectionAll;
-    }
-
-    private bool ShouldAdjustSecondaryColor()
-    {
-        string selection = NormalizeColorSelectionValue(_colorSelectionValue);
-        return selection is ColorSelectionSecondary or ColorSelectionAll;
-    }
-
-    private Color GetAdjustedForegroundColor(Color background)
-    {
-        Color baseForeground = GetBaseForegroundColor(background);
-        double intensityScale = GetContrastIntensityScale(_contrastValue);
-        if (intensityScale <= 0d)
-            return baseForeground;
-
-        double targetRatio = Math.Clamp(_desiredContrastRatio, 1f, 21f) * intensityScale;
-        return ShiftForegroundTowardContrast(background, baseForeground, targetRatio);
-    }
-
-    private static Color GetBaseForegroundColor(Color background)
-    {
-        return RelativeLuminance(background) > 0.179d
-            ? Color.FromArgb(255, 0, 0, 0)
-            : Color.FromArgb(255, 255, 255, 255);
-    }
-
-    private static Color ShiftForegroundTowardContrast(Color background, Color baseForeground, double targetContrastRatio)
-    {
-        double bgLuminance = RelativeLuminance(background);
-        bool useDarkForeground = baseForeground.R == 0 && baseForeground.G == 0 && baseForeground.B == 0;
-
-        double targetLuminance = useDarkForeground
-            ? ((bgLuminance + 0.05d) / targetContrastRatio) - 0.05d
-            : (targetContrastRatio * (bgLuminance + 0.05d)) - 0.05d;
-
-        targetLuminance = Math.Clamp(targetLuminance, 0d, 1d);
-        byte channel = LuminanceToSrgbByte(targetLuminance);
-        return Color.FromArgb(255, channel, channel, channel);
-    }
-
-    private Color GetAdjustedBackgroundColor(Color color)
-    {
-        double intensityScale = GetContrastIntensityScale(_contrastValue);
-        if (intensityScale <= 0d)
-            return color;
-
-        double targetRatio = Math.Clamp(_desiredContrastRatio, 1f, 21f) * intensityScale;
-        double amount = Math.Clamp((targetRatio - 1d) / 10d, 0d, 0.85d);
-
-        return _isDarkTheme
-            ? Mix(color, Color.FromArgb(255, 255, 255, 255), amount)
-            : Mix(color, Color.FromArgb(255, 0, 0, 0), amount * 0.65d);
-    }
-
-    private static double GetContrastIntensityScale(object? contrastValue)
-    {
-        return NormalizeContrastValue(contrastValue) switch
-        {
-            ContrastNone => 0d,
-            ContrastLow => 0.8d,
-            ContrastHigh => 1.25d,
-            _ => 1.0d
-        };
-    }
-
-    private static string NormalizeColorSelectionValue(object? value)
-    {
-        string raw = value?.ToString() ?? ColorSelectionAll;
-        if (raw.Equals(ColorSelectionNone, StringComparison.OrdinalIgnoreCase))
-            return ColorSelectionNone;
-
-        if (raw.Equals(ColorSelectionPrimary, StringComparison.OrdinalIgnoreCase))
-            return ColorSelectionPrimary;
-
-        if (raw.Equals(ColorSelectionSecondary, StringComparison.OrdinalIgnoreCase))
-            return ColorSelectionSecondary;
-
-        return ColorSelectionAll;
-    }
-
-    private static string NormalizeContrastValue(object? value)
-    {
-        string raw = value?.ToString() ?? ContrastMedium;
-        if (raw.Equals(ContrastNone, StringComparison.OrdinalIgnoreCase))
-            return ContrastNone;
-
-        if (raw.Equals(ContrastLow, StringComparison.OrdinalIgnoreCase))
-            return ContrastLow;
-
-        if (raw.Equals(ContrastHigh, StringComparison.OrdinalIgnoreCase))
-            return ContrastHigh;
-
-        return ContrastMedium;
-    }
-
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
-    private static byte LuminanceToSrgbByte(double luminance)
-    {
-        double srgb = luminance <= 0.0031308d
-            ? luminance * 12.92d
-            : 1.055d * Math.Pow(luminance, 1d / 2.4d) - 0.055d;
-
-        return (byte)Math.Clamp((int)Math.Round(srgb * 255d), 0, 255);
-    }
-
-    private static double RelativeLuminance(Color color)
-    {
-        static double ToLinear(byte c)
-        {
-            double s = c / 255.0;
-            return s <= 0.03928 ? s / 12.92 : Math.Pow((s + 0.055) / 1.055, 2.4);
-        }
-
-        double r = ToLinear(color.R);
-        double g = ToLinear(color.G);
-        double b = ToLinear(color.B);
-        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    }
-
-    private static Color Mix(Color from, Color to, double amount)
-    {
-        amount = Math.Clamp(amount, 0d, 1d);
-        byte M(byte a, byte b) => (byte)Math.Clamp((int)Math.Round(a + (b - a) * amount), 0, 255);
-        return Color.FromArgb(255, M(from.R, to.R), M(from.G, to.G), M(from.B, to.B));
-    }
-
-    private static string? GetThemeName(object? theme)
-    {
-        if (theme is ThemeItem item)
-            return item.Name;
-        return theme?.ToString();
-    }
-
-    private static bool ThemeNameEquals(object? theme, string name)
-    {
-        string? themeName = GetThemeName(theme);
-        return !string.IsNullOrWhiteSpace(themeName) &&
-               string.Equals(themeName, name, StringComparison.OrdinalIgnoreCase);
-    }
-
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }

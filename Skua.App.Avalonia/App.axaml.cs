@@ -710,23 +710,7 @@ public partial class App : Application
     {
         try
         {
-            ISettingsService settingsService = Ioc.Default.GetRequiredService<ISettingsService>();
-            ThemeItem? savedTheme = ThemeItem.FromString(settingsService.Get<string>("CurrentTheme"));
-            ThemeItem displaySnapshot = new()
-            {
-                Name = savedTheme?.Name ?? "Skua",
-                IsDarkTheme = themeService.IsDarkTheme,
-                PrimaryColor = themeService.PrimaryColor,
-                SecondaryColor = themeService.SecondaryColor,
-                PrimaryForegroundColor = themeService.PrimaryForegroundColor,
-                SecondaryForegroundColor = themeService.SecondaryForegroundColor,
-                UseColorAdjustment = false,
-                DesiredContrastRatio = themeService.DesiredContrastRatio,
-                ContrastValue = themeService.ContrastValue?.ToString() ?? "Medium",
-                ColorSelectionValue = themeService.ColorSelectionValue?.ToString() ?? "All"
-            };
-
-            string message = "THEME|" + themeService.UseAccentOnMainTitleBar.ToString() + "|" + displaySnapshot.ConvertToString();
+            string message = $"THEME|{themeService.UseAccentOnMainTitleBar}|{themeService.IsDarkTheme}|{themeService.PrimaryHex}|{themeService.ForegroundHex}";
             _ = Task.Run(() =>
             {
                 for (int attempt = 0; attempt < 5; attempt++)

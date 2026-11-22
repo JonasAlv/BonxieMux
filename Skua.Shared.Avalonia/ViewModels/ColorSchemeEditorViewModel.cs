@@ -6,11 +6,10 @@ namespace Skua.Shared.Avalonia.ViewModels;
 
 public class ColorSchemeEditorViewModel : BotControlViewModelBase
 {
-    public ColorSchemeEditorViewModel(IThemeService themeService, ThemeSettingsViewModel themeSettings)
+    public ColorSchemeEditorViewModel(IThemeService themeService)
         : base("Color Scheme Editor")
     {
         ThemeService = themeService;
-        ThemeSettings = themeSettings;
 
         ChangeCustomHueCommand = new RelayCommand<object>(ThemeService.ChangeCustomColor);
         ChangeToPrimaryCommand = new RelayCommand(() => ThemeService.ChangeScheme(ColorScheme.Primary));
@@ -20,7 +19,6 @@ public class ColorSchemeEditorViewModel : BotControlViewModelBase
     }
 
     public IThemeService ThemeService { get; }
-    public ThemeSettingsViewModel ThemeSettings { get; }
     public IRelayCommand ChangeCustomHueCommand { get; }
     public IRelayCommand ChangeToPrimaryCommand { get; }
     public IRelayCommand ChangeToSecondaryCommand { get; }

@@ -203,9 +203,7 @@ public static class Services
     public static IServiceCollection AddThemeViewModels(this IServiceCollection services)
     {
         services.AddSingleton<ApplicationThemesViewModel>();
-        services.AddSingleton<ThemeSettingsViewModel>();
         services.AddSingleton<ColorSchemeEditorViewModel>();
-        services.AddSingleton<BackgroundThemeViewModel>();
 
         return services;
     }
