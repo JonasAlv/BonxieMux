@@ -122,6 +122,7 @@ internal sealed class DmabufSkiaRenderer
     private const uint GL_RGBA8 = 0x8058u;
     private const int MaxCachedBuffers = 8;
     private static readonly SKSamplingOptions LinearSampling = new(SKFilterMode.Linear);
+    private static readonly SKSamplingOptions NearestSampling = new(SKFilterMode.Nearest);
     private static readonly ConcurrentQueue<DmabufSkiaRenderer> s_retiredRenderers = new();
 
     private sealed class CachedDmabufImage
@@ -260,6 +261,7 @@ internal sealed class DmabufSkiaRenderer
                 }
             }
 
+            bool deferredAck = false;
             if (_activeEntry == null)
             {
                 canvas.DrawRect(dstRect, _blackPaint);
@@ -271,16 +273,50 @@ internal sealed class DmabufSkiaRenderer
                 float scaleY = MathF.Sqrt(m.ScaleY * m.ScaleY + m.SkewX * m.SkewX);
                 if (scaleX < 0.01f) scaleX = 1f;
                 if (scaleY < 0.01f) scaleY = 1f;
-                float srcW = Math.Clamp((float)size.Width * scaleX, 1f, _activeEntry.Width);
-                float srcH = Math.Clamp((float)size.Height * scaleY, 1f, _activeEntry.Height);
+                float physW = (float)size.Width * scaleX;
+                float physH = (float)size.Height * scaleY;
+                float srcW = Math.Clamp(physW, 1f, _activeEntry.Width);
+                float srcH = Math.Clamp(physH, 1f, _activeEntry.Height);
                 SKRect srcRect = new(0f, 0f, srcW, srcH);
-                canvas.DrawImage(_activeEntry.Image, srcRect, dstRect, LinearSampling, _opaquePaint);
-                grContext.Flush();
+                SKSamplingOptions sampling = (MathF.Abs(srcW - physW) < 0.5f && MathF.Abs(srcH - physH) < 0.5f &&
+                    MathF.Abs(srcW - MathF.Round(srcW)) < 0.01f && MathF.Abs(srcH - MathF.Round(srcH)) < 0.01f)
+                    ? NearestSampling
+                    : LinearSampling;
+                canvas.DrawImage(_activeEntry.Image, srcRect, dstRect, sampling, _opaquePaint);
+
+                if (acquiredSeq != 0)
+                {
+                    if (Dispatcher.UIThread.CheckAccess())
+                    {
+                        deferredAck = true;
+                    }
+                    else
+                    {
+                        grContext.Flush();
+                    }
+                }
             }
 
             ulong presentedSeq = LastSeq;
             if (acquiredSeq != 0)
-                BonxieWaylandNative.AckFrame(_waylandHost, acquiredSeq);
+            {
+                if (deferredAck)
+                {
+                    ulong seqToAck = acquiredSeq;
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        lock (_hostLock)
+                        {
+                            if (!_disposed && _waylandHost != IntPtr.Zero)
+                                BonxieWaylandNative.AckFrame(_waylandHost, seqToAck);
+                        }
+                    }, DispatcherPriority.Render);
+                }
+                else
+                {
+                    BonxieWaylandNative.AckFrame(_waylandHost, acquiredSeq);
+                }
+            }
             _onPresentedFrame(presentedSeq);
 
             ulong latestSeq = BonxieWaylandNative.FrameSeq(_waylandHost);
