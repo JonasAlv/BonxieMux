@@ -173,10 +173,6 @@ public class World {
     public static function killLag(enable:Boolean):void {
         _lagKiller = enable;
         Main.instance.game.world.visible = !enable;
-        
-        if (Main.instance.customBGLagKiller) {
-            Main.instance.customBGLagKiller.visible = enable;
-        }
     }
 }
 }

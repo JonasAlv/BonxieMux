@@ -539,19 +539,6 @@ public partial class ScriptInterface : IScriptInterface, IScriptInterfaceManager
         switch (name)
         {
             case "pre-load":
-                Schedule(1000, _ =>
-                {
-                    try
-                    {
-                        string sBG = _settingsService.Get("sBG", "Generic2.swf");
-                        string? customBackgroundPath = _settingsService.Get<string?>("CustomBackgroundPath", null);
-                        Flash.Call("setBackgroundValues", sBG, customBackgroundPath ?? "");
-                    }
-                    catch (Exception ex)
-                    {
-                        Log($"Could not set background values: {ex.Message}");
-                    }
-                });
                 break;
 
             case "loaded":

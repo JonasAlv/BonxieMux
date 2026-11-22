@@ -52,7 +52,6 @@ public partial class App : Application
         services.AddSingleton<IWindowService, WindowService>();
         services.AddSingleton<IClientFilesService, ClientFilesService>();
         services.AddSingleton<IThemeService, Skua.Shared.Avalonia.Services.AvaloniaThemeService>();
-        services.AddSingleton<BackgroundThemeService>();
         services.AddSkuaManagerViewModels();
 
         Ioc.Default.ConfigureServices(services.BuildServiceProvider());

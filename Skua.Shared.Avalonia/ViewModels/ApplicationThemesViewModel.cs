@@ -115,7 +115,7 @@ public class ApplicationThemesViewModel : BotControlViewModelBase
     public IRelayCommand SetCurrentThemeCommand { get; }
     public IRelayCommand RemoveThemeCommand { get; }
 
-    public List<string> Tabs { get; } = new() { "Palette & Accents", "Theme Library", "Custom Backgrounds" };
+    public List<string> Tabs { get; } = new() { "Palette & Accents", "Theme Library", "Title Bar Artwork" };
 
     public string SelectedTab
     {

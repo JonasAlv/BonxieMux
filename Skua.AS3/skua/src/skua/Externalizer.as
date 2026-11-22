@@ -22,7 +22,6 @@ public class Externalizer {
     public function init(root:Main):void {
         // Core initialization
         this.addCallback("loadClient", Main.loadGame);
-        this.addCallback("setBackgroundValues", Main.setBackgroundValues);
         this.addCallback("isTrue", Main.isTrue);
         this.addCallback("isNull", Main.isNull);
 

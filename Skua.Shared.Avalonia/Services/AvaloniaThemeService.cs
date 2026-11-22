@@ -233,14 +233,45 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         {
             if (_isDarkTheme == value)
                 return;
+
+            // Remember outgoing mode's Accent & Text-on-Accent colors before switching
+            SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
+
             _isDarkTheme = value;
             OnPropertyChanged();
-            if (IsColorAdjusted)
-                ApplyColorAdjustmentIfEnabled();
-            else
-                ThemeChanged?.Invoke(SelectedColor);
+
+            // Restore incoming mode's remembered Accent & Text-on-Accent colors
+            (Color nextAccent, Color nextTextOnAccent) = LoadModeColors(value);
+            _primaryColor = nextAccent;
+            _secondaryColor = nextAccent;
+            _primaryForegroundColor = nextTextOnAccent;
+            _secondaryForegroundColor = nextTextOnAccent;
+            SetSelectedColorSilently(
+                ActiveScheme == ColorScheme.PrimaryForeground || ActiveScheme == ColorScheme.SecondaryForeground
+                    ? nextTextOnAccent
+                    : nextAccent);
+
+            ThemeChanged?.Invoke(_primaryColor);
+            SchemeChanged?.Invoke(ActiveScheme, GetColorForScheme(ActiveScheme));
             SaveCurrentThemeSnapshot();
         }
+    }
+
+    private void SaveModeColors(bool isDark, Color accent, Color textOnAccent)
+    {
+        string prefix = isDark ? "Dark" : "Light";
+        _settingsService.Set($"{prefix}AccentColor", $"#{accent.A:X2}{accent.R:X2}{accent.G:X2}{accent.B:X2}");
+        _settingsService.Set($"{prefix}TextOnAccentColor", $"#{textOnAccent.A:X2}{textOnAccent.R:X2}{textOnAccent.G:X2}{textOnAccent.B:X2}");
+    }
+
+    private (Color Accent, Color TextOnAccent) LoadModeColors(bool isDark)
+    {
+        string prefix = isDark ? "Dark" : "Light";
+        string? accentHex = _settingsService.Get<string?>($"{prefix}AccentColor", null);
+        string? textHex = _settingsService.Get<string?>($"{prefix}TextOnAccentColor", null);
+        Color accent = !string.IsNullOrWhiteSpace(accentHex) ? ResolveAccentColor(accentHex) : Color.Parse("#10B981");
+        Color textOnAccent = !string.IsNullOrWhiteSpace(textHex) ? ResolveAccentColor(textHex) : Colors.White;
+        return (accent, textOnAccent);
     }
 
     private Color _primaryColor;
@@ -860,6 +891,8 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
                 _secondaryColor = color;
             }
         }
+
+        SaveModeColors(_isDarkTheme, _primaryColor, _primaryForegroundColor);
 
         if (immediate)
         {

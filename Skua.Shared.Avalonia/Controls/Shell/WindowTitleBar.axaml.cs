@@ -171,13 +171,12 @@ public partial class WindowTitleBar : UserControl
     private void ApplyAccentForeground()
     {
         string resourceKey = UseAccentBackground ? "SkuaAccentForegroundBrush" : "SkuaAccentBrush";
-        if (!TryGetResource(resourceKey, ActualThemeVariant, out object? resource) || resource is not IBrush brush)
-            return;
-
-        TitleTextBlock.Foreground = brush;
-        MinimizeButton.Foreground = brush;
-        MaximizeButton.Foreground = brush;
-        CloseButton.Foreground = brush;
+        var dyn = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(resourceKey);
+        TitleTextBlock[!TextBlock.ForegroundProperty] = dyn;
+        MinimizeButton[!Button.ForegroundProperty] = dyn;
+        MaximizeButton[!Button.ForegroundProperty] = dyn;
+        CloseButton[!Button.ForegroundProperty] = dyn;
+        DockButton[!Button.ForegroundProperty] = dyn;
     }
 
     private void ApplyArtworkPath(string? path)

@@ -96,7 +96,6 @@ public static class Services
         services.AddSingleton<IClientFilesService, ClientFilesService>();
         services.AddSingleton<IAuraMonitorService, AuraMonitorService>();
         services.AddSingleton<IJunkService, JunkService>();
-        services.AddSingleton<BackgroundThemeService>();
 
         return services;
     }

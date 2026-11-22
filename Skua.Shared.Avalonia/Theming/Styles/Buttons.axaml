@@ -1,6 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:buttons="using:Skua.Shared.Avalonia.Controls.Buttons">
+        xmlns:buttons="using:Skua.Shared.Avalonia.Controls.Buttons"
+        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia">
     <Design.PreviewWith>
         <Border Padding="20">
             <!-- Add Controls for Previewer Here -->
@@ -270,12 +271,19 @@
         <Setter Property="buttons:HoverGlow.EdgeAmount" Value="0.6" />
     </Style>
     <Style Selector="Button.skua-primary /template/ ContentPresenter#PART_ContentPresenter, Button.skua-button.skua-primary /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentForegroundBrush}" />
         <Setter Property="Transitions">
             <Transitions>
                 <BrushTransition Property="Background" Duration="0:0:0.08" Easing="CubicEaseOut" />
                 <BrushTransition Property="BorderBrush" Duration="0:0:0.08" Easing="CubicEaseOut" />
             </Transitions>
         </Setter>
+    </Style>
+    <Style Selector="Button.skua-primary materialIcons|MaterialIcon, Button.skua-button.skua-primary materialIcons|MaterialIcon">
+        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentForegroundBrush}" />
+    </Style>
+    <Style Selector="Button.skua-primary TextBlock, Button.skua-button.skua-primary TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentForegroundBrush}" />
     </Style>
     <Style Selector="Button.skua-primary:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.skua-button.skua-primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{CompiledBinding $parent[Button].(buttons:HoverGlow.Fill)}" />

@@ -37,7 +37,6 @@ public class Main extends MovieClip {
     private var versionUrl:String = (sURL + 'api/data/gameversion');
     private var loginURL:String = (sURL + 'api/login/now');
     private var sFile:String;
-    private var sBG:String = 'hideme.swf';
     private var isEU:Boolean;
     private var urlLoader:URLLoader;
     private var vars:Object;
@@ -45,10 +44,6 @@ public class Main extends MovieClip {
     private var sTitle:String = '<font color="#FDAF2D">AURAS!!!</font>';
     private var stg:Stage;
     private var gameDomain:ApplicationDomain;
-    private var customBGLoader:Loader;
-    private var customBGReady:MovieClip = null;
-    public var customBGLagKiller:MovieClip = null;
-    private var customBackgroundURL:String;
     private var packetClient:*;
     private var packetDebug:Boolean;
 
@@ -67,21 +62,6 @@ public class Main extends MovieClip {
     public static function loadGame():void {
         Main.instance.onAddedToStage();
         Main.instance.external.call('pre-load');
-    }
-
-    public static function setBackgroundValues(sBGValue:String, customBackground:String):void {
-        if (sBGValue && sBGValue.length > 0) {
-            instance.sBG = sBGValue;
-            if (instance.game && instance.game.params) {
-                instance.game.params.sBG = sBGValue;
-            }
-        }
-        if (customBackground && customBackground.length > 0) {
-            instance.customBackgroundURL = customBackground;
-            instance.initCustomBackground();
-        } else {
-            instance.customBackgroundURL = null;
-        }
     }
 
     private function init(e:Event = null):void {
@@ -134,7 +114,7 @@ public class Main extends MovieClip {
 
         this.game.params.vars = this.vars;
         this.game.params.sURL = this.sURL;
-        this.game.params.sBG = this.sBG;
+        this.game.params.sBG = (this.vars && this.vars.sBG) ? this.vars.sBG : 'Generic2.swf';
         this.game.params.sTitle = this.sTitle;
         this.game.params.isEU = this.isEU;
         this.game.params.loginURL = this.loginURL;
@@ -148,14 +128,9 @@ public class Main extends MovieClip {
 
         Modules.init();
         this.stg.addEventListener(Event.ENTER_FRAME, Modules.handleFrame);
-        this.stg.addEventListener(Event.ENTER_FRAME, this.monitorLoginScreen);
         this.stg.addEventListener(Event.ENTER_FRAME, this.monitorServerList);
 
         this.game.stage.addEventListener(KeyboardEvent.KEY_DOWN, this.key_StageGame);
-        
-        if (this.customBackgroundURL && this.customBackgroundURL.length > 0) {
-            this.initCustomBackground();
-        }
         
         Auras.initialize();
         
@@ -235,31 +210,6 @@ public class Main extends MovieClip {
         }
     }
 
-    private function monitorLoginScreen(event:Event):void {
-        if (!this.customBGReady || !this.game || !this.game.mcLogin) return;
-        
-        if (this.game.mcLogin.visible && this.game.mcLogin.mcTitle) {
-            var hasCustomBG:Boolean = false;
-            var numChildren:int = this.game.mcLogin.mcTitle.numChildren;
-            
-            for (var i:int = 0; i < numChildren; i++) {
-                if (this.game.mcLogin.mcTitle.getChildAt(i) == this.customBGReady) {
-                    hasCustomBG = true;
-                    break;
-                }
-            }
-            
-            if (!hasCustomBG) {
-                if (this.customBGReady.parent) {
-                    this.customBGReady.parent.removeChild(this.customBGReady);
-                }
-                while (this.game.mcLogin.mcTitle.numChildren > 0) {
-                    this.game.mcLogin.mcTitle.removeChildAt(0);
-                }
-                this.game.mcLogin.mcTitle.addChild(this.customBGReady);
-            }
-        }
-    }
 
     private var _policyFilesLoaded:Boolean = false;
 
@@ -286,40 +236,6 @@ public class Main extends MovieClip {
                 Server.loadPolicyFiles();
             }
         } catch (e:Error) {}
-    }
-
-    private function initCustomBackground():void {
-        if (!this.customBackgroundURL) {
-            return;
-        }
-
-        this.customBGLoader = new Loader();
-        this.customBGLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, function (e:Event):void {
-            customBGReady = MovieClip(customBGLoader.content);
-
-            var checkTimer:Timer = new Timer(100);
-            checkTimer.addEventListener(TimerEvent.TIMER, function (timerEvent:TimerEvent):void {
-                if (game) {
-                    while (game.mcLogin.mcTitle.numChildren > 0) {
-                        game.mcLogin.mcTitle.removeChildAt(0);
-                    }
-                    game.mcLogin.mcTitle.addChild(customBGReady);
-                    checkTimer.stop();
-                }
-            });
-            checkTimer.start();
-        });
-        this.customBGLoader.load(new URLRequest(this.customBackgroundURL));
-        
-        var lagKillerLoader:Loader = new Loader();
-        lagKillerLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, function (e:Event):void {
-            customBGLagKiller = MovieClip(lagKillerLoader.content);
-            if (game) {
-                game.addChildAt(customBGLagKiller, 0);
-                customBGLagKiller.visible = false;
-            }
-        });
-        lagKillerLoader.load(new URLRequest(this.customBackgroundURL));
     }
 
     public function key_StageGame(kbArgs:KeyboardEvent):void {
