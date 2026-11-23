@@ -328,21 +328,12 @@ public partial class TabbedHostWindow : Window
         QuickBarControls detachedQuickBar = new();
         _detachedQuickBars[childPid] = detachedQuickBar;
 
-        Button sizeBtn = CreateDetachedTitleButton(
-            Material.Icons.MaterialIconKind.ResizeBottomRight,
-            ToolTip.GetTip(GameSizeBorder)?.ToString() ?? "Game Viewport Size: Auto (click to cycle)",
-            () => { });
-        sizeBtn.Click += (_, _) =>
-        {
-            GameSizeBorder_PointerPressed(null, null!);
-            ToolTip.SetTip(sizeBtn, ToolTip.GetTip(GameSizeBorder));
-        };
-
         var (autoToggle, autoPopup) = BuildAutoControls(detachedQuickBar, PlacementMode.BottomEdgeAlignedRight, childPid);
         autoToggle.Classes.Remove("activity-item");
         autoToggle.Classes.Add("titlebar");
         autoToggle.Width = 26;
         autoToggle.Height = 26;
+        autoToggle.CornerRadius = new CornerRadius(4);
         Panel autoHost = new() { Width = 26, Height = 26, Children = { autoToggle, autoPopup } };
 
         var (jumpToggle, jumpPopup) = BuildJumpControls(detachedQuickBar, PlacementMode.BottomEdgeAlignedRight, childPid);
@@ -350,17 +341,19 @@ public partial class TabbedHostWindow : Window
         jumpToggle.Classes.Add("titlebar");
         jumpToggle.Width = 26;
         jumpToggle.Height = 26;
+        jumpToggle.CornerRadius = new CornerRadius(4);
         Panel jumpHost = new() { Width = 26, Height = 26, Children = { jumpToggle, jumpPopup } };
 
         Button botWinBtn = CreateDetachedTitleButton(Material.Icons.MaterialIconKind.Apps, "Show All Bot Windows & Tools", () =>
             Skua.App.Avalonia.Services.TabIpc.SendCommand(childPid, "BOT_WINDOW"));
+        botWinBtn.CornerRadius = new CornerRadius(4);
 
         StackPanel rightButtons = new()
         {
             Orientation = Orientation.Horizontal,
             Spacing = 2,
             VerticalAlignment = VerticalAlignment.Center,
-            Children = { sizeBtn, autoHost, jumpHost, botWinBtn }
+            Children = { autoHost, jumpHost, botWinBtn }
         };
 
         var titleBar = new Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar

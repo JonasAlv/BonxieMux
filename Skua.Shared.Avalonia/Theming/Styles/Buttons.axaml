@@ -302,12 +302,8 @@
         <Setter Property="BorderThickness" Value="0" />
     </Style>
 
-    <Style Selector="Button.titlebar">
+    <Style Selector="Button.titlebar, ToggleButton.titlebar">
         <Setter Property="Transitions" Value="{x:Null}" />
-    </Style>
-    <Style Selector="Button.titlebar:pressed">
-    </Style>
-    <Style Selector="Button.titlebar">
         <Setter Property="Width" Value="32" />
         <Setter Property="Height" Value="30" />
         <Setter Property="Padding" Value="0" />
@@ -316,18 +312,29 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
     </Style>
-    <Style Selector="Button.titlebar:pointerover">
+    <Style Selector="Button.titlebar /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.titlebar /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.titlebar:pointerover, ToggleButton.titlebar:pointerover">
         <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
     </Style>
-    <Style Selector="Button.titlebar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.titlebar:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.titlebar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="TextBlock.Foreground" Value="{DynamicResource SkuaAccentBrush}" />
     </Style>
-    <Style Selector="Button.titlebar:pressed">
+    <Style Selector="ToggleButton.titlebar:checked, ToggleButton.titlebar:checked:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
+    </Style>
+    <Style Selector="ToggleButton.titlebar:checked /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.titlebar:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.titlebar:pressed, ToggleButton.titlebar:pressed">
         <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
     </Style>
-    <Style Selector="Button.titlebar:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.titlebar:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.titlebar:pressed /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
         <Setter Property="BorderBrush" Value="Transparent" />
     </Style>
