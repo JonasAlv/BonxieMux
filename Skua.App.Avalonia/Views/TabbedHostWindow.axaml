@@ -25,38 +25,6 @@
                     Background="{DynamicResource SkuaSurfaceBrush}"
                     BorderBrush="{DynamicResource SkuaBorderBrush}"
                     BorderThickness="0,0,1,0">
-                <Border.Styles>
-                    <Style Selector="Border.activity-item">
-                        <Setter Property="Width" Value="28" />
-                        <Setter Property="Height" Value="28" />
-                        <Setter Property="CornerRadius" Value="5" />
-                        <Setter Property="HorizontalAlignment" Value="Center" />
-                        <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="Cursor" Value="Hand" />
-                    </Style>
-                    <Style Selector="Border.activity-item:pointerover">
-                        <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
-                    </Style>
-                    <Style Selector="Button.activity-item, ToggleButton.activity-item">
-                        <Setter Property="Width" Value="28" />
-                        <Setter Property="Height" Value="28" />
-                        <Setter Property="Padding" Value="0" />
-                        <Setter Property="CornerRadius" Value="5" />
-                        <Setter Property="HorizontalAlignment" Value="Center" />
-                        <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="BorderThickness" Value="0" />
-                    </Style>
-                    <Style Selector="Button.activity-item /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.activity-item /template/ ContentPresenter#PART_ContentPresenter">
-                        <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="CornerRadius" Value="5" />
-                    </Style>
-                    <Style Selector="Button.activity-item:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.activity-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-                        <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
-                    </Style>
-                    <Style Selector="ToggleButton.activity-item:checked /template/ ContentPresenter#PART_ContentPresenter">
-                        <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
-                    </Style>
-                </Border.Styles>
                 <DockPanel LastChildFill="False">
                     <StackPanel DockPanel.Dock="Top" Orientation="Vertical" Spacing="2" Margin="0,4,0,0">
                         <Border x:Name="GlobeBorder"
