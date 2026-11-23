@@ -113,15 +113,11 @@
                                         </StackPanel>
                                         <TextBlock Text="{Binding Info.Description}" FontSize="11" TextWrapping="Wrap"
                                                    Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4" Margin="0,2,0,0">
-                                            <materialIcons:MaterialIcon Grid.Column="0" Kind="FolderOutline" Width="12" Height="12" VerticalAlignment="Top" Margin="0,1,0,0"
-                                                                        Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                            <TextBlock Grid.Column="1" FontSize="10.5" TextWrapping="Wrap" Foreground="{DynamicResource SkuaMutedTextBrush}"
-                                                       ToolTip.Tip="{Binding DisplayPath}">
-                                                <Run Text="{Binding WrappablePath}" FontFamily="JetBrains Mono,Consolas,Courier New,monospace" />
-                                                <Run Text="{Binding ListMeta}" />
-                                            </TextBlock>
-                                        </Grid>
+                                        <TextBlock Margin="0,2,0,0" FontSize="10.5" TextWrapping="Wrap" Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                                   ToolTip.Tip="{Binding DisplayPath}">
+                                            <Run Text="{Binding WrappablePath}" FontFamily="JetBrains Mono,Consolas,Courier New,monospace" />
+                                            <Run Text="{Binding ListMeta}" />
+                                        </TextBlock>
                                         <ItemsControl ItemsSource="{Binding InfoTags}" Margin="0,4,0,0">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>

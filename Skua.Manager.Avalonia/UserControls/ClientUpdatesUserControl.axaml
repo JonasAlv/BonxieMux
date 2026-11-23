@@ -131,17 +131,10 @@
                 Padding="16"
                 IsVisible="{Binding IsBusy}">
             <StackPanel Spacing="8">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="{Binding ProgressStatus}"
-                               FontWeight="SemiBold"
-                               FontSize="12"
-                               Foreground="{DynamicResource SkuaTextBrush}" />
-                    <materialIcons:MaterialIcon Grid.Column="1"
-                                                Kind="Loading"
-                                                Width="16"
-                                                Height="16"
-                                                Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                </Grid>
+                <TextBlock Text="{Binding ProgressStatus}"
+                           FontWeight="SemiBold"
+                           FontSize="12"
+                           Foreground="{DynamicResource SkuaTextBrush}" />
                 <ProgressBar IsIndeterminate="{Binding IsBusy}"
                              Height="4"
                              HorizontalAlignment="Stretch" />

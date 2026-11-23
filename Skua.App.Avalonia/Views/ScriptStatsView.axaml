@@ -37,12 +37,11 @@
   </UserControl.Styles>
 
   <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
-    <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,Auto,*,Auto" ColumnSpacing="8">
-      <materialIcons:MaterialIcon Grid.Column="0" Kind="ClockOutline" Width="16" Height="16" Foreground="#9CA3AF" VerticalAlignment="Center" />
-      <TextBlock Grid.Column="1" Text="{Binding ScriptStats.Time, StringFormat={}{0:hh\\:mm\\:ss}}" FontFamily="Cascadia Mono,Consolas,Courier New,monospace"
+    <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
+      <TextBlock Grid.Column="0" Text="{Binding ScriptStats.Time, StringFormat={}{0:hh\\:mm\\:ss}}" FontFamily="Cascadia Mono,Consolas,Courier New,monospace"
                  FontWeight="SemiBold" VerticalAlignment="Center" />
-      <TextBlock Grid.Column="2" Text="script time" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
-      <Button Grid.Column="4" Classes="skua-button small w84" Command="{Binding ResetStatsCommand}" ToolTip.Tip="Reset all combat and drop counters">
+      <TextBlock Grid.Column="1" Text="script time" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+      <Button Grid.Column="3" Classes="skua-button small w84" Command="{Binding ResetStatsCommand}" ToolTip.Tip="Reset all combat and drop counters">
   <TextBlock Text="Reset" VerticalAlignment="Center" />
 </Button>
     </Grid>

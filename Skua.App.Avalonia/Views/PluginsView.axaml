@@ -28,11 +28,8 @@
     <ListBox Grid.Row="2" ItemsSource="{Binding Plugins}" Padding="4">
       <ListBox.ItemTemplate>
         <DataTemplate>
-          <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" MinHeight="40" ToolTip.Tip="{Binding Description}">
-            <Border Grid.Column="0" Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SkuaSurfaceAltBrush}" VerticalAlignment="Center">
-              <materialIcons:MaterialIcon Kind="PuzzleOutline" Width="18" Height="18" Foreground="{DynamicResource SkuaAccentBrush}" />
-            </Border>
-            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" MinHeight="40" ToolTip.Tip="{Binding Description}">
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="1">
               <TextBlock Text="{Binding Container.Plugin.Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
               <TextBlock FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis">
                 <TextBlock.Text>
@@ -43,10 +40,10 @@
                 </TextBlock.Text>
               </TextBlock>
             </StackPanel>
-            <Button Grid.Column="2" Classes="skua-button small w84" IsEnabled="{Binding HasOptions}" Command="{Binding EditPluginOptionsCommand}">
+            <Button Grid.Column="1" Classes="skua-button small w84" IsEnabled="{Binding HasOptions}" Command="{Binding EditPluginOptionsCommand}">
   <TextBlock Text="Options" VerticalAlignment="Center" />
 </Button>
-            <Button Grid.Column="3" Classes="skua-button small skua-danger-soft w84" Content="Unload" Command="{Binding UnloadCommand}" />
+            <Button Grid.Column="2" Classes="skua-button small skua-danger-soft w84" Content="Unload" Command="{Binding UnloadCommand}" />
           </Grid>
         </DataTemplate>
       </ListBox.ItemTemplate>

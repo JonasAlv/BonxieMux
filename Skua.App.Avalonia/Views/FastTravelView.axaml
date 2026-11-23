@@ -91,23 +91,19 @@
                         Command="{Binding TravelCommand}"
                         CommandParameter="{Binding}"
                         ToolTip.Tip="Travel here">
-                  <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                    <materialIcons:MaterialIcon Grid.Column="0" Kind="NavigationVariantOutline" Width="17" Height="17"
-                                                Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                      <TextBlock Text="{Binding DescriptionName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                      <TextBlock FontFamily="Cascadia Mono,Consolas,Courier New,monospace" FontSize="11"
-                                 Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis">
-                        <TextBlock.Text>
-                          <MultiBinding StringFormat="{}{0} · {1} · {2}">
-                            <Binding Path="MapName" />
-                            <Binding Path="Cell" />
-                            <Binding Path="Pad" />
-                          </MultiBinding>
-                        </TextBlock.Text>
-                      </TextBlock>
-                    </StackPanel>
-                  </Grid>
+                  <StackPanel VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Text="{Binding DescriptionName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock FontFamily="Cascadia Mono,Consolas,Courier New,monospace" FontSize="11"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis">
+                      <TextBlock.Text>
+                        <MultiBinding StringFormat="{}{0} · {1} · {2}">
+                          <Binding Path="MapName" />
+                          <Binding Path="Cell" />
+                          <Binding Path="Pad" />
+                        </MultiBinding>
+                      </TextBlock.Text>
+                    </TextBlock>
+                  </StackPanel>
                 </Button>
                 <Button Grid.Column="1" Classes="icon card-action" Width="26" Height="26"
                         Command="{Binding EditCommand}" ToolTip.Tip="Edit">

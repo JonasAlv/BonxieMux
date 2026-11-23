@@ -199,15 +199,15 @@ public partial class WindowTitleBar : UserControl
 
     private void ApplyAccentForeground()
     {
-        string iconKey = UseAccentBackground ? "SkuaAccentForegroundBrush" : "SkuaAccentBrush";
+        string dockKey = UseAccentBackground ? "SkuaAccentForegroundBrush" : "SkuaAccentBrush";
         string titleKey = UseAccentBackground ? "SkuaAccentForegroundBrush" : "SkuaTextBrush";
-        var iconDyn = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(iconKey);
+        var dockDyn = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(dockKey);
         var titleDyn = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(titleKey);
         TitleTextBlock[!TextBlock.ForegroundProperty] = titleDyn;
-        MinimizeButton[!Button.ForegroundProperty] = iconDyn;
-        MaximizeButton[!Button.ForegroundProperty] = iconDyn;
-        CloseButton[!Button.ForegroundProperty] = iconDyn;
-        DockButton[!Button.ForegroundProperty] = iconDyn;
+        MinimizeButton[!Button.ForegroundProperty] = titleDyn;
+        MaximizeButton[!Button.ForegroundProperty] = titleDyn;
+        CloseButton[!Button.ForegroundProperty] = titleDyn;
+        DockButton[!Button.ForegroundProperty] = dockDyn;
     }
 
     private void ApplyArtworkPath(string? path)

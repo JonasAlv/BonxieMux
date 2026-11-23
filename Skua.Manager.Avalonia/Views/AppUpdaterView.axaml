@@ -11,13 +11,6 @@
              d:DesignWidth="600">
     <Grid Margin="16">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-            <materialIcons:MaterialIcon Kind="Update"
-                                        Width="100"
-                                        Height="100"
-                                        HorizontalAlignment="Center"
-                                        Foreground="{DynamicResource SkuaAccentBrush}"
-                                        Margin="0,0,0,24" />
-
             <TextBlock Text="BonxieMux Client Updater"
                        FontSize="26"
                        FontWeight="Light"

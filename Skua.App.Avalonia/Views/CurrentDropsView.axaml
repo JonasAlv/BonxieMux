@@ -37,17 +37,12 @@
              Padding="4">
       <ListBox.ItemTemplate>
         <DataTemplate>
-          <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8" MinHeight="24">
-            <materialIcons:MaterialIcon Grid.Column="0"
-                                        Kind="PackageVariantClosed"
-                                        Width="16" Height="16"
-                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
-                                        VerticalAlignment="Center" />
-            <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-            <Border Grid.Column="2" Classes="chip gold" IsVisible="{Binding Coins}">
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" MinHeight="24">
+            <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            <Border Grid.Column="1" Classes="chip gold" IsVisible="{Binding Coins}">
               <TextBlock Text="AC" />
             </Border>
-            <Border Grid.Column="3" Classes="count">
+            <Border Grid.Column="2" Classes="count">
               <TextBlock Text="{Binding Quantity, StringFormat='x{0}'}" />
             </Border>
           </Grid>

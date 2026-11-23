@@ -17,11 +17,7 @@
                     Classes.skua-danger="{Binding IsRunningQueue}"
                     Classes.skua-primary="{Binding !IsRunningQueue}"
                     Command="{Binding ToggleQueueCommand}">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="15" Height="15" IsVisible="{Binding !IsRunningQueue}" />
-                    <materialIcons:MaterialIcon Kind="StopCircleOutline" Width="15" Height="15" IsVisible="{Binding IsRunningQueue}" />
-                    <TextBlock Text="{Binding ToggleQueueText}" VerticalAlignment="Center" />
-                </StackPanel>
+                <TextBlock Text="{Binding ToggleQueueText}" VerticalAlignment="Center" />
             </Button>
             <TextBlock Grid.Column="1" Text="{Binding QueueSummary}" FontSize="11" Margin="4,0,0,0" VerticalAlignment="Center"
                        TextTrimming="CharacterEllipsis" Foreground="{DynamicResource SkuaMutedTextBrush}" />

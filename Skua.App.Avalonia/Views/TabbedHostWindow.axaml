@@ -255,10 +255,19 @@
                                     VerticalAlignment="Center"
                                     Margin="4,0,6,0"
                                     Spacing="2">
+                            <StackPanel.Styles>
+                                <Style Selector="Button.tab-strip-action:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.tab-strip-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                    <Setter Property="Background" Value="{DynamicResource SkuaAccentTintBrush}" />
+                                </Style>
+                                <Style Selector="Button.tab-strip-action:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.tab-strip-action:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.tab-strip-action:checked /template/ ContentPresenter#PART_ContentPresenter">
+                                    <Setter Property="Background" Value="{DynamicResource SkuaAccentTintStrongBrush}" />
+                                </Style>
+                            </StackPanel.Styles>
                             <Button x:Name="AddTabButton"
+                                    Classes="tab-strip-action"
                                     Click="AddTabButton_Click"
-                                    Width="22"
-                                    Height="22"
+                                    Width="24"
+                                    Height="24"
                                     VerticalAlignment="Center"
                                     Padding="0"
                                     Background="Transparent"
@@ -266,11 +275,12 @@
                                     CornerRadius="4"
                                     Cursor="Hand"
                                     ToolTip.Tip="Open New Client Tab">
-                                <materialIcons:MaterialIcon Kind="Plus" Width="14" Height="14" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <materialIcons:MaterialIcon Kind="Plus" Width="18" Height="18" Foreground="{DynamicResource SkuaAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Button>
                             <ToggleButton x:Name="AccountLaunchToggle"
-                                          Width="22"
-                                          Height="22"
+                                          Classes="tab-strip-action"
+                                          Width="24"
+                                          Height="24"
                                           VerticalAlignment="Center"
                                           Padding="0"
                                           Background="Transparent"
@@ -279,7 +289,7 @@
                                           Cursor="Hand"
                                           Click="AccountLaunchToggle_Click"
                                           ToolTip.Tip="Quick Account Launch (Ctrl+Shift+L)">
-                                <materialIcons:MaterialIcon Kind="ChevronDown" Width="12" Height="12" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <materialIcons:MaterialIcon Kind="ChevronDown" Width="18" Height="18" Foreground="{DynamicResource SkuaAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </ToggleButton>
                             <Popup x:Name="AccountQuickLaunchPopup"
                                    Placement="Bottom"
@@ -462,7 +472,6 @@
                     CornerRadius="6"
                     Padding="36,28">
                 <StackPanel Spacing="14" HorizontalAlignment="Center">
-                    <materialIcons:MaterialIcon Kind="DockWindow" Width="52" Height="52" Foreground="{DynamicResource SkuaAccentBrush}" HorizontalAlignment="Center" />
                     <TextBlock x:Name="DetachedTabNameText" Text="Account is in Window Mode" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource SkuaTextBrush}" HorizontalAlignment="Center" />
                     <TextBlock Text="This client is running as an independent floating window." FontSize="12" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" />
                     <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center" Margin="0,8,0,0">

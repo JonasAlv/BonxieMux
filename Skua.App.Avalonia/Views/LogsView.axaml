@@ -22,18 +22,22 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-            <Button Grid.Column="1" Classes="skua-button small w84" Click="CopyButton_Click" ToolTip.Tip="Copy the selected lines (or all)">
-  <TextBlock Text="Copy" VerticalAlignment="Center" />
-</Button>
-            <Button Grid.Column="2" Classes="skua-button small w84" Click="DeselectButton_Click" ToolTip.Tip="Clear the selected lines">
-  <TextBlock Text="Deselect" VerticalAlignment="Center" />
-</Button>
-            <Button Grid.Column="3" Classes="skua-button small w84" Command="{Binding SelectedTab.SaveLogCommand}" ToolTip.Tip="Save this log to a file">
-  <TextBlock Text="Save" VerticalAlignment="Center" />
-</Button>
-            <Button Grid.Column="4" Classes="skua-button small skua-danger-soft w84" Command="{Binding SelectedTab.ClearLogCommand}" ToolTip.Tip="Clear this log">
-  <TextBlock Text="Clear" VerticalAlignment="Center" />
-</Button>
+            <Button Grid.Column="1" Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
+                    Click="CopyButton_Click" ToolTip.Tip="Copy the selected lines (or all)">
+                <materialIcons:MaterialIcon Kind="ContentCopy" Width="14" Height="14" />
+            </Button>
+            <Button Grid.Column="2" Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
+                    Click="DeselectButton_Click" ToolTip.Tip="Clear the selected lines">
+                <materialIcons:MaterialIcon Kind="SelectionRemove" Width="14" Height="14" />
+            </Button>
+            <Button Grid.Column="3" Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
+                    Command="{Binding SelectedTab.SaveLogCommand}" ToolTip.Tip="Save this log to a file">
+                <materialIcons:MaterialIcon Kind="ContentSave" Width="14" Height="14" />
+            </Button>
+            <Button Grid.Column="4" Classes="skua-button small skua-danger-soft" Width="26" Padding="0" HorizontalContentAlignment="Center"
+                    Command="{Binding SelectedTab.ClearLogCommand}" ToolTip.Tip="Clear this log">
+                <materialIcons:MaterialIcon Kind="TrashCanOutline" Width="14" Height="14" />
+            </Button>
         </Grid>
 
         <ContentControl Grid.Row="1" x:Name="TabContent" Content="{Binding SelectedTab}" />

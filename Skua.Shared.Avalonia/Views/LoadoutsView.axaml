@@ -105,58 +105,51 @@
               CornerRadius="10">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <StackPanel>
-            <Grid Classes="slot" ColumnDefinitions="24,64,*,Auto">
-              <materialIcons:MaterialIcon Kind="ShieldAccountOutline" />
-              <TextBlock Grid.Column="1" Classes="slot-name" Text="Class" />
-              <TextBlock Grid.Column="2" Classes="slot-item" Text="{Binding SelectedLoadout.Class}" />
-              <Border Grid.Column="3" Classes="chip accent" IsVisible="{Binding SelectedLoadout.ClassEnhancement, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}">
+            <Grid Classes="slot" ColumnDefinitions="64,*,Auto">
+              <TextBlock Grid.Column="0" Classes="slot-name" Text="Class" />
+              <TextBlock Grid.Column="1" Classes="slot-item" Text="{Binding SelectedLoadout.Class}" />
+              <Border Grid.Column="2" Classes="chip accent" IsVisible="{Binding SelectedLoadout.ClassEnhancement, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}">
                 <TextBlock Text="{Binding SelectedLoadout.ClassEnhancement}" />
               </Border>
             </Grid>
             <Border Classes="slot-divider" />
-            <Grid Classes="slot" ColumnDefinitions="24,64,*,Auto">
-              <materialIcons:MaterialIcon Kind="TshirtCrewOutline" />
-              <TextBlock Grid.Column="1" Classes="slot-name" Text="Armor" />
-              <TextBlock Grid.Column="2" Classes="slot-item" Text="{Binding SelectedLoadout.Armor}" />
+            <Grid Classes="slot" ColumnDefinitions="64,*,Auto">
+              <TextBlock Grid.Column="0" Classes="slot-name" Text="Armor" />
+              <TextBlock Grid.Column="1" Classes="slot-item" Text="{Binding SelectedLoadout.Armor}" />
             </Grid>
             <Border Classes="slot-divider" />
-            <Grid Classes="slot" ColumnDefinitions="24,64,*,Auto">
-              <materialIcons:MaterialIcon Kind="Sword" />
-              <TextBlock Grid.Column="1" Classes="slot-name" Text="Weapon" />
-              <TextBlock Grid.Column="2" Classes="slot-item" Text="{Binding SelectedLoadout.Weapon}" />
-              <Border Grid.Column="3" Classes="chip accent" IsVisible="{Binding SelectedLoadout.WeaponEnhancement, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}">
+            <Grid Classes="slot" ColumnDefinitions="64,*,Auto">
+              <TextBlock Grid.Column="0" Classes="slot-name" Text="Weapon" />
+              <TextBlock Grid.Column="1" Classes="slot-item" Text="{Binding SelectedLoadout.Weapon}" />
+              <Border Grid.Column="2" Classes="chip accent" IsVisible="{Binding SelectedLoadout.WeaponEnhancement, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}">
                 <TextBlock Text="{Binding SelectedLoadout.WeaponEnhancement}" />
               </Border>
             </Grid>
             <Border Classes="slot-divider" />
-            <Grid Classes="slot" ColumnDefinitions="24,64,*,Auto">
-              <materialIcons:MaterialIcon Kind="HardHat" />
-              <TextBlock Grid.Column="1" Classes="slot-name" Text="Helm" />
-              <TextBlock Grid.Column="2" Classes="slot-item" Text="{Binding SelectedLoadout.Helm}" />
-              <Border Grid.Column="3" Classes="chip accent" IsVisible="{Binding SelectedLoadout.HelmEnhancement, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}">
+            <Grid Classes="slot" ColumnDefinitions="64,*,Auto">
+              <TextBlock Grid.Column="0" Classes="slot-name" Text="Helm" />
+              <TextBlock Grid.Column="1" Classes="slot-item" Text="{Binding SelectedLoadout.Helm}" />
+              <Border Grid.Column="2" Classes="chip accent" IsVisible="{Binding SelectedLoadout.HelmEnhancement, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}">
                 <TextBlock Text="{Binding SelectedLoadout.HelmEnhancement}" />
               </Border>
             </Grid>
             <Border Classes="slot-divider" />
-            <Grid Classes="slot" ColumnDefinitions="24,64,*,Auto">
-              <materialIcons:MaterialIcon Kind="FlagVariant" />
-              <TextBlock Grid.Column="1" Classes="slot-name" Text="Cape" />
-              <TextBlock Grid.Column="2" Classes="slot-item" Text="{Binding SelectedLoadout.Cape}" />
-              <Border Grid.Column="3" Classes="chip accent" IsVisible="{Binding SelectedLoadout.CapeEnhancement, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}">
+            <Grid Classes="slot" ColumnDefinitions="64,*,Auto">
+              <TextBlock Grid.Column="0" Classes="slot-name" Text="Cape" />
+              <TextBlock Grid.Column="1" Classes="slot-item" Text="{Binding SelectedLoadout.Cape}" />
+              <Border Grid.Column="2" Classes="chip accent" IsVisible="{Binding SelectedLoadout.CapeEnhancement, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}">
                 <TextBlock Text="{Binding SelectedLoadout.CapeEnhancement}" />
               </Border>
             </Grid>
             <Border Classes="slot-divider" />
-            <Grid Classes="slot" ColumnDefinitions="24,64,*,Auto">
-              <materialIcons:MaterialIcon Kind="Paw" />
-              <TextBlock Grid.Column="1" Classes="slot-name" Text="Pet" />
-              <TextBlock Grid.Column="2" Classes="slot-item" Text="{Binding SelectedLoadout.Pet}" />
+            <Grid Classes="slot" ColumnDefinitions="64,*,Auto">
+              <TextBlock Grid.Column="0" Classes="slot-name" Text="Pet" />
+              <TextBlock Grid.Column="1" Classes="slot-item" Text="{Binding SelectedLoadout.Pet}" />
             </Grid>
             <Border Classes="slot-divider" />
-            <Grid Classes="slot" ColumnDefinitions="24,64,*,Auto">
-              <materialIcons:MaterialIcon Kind="Necklace" />
-              <TextBlock Grid.Column="1" Classes="slot-name" Text="Amulet" />
-              <TextBlock Grid.Column="2" Classes="slot-item" Text="{Binding SelectedLoadout.Amulet}" />
+            <Grid Classes="slot" ColumnDefinitions="64,*,Auto">
+              <TextBlock Grid.Column="0" Classes="slot-name" Text="Amulet" />
+              <TextBlock Grid.Column="1" Classes="slot-item" Text="{Binding SelectedLoadout.Amulet}" />
             </Grid>
           </StackPanel>
         </ScrollViewer>

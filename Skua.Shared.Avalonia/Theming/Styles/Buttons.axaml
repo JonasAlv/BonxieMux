@@ -76,14 +76,14 @@
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
     </Style>
     <Style Selector="Button.icon-28">
         <Setter Property="Width" Value="32" />
         <Setter Property="Height" Value="32" />
     </Style>
     <Style Selector="Button.danger-icon TextBlock, Button.icon TextBlock">
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
     </Style>
     <Style Selector="Button.danger-icon /template/ ContentPresenter#PART_ContentPresenter, Button.icon /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="Transparent" />
@@ -93,12 +93,12 @@
     <Style Selector="Button.danger-icon:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
     <Style Selector="Button.danger-icon:pressed /template/ ContentPresenter#PART_ContentPresenter, Button.icon:pressed /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaPressedBrush}" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentPressedBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
     <Style Selector="Button.icon-muted">
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
@@ -310,7 +310,7 @@
         <Setter Property="CornerRadius" Value="0" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
     <Style Selector="Button.titlebar /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.titlebar /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="Transparent" />
@@ -322,7 +322,7 @@
     <Style Selector="Button.titlebar:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.titlebar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
         <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="TextBlock.Foreground" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
     <Style Selector="ToggleButton.titlebar:checked, ToggleButton.titlebar:checked:pointerover">
         <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />

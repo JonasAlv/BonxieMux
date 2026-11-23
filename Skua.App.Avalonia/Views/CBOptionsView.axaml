@@ -11,22 +11,24 @@
         <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
       </TextBox.InnerLeftContent>
     </TextBox>
-    <Border Grid.Row="1" Classes="option-list" VerticalAlignment="Top">
-      <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" AllowAutoHide="False">
-        <ItemsControl ItemsSource="{Binding FilteredOptions}" Margin="0,0,0,-1" VerticalAlignment="Top">
-        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-        <ItemsControl.Styles>
-          <Style Selector="ContentPresenter:nth-child(2n+1) > Border.option-row"><Setter Property="BorderThickness" Value="0,0,1,1" /></Style>
-        </ItemsControl.Styles>
-        <ItemsControl.ItemTemplate>
-          <DataTemplate>
-            <Border Classes="option-row" MinHeight="38" Padding="12,3">
-              <sharedOptions:OptionItemControl CompactText="True" />
-            </Border>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
+    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" AllowAutoHide="False">
+      <Border Background="{DynamicResource SkuaSurfaceBrush}"
+              BorderBrush="{DynamicResource SkuaBorderBrush}"
+              BorderThickness="1"
+              CornerRadius="8"
+              Padding="14,12"
+              VerticalAlignment="Top">
+        <ItemsControl ItemsSource="{Binding FilteredOptions}" VerticalAlignment="Top">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border MinHeight="34" Padding="6,2">
+                <sharedOptions:OptionItemControl CompactText="True" />
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
         </ItemsControl>
-      </ScrollViewer>
-    </Border>
+      </Border>
+    </ScrollViewer>
   </Grid>
 </UserControl>

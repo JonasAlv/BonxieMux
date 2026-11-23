@@ -6,27 +6,20 @@
              Background="{DynamicResource SkuaPageBrush}"
              x:Class="Skua.App.Avalonia.Views.CoreBotsView">
   <Grid Margin="12" RowDefinitions="Auto,Auto,*" RowSpacing="10">
-    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
-      <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16"
-              Background="{DynamicResource SkuaSurfaceAltBrush}"
-              BorderBrush="{DynamicResource SkuaBorderBrush}"
-              BorderThickness="1">
-        <materialIcons:MaterialIcon Kind="AccountCircleOutline" Width="18" Height="18"
-                                    Foreground="{DynamicResource SkuaAccentBrush}" />
-      </Border>
-      <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="2,0,0,0">
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
+      <StackPanel Grid.Column="0" VerticalAlignment="Center">
         <TextBlock Text="Account" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
         <ComboBox HorizontalAlignment="Stretch" MinWidth="180" ItemsSource="{Binding Accounts}" SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
                   ToolTip.Tip="Pick another open account: Load and Save use that account's CoreBots file. An account with no file yet starts from the values shown." />
       </StackPanel>
-      <Button Grid.Column="2" Classes="skua-button w84" Command="{Binding LoadCommand}" ToolTip.Tip="Load saved CoreBots settings">
+      <Button Grid.Column="1" Classes="skua-button w84" Command="{Binding LoadCommand}" ToolTip.Tip="Load saved CoreBots settings">
   <TextBlock Text="Load" VerticalAlignment="Center" />
 </Button>
-      <Button Grid.Column="3" Classes="skua-button w140" Command="{Binding LoadCharacterCommand}"
+      <Button Grid.Column="2" Classes="skua-button w140" Command="{Binding LoadCharacterCommand}"
               ToolTip.Tip="Load in-game character equipment and classes">
   <TextBlock Text="Load character" VerticalAlignment="Center" />
 </Button>
-      <Button Grid.Column="4" Classes="skua-button skua-primary w84" Command="{Binding SaveCommand}" ToolTip.Tip="Save current CoreBots options">
+      <Button Grid.Column="3" Classes="skua-button skua-primary w84" Command="{Binding SaveCommand}" ToolTip.Tip="Save current CoreBots options">
   <TextBlock Text="Save" VerticalAlignment="Center" />
 </Button>
     </Grid>

@@ -23,7 +23,7 @@
     </Style>
     
     <Style Selector="TextBlock.titlebar-title">
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
         <Setter Property="FontSize" Value="14" />
     </Style>
     

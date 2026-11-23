@@ -18,7 +18,6 @@
                 HorizontalAlignment="Stretch">
         <Expander.Header>
           <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-            <materialIcons:MaterialIcon Kind="ShieldCrownOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaAccentBrush}" VerticalAlignment="Center" />
             <TextBlock Text="Detailed Equipment Slots"
                        FontWeight="Bold"
                        FontSize="12"

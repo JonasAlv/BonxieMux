@@ -42,24 +42,16 @@
                     Padding="14,12">
               <StackPanel Spacing="10">
                 
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" VerticalAlignment="Center">
-                  <materialIcons:MaterialIcon Grid.Column="0"
-                                              Kind="{Binding Icon}"
-                                              Width="20"
-                                              Height="20"
-                                              Foreground="{DynamicResource SkuaTextBrush}"
-                                              VerticalAlignment="Center" />
-                  <StackPanel Grid.Column="1" Spacing="1">
-                    <TextBlock Text="{Binding Title}"
-                               FontWeight="Bold"
-                               FontSize="14"
-                               Foreground="{DynamicResource SkuaTextBrush}" />
-                    <TextBlock Text="{Binding Description}"
-                               FontSize="11"
-                               Foreground="{DynamicResource SkuaMutedTextBrush}"
-                               TextWrapping="Wrap" />
-                  </StackPanel>
-                </Grid>
+                <StackPanel Spacing="1">
+                  <TextBlock Text="{Binding Title}"
+                             FontWeight="Bold"
+                             FontSize="14"
+                             Foreground="{DynamicResource SkuaTextBrush}" />
+                  <TextBlock Text="{Binding Description}"
+                             FontSize="11"
+                             Foreground="{DynamicResource SkuaMutedTextBrush}"
+                             TextWrapping="Wrap" />
+                </StackPanel>
 
                 <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" Margin="0,2,0,4" />
 

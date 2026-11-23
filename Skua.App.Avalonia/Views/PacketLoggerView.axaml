@@ -68,11 +68,7 @@
                             Height="32"
                             Padding="10,0"
                             Command="{Binding ToggleLoggingCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="14" Height="14" IsVisible="{Binding !IsReceivingPackets}" />
-                            <materialIcons:MaterialIcon Kind="StopCircleOutline" Width="14" Height="14" IsVisible="{Binding IsReceivingPackets}" />
-                            <TextBlock Text="{Binding StartStopText}" FontWeight="SemiBold" VerticalAlignment="Center" />
-                        </StackPanel>
+                        <TextBlock Text="{Binding StartStopText}" FontWeight="SemiBold" VerticalAlignment="Center" />
                     </Button>
 
                     <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="1"
@@ -150,11 +146,7 @@
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
                             Command="{Binding ToggleLoggingCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                            <materialIcons:MaterialIcon Kind="PlayCircleOutline" Width="16" Height="16" IsVisible="{Binding !IsReceivingPackets}" />
-                            <materialIcons:MaterialIcon Kind="StopCircleOutline" Width="16" Height="16" IsVisible="{Binding IsReceivingPackets}" />
-                            <TextBlock Text="{Binding StartStopText}" FontWeight="SemiBold" VerticalAlignment="Center" />
-                        </StackPanel>
+                        <TextBlock Text="{Binding StartStopText}" FontWeight="SemiBold" VerticalAlignment="Center" />
                     </Button>
                     <CheckBox Content="Log To File"
                               IsChecked="{Binding LogToFile}"
