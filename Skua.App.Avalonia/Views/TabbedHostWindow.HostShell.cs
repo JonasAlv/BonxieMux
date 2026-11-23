@@ -504,6 +504,13 @@ public partial class TabbedHostWindow : Window
             targetW = Math.Max(1.0, Math.Min(width, canvasW - left));
             targetH = Math.Max(1.0, Math.Min(height, canvasH - top));
         }
+        else if (_stretchGame)
+        {
+            left = 0.0;
+            top = 0.0;
+            targetW = canvasW;
+            targetH = canvasH;
+        }
         else if (_gameSize is null)
         {
             const double aspect = 960.0 / 550.0;
@@ -546,6 +553,7 @@ public partial class TabbedHostWindow : Window
 
         Canvas.SetLeft(viewport, left);
         Canvas.SetTop(viewport, top);
+        viewport.StretchToFill = _stretchGame && !_isGridViewEnabled;
         viewport.Width = targetW;
         viewport.Height = targetH;
         viewport.IsVisible = !isHeadless;

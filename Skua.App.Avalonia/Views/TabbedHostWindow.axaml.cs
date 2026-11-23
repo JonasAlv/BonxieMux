@@ -303,7 +303,7 @@ public partial class TabbedHostWindow : Window
 
         _gridLayout = NormalGridLayout(Ioc.Default.GetService<ISettingsService>()?.Get("BonxieMuxGridLayout", "auto"));
         UpdateGridLayoutButton();
-        _gameSize = ParseGameSize(Ioc.Default.GetService<ISettingsService>()?.Get("BonxieMuxGameSize", "auto"));
+        LoadGameSizeSetting(Ioc.Default.GetService<ISettingsService>()?.Get("BonxieMuxGameSize", "auto"));
         UpdateGameSizeButton();
         GridViewBorder.PointerEntered += GridViewBorder_PointerEntered;
         GridViewBorder.PointerExited += GridViewBorder_PointerExited;

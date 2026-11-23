@@ -130,16 +130,27 @@ public partial class TabbedHostWindow
         }
     }
 
-    private static readonly (int W, int H)[] GameSizes = { (640, 367), (960, 550), (1257, 720), (1571, 900), (1885, 1080) };
+    private static readonly (int W, int H)[] GameSizes = { (480, 275) };
     private (int W, int H)? _gameSize;
+    private bool _stretchGame;
 
-    private static (int W, int H)? ParseGameSize(string? value)
+    private void LoadGameSizeSetting(string? value)
     {
-        string[] parts = (value ?? "").Split('x');
-        if (parts.Length == 2 && int.TryParse(parts[0], out int w) && int.TryParse(parts[1], out int h)
-            && w is >= 320 and <= 7680 && h is >= 180 and <= 4320)
-            return (w, h);
-        return null;
+        if (string.Equals(value, "stretch", StringComparison.OrdinalIgnoreCase))
+        {
+            _stretchGame = true;
+            _gameSize = null;
+        }
+        else if (string.Equals(value, "480x275", StringComparison.OrdinalIgnoreCase))
+        {
+            _stretchGame = false;
+            _gameSize = (480, 275);
+        }
+        else
+        {
+            _stretchGame = false;
+            _gameSize = null;
+        }
     }
 
     private static (int X, int Y, int W, int H) FitGameSize(int x, int y, int w, int h, (int W, int H)? size)
@@ -153,16 +164,34 @@ public partial class TabbedHostWindow
 
     private void UpdateGameSizeButton()
     {
-        ToolTip.SetTip(GameSizeBorder, _gameSize is { } t
-            ? $"Game size: {t.W} x {t.H}. Click for the next size."
-            : "Game size: fills the window. Click to play at a fixed size (centred, never larger than the window).");
+        string tip = _stretchGame
+            ? "Game size: Stretch (fills full window). Click for 0.5x (480 x 275)."
+            : _gameSize is { } t
+                ? $"Game size: 0.5x ({t.W} x {t.H}). Click for Default mode."
+                : "Game size: Default (960:550 fit). Click for Stretch mode.";
+        ToolTip.SetTip(GameSizeBorder, tip);
     }
 
     private void GameSizeBorder_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        int next = _gameSize is { } s ? Array.IndexOf(GameSizes, s) + 1 : 0;
-        _gameSize = next < GameSizes.Length ? GameSizes[next] : null;
-        Ioc.Default.GetService<ISettingsService>()?.Set("BonxieMuxGameSize", _gameSize is { } g ? $"{g.W}x{g.H}" : "auto");
+        if (!_stretchGame && _gameSize is null)
+        {
+            _stretchGame = true;
+            _gameSize = null;
+        }
+        else if (_stretchGame)
+        {
+            _stretchGame = false;
+            _gameSize = GameSizes[0];
+        }
+        else
+        {
+            _stretchGame = false;
+            _gameSize = null;
+        }
+
+        string mode = _stretchGame ? "stretch" : _gameSize is { } g ? $"{g.W}x{g.H}" : "auto";
+        Ioc.Default.GetService<ISettingsService>()?.Set("BonxieMuxGameSize", mode);
         UpdateGameSizeButton();
         _lastX = int.MinValue;
         DoReposition();

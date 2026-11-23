@@ -665,11 +665,11 @@ public class GameHost : Control, ICustomHitTest
         if (_flash is null && _remoteChildPid <= 0 && _waylandHost == IntPtr.Zero)
             return;
         double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
-        Point p = e.GetPosition(this);
+        (double x, double y) = MapPointerPosition(e.GetPosition(this), scale);
         if (_waylandHost != IntPtr.Zero)
-            BonxieWaylandNative.PointerMotion(_waylandHost, p.X * scale, p.Y * scale);
+            BonxieWaylandNative.PointerMotion(_waylandHost, x, y);
         else
-            DispatchInput(new { input = "mouse_move", x = p.X * scale, y = p.Y * scale });
+            DispatchInput(new { input = "mouse_move", x, y });
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
@@ -682,13 +682,13 @@ public class GameHost : Control, ICustomHitTest
             return;
 
         double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
-        Point p = e.GetPosition(this);
+        (double x, double y) = MapPointerPosition(e.GetPosition(this), scale);
         PointerUpdateKind kind = e.GetCurrentPoint(this).Properties.PointerUpdateKind;
 
         if (_waylandHost != IntPtr.Zero)
         {
             UpdateRefreshRateForWindow();
-            BonxieWaylandNative.PointerMotion(_waylandHost, p.X * scale, p.Y * scale);
+            BonxieWaylandNative.PointerMotion(_waylandHost, x, y);
             uint wlBtn = kind switch
             {
                 PointerUpdateKind.RightButtonPressed => BtnRight,
@@ -699,7 +699,7 @@ public class GameHost : Control, ICustomHitTest
             return;
         }
 
-        DispatchInput(new { input = "mouse_move", x = p.X * scale, y = p.Y * scale });
+        DispatchInput(new { input = "mouse_move", x, y });
         string button = kind switch
         {
             PointerUpdateKind.RightButtonPressed => "right",
@@ -775,13 +775,57 @@ public class GameHost : Control, ICustomHitTest
         base.Render(context);
     }
 
+    private bool _stretchToFill;
+
+    public bool StretchToFill
+    {
+        get => _stretchToFill;
+        set
+        {
+            if (_stretchToFill == value)
+                return;
+            _stretchToFill = value;
+            if (_glViewport is WaylandDmabufViewport dmaVp)
+                dmaVp.StretchToFill = value;
+            SendResizeIfNeeded();
+        }
+    }
+
+    private (double X, double Y) MapPointerPosition(Point p, double scale)
+    {
+        if (_stretchToFill && _lastSentWidth > 0 && _lastSentHeight > 0 && Bounds.Width > 0 && Bounds.Height > 0)
+            return (p.X / Bounds.Width * _lastSentWidth, p.Y / Bounds.Height * _lastSentHeight);
+        return (p.X * scale, p.Y * scale);
+    }
+
     private void SendResizeIfNeeded()
     {
         if ((_flash is null && _remoteChildPid <= 0 && _waylandHost == IntPtr.Zero) || !IsVisible)
             return;
         double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
-        int w = Math.Max(1, (int)Math.Round(Bounds.Width * scale));
-        int h = Math.Max(1, (int)Math.Round(Bounds.Height * scale));
+        double rw = Bounds.Width * scale;
+        double rh = Bounds.Height * scale;
+        int w;
+        int h;
+        if (_stretchToFill && rw > 2 && rh > 2)
+        {
+            const double aspect = 960.0 / 550.0;
+            if (rw / rh > aspect)
+            {
+                h = Math.Max(2, (int)Math.Round(rh));
+                w = Math.Max(2, (int)Math.Round(rh * aspect));
+            }
+            else
+            {
+                w = Math.Max(2, (int)Math.Round(rw));
+                h = Math.Max(2, (int)Math.Round(rw / aspect));
+            }
+        }
+        else
+        {
+            w = Math.Max(1, (int)Math.Round(rw));
+            h = Math.Max(1, (int)Math.Round(rh));
+        }
         if (w <= 2 || h <= 2)
             return;
         if (w == _lastSentWidth && h == _lastSentHeight)

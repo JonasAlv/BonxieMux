@@ -170,6 +170,8 @@ internal sealed class DmabufSkiaRenderer
     private ulong _lastNotifiedPresentedSeq;
     private bool _disposed;
 
+    public bool StretchToFill { get; set; }
+
     public DmabufSkiaRenderer(
         IntPtr waylandHost,
         Action<ulong> onPresentedFrame,
@@ -274,15 +276,25 @@ internal sealed class DmabufSkiaRenderer
                 float scaleY = MathF.Sqrt(m.ScaleY * m.ScaleY + m.SkewX * m.SkewX);
                 if (scaleX < 0.01f) scaleX = 1f;
                 if (scaleY < 0.01f) scaleY = 1f;
-                float physW = (float)size.Width * scaleX;
-                float physH = (float)size.Height * scaleY;
-                float srcW = Math.Clamp(physW, 1f, _activeEntry.Width);
-                float srcH = Math.Clamp(physH, 1f, _activeEntry.Height);
-                SKRect srcRect = new(0f, 0f, srcW, srcH);
-                SKSamplingOptions sampling = (MathF.Abs(srcW - physW) < 0.5f && MathF.Abs(srcH - physH) < 0.5f &&
-                    MathF.Abs(srcW - MathF.Round(srcW)) < 0.01f && MathF.Abs(srcH - MathF.Round(srcH)) < 0.01f)
-                    ? NearestSampling
-                    : LinearSampling;
+                SKRect srcRect;
+                SKSamplingOptions sampling;
+                if (StretchToFill)
+                {
+                    srcRect = new(0f, 0f, _activeEntry.Width, _activeEntry.Height);
+                    sampling = LinearSampling;
+                }
+                else
+                {
+                    float physW = (float)size.Width * scaleX;
+                    float physH = (float)size.Height * scaleY;
+                    float srcW = Math.Clamp(physW, 1f, _activeEntry.Width);
+                    float srcH = Math.Clamp(physH, 1f, _activeEntry.Height);
+                    srcRect = new(0f, 0f, srcW, srcH);
+                    sampling = (MathF.Abs(srcW - physW) < 0.5f && MathF.Abs(srcH - physH) < 0.5f &&
+                        MathF.Abs(srcW - MathF.Round(srcW)) < 0.01f && MathF.Abs(srcH - MathF.Round(srcH)) < 0.01f)
+                        ? NearestSampling
+                        : LinearSampling;
+                }
                 canvas.DrawImage(_activeEntry.Image, srcRect, dstRect, sampling, _opaquePaint);
 
                 if (acquiredSeq != 0)
@@ -486,6 +498,19 @@ internal sealed unsafe class WaylandDmabufViewport : Control
         _scheduleWakeAction = ScheduleWake;
         _renderer = new DmabufSkiaRenderer(waylandHost, onPresentedFrame, _scheduleWakeAction);
         IsHitTestVisible = false;
+    }
+
+    public bool StretchToFill
+    {
+        get => _renderer.StretchToFill;
+        set
+        {
+            if (_renderer.StretchToFill != value)
+            {
+                _renderer.StretchToFill = value;
+                InvalidateVisual();
+            }
+        }
     }
 
     public bool HasPendingFrame() => _renderer.HasPendingFrame();
