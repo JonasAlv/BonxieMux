@@ -130,7 +130,7 @@ public partial class TabbedHostWindow
         }
     }
 
-    private static readonly (int W, int H)[] GameSizes = { (480, 275), (960, 550), (1885, 1080) };
+    private static readonly (int W, int H)[] GameSizes = { (640, 367), (960, 550), (1257, 720), (1571, 900), (1885, 1080) };
     private (int W, int H)? _gameSize;
 
     private static (int W, int H)? ParseGameSize(string? value)
@@ -153,21 +153,9 @@ public partial class TabbedHostWindow
 
     private void UpdateGameSizeButton()
     {
-        if (_gameSize is { } t)
-        {
-            string scale = t.W switch
-            {
-                480 => "0.5x",
-                960 => "1x",
-                1885 => "1.96x (1080p)",
-                _ => $"{t.W / 960.0:0.##}x"
-            };
-            ToolTip.SetTip(GameSizeBorder, $"Game size: {scale} ({t.W} x {t.H}). Click for the next size.");
-        }
-        else
-        {
-            ToolTip.SetTip(GameSizeBorder, "Game size: Auto (fills window). Click to play at a fixed size (0.5x, 1x, 1080p).");
-        }
+        ToolTip.SetTip(GameSizeBorder, _gameSize is { } t
+            ? $"Game size: {t.W} x {t.H}. Click for the next size."
+            : "Game size: fills the window. Click to play at a fixed size (centred, never larger than the window).");
     }
 
     private void GameSizeBorder_PointerPressed(object? sender, PointerPressedEventArgs e)
