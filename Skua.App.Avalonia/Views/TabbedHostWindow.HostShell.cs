@@ -497,6 +497,8 @@ public partial class TabbedHostWindow : Window
         double targetW;
         double targetH;
 
+        bool stretch = (_stretchGame || _gameOnly) && !_isGridViewEnabled;
+
         if (_isGridViewEnabled)
         {
             left = Math.Max(0.0, x - hostX);
@@ -504,7 +506,7 @@ public partial class TabbedHostWindow : Window
             targetW = Math.Max(1.0, Math.Min(width, canvasW - left));
             targetH = Math.Max(1.0, Math.Min(height, canvasH - top));
         }
-        else if (_stretchGame)
+        else if (stretch)
         {
             left = 0.0;
             top = 0.0;
@@ -553,7 +555,7 @@ public partial class TabbedHostWindow : Window
 
         Canvas.SetLeft(viewport, left);
         Canvas.SetTop(viewport, top);
-        viewport.StretchToFill = _stretchGame && !_isGridViewEnabled;
+        viewport.StretchToFill = stretch;
         viewport.Width = targetW;
         viewport.Height = targetH;
         viewport.IsVisible = !isHeadless;
