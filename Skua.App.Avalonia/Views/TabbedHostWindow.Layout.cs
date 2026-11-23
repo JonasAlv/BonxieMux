@@ -130,7 +130,7 @@ public partial class TabbedHostWindow
         }
     }
 
-    private static readonly (int W, int H)[] GameSizes = { (480, 275), (960, 550), (1920, 1100), (2880, 1650) };
+    private static readonly (int W, int H)[] GameSizes = { (480, 275), (960, 550), (1885, 1080) };
     private (int W, int H)? _gameSize;
 
     private static (int W, int H)? ParseGameSize(string? value)
@@ -159,15 +159,14 @@ public partial class TabbedHostWindow
             {
                 480 => "0.5x",
                 960 => "1x",
-                1920 => "2x",
-                2880 => "3x",
+                1885 => "1.96x (1080p)",
                 _ => $"{t.W / 960.0:0.##}x"
             };
             ToolTip.SetTip(GameSizeBorder, $"Game size: {scale} ({t.W} x {t.H}). Click for the next size.");
         }
         else
         {
-            ToolTip.SetTip(GameSizeBorder, "Game size: Auto (fills window). Click to play at a fixed size (0.5x, 1x, 2x, 3x).");
+            ToolTip.SetTip(GameSizeBorder, "Game size: Auto (fills window). Click to play at a fixed size (0.5x, 1x, 1080p).");
         }
     }
 
