@@ -28,7 +28,7 @@ public static class AppImageDesktopIntegration
 
             appImagePath = Path.GetFullPath(appImagePath);
 
-            string desktopFileName;
+            string legacyDesktopFileName;
             string name;
             string genericName;
             string comment;
@@ -39,7 +39,7 @@ public static class AppImageDesktopIntegration
             switch (identity)
             {
                 case AppIdentity.Manager:
-                    desktopFileName = "bonxiemux-manager.desktop";
+                    legacyDesktopFileName = "bonxiemux-manager.desktop";
                     name = "BonxieMux Manager";
                     genericName = "BonxieMux Account & Script Manager";
                     comment = "Account manager, script updater, and launcher for BonxieMux";
@@ -50,7 +50,7 @@ public static class AppImageDesktopIntegration
 
                 case AppIdentity.BonxieMux:
                 default:
-                    desktopFileName = "bonxiemux.desktop";
+                    legacyDesktopFileName = "bonxiemux.desktop";
                     name = "BonxieMux";
                     genericName = "AQW Bot & Game Client";
                     comment = "Linux AQW client with advanced scripting and multi-account tabs";
@@ -63,9 +63,21 @@ public static class AppImageDesktopIntegration
             string xdgDataHome = Environment.GetEnvironmentVariable("XDG_DATA_HOME") ??
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share");
             string appsDir = Path.Combine(xdgDataHome, "applications");
-            string desktopFilePath = Path.Combine(appsDir, desktopFileName);
-            string wmDesktopFilePath = Path.Combine(appsDir, $"{wmClass}.desktop");
+            string desktopFilePath = Path.Combine(appsDir, $"{wmClass}.desktop");
+            string legacyDesktopFilePath = Path.Combine(appsDir, legacyDesktopFileName);
             string iconsBase = Path.Combine(xdgDataHome, "icons", "hicolor");
+
+            bool removedLegacy = false;
+            if (!string.Equals(desktopFilePath, legacyDesktopFilePath, StringComparison.Ordinal) &&
+                File.Exists(legacyDesktopFilePath))
+            {
+                try
+                {
+                    File.Delete(legacyDesktopFilePath);
+                    removedLegacy = true;
+                }
+                catch { }
+            }
 
             string currentVersion = ClientFileSources.AssemblyVersion;
             bool needsUpdate = false;
@@ -73,7 +85,7 @@ public static class AppImageDesktopIntegration
             string dest256 = Path.Combine(iconsBase, "256x256", "apps", $"{iconName}.png");
             string dest256Wm = Path.Combine(iconsBase, "256x256", "apps", $"{wmClass}.png");
 
-            if (!File.Exists(desktopFilePath) || !File.Exists(wmDesktopFilePath) || !File.Exists(dest256) || !File.Exists(dest256Wm))
+            if (!File.Exists(desktopFilePath) || !File.Exists(dest256) || !File.Exists(dest256Wm))
             {
                 needsUpdate = true;
             }
@@ -114,7 +126,11 @@ public static class AppImageDesktopIntegration
             }
 
             if (!needsUpdate)
+            {
+                if (removedLegacy)
+                    NotifyDesktopDatabase(appsDir, iconsBase);
                 return;
+            }
 
             bool copiedAnyIcon = false;
             string? appDir = Environment.GetEnvironmentVariable("APPDIR");
@@ -212,12 +228,6 @@ public static class AppImageDesktopIntegration
                 ClientFileSources.RestrictFilePermissions(tempFile);
                 File.Move(tempFile, desktopFilePath, overwrite: true);
                 ClientFileSources.RestrictFilePermissions(desktopFilePath);
-
-                if (!string.Equals(desktopFilePath, wmDesktopFilePath, StringComparison.Ordinal))
-                {
-                    File.Copy(desktopFilePath, wmDesktopFilePath, overwrite: true);
-                    ClientFileSources.RestrictFilePermissions(wmDesktopFilePath);
-                }
             }
             finally
             {
