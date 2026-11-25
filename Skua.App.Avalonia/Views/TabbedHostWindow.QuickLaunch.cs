@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Skua.Core.Interfaces;
 using Skua.Core.Models;
+using Skua.Shared.Avalonia.Controls.Shell;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -34,12 +35,51 @@ public partial class TabbedHostWindow
     {
         Dispatcher.UIThread.Post(() =>
         {
-            if (AccountLaunchToggle == null || AccountQuickLaunchPopup == null)
-                return;
+            try
+            {
+                if (QuickPickWindow.DismissActive())
+                    return;
 
-            AccountLaunchToggle.IsChecked = true;
-            RefreshQuickLaunchPopup();
-            Dispatcher.UIThread.Post(() => AccountQuickLaunchSearch?.Focus(), DispatcherPriority.Input);
+                RefreshQuickLaunchPopup();
+                var items = new List<QuickPickItem>();
+
+                foreach (KeyValuePair<TabItem, TabInfo> kvp in _tabs)
+                {
+                    TabItem tab = kvp.Key;
+                    string title = GetTabTitle(tab);
+                    if (string.IsNullOrWhiteSpace(title))
+                        title = $"Tab {kvp.Value.Process?.Id}";
+                    items.Add(new QuickPickItem("Tab", title, "Switch", () =>
+                    {
+                        if (InstancesTabControl != null)
+                            InstancesTabControl.SelectedItem = tab;
+                        Activate();
+                    }));
+                }
+
+                foreach (GroupData g in _quickLaunchGroups)
+                {
+                    GroupData group = g;
+                    items.Add(new QuickPickItem("Group", group.Name, $"{group.Accounts.Count} accounts", () =>
+                        LaunchQuickAccounts(group.Accounts, inNewWindow: false)));
+                }
+
+                foreach (QuickLaunchAccountEntry a in _quickLaunchAccounts)
+                {
+                    QuickLaunchAccountEntry acct = a;
+                    string title = string.IsNullOrWhiteSpace(acct.DisplayName)
+                        || string.Equals(acct.DisplayName, acct.Username, StringComparison.OrdinalIgnoreCase)
+                        ? acct.Username
+                        : $"{acct.DisplayName} ({acct.Username})";
+                    string detail = IsAccountOpenInCurrentHost(acct.Username) ? "Open" : acct.Server;
+                    items.Add(new QuickPickItem("Account", title, detail, () =>
+                        LaunchQuickAccounts([acct.Username], inNewWindow: false)));
+                }
+
+                var picker = new QuickPickWindow(items, "Quick Launch", "Search tabs, accounts, or groups…");
+                picker.ShowModeless(this);
+            }
+            catch { }
         });
     }
 

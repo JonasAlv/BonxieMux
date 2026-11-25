@@ -11,6 +11,7 @@ using Skua.Core.Interfaces.ViewModels;
 using Skua.Core.Models;
 using Skua.Shared.Avalonia.Controls.Options;
 using Skua.Shared.Avalonia.Controls.Shell;
+using Skua.Shared.Avalonia.Theming;
 using Skua.Shared.Avalonia.ViewModels.Dialogs;
 using Skua.Shared.Avalonia.ViewModels.Options;
 using System;
@@ -65,6 +66,11 @@ public abstract class DialogServiceBase : IDialogService
             Dispatcher.UIThread.Invoke(() => ShowMessageBox(message, caption));
             return;
         }
+        if (message.Length <= 180 && !message.Contains('\n') && ToastHost.Current is { } toasts)
+        {
+            toasts.Push(string.IsNullOrWhiteSpace(caption) ? message : $"{caption}: {message}");
+            return;
+        }
         _ = ShowButtonsDialog(caption, message, ["OK"]);
     }
 
@@ -113,8 +119,8 @@ public abstract class DialogServiceBase : IDialogService
 
     private static bool? ShowInputDialog(InputDialogViewModel vm, string title)
     {
-        Window dialog = CreateBaseDialog(title);
-        TextBox input = new() { Text = vm.DialogTextInput, Watermark = vm.TextBoxHint };
+        ModalDialogWindow dialog = CreateModalDialog(title);
+        TextBox input = new() { Text = vm.DialogTextInput, PlaceholderText = vm.TextBoxHint };
         if (vm.NumberOnly)
         {
             input.TextChanged += (_, _) =>
@@ -130,40 +136,25 @@ public abstract class DialogServiceBase : IDialogService
         }
 
         bool? result = null;
-        Button ok = new() { Content = "OK", MinWidth = 84, Classes = { "skua-button", "skua-primary" }, IsDefault = true };
-        Button cancel = new() { Content = "Cancel", MinWidth = 84, Classes = { "skua-button" }, IsCancel = true };
-
-        ok.Click += (_, _) =>
+        dialog.AddButton("Cancel", () => { result = false; dialog.Close(); }, isCancel: true);
+        dialog.AddButton("OK", () =>
         {
             vm.DialogTextInput = input.Text ?? string.Empty;
             result = true;
             dialog.Close();
-        };
-        cancel.Click += (_, _) =>
-        {
-            result = false;
-            dialog.Close();
-        };
+        }, isPrimary: true, isDefault: true);
 
         StackPanel content = new()
         {
-            Margin = new Thickness(16),
-            Spacing = 12,
+            Spacing = UiTokens.GetDouble(UiTokens.UiGapLg, 12),
             Children =
             {
-                new TextBlock { Text = vm.DialogHint, TextWrapping = TextWrapping.Wrap, FontSize = 13 },
-                input,
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Spacing = 8,
-                    Children = { cancel, ok }
-                }
+                ModalDialogWindow.CreateBodyText(vm.DialogHint),
+                input
             }
         };
 
-        dialog.Content = WrapWithShell(title, content);
+        dialog.SetBody(content);
         Show(dialog);
         return result;
     }
@@ -171,9 +162,8 @@ public abstract class DialogServiceBase : IDialogService
     private bool? ShowOptionContainerDialog(OptionContainerViewModel vm, string title)
     {
         string resolvedTitle = ResolveOptionContainerTitle(title);
-        Window dialog = CreateBaseDialog(resolvedTitle);
+        ModalDialogWindow dialog = CreateModalDialog(resolvedTitle, 560);
         dialog.SizeToContent = SizeToContent.Manual;
-        dialog.Width = 560;
         dialog.MinWidth = 460;
         dialog.MinHeight = 420;
         dialog.CanResize = true;
@@ -191,45 +181,15 @@ public abstract class DialogServiceBase : IDialogService
 
         OptionContainerUserControl content = new() { DataContext = vm };
 
-        Button saveBtn = new() { Content = "Save", MinWidth = 84, Classes = { "skua-button", "skua-primary" }, IsDefault = true };
-        Button cancelBtn = new() { Content = "Cancel", MinWidth = 84, Classes = { "skua-button" }, IsCancel = true };
         Button resetBtn = new() { Content = "Reset Defaults", Classes = { "skua-button" } };
+        resetBtn.Click += (_, _) => vm.ResetAllToDefaults();
+        dialog.SetLeftFooter(resetBtn);
 
         bool? result = null;
-        saveBtn.Click += (_, _) => { result = true; dialog.Close(); };
-        cancelBtn.Click += (_, _) => { result = false; dialog.Close(); };
-        resetBtn.Click += (_, _) => vm.ResetAllToDefaults();
+        dialog.AddButton("Cancel", () => { result = false; dialog.Close(); }, isCancel: true);
+        dialog.AddButton("Save", () => { result = true; dialog.Close(); }, isPrimary: true, isDefault: true);
 
-        Grid rootLayout = new();
-        rootLayout.RowDefinitions.Add(new RowDefinition(GridLength.Star));
-        rootLayout.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-
-        Grid.SetRow(content, 0);
-        rootLayout.Children.Add(content);
-
-        Grid buttonPanel = new()
-        {
-            Margin = new Thickness(12, 0, 12, 12),
-            ColumnDefinitions = new ColumnDefinitions("Auto,*")
-        };
-
-        buttonPanel.Children.Add(resetBtn);
-        Grid.SetColumn(resetBtn, 0);
-
-        StackPanel actionButtons = new()
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = 8,
-            Children = { cancelBtn, saveBtn }
-        };
-        buttonPanel.Children.Add(actionButtons);
-        Grid.SetColumn(actionButtons, 1);
-
-        Grid.SetRow(buttonPanel, 1);
-        rootLayout.Children.Add(buttonPanel);
-
-        dialog.Content = WrapWithShell(resolvedTitle, rootLayout);
+        dialog.SetBody(content, new Thickness(0));
         Show(dialog);
         return result;
     }
@@ -257,8 +217,8 @@ public abstract class DialogServiceBase : IDialogService
 
     protected static string ShowButtonsDialog(string title, string message, string[] buttons)
     {
-        Window dialog = CreateBaseDialog(title);
-        dialog.Width = (message.Length > 200 || message.Contains('\n')) ? 560 : 460;
+        double width = (message.Length > 200 || message.Contains('\n')) ? 560 : 460;
+        ModalDialogWindow dialog = CreateModalDialog(title, width);
         dialog.SizeToContent = SizeToContent.Manual;
         dialog.CanResize = true;
 
@@ -273,9 +233,9 @@ public abstract class DialogServiceBase : IDialogService
         {
             Text = message,
             TextWrapping = TextWrapping.Wrap,
-            FontSize = 13,
             LineHeight = 20
         };
+        UiTokens.Bind(label, SelectableTextBlock.FontSizeProperty, UiTokens.UiFontBody);
         label.Measure(new Size(dialog.Width - 34, double.PositiveInfinity));
         dialog.Height = Math.Min(maxScreenHeight, Math.Max(dialog.MinHeight, label.DesiredSize.Height + 112));
 
@@ -295,70 +255,24 @@ public abstract class DialogServiceBase : IDialogService
                 copyButton.Content = "Copied!";
             }
         };
-
-        StackPanel buttonPanel = new()
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = 8
-        };
+        dialog.SetLeftFooter(copyButton);
 
         string clicked = string.Empty;
         foreach (string text in buttons)
         {
-            Button button = new() { Content = text, MinWidth = 84, Classes = { "skua-button" } };
-            if (text == "OK" || text == "Yes")
-            {
-                button.Classes.Add("skua-primary");
-                button.IsDefault = true;
-            }
-            else if (text == "Cancel" || text == "No")
-            {
-                button.IsCancel = true;
-            }
-
-            button.Click += (_, _) => { clicked = text; dialog.Close(); };
-            buttonPanel.Children.Add(button);
+            bool isPrimary = text == "OK" || text == "Yes";
+            bool isCancel = text == "Cancel" || text == "No";
+            dialog.AddButton(text, () => { clicked = text; dialog.Close(); }, isPrimary: isPrimary, isDefault: isPrimary, isCancel: isCancel);
         }
 
-        Grid footerPanel = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
-        Grid.SetColumn(copyButton, 0);
-        Grid.SetColumn(buttonPanel, 1);
-        footerPanel.Children.Add(copyButton);
-        footerPanel.Children.Add(buttonPanel);
-
-        Grid content = new()
-        {
-            Margin = new Thickness(16),
-            RowDefinitions = new RowDefinitions("*,Auto"),
-            RowSpacing = 16
-        };
-        Grid.SetRow(scrollViewer, 0);
-        Grid.SetRow(footerPanel, 1);
-        content.Children.Add(scrollViewer);
-        content.Children.Add(footerPanel);
-
-        dialog.Content = WrapWithShell(title, content);
+        dialog.SetBody(scrollViewer);
         Show(dialog);
         return clicked;
     }
 
-    protected static Window CreateBaseDialog(string title)
-    {
-        Window dialog = new()
-        {
-            Title = title,
-            Width = 420,
-            MinWidth = 250,
-            MinHeight = 100,
-            SizeToContent = SizeToContent.Height,
-            WindowStartupLocation = WindowStartupLocation.Manual,
-            CanResize = true,
-            ShowActivated = true
-        };
-        ShellWindowHelper.ConfigureFramelessWindow(dialog);
-        return dialog;
-    }
+    protected static ModalDialogWindow CreateModalDialog(string title, double width = 420) => new(title, width);
+
+    protected static Window CreateBaseDialog(string title) => CreateModalDialog(title);
 
     protected static Control WrapWithShell(string title, Control content) =>
         ShellWindowHelper.CreateShellContent(title, content);

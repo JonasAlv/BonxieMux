@@ -5,8 +5,8 @@
     <Border Classes="topbar-popup"
             Background="{DynamicResource SkuaSurfaceBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="1"
-            CornerRadius="8"
+            BorderThickness="{DynamicResource UiBorderThin}"
+            CornerRadius="{DynamicResource UiRadiusCard}"
             Padding="0">
         <ContentPresenter Content="{Binding Content, ElementName=Root}" />
     </Border>

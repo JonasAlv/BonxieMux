@@ -1,0 +1,55 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Skua.Shared.Avalonia.Controls.Shell"
+        x:Class="Skua.Shared.Avalonia.Controls.Shell.QuickPickWindow"
+        Classes="skua"
+        Width="460"
+        SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterScreen"
+        WindowDecorations="None"
+        Background="{DynamicResource SkuaPageBrush}">
+    <Border ClipToBounds="True"
+            BorderThickness="{DynamicResource UiBorderThin}"
+            CornerRadius="{DynamicResource UiRadiusCard}"
+            Background="{DynamicResource SkuaSurfaceBrush}"
+            BorderBrush="{DynamicResource SkuaBorderStrongBrush}">
+        <StackPanel Orientation="Vertical">
+            <TextBox x:Name="SearchBox"
+                     Height="{DynamicResource UiControlHeight}"
+                     Margin="8,8,8,6"
+                     TextChanged="SearchBox_TextChanged"
+                     KeyDown="SearchBox_KeyDown" />
+            <ListBox x:Name="ItemsList"
+                     Margin="4,0,4,6"
+                     MaxHeight="360"
+                     Tapped="ItemsList_Tapped"
+                     DoubleTapped="ItemsList_DoubleTapped">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:QuickPickItem">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource UiGapSm}">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding Category, StringFormat='{}{0}:'}"
+                                       IsVisible="{Binding Category, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                       FontSize="{DynamicResource UiFontBody}"
+                                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Title}"
+                                       FontSize="{DynamicResource UiFontBody}"
+                                       Foreground="{DynamicResource SkuaTextBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding Detail}"
+                                       IsVisible="{Binding Detail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                       FontSize="{DynamicResource UiFontSmall}"
+                                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </StackPanel>
+    </Border>
+</Window>

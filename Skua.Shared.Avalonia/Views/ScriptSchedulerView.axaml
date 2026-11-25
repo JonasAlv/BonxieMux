@@ -10,8 +10,8 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Skua.Shared.Avalonia.Views.ScriptSchedulerView">
 
-    <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="10">
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
+    <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapBase}">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
             <Button Grid.Column="0"
                     Classes="skua-button w140"
                     Classes.skua-danger="{Binding IsRunningQueue}"
@@ -19,7 +19,7 @@
                     Command="{Binding ToggleQueueCommand}">
                 <TextBlock Text="{Binding ToggleQueueText}" VerticalAlignment="Center" />
             </Button>
-            <TextBlock Grid.Column="1" Text="{Binding QueueSummary}" FontSize="11" Margin="4,0,0,0" VerticalAlignment="Center"
+            <TextBlock Grid.Column="1" Text="{Binding QueueSummary}" FontSize="{DynamicResource UiFontSmall}" Margin="4,0,0,0" VerticalAlignment="Center"
                        TextTrimming="CharacterEllipsis" Foreground="{DynamicResource SkuaMutedTextBrush}" />
             <Button Grid.Column="2" Classes="skua-button w84" Command="{Binding LoadPlaylistCommand}" ToolTip.Tip="Load a saved playlist">
   <TextBlock Text="Load" VerticalAlignment="Center" />
@@ -34,7 +34,7 @@
 
         <Border Grid.Row="1" Classes="option-list">
             <Grid RowDefinitions="Auto,*">
-                <Border Grid.Row="0" Height="30" Background="{DynamicResource SkuaSurfaceAltBrush}"
+                <Border Grid.Row="0" Height="{DynamicResource UiTitleBarHeight}" Background="{DynamicResource SkuaSurfaceAltBrush}"
                         BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="0,0,0,1">
                     <Grid ColumnDefinitions="40,*,120,100,44">
                         <TextBlock Grid.Column="0" Classes="section-label" Text="#" HorizontalAlignment="Center" />
@@ -88,7 +88,7 @@
                                     </ContextMenu>
                                 </Grid.ContextMenu>
 
-                                <TextBlock Grid.Column="0" Text="{Binding $parent[ListBoxItem].Tag}" FontSize="11" HorizontalAlignment="Center"
+                                <TextBlock Grid.Column="0" Text="{Binding $parent[ListBoxItem].Tag}" FontSize="{DynamicResource UiFontSmall}" HorizontalAlignment="Center"
                                            VerticalAlignment="Center" Foreground="{DynamicResource SkuaMutedTextBrush}" />
 
                                 <Grid Grid.Column="1" Margin="12,0">
@@ -107,11 +107,11 @@
                                 </Border>
 
                                 <TextBlock Grid.Column="3" Text="{Binding Duration}" Margin="12,0" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                           FontFamily="JetBrains Mono,Consolas,Courier New,monospace" FontSize="11"
+                                           FontFamily="{DynamicResource UiFontMono}" FontSize="{DynamicResource UiFontSmall}"
                                            Classes.done="{Binding IsDone}" />
 
                                 <Button Grid.Column="4" Classes="icon icon-muted" HorizontalAlignment="Center" ToolTip.Tip="Move, options, remove">
-                                    <materialIcons:MaterialIcon Kind="DotsVertical" Width="16" Height="16" />
+                                    <materialIcons:MaterialIcon Kind="DotsVertical" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                     <Button.Flyout>
                                         <MenuFlyout Placement="BottomEdgeAlignedRight">
                                             <MenuItem Header="Move up" Command="{Binding #Root.((vms:ScriptSchedulerViewModel)DataContext).MoveScriptUpCommand}" CommandParameter="{Binding}" />
@@ -127,12 +127,12 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <TextBlock Grid.Row="1" Text="The playlist is empty. Add scripts to queue them." FontSize="12"
+                <TextBlock Grid.Row="1" Text="The playlist is empty. Add scripts to queue them." FontSize="{DynamicResource UiFontBody}"
                            HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource SkuaMutedTextBrush}"
                            IsVisible="{Binding !ScriptQueue.Count}" />
             </Grid>
         </Border>
 
-        <TextBlock Grid.Row="2" Text="Double-click a name to rename it" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        <TextBlock Grid.Row="2" Text="Double-click a name to rename it" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
     </Grid>
 </UserControl>

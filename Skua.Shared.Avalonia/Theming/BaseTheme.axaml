@@ -1,5 +1,12 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Styles.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Skua.Shared.Avalonia/Theming/Tokens.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Styles.Resources>
   
     <StyleInclude Source="avares://Skua.Shared.Avalonia/Theming/Styles/Borders.axaml"/>
     <StyleInclude Source="avares://Skua.Shared.Avalonia/Theming/Styles/Buttons.axaml"/>
@@ -22,7 +29,7 @@
     <Style Selector="Window, Window.skua">
         <Setter Property="Background" Value="{DynamicResource SkuaPageBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
     </Style>
 
     <Style Selector="Border.window-frame">

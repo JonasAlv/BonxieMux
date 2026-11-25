@@ -4,7 +4,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.Grabber"
              xmlns:controls="clr-namespace:Skua.Shared.Avalonia.Controls;assembly=Skua.Shared.Avalonia"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:converters="clr-namespace:Skua.App.Avalonia.Converters"
+             xmlns:sharedConverters="clr-namespace:Skua.Shared.Avalonia.Converters;assembly=Skua.Shared.Avalonia"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Skua.App.Avalonia.Views.GrabberListView"
              x:DataType="vms:GrabberListViewModel"
@@ -12,24 +14,20 @@
 
   <UserControl.Resources>
     <converters:GrabberItemDisplayConverter x:Key="GrabberItemDisplayConverter" />
-    <converters:BooleanToSelectionModeConverter x:Key="BooleanToSelectionModeConverter" />
+    <sharedConverters:BooleanToSelectionModeConverter x:Key="BooleanToSelectionModeConverter" />
   </UserControl.Resources>
 
-  <Grid Margin="14,0,14,14" RowDefinitions="Auto,*,Auto" RowSpacing="12">
-    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+  <Grid Margin="14,0,14,14" RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapLg}">
+    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
       <Button Grid.Column="0"
               Classes="skua-button skua-primary w112"
               Command="{Binding GrabCommand}"
               IsEnabled="{Binding !IsBusy}">
   <TextBlock Text="Grab" VerticalAlignment="Center" />
 </Button>
-      <TextBox Grid.Column="1"
-               PlaceholderText="Search"
-               Text="{Binding SearchText, Mode=TwoWay}">
-        <TextBox.InnerLeftContent>
-          <materialIcons:MaterialIcon Kind="Magnify" Width="16" Height="16" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-        </TextBox.InnerLeftContent>
-      </TextBox>
+      <primitives:SearchFilterBar Grid.Column="1"
+                                  PlaceholderText="Search"
+                                  SearchText="{Binding SearchText, Mode=TwoWay}" />
       <ToggleButton Grid.Column="2"
                     Classes="option-chip"
                     Margin="0"
@@ -40,15 +38,15 @@
 </ToggleButton>
     </Grid>
 
-    <Grid Grid.Row="1" ColumnDefinitions="*,10,232" RowDefinitions="Auto,*" RowSpacing="8">
-      <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="6" MinHeight="26">
+    <Grid Grid.Row="1" ColumnDefinitions="*,10,232" RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapMd}">
+      <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="{DynamicResource UiGapSm}" MinHeight="26">
         <TextBlock Grid.Column="0" Classes="section-label" Text="ITEMS" />
         <Border Grid.Column="1" Classes="count">
           <TextBlock Text="{Binding GrabbedItems.Count}" />
         </Border>
-        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
           <TextBlock Text="{Binding ProgressReportMessage}"
-                     FontSize="11"
+                     FontSize="{DynamicResource UiFontSmall}"
                      FontWeight="SemiBold"
                      Foreground="{DynamicResource SkuaMutedTextBrush}"
                      VerticalAlignment="Center"
@@ -58,19 +56,19 @@
                   Command="{Binding CancelTaskCommand}"
                   IsVisible="{Binding IsBusy}" />
           <TextBlock x:Name="SelectedCountText"
-                     FontSize="11"
+                     FontSize="{DynamicResource UiFontSmall}"
                      Foreground="{DynamicResource SkuaMutedTextBrush}"
                      VerticalAlignment="Center"
                      IsVisible="{Binding !ShowMessage}" />
-          <StackPanel Orientation="Horizontal" Spacing="2" IsEnabled="{Binding !IsBusy}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGap2xs}" IsEnabled="{Binding !IsBusy}">
             <Button Classes="icon icon-muted" Click="UnselectAll_Click" ToolTip.Tip="Unselect all">
-              <materialIcons:MaterialIcon Kind="SelectionRemove" Width="16" Height="16" />
+              <materialIcons:MaterialIcon Kind="SelectionRemove" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
             </Button>
             <Button Classes="icon icon-muted" Click="CopyButton_Click" ToolTip.Tip="Copy the selected items (or all) to the clipboard">
-              <materialIcons:MaterialIcon Kind="ContentCopy" Width="16" Height="16" />
+              <materialIcons:MaterialIcon Kind="ContentCopy" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
             </Button>
             <Button Classes="icon icon-muted" Click="ExportButton_Click" ToolTip.Tip="Export everything grabbed for the selected items (or all) to a .txt file">
-              <materialIcons:MaterialIcon Kind="FileExportOutline" Width="16" Height="16" />
+              <materialIcons:MaterialIcon Kind="FileExportOutline" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
             </Button>
           </StackPanel>
         </StackPanel>
@@ -82,14 +80,14 @@
                SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
                SelectionMode="{Binding IsMultipleSelection, Converter={StaticResource BooleanToSelectionModeConverter}}"
                SelectionChanged="GrabbedItemsList_SelectionChanged"
-               Padding="4">
+               Padding="{DynamicResource UiPaddingXs}">
         <ListBox.ItemTemplate>
           <DataTemplate>
-            <Grid ColumnDefinitions="52,*,Auto" ColumnSpacing="8" MinHeight="22">
+            <Grid ColumnDefinitions="52,*,Auto" ColumnSpacing="{DynamicResource UiGapMd}" MinHeight="22">
               <TextBlock Grid.Column="0"
                          Text="{ReflectionBinding ID}"
-                         FontFamily="Cascadia Mono,Consolas,Courier New,monospace"
-                         FontSize="11"
+                         FontFamily="{DynamicResource UiFontMono}"
+                         FontSize="{DynamicResource UiFontSmall}"
                          Foreground="{DynamicResource SkuaMutedTextBrush}"
                          VerticalAlignment="Center" />
               <TextBlock Grid.Column="1"
@@ -111,9 +109,9 @@
       <Border Grid.Row="1" Grid.Column="2"
               Background="{DynamicResource SkuaSurfaceBrush}"
               BorderBrush="{DynamicResource SkuaBorderBrush}"
-              BorderThickness="1"
-              CornerRadius="10"
-              Padding="10">
+              BorderThickness="{DynamicResource UiBorderThin}"
+              CornerRadius="{DynamicResource UiRadiusCard}"
+              Padding="{DynamicResource UiCardPadding}">
         <controls:PropertyGridControl SelectedObject="{Binding SelectedItem}" />
       </Border>
     </Grid>
@@ -122,7 +120,7 @@
       <ItemsControl HorizontalAlignment="Right" ItemsSource="{Binding GrabberCommands}" IsEnabled="{Binding !IsBusy}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
-            <WrapPanel Orientation="Horizontal" ItemSpacing="6" LineSpacing="6" />
+            <WrapPanel Orientation="Horizontal" ItemSpacing="{DynamicResource UiGapSm}" LineSpacing="{DynamicResource UiGapSm}" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>

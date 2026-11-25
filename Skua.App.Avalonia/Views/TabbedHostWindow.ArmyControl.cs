@@ -5,8 +5,11 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Skua.App.Avalonia.Services;
+using Skua.App.Avalonia.Views.Dialogs;
 using Skua.Core.Interfaces;
 using Skua.Core.Models;
+using Skua.Shared.Avalonia.Controls.Shell;
+using Skua.Shared.Avalonia.Theming;
 using Skua.Shared.Avalonia.ViewModels;
 using Skua.Shared.Avalonia.ViewModels.Dialogs;
 using Skua.Shared.Avalonia.ViewModels.ScriptRepo;
@@ -296,197 +299,71 @@ public partial class TabbedHostWindow
         }
     }
 
-    private Window CreateStyledDialog(string title, double width, double? minHeight = null)
-    {
-        Window dialog = new Window
-        {
-            Title = title,
-            Width = width,
-            SizeToContent = SizeToContent.Height,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            CanResize = false,
-            WindowDecorations = WindowDecorations.None,
-            ExtendClientAreaToDecorationsHint = true,
-            ExtendClientAreaTitleBarHeightHint = 32,
-            Background = this.Background,
-        };
-        if (minHeight.HasValue)
-            dialog.MinHeight = minHeight.Value;
-        dialog.Classes.Add("skua");
-        return dialog;
-    }
-
-    private static void SetDialogContent(Window dialog, Control body)
-    {
-        var titleBar = new Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar
-        {
-            TitleText = dialog.Title ?? string.Empty,
-        };
-        Grid.SetRow(titleBar, 0);
-        Grid.SetRow(body, 1);
-
-        var shell = new Grid
-        {
-            RowDefinitions = new RowDefinitions("Auto,*"),
-        };
-        shell.Children.Add(titleBar);
-        shell.Children.Add(body);
-
-        var frame = new Border();
-        frame.Classes.Add("window-frame");
-        frame.Child = shell;
-        dialog.Content = frame;
-    }
-
     private async void MenuItem_MapTravel_Click(object? sender, RoutedEventArgs e)
     {
-        Window dialog = CreateStyledDialog("Map Travel", 640);
-
-        StackPanel panel = new StackPanel { Spacing = 14, Margin = new Thickness(18) };
-        panel.Children.Add(new TextBlock
+        ModalDialogWindow dialog = new("Map Travel", 640)
         {
-            Text = "Choose a recent destination or a saved preset to jump all clients.",
-            TextWrapping = TextWrapping.Wrap
-        });
-
-        TextBlock historyLabel = new TextBlock { Text = "Recent destinations" };
-        ComboBox historyPicker = new ComboBox
-        {
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            MinWidth = 360
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false
         };
-        StackPanel historyButtons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = 8
-        };
-        Button jumpHistoryButton = new Button { Content = "Select / Jump", MinWidth = 110 };
-        Button clearHistoryButton = new Button { Content = "Clear History", MinWidth = 100 };
+        ArmyMapTravelView view = new();
 
-        void RefreshHistory()
-        {
-            List<ArmyJumpDestination> history = _jumpMapHistory.ToList();
-            historyPicker.ItemsSource = history.Select(item => item.DisplayName).ToList();
-            historyPicker.SelectedIndex = history.Count > 0 ? 0 : -1;
-            jumpHistoryButton.IsEnabled = history.Count > 0;
-            clearHistoryButton.IsEnabled = history.Count > 0;
-        }
+        void RefreshHistory() => view.RefreshHistory(_jumpMapHistory.Select(item => item.DisplayName));
+        void RefreshPresets(int selectedIndex = 0) => view.RefreshPresets(_jumpMapPresets.Select(item => $"{item.Name} — {item.DisplayName}"), selectedIndex);
 
-        jumpHistoryButton.Click += (_, _) =>
+        view.JumpHistoryClicked += index =>
         {
-            List<ArmyJumpDestination> history = _jumpMapHistory.ToList();
-            int index = historyPicker.SelectedIndex;
-            if (index >= 0 && index < history.Count)
-                JumpArmyToDestination(history[index]);
+            if (index >= 0 && index < _jumpMapHistory.Count)
+                JumpArmyToDestination(_jumpMapHistory[index]);
         };
-        clearHistoryButton.Click += (_, _) =>
+        view.ClearHistoryClicked += () =>
         {
             _jumpMapHistory.Clear();
             SaveArmyJumpSettings();
             RefreshHistory();
         };
-        historyButtons.Children.Add(jumpHistoryButton);
-        historyButtons.Children.Add(clearHistoryButton);
-        panel.Children.Add(historyLabel);
-        panel.Children.Add(historyPicker);
-        panel.Children.Add(historyButtons);
-
-        panel.Children.Add(new Separator());
-
-        TextBlock presetLabel = new TextBlock { Text = "Saved presets" };
-        ComboBox presetPicker = new ComboBox
+        view.JumpPresetClicked += index =>
         {
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            MinWidth = 360
-        };
-        StackPanel presetButtons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = 8
-        };
-        Button jumpPresetButton = new Button { Content = "Select / Jump", MinWidth = 110 };
-        Button createPresetButton = new Button { Content = "Create", MinWidth = 80 };
-        Button editPresetButton = new Button { Content = "Edit", MinWidth = 70 };
-        Button deletePresetButton = new Button { Content = "Delete", MinWidth = 80 };
-
-        void RefreshPresets(int selectedIndex = 0)
-        {
-            presetPicker.ItemsSource = _jumpMapPresets.Select(item => $"{item.Name} — {item.DisplayName}").ToList();
-            presetPicker.SelectedIndex = _jumpMapPresets.Count == 0 ? -1 : Math.Clamp(selectedIndex, 0, _jumpMapPresets.Count - 1);
-            bool hasPresets = _jumpMapPresets.Count > 0;
-            jumpPresetButton.IsEnabled = hasPresets;
-            editPresetButton.IsEnabled = hasPresets;
-            deletePresetButton.IsEnabled = hasPresets;
-        }
-
-        jumpPresetButton.Click += (_, _) =>
-        {
-            int index = presetPicker.SelectedIndex;
             if (index >= 0 && index < _jumpMapPresets.Count)
                 JumpArmyToDestination(_jumpMapPresets[index]);
         };
-        createPresetButton.Click += async (_, _) =>
+        view.CreatePresetClicked += async () =>
         {
             dialog.Hide();
             await OpenJumpMapPresetEditor(null);
             RefreshPresets(_jumpMapPresets.Count - 1);
             dialog.Show();
         };
-        editPresetButton.Click += async (_, _) =>
+        view.EditPresetClicked += async index =>
         {
-            int index = presetPicker.SelectedIndex;
             if (index < 0 || index >= _jumpMapPresets.Count)
                 return;
-
             ArmyJumpDestination selectedPreset = _jumpMapPresets[index];
             dialog.Hide();
             await OpenJumpMapPresetEditor(selectedPreset);
             RefreshPresets(index);
             dialog.Show();
         };
-        deletePresetButton.Click += (_, _) =>
+        view.DeletePresetClicked += index =>
         {
-            int index = presetPicker.SelectedIndex;
             if (index < 0 || index >= _jumpMapPresets.Count)
                 return;
-
             _jumpMapPresets.RemoveAt(index);
             SaveArmyJumpSettings();
             RefreshPresets(index);
         };
 
-        presetButtons.Children.Add(jumpPresetButton);
-        presetButtons.Children.Add(createPresetButton);
-        presetButtons.Children.Add(editPresetButton);
-        presetButtons.Children.Add(deletePresetButton);
-        panel.Children.Add(presetLabel);
-        panel.Children.Add(presetPicker);
-        panel.Children.Add(presetButtons);
-
-        StackPanel bottomButtons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = 8
-        };
-        Button manualJumpButton = new Button { Content = "Jump to Map / Cell...", MinWidth = 140 };
-        Button closeButton = new Button { Content = "Close", MinWidth = 84, IsCancel = true };
-        manualJumpButton.Click += (_, _) =>
+        dialog.AddButton("Jump to Map / Cell...", () =>
         {
             dialog.Hide();
             MenuItem_JumpMap_Click(null, new RoutedEventArgs());
             dialog.Show();
-        };
-        closeButton.Click += (_, _) => dialog.Close();
-        bottomButtons.Children.Add(manualJumpButton);
-        bottomButtons.Children.Add(closeButton);
-        panel.Children.Add(bottomButtons);
+        }, minWidth: 140);
+        dialog.AddButton("Close", () => dialog.Close(), isCancel: true);
 
         RefreshHistory();
         RefreshPresets();
-        SetDialogContent(dialog, panel);
+        dialog.SetBody(view);
         await dialog.ShowDialog(this);
     }
 
@@ -523,6 +400,62 @@ public partial class TabbedHostWindow
                 PostChildMessage(info.ChildHwnd, SkuaIpcMessages.JumpMap, IntPtr.Zero, IntPtr.Zero);
     }
 
+    private async Task<(bool Confirmed, int SelectedIndex, string SelectedText)> ShowArmyComboDialogAsync(
+        string title,
+        string prompt,
+        IReadOnlyList<string> items,
+        string? selectedItem,
+        bool isEditable,
+        string confirmText,
+        double width = 440,
+        double confirmMinWidth = 84,
+        string? leftActionText = null,
+        Action<ModalDialogWindow>? onLeftAction = null)
+    {
+        ModalDialogWindow dialog = new(title, width)
+        {
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false
+        };
+
+        ComboBox picker = new()
+        {
+            ItemsSource = items,
+            IsEditable = isEditable,
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+        if (selectedItem is not null)
+        {
+            picker.SelectedItem = selectedItem;
+            if (isEditable)
+                picker.Text = selectedItem;
+        }
+        else if (items.Count > 0)
+        {
+            picker.SelectedIndex = 0;
+        }
+
+        if (!string.IsNullOrWhiteSpace(leftActionText) && onLeftAction is not null)
+        {
+            Button leftBtn = new() { Content = leftActionText, MinWidth = 100, Classes = { "skua-button" } };
+            leftBtn.Click += (_, _) => onLeftAction(dialog);
+            dialog.SetLeftFooter(leftBtn);
+        }
+
+        dialog.AddButton("Cancel", () => dialog.Close(false), isCancel: true);
+        dialog.AddButton(confirmText, () => dialog.Close(true), isPrimary: true, isDefault: true, minWidth: confirmMinWidth);
+
+        dialog.SetBody(new StackPanel
+        {
+            Spacing = UiTokens.GetDouble(UiTokens.UiGapLg, 12),
+            Children = { ModalDialogWindow.CreateBodyText(prompt), picker }
+        });
+
+        bool? confirmed = await dialog.ShowDialog<bool?>(this);
+        string text = isEditable ? (picker.Text ?? string.Empty) : (picker.SelectedItem?.ToString() ?? string.Empty);
+        return (confirmed == true, picker.SelectedIndex, text.Trim());
+    }
+
     private async void MenuItem_JumpMapHistory_Click(object? sender, RoutedEventArgs e)
     {
         if (_jumpMapHistory.Count == 0)
@@ -531,43 +464,26 @@ public partial class TabbedHostWindow
             return;
         }
 
-        Window dialog = CreateStyledDialog("Jump to Recent Destination", 440);
-
-        StackPanel panel = new StackPanel { Spacing = 12, Margin = new Thickness(18) };
-        panel.Children.Add(new TextBlock { Text = "Select a recent map, room and cell:", TextWrapping = TextWrapping.Wrap });
-
         List<ArmyJumpDestination> history = _jumpMapHistory.ToList();
-        ComboBox historyPicker = new ComboBox
-        {
-            ItemsSource = history.Select(item => item.DisplayName).ToList(),
-            SelectedIndex = 0,
-            HorizontalAlignment = HorizontalAlignment.Stretch
-        };
-        panel.Children.Add(historyPicker);
+        var (confirmed, selectedIndex, _) = await ShowArmyComboDialogAsync(
+            "Jump to Recent Destination",
+            "Select a recent map, room and cell:",
+            history.Select(item => item.DisplayName).ToList(),
+            null,
+            isEditable: false,
+            confirmText: "Jump",
+            leftActionText: "Clear History",
+            onLeftAction: dlg =>
+            {
+                _jumpMapHistory.Clear();
+                SaveArmyJumpSettings();
+                dlg.Close(false);
+            });
 
-        StackPanel buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8 };
-        Button clearButton = new Button { Content = "Clear History", MinWidth = 100 };
-        Button cancelButton = new Button { Content = "Cancel", MinWidth = 84 };
-        Button jumpButton = new Button { Content = "Jump", MinWidth = 84, IsDefault = true };
-        clearButton.Click += (_, _) =>
-        {
-            _jumpMapHistory.Clear();
-            SaveArmyJumpSettings();
-            dialog.Close(false);
-        };
-        cancelButton.Click += (_, _) => dialog.Close(false);
-        jumpButton.Click += (_, _) => dialog.Close(true);
-        buttons.Children.Add(clearButton);
-        buttons.Children.Add(cancelButton);
-        buttons.Children.Add(jumpButton);
-        panel.Children.Add(buttons);
-        SetDialogContent(dialog, panel);
-
-        bool? confirmed = await dialog.ShowDialog<bool?>(this);
-        if (confirmed != true || historyPicker.SelectedIndex < 0 || historyPicker.SelectedIndex >= history.Count)
+        if (!confirmed || selectedIndex < 0 || selectedIndex >= history.Count)
             return;
 
-        JumpArmyToDestination(history[historyPicker.SelectedIndex]);
+        JumpArmyToDestination(history[selectedIndex]);
     }
 
     private async void MenuItem_SaveJumpMapPreset_Click(object? sender, RoutedEventArgs e)
@@ -577,14 +493,20 @@ public partial class TabbedHostWindow
 
     private async Task OpenJumpMapPresetEditor(ArmyJumpDestination? existingPreset)
     {
-        Window dialog = CreateStyledDialog(existingPreset == null ? "Create Map Preset" : "Edit Map Preset", 460);
+        ModalDialogWindow dialog = new(existingPreset == null ? "Create Map Preset" : "Edit Map Preset", 460)
+        {
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false
+        };
 
-        StackPanel panel = new StackPanel { Spacing = 10, Margin = new Thickness(18) };
-        TextBox nameInput = new TextBox { Watermark = "Preset name", Text = existingPreset?.Name ?? "" };
-        TextBox mapInput = new TextBox { Watermark = "Map name", Text = existingPreset?.Map ?? "" };
-        TextBox roomInput = new TextBox { Watermark = "Room number (optional)", Text = existingPreset?.Room ?? "" };
-        TextBox cellInput = new TextBox { Watermark = "Cell", Text = existingPreset?.Cell ?? "Enter" };
-        TextBox padInput = new TextBox { Watermark = "Pad", Text = existingPreset?.Pad ?? "Spawn" };
+        ArmyMapPresetEditorView view = new()
+        {
+            PresetName = existingPreset?.Name ?? string.Empty,
+            MapName = existingPreset?.Map ?? string.Empty,
+            RoomNumber = existingPreset?.Room ?? string.Empty,
+            CellName = existingPreset?.Cell ?? "Enter",
+            PadName = existingPreset?.Pad ?? "Spawn"
+        };
 
         if (existingPreset == null
             && InstancesTabControl.SelectedItem is TabItem currentTab
@@ -595,26 +517,14 @@ public partial class TabbedHostWindow
             && currentLocation.UpdatedUtc >= DateTime.UtcNow.AddSeconds(-5)
             && !string.IsNullOrWhiteSpace(currentLocation.Map))
         {
-            mapInput.Text = currentLocation.Map;
-            roomInput.Text = currentLocation.Room;
-            cellInput.Text = currentLocation.Cell;
-            padInput.Text = currentLocation.Pad;
-            nameInput.Text = currentLocation.Map + (string.IsNullOrWhiteSpace(currentLocation.Room) ? "" : "-" + currentLocation.Room);
+            view.MapName = currentLocation.Map;
+            view.RoomNumber = currentLocation.Room;
+            view.CellName = currentLocation.Cell;
+            view.PadName = currentLocation.Pad;
+            view.PresetName = currentLocation.Map + (string.IsNullOrWhiteSpace(currentLocation.Room) ? "" : "-" + currentLocation.Room);
         }
 
-        panel.Children.Add(new TextBlock { Text = "Preset name" });
-        panel.Children.Add(nameInput);
-        panel.Children.Add(new TextBlock { Text = "Map" });
-        panel.Children.Add(mapInput);
-        panel.Children.Add(new TextBlock { Text = "Room number (optional)" });
-        panel.Children.Add(roomInput);
-        panel.Children.Add(new TextBlock { Text = "Cell" });
-        panel.Children.Add(cellInput);
-        panel.Children.Add(new TextBlock { Text = "Pad" });
-        panel.Children.Add(padInput);
-
-        Button saveCurrentButton = new Button { Content = "Use Current Client Location", HorizontalAlignment = HorizontalAlignment.Left };
-        saveCurrentButton.Click += (_, _) =>
+        view.UseCurrentLocationClicked += () =>
         {
             if (InstancesTabControl.SelectedItem is not TabItem selectedTab
                 || !_tabs.TryGetValue(selectedTab, out TabInfo? selectedInfo)
@@ -628,23 +538,19 @@ public partial class TabbedHostWindow
                 return;
             }
 
-            mapInput.Text = location.Map;
-            roomInput.Text = location.Room;
-            cellInput.Text = location.Cell;
-            padInput.Text = location.Pad;
-            if (string.IsNullOrWhiteSpace(nameInput.Text))
-                nameInput.Text = location.Map + (string.IsNullOrWhiteSpace(location.Room) ? "" : "-" + location.Room);
+            view.MapName = location.Map;
+            view.RoomNumber = location.Room;
+            view.CellName = location.Cell;
+            view.PadName = location.Pad;
+            if (string.IsNullOrWhiteSpace(view.PresetName))
+                view.PresetName = location.Map + (string.IsNullOrWhiteSpace(location.Room) ? "" : "-" + location.Room);
         };
-        panel.Children.Add(saveCurrentButton);
 
-        StackPanel buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8 };
-        Button cancelButton = new Button { Content = "Cancel", MinWidth = 84 };
-        Button saveButton = new Button { Content = "Save Preset", MinWidth = 100, IsDefault = true };
-        cancelButton.Click += (_, _) => dialog.Close(false);
-        saveButton.Click += (_, _) =>
+        dialog.AddButton("Cancel", () => dialog.Close(false), isCancel: true);
+        dialog.AddButton("Save Preset", () =>
         {
-            string name = nameInput.Text?.Trim() ?? "";
-            string map = mapInput.Text?.Trim() ?? "";
+            string name = view.PresetName.Trim();
+            string map = view.MapName.Trim();
             if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(map))
             {
                 Ioc.Default.GetRequiredService<IDialogService>().ShowMessageBox("Enter both a preset name and map name.", "Create Map Preset");
@@ -654,21 +560,18 @@ public partial class TabbedHostWindow
             ArmyJumpDestination preset = existingPreset ?? new ArmyJumpDestination();
             preset.Name = name;
             preset.Map = map;
-            preset.Room = roomInput.Text?.Trim() ?? "";
-            preset.Cell = string.IsNullOrWhiteSpace(cellInput.Text) ? "Enter" : cellInput.Text.Trim();
-            preset.Pad = string.IsNullOrWhiteSpace(padInput.Text) ? "Spawn" : padInput.Text.Trim();
+            preset.Room = view.RoomNumber.Trim();
+            preset.Cell = string.IsNullOrWhiteSpace(view.CellName) ? "Enter" : view.CellName.Trim();
+            preset.Pad = string.IsNullOrWhiteSpace(view.PadName) ? "Spawn" : view.PadName.Trim();
 
             _jumpMapPresets.RemoveAll(item => !ReferenceEquals(item, preset) && item.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
             if (existingPreset == null)
                 _jumpMapPresets.Add(preset);
             SaveArmyJumpSettings();
             dialog.Close(true);
-        };
-        buttons.Children.Add(cancelButton);
-        buttons.Children.Add(saveButton);
-        panel.Children.Add(buttons);
-        SetDialogContent(dialog, panel);
+        }, isPrimary: true, isDefault: true, minWidth: 100);
 
+        dialog.SetBody(view);
         await dialog.ShowDialog<bool?>(this);
     }
 
@@ -680,91 +583,64 @@ public partial class TabbedHostWindow
             return;
         }
 
-        Window dialog = CreateStyledDialog("Jump to Map Preset", 440);
-
-        StackPanel panel = new StackPanel { Spacing = 12, Margin = new Thickness(18) };
-        panel.Children.Add(new TextBlock { Text = "Select a saved map, room and cell preset:", TextWrapping = TextWrapping.Wrap });
-
         List<ArmyJumpDestination> presets = _jumpMapPresets.ToList();
-        ComboBox presetPicker = new ComboBox
-        {
-            ItemsSource = presets.Select(item => $"{item.Name} — {item.DisplayName}").ToList(),
-            SelectedIndex = 0,
-            HorizontalAlignment = HorizontalAlignment.Stretch
-        };
-        panel.Children.Add(presetPicker);
+        var (confirmed, selectedIndex, _) = await ShowArmyComboDialogAsync(
+            "Jump to Map Preset",
+            "Select a saved map, room and cell preset:",
+            presets.Select(item => $"{item.Name} — {item.DisplayName}").ToList(),
+            null,
+            isEditable: false,
+            confirmText: "Jump");
 
-        StackPanel buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8 };
-        Button cancelButton = new Button { Content = "Cancel", MinWidth = 84 };
-        Button jumpButton = new Button { Content = "Jump", MinWidth = 84, IsDefault = true };
-        cancelButton.Click += (_, _) => dialog.Close(false);
-        jumpButton.Click += (_, _) => dialog.Close(true);
-        buttons.Children.Add(cancelButton);
-        buttons.Children.Add(jumpButton);
-        panel.Children.Add(buttons);
-        SetDialogContent(dialog, panel);
-
-        bool? confirmed = await dialog.ShowDialog<bool?>(this);
-        if (confirmed != true || presetPicker.SelectedIndex < 0 || presetPicker.SelectedIndex >= presets.Count)
+        if (!confirmed || selectedIndex < 0 || selectedIndex >= presets.Count)
             return;
 
-        JumpArmyToDestination(presets[presetPicker.SelectedIndex]);
+        JumpArmyToDestination(presets[selectedIndex]);
     }
 
     private async void MenuItem_ManageJumpMapPresets_Click(object? sender, RoutedEventArgs e)
     {
-        Window dialog = CreateStyledDialog("Manage Map Presets", 600, minHeight: 280);
-
-        StackPanel panel = new StackPanel { Spacing = 12, Margin = new Thickness(18) };
-        panel.Children.Add(new TextBlock { Text = "Create, inspect, edit, or delete saved map presets.", TextWrapping = TextWrapping.Wrap });
-
-        ListBox presetList = new ListBox
+        ModalDialogWindow dialog = new("Manage Map Presets", 600)
         {
-            ItemsSource = _jumpMapPresets.Select(item => $"{item.Name} — {item.DisplayName}").ToList(),
-            SelectedIndex = _jumpMapPresets.Count > 0 ? 0 : -1,
-            MinHeight = 100,
-            MaxHeight = 320
+            MinHeight = 280,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false
         };
-        panel.Children.Add(presetList);
 
-        TextBlock destinationText = new TextBlock { TextWrapping = TextWrapping.Wrap };
-        void UpdateDestination()
+        ArmyManagePresetsView view = new();
+
+        void UpdateDestination(int index)
         {
-            int index = presetList.SelectedIndex;
-            destinationText.Text = index >= 0 && index < _jumpMapPresets.Count
+            view.SetDestinationSummary(index >= 0 && index < _jumpMapPresets.Count
                 ? $"Destination: {_jumpMapPresets[index].DisplayName}"
-                : "No preset selected.";
+                : "No preset selected.");
         }
 
-        presetList.SelectionChanged += (_, _) => UpdateDestination();
-        panel.Children.Add(destinationText);
-        UpdateDestination();
-
-        StackPanel buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8 };
-        Button createButton = new Button { Content = "Create Preset...", MinWidth = 110 };
-        Button editButton = new Button { Content = "Edit Selected...", MinWidth = 110, IsEnabled = _jumpMapPresets.Count > 0 };
-        Button deleteButton = new Button { Content = "Delete Selected", MinWidth = 120, IsEnabled = _jumpMapPresets.Count > 0 };
-        Button closeButton = new Button { Content = "Close", MinWidth = 84, IsCancel = true };
+        Button? editButton = null;
+        Button? deleteButton = null;
 
         void RefreshPresets(int selectedIndex)
         {
-            presetList.ItemsSource = _jumpMapPresets.Select(item => $"{item.Name} — {item.DisplayName}").ToList();
-            presetList.SelectedIndex = _jumpMapPresets.Count == 0 ? -1 : Math.Clamp(selectedIndex, 0, _jumpMapPresets.Count - 1);
-            editButton.IsEnabled = _jumpMapPresets.Count > 0;
-            deleteButton.IsEnabled = _jumpMapPresets.Count > 0;
-            UpdateDestination();
+            view.RefreshPresets(_jumpMapPresets.Select(item => $"{item.Name} — {item.DisplayName}"), selectedIndex);
+            bool hasPresets = _jumpMapPresets.Count > 0;
+            if (editButton != null) editButton.IsEnabled = hasPresets;
+            if (deleteButton != null) deleteButton.IsEnabled = hasPresets;
+            UpdateDestination(view.SelectedIndex);
         }
 
-        createButton.Click += async (_, _) =>
+        view.SelectionChangedIndex += UpdateDestination;
+
+        dialog.AddButton("Create Preset...", async () =>
         {
             dialog.Hide();
             await OpenJumpMapPresetEditor(null);
             dialog.Show();
             RefreshPresets(_jumpMapPresets.Count - 1);
-        };
-        editButton.Click += async (_, _) =>
+        }, minWidth: 110);
+
+        editButton = dialog.AddButton("Edit Selected...", async () =>
         {
-            int index = presetList.SelectedIndex;
+            int index = view.SelectedIndex;
             if (index < 0 || index >= _jumpMapPresets.Count)
                 return;
 
@@ -773,25 +649,23 @@ public partial class TabbedHostWindow
             await OpenJumpMapPresetEditor(selectedPreset);
             dialog.Show();
             RefreshPresets(index);
-        };
-        deleteButton.Click += (_, _) =>
+        }, minWidth: 110);
+
+        deleteButton = dialog.AddButton("Delete Selected", () =>
         {
-            int index = presetList.SelectedIndex;
+            int index = view.SelectedIndex;
             if (index < 0 || index >= _jumpMapPresets.Count)
                 return;
 
             _jumpMapPresets.RemoveAt(index);
             SaveArmyJumpSettings();
             RefreshPresets(index);
-        };
-        closeButton.Click += (_, _) => dialog.Close();
-        buttons.Children.Add(createButton);
-        buttons.Children.Add(editButton);
-        buttons.Children.Add(deleteButton);
-        buttons.Children.Add(closeButton);
-        panel.Children.Add(buttons);
-        SetDialogContent(dialog, panel);
+        }, minWidth: 120);
 
+        dialog.AddButton("Close", () => dialog.Close(), isCancel: true);
+
+        RefreshPresets(_jumpMapPresets.Count > 0 ? 0 : -1);
+        dialog.SetBody(view);
         await dialog.ShowDialog(this);
     }
 
@@ -812,32 +686,17 @@ public partial class TabbedHostWindow
             return;
         }
 
-        Window dialog = CreateStyledDialog("Jump Army to Player", 360);
-        StackPanel panel = new StackPanel { Spacing = 12, Margin = new Thickness(18) };
-        panel.Children.Add(new TextBlock { Text = "Select a player from the open client tabs:", TextWrapping = TextWrapping.Wrap });
         string initialPlayer = players.FirstOrDefault(player => player.Equals(_lastJumpPlayer, StringComparison.OrdinalIgnoreCase)) ?? players[0];
-        ComboBox playerPicker = new ComboBox
-        {
-            ItemsSource = players,
-            SelectedItem = initialPlayer,
-            Text = initialPlayer,
-            IsEditable = true,
-            HorizontalAlignment = HorizontalAlignment.Stretch
-        };
-        panel.Children.Add(playerPicker);
-        StackPanel buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8 };
-        Button cancelButton = new Button { Content = "Cancel", MinWidth = 84 };
-        Button jumpButton = new Button { Content = "Jump", MinWidth = 84, IsDefault = true };
-        cancelButton.Click += (_, _) => dialog.Close(false);
-        jumpButton.Click += (_, _) => dialog.Close(true);
-        buttons.Children.Add(cancelButton);
-        buttons.Children.Add(jumpButton);
-        panel.Children.Add(buttons);
-        SetDialogContent(dialog, panel);
+        var (confirmed, _, targetPlayer) = await ShowArmyComboDialogAsync(
+            "Jump Army to Player",
+            "Select a player from the open client tabs:",
+            players,
+            initialPlayer,
+            isEditable: true,
+            confirmText: "Jump",
+            width: 360);
 
-        bool? confirmed = await dialog.ShowDialog<bool?>(this);
-        string targetPlayer = playerPicker.Text?.Trim() ?? "";
-        if (confirmed != true || string.IsNullOrWhiteSpace(targetPlayer))
+        if (!confirmed || string.IsNullOrWhiteSpace(targetPlayer))
             return;
 
         _lastJumpPlayer = targetPlayer;
@@ -903,32 +762,18 @@ public partial class TabbedHostWindow
             return;
         }
 
-        Window dialog = CreateStyledDialog("Change Server for All", 360);
-        StackPanel panel = new StackPanel { Spacing = 12, Margin = new Thickness(18) };
-        panel.Children.Add(new TextBlock { Text = "Select the server for all open clients:", TextWrapping = TextWrapping.Wrap });
-
         string initialServer = serverNames.FirstOrDefault(name => name.Equals("Artix", StringComparison.OrdinalIgnoreCase)) ?? serverNames[0];
-        ComboBox serverPicker = new ComboBox
-        {
-            ItemsSource = serverNames,
-            SelectedItem = initialServer,
-            HorizontalAlignment = HorizontalAlignment.Stretch
-        };
-        panel.Children.Add(serverPicker);
+        var (confirmed, _, targetServer) = await ShowArmyComboDialogAsync(
+            "Change Server for All",
+            "Select the server for all open clients:",
+            serverNames,
+            initialServer,
+            isEditable: false,
+            confirmText: "Change Server",
+            width: 360,
+            confirmMinWidth: 110);
 
-        StackPanel buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8 };
-        Button cancelButton = new Button { Content = "Cancel", MinWidth = 84 };
-        Button changeButton = new Button { Content = "Change Server", MinWidth = 110, IsDefault = true };
-        cancelButton.Click += (_, _) => dialog.Close(false);
-        changeButton.Click += (_, _) => dialog.Close(true);
-        buttons.Children.Add(cancelButton);
-        buttons.Children.Add(changeButton);
-        panel.Children.Add(buttons);
-        SetDialogContent(dialog, panel);
-
-        bool? confirmed = await dialog.ShowDialog<bool?>(this);
-        string targetServer = serverPicker.SelectedItem?.ToString()?.Trim() ?? string.Empty;
-        if (confirmed != true || string.IsNullOrWhiteSpace(targetServer))
+        if (!confirmed || string.IsNullOrWhiteSpace(targetServer))
             return;
 
         try

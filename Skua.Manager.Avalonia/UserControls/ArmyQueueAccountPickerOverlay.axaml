@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
+             xmlns:vm="clr-namespace:Skua.Manager.Avalonia.ViewModels"
+             x:Class="Skua.Manager.Avalonia.UserControls.ArmyQueueAccountPickerOverlay"
+             x:DataType="vm:ArmyQueueViewModel">
+    <Border IsVisible="{Binding ShowAccountPicker}"
+            Background="{DynamicResource SkuaOverlayBackdropBrush}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+        <Border Background="{DynamicResource SkuaSurfaceBrush}"
+                BorderBrush="{DynamicResource SkuaBorderBrush}"
+                BorderThickness="{DynamicResource UiBorderThin}"
+                CornerRadius="{DynamicResource UiRadiusCard}"
+                Width="380"
+                MaxHeight="420"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Padding="14">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{DynamicResource UiGapMd}">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Pick Accounts for Squad" FontSize="{DynamicResource UiFontHeading}" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}" />
+                    <Button Grid.Column="1" Classes="skua-button" Padding="{DynamicResource UiPaddingXs}" Height="22" Width="22" Command="{Binding CancelAccountPickerCommand}">
+                        <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" />
+                    </Button>
+                </Grid>
+
+                <primitives:SearchFilterBar Grid.Row="1"
+                                            PlaceholderText="Search accounts..."
+                                            SearchText="{Binding AccountPickerSearchText, Mode=TwoWay}">
+                    <primitives:SearchFilterBar.RightContent>
+                        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}">
+                            <Button Classes="skua-button" Padding="6,2" Command="{Binding SelectAllPickerCommand}">
+                                <TextBlock Text="All" FontSize="{DynamicResource UiFontMicro}" />
+                            </Button>
+                            <Button Classes="skua-button" Padding="6,2" Command="{Binding DeselectAllPickerCommand}">
+                                <TextBlock Text="None" FontSize="{DynamicResource UiFontMicro}" />
+                            </Button>
+                        </StackPanel>
+                    </primitives:SearchFilterBar.RightContent>
+                </primitives:SearchFilterBar>
+
+                <ListBox Grid.Row="2"
+                         ItemsSource="{Binding AvailableAccounts}"
+                         Height="240">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:AccountPickerItemViewModel">
+                            <CheckBox IsChecked="{Binding IsSelected}"
+                                      Margin="2,1">
+                                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="{DynamicResource UiFontBody}" Margin="4,0" />
+                            </CheckBox>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource UiGapMd}">
+                    <Button Grid.Column="0"
+                            Classes="skua-button skua-primary"
+                            HorizontalAlignment="Stretch"
+                            Height="{DynamicResource UiControlHeight}"
+                            Command="{Binding ConfirmAccountPickerCommand}">
+                        <TextBlock Text="Done" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" HorizontalAlignment="Center" />
+                    </Button>
+                    <Button Grid.Column="1"
+                            Classes="skua-button"
+                            HorizontalAlignment="Stretch"
+                            Height="{DynamicResource UiControlHeight}"
+                            Command="{Binding CancelAccountPickerCommand}">
+                        <TextBlock Text="Cancel" FontSize="{DynamicResource UiFontBody}" HorizontalAlignment="Center" />
+                    </Button>
+                </Grid>
+            </Grid>
+        </Border>
+    </Border>
+</UserControl>

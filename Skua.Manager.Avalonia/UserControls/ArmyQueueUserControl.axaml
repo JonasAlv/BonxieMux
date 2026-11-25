@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Skua.Manager.Avalonia.ViewModels"
+             xmlns:local="clr-namespace:Skua.Manager.Avalonia.UserControls"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Skua.Manager.Avalonia.UserControls.ArmyQueueUserControl"
              x:DataType="vm:ArmyQueueViewModel"
@@ -10,56 +11,56 @@
              d:DesignHeight="500"
              mc:Ignorable="d">
 
-    <Grid Margin="10" RowDefinitions="Auto,*" RowSpacing="8">
+    <Grid Margin="10" RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapMd}">
 
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <TextBlock Text="Army Queue" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
+                <TextBlock Text="Army Queue" FontSize="{DynamicResource UiFontDisplay}" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
                 
                 <Button Classes="skua-button"
                         Padding="8,4"
-                        Height="26"
+                        Height="{DynamicResource UiSmallControlHeight}"
                         VerticalAlignment="Center"
                         ToolTip.Tip="Toggle Quick Guide"
                         Command="{Binding ToggleHelpGuideCommand}">
-  <TextBlock Text="How to Use" FontSize="11" />
+  <TextBlock Text="How to Use" FontSize="{DynamicResource UiFontSmall}" />
 </Button>
             </StackPanel>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}">
                 <Button Classes="skua-button skua-primary"
-                        Height="34"
+                        Height="{DynamicResource UiControlHeight}"
                         Padding="16,0"
                         IsVisible="{Binding !IsRunning}"
                         Command="{Binding StartQueueCommand}">
-  <TextBlock Text="Start Queue" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+  <TextBlock Text="Start Queue" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" VerticalAlignment="Center" />
 </Button>
 
                 <Button Classes="skua-button"
-                        Height="34"
+                        Height="{DynamicResource UiControlHeight}"
                         Padding="14,0"
                         IsVisible="{Binding CanPause}"
                         ToolTip.Tip="Pause after current squad finishes - will NOT start next squad"
                         Command="{Binding PauseQueueCommand}">
-  <TextBlock Text="Pause Queue" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+  <TextBlock Text="Pause Queue" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" VerticalAlignment="Center" />
 </Button>
 
                 <Button Classes="skua-button skua-primary"
-                        Height="34"
+                        Height="{DynamicResource UiControlHeight}"
                         Padding="14,0"
                         IsVisible="{Binding CanResume}"
                         ToolTip.Tip="Resume queue and proceed to next squad"
                         Command="{Binding ResumeQueueCommand}">
-  <TextBlock Text="Resume Queue" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+  <TextBlock Text="Resume Queue" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" VerticalAlignment="Center" />
 </Button>
 
                 <Button Classes="skua-button"
-                        Height="34"
+                        Height="{DynamicResource UiControlHeight}"
                         Padding="14,0"
                         IsVisible="{Binding IsRunning}"
                         ToolTip.Tip="Stop queue completely"
                         Command="{Binding StopQueueCommand}">
-  <TextBlock Text="Stop Queue" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+  <TextBlock Text="Stop Queue" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" VerticalAlignment="Center" />
 </Button>
             </StackPanel>
         </Grid>
@@ -68,30 +69,30 @@
                       x:Name="ContentScrollViewer"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto">
-            <StackPanel Spacing="8" Margin="0,0,4,0">
+            <StackPanel Spacing="{DynamicResource UiGapMd}" Margin="0,0,4,0">
 
                 <Border IsVisible="{Binding ShowHelpGuide}"
                         Background="{DynamicResource SkuaSurfaceSubtleBrush}"
-                        BorderBrush="{DynamicResource SkuaAccentBrush}"
-                        BorderThickness="1"
-                        CornerRadius="6"
-                        Padding="12,10">
-                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
+                        BorderBrush="{DynamicResource SkuaBorderBrush}"
+                        BorderThickness="{DynamicResource UiBorderThin}"
+                        CornerRadius="{DynamicResource UiRadiusCard}"
+                        Padding="{DynamicResource UiCardCompactPadding}">
+                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{DynamicResource UiGapSm}">
                         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-  <TextBlock Text="Quick Guide: How Army Queue Works" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
+                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}">
+  <TextBlock Text="Quick Guide: How Army Queue Works" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" Foreground="{DynamicResource SkuaTextBrush}" />
 </StackPanel>
-                            <Button Grid.Column="1" Classes="skua-button" Padding="4" Height="22" Width="22" Command="{Binding DismissHelpGuideCommand}">
-                                <materialIcons:MaterialIcon Kind="Close" Width="12" Height="12" />
+                            <Button Grid.Column="1" Classes="skua-button" Padding="{DynamicResource UiPaddingXs}" Height="22" Width="22" Command="{Binding DismissHelpGuideCommand}">
+                                <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" />
                             </Button>
                         </Grid>
 
-                        <StackPanel Grid.Row="1" Spacing="4" Margin="22,0,0,0">
-                            <TextBlock Text="1. Create Squads: Keep Squad 1 or click '+ Squad' to add more squads (runs one after another)." FontSize="11" Foreground="{DynamicResource SkuaTextBrush}" />
-                            <TextBlock Text="2. Pick Players: Click '+ Pick Accounts' to check off accounts directly from your list." FontSize="11" Foreground="{DynamicResource SkuaTextBrush}" />
-                            <TextBlock Text="3. Assign Scripts: Set a squad script, or choose an account's own Script to override it (e.g. LoO, AP, SC, DPS)." FontSize="11" Foreground="{DynamicResource SkuaTextBrush}" />
-                            <TextBlock Text="4. Hit 'Start Queue': Squad 1 runs -> auto-exits on completion -> Squad 2 starts automatically!" FontSize="11" Foreground="{DynamicResource SkuaTextBrush}" />
-                            <TextBlock Text="Tip: You can reuse the same account in multiple squads (e.g., your main buffer as carry in Squad 1 and Squad 2)." FontSize="10" FontStyle="Italic" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                        <StackPanel Grid.Row="1" Spacing="{DynamicResource UiGapXs}" Margin="22,0,0,0">
+                            <TextBlock Text="1. Create Squads: Keep Squad 1 or click '+ Squad' to add more squads (runs one after another)." FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaTextBrush}" />
+                            <TextBlock Text="2. Pick Players: Click '+ Pick Accounts' to check off accounts directly from your list." FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaTextBrush}" />
+                            <TextBlock Text="3. Assign Scripts: Set a squad script, or choose an account's own Script to override it (e.g. LoO, AP, SC, DPS)." FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaTextBrush}" />
+                            <TextBlock Text="4. Hit 'Start Queue': Squad 1 runs -> auto-exits on completion -> Squad 2 starts automatically!" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaTextBrush}" />
+                            <TextBlock Text="Tip: You can reuse the same account in multiple squads (e.g., your main buffer as carry in Squad 1 and Squad 2)." FontSize="{DynamicResource UiFontMicro}" FontStyle="Italic" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                         </StackPanel>
 
                         <Button Grid.Row="2"
@@ -99,7 +100,7 @@
                                 HorizontalAlignment="Right"
                                 Padding="10,3"
                                 Command="{Binding DismissHelpGuideCommand}">
-                            <TextBlock Text="Got it, hide guide" FontSize="10" />
+                            <TextBlock Text="Got it, hide guide" FontSize="{DynamicResource UiFontMicro}" />
                         </Button>
                     </Grid>
                 </Border>
@@ -107,31 +108,31 @@
                 <Border IsVisible="{Binding IsRunning}"
                         Background="{DynamicResource SkuaSurfaceBrush}"
                         BorderBrush="{DynamicResource SkuaBorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="6"
+                        BorderThickness="{DynamicResource UiBorderThin}"
+                        CornerRadius="{DynamicResource UiRadiusCard}"
                         Padding="10,6">
-                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ProgressValue, StringFormat={}{0:F0}%}" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="{DynamicResource UiGapXs}">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding StatusText}" FontSize="{DynamicResource UiFontSmall}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ProgressValue, StringFormat={}{0:F0}%}" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                         <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Height="4" Value="{Binding ProgressValue}" Minimum="0" Maximum="100" />
                     </Grid>
                 </Border>
 
                 <Border Background="{DynamicResource SkuaSurfaceBrush}"
                         BorderBrush="{DynamicResource SkuaBorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8"
-                        Padding="10">
-                    <StackPanel Spacing="8">
+                        BorderThickness="{DynamicResource UiBorderThin}"
+                        CornerRadius="{DynamicResource UiRadiusCard}"
+                        Padding="{DynamicResource UiCardPadding}">
+                    <StackPanel Spacing="{DynamicResource UiGapMd}">
 
                         <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
                             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
                                     <ListBox ItemsSource="{Binding Steps}"
                                              SelectedItem="{Binding SelectedStep, Mode=TwoWay}">
                                         <ListBox.ItemsPanel>
                                             <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal" Spacing="4" />
+                                                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" />
                                             </ItemsPanelTemplate>
                                         </ListBox.ItemsPanel>
                                         <ListBox.ItemTemplate>
@@ -143,17 +144,17 @@
                                                         PointerMoved="OnSquadTabPointerMoved"
                                                         DragDrop.DragOver="OnSquadTabDragOver"
                                                         DragDrop.Drop="OnSquadTabDrop">
-                                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                        <materialIcons:MaterialIcon Kind="DragHorizontalVariant" Width="12" Height="12" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
-                                                        <Border CornerRadius="8" Background="{DynamicResource SkuaSurfaceSubtleBrush}" Padding="6,1" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding Members.Count}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+                                                        <materialIcons:MaterialIcon Kind="DragHorizontalVariant" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" VerticalAlignment="Center" />
+                                                        <Border CornerRadius="{DynamicResource UiRadiusCard}" Background="{DynamicResource SkuaSurfaceSubtleBrush}" Padding="6,1" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Members.Count}" FontSize="{DynamicResource UiFontMicro}" FontWeight="SemiBold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                                         </Border>
                                                         <Button Classes="skua-button"
                                                                 Height="18"
                                                                 Width="18"
                                                                 Padding="0"
-                                                                CornerRadius="9"
+                                                                CornerRadius="{DynamicResource UiRadiusCard}"
                                                                 VerticalAlignment="Center"
                                                                 ToolTip.Tip="Close Squad"
                                                                 Command="{Binding $parent[UserControl].((vm:ArmyQueueViewModel)DataContext).RemoveStepSpecificCommand}"
@@ -167,54 +168,54 @@
                                     </ListBox>
 
                                     <Button Classes="skua-button"
-                                            Height="28"
-                                            Width="28"
+                                            Height="{DynamicResource UiControlHeight}"
+                                            Width="{DynamicResource UiControlHeight}"
                                             Padding="0"
-                                            CornerRadius="14"
+                                            CornerRadius="{DynamicResource UiRadiusControl}"
                                             VerticalAlignment="Center"
                                             ToolTip.Tip="Add Squad"
                                             Command="{Binding AddStepCommand}">
-                                        <materialIcons:MaterialIcon Kind="Plus" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <materialIcons:MaterialIcon Kind="Plus" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                     </Button>
                                 </StackPanel>
                             </ScrollViewer>
 
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
                                 <Button Classes="skua-button" Padding="8,4" ToolTip.Tip="Import an existing Manager Group as a Squad" Command="{Binding ImportGroupAsStepCommand}">
-  <TextBlock Text="Import Group" FontSize="11" />
+  <TextBlock Text="Import Group" FontSize="{DynamicResource UiFontSmall}" />
 </Button>
                             </StackPanel>
                         </Grid>
 
                         <Separator Height="1" Background="{DynamicResource SkuaBorderBrush}" Margin="0,2" />
 
-                        <StackPanel Spacing="6"
+                        <StackPanel Spacing="{DynamicResource UiGapSm}"
                                     IsVisible="{Binding SelectedStep, Converter={x:Static ObjectConverters.IsNotNull}}">
 
-                            <Grid ColumnDefinitions="150,*,Auto" ColumnSpacing="10" VerticalAlignment="Center">
+                            <Grid ColumnDefinitions="150,*,Auto" ColumnSpacing="{DynamicResource UiGapBase}" VerticalAlignment="Center">
                                 <TextBox Text="{Binding SelectedStep.Name}"
-                                         Height="32"
-                                         FontSize="12"
+                                         Height="{DynamicResource UiControlHeight}"
+                                         FontSize="{DynamicResource UiFontBody}"
                                          FontWeight="SemiBold"
-                                         CornerRadius="6"
+                                         CornerRadius="{DynamicResource UiRadiusCard}"
                                          PlaceholderText="Squad Name" />
 
                                 <Border Grid.Column="1"
-                                        Height="32"
+                                        Height="{DynamicResource UiControlHeight}"
                                         Background="{DynamicResource SkuaSurfaceSubtleBrush}"
                                         BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="6"
-                                        Padding="10,0">
-                                    <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="6" VerticalAlignment="Center">
+                                        BorderThickness="{DynamicResource UiBorderThin}"
+                                        CornerRadius="{DynamicResource UiRadiusCard}"
+                                        Padding="{DynamicResource UiControlPadding}">
+                                    <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
                                         <Panel Grid.Column="0" VerticalAlignment="Center">
                                             <TextBlock Text="Default Script (Optional - applies to all squad members)"
-                                                       FontSize="11"
+                                                       FontSize="{DynamicResource UiFontSmall}"
                                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
                                                        TextTrimming="CharacterEllipsis"
                                                        IsVisible="{Binding !SelectedStep.HasStepScript}" />
                                             <TextBlock Text="{Binding SelectedStep.DisplayStepScriptName}"
-                                                       FontSize="11"
+                                                       FontSize="{DynamicResource UiFontSmall}"
                                                        FontWeight="SemiBold"
                                                        Foreground="{DynamicResource SkuaTextBrush}"
                                                        TextTrimming="CharacterEllipsis"
@@ -224,24 +225,24 @@
 
                                         <Button Grid.Column="1"
                                                 Classes="skua-button"
-                                                Height="24"
-                                                Padding="8,0"
+                                                Height="{DynamicResource UiSmallControlHeight}"
+                                                Padding="{DynamicResource UiButtonPadding}"
                                                 VerticalAlignment="Center"
                                                 ToolTip.Tip="Browse and download scripts from repository"
                                                 Command="{Binding OpenScriptRepoForStepCommand}"
                                                 CommandParameter="{Binding SelectedStep}">
-  <TextBlock Text="Browse" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
+  <TextBlock Text="Browse" FontSize="{DynamicResource UiFontMicro}" FontWeight="SemiBold" VerticalAlignment="Center" />
 </Button>
 
                                         <Button Grid.Column="2"
                                                 Classes="skua-button"
-                                                Height="24"
+                                                Height="{DynamicResource UiSmallControlHeight}"
                                                 Width="24"
                                                 Padding="0"
                                                 VerticalAlignment="Center"
                                                 ToolTip.Tip="Select script file from folder (Right click: Open folder)"
                                                 Command="{Binding SelectedStep.BrowseStepScriptCommand}">
-                                            <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="13" Height="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                             <Button.ContextMenu>
                                                 <ContextMenu>
                                                     <MenuItem Header="Select script file..." Command="{Binding SelectedStep.BrowseStepScriptCommand}" />
@@ -252,14 +253,14 @@
 
                                         <Button Grid.Column="3"
                                                 Classes="skua-button"
-                                                Height="24"
-                                                Padding="8,0"
+                                                Height="{DynamicResource UiSmallControlHeight}"
+                                                Padding="{DynamicResource UiButtonPadding}"
                                                 VerticalAlignment="Center"
                                                 ToolTip.Tip="Configure options for this squad's script"
                                                 IsVisible="{Binding SelectedStep.HasStepScript}"
                                                 Command="{Binding EditStepScriptConfigCommand}"
                                                 CommandParameter="{Binding SelectedStep}">
-  <TextBlock Text="Options" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
+  <TextBlock Text="Options" FontSize="{DynamicResource UiFontMicro}" FontWeight="SemiBold" VerticalAlignment="Center" />
 </Button>
 
                                         <Button Grid.Column="4"
@@ -267,7 +268,7 @@
                                                 Height="20"
                                                 Width="20"
                                                 Padding="0"
-                                                CornerRadius="10"
+                                                CornerRadius="{DynamicResource UiRadiusCard}"
                                                 VerticalAlignment="Center"
                                                 ToolTip.Tip="Clear default script"
                                                 IsVisible="{Binding SelectedStep.HasStepScript}"
@@ -279,11 +280,11 @@
 
                                 <Button Grid.Column="2"
                                         Classes="skua-button skua-primary"
-                                        Height="32"
+                                        Height="{DynamicResource UiControlHeight}"
                                         Padding="14,0"
                                         ToolTip.Tip="Pick individual accounts to add to this squad"
                                         Command="{Binding OpenAccountPickerCommand}">
-  <TextBlock Text="+ Pick Accounts" FontSize="12" FontWeight="Bold" VerticalAlignment="Center" />
+  <TextBlock Text="+ Pick Accounts" FontSize="{DynamicResource UiFontBody}" FontWeight="Bold" VerticalAlignment="Center" />
 </Button>
                             </Grid>
 
@@ -292,7 +293,7 @@
                                     HorizontalAlignment="Center">
                                 <TextBlock Text="No players in this squad yet. Click '+ Pick Accounts' above to pick players."
                                            FontStyle="Italic"
-                                           FontSize="11"
+                                           FontSize="{DynamicResource UiFontSmall}"
                                            Foreground="{DynamicResource SkuaMutedTextBrush}" />
                             </Border>
 
@@ -301,47 +302,47 @@
                                     <DataTemplate x:DataType="vm:ArmyQueueMemberViewModel">
                                         <Border Background="{DynamicResource SkuaSurfaceSubtleBrush}"
                                                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                BorderThickness="1"
-                                                CornerRadius="5"
+                                                BorderThickness="{DynamicResource UiBorderThin}"
+                                                CornerRadius="{DynamicResource UiRadiusControl}"
                                                 Padding="8,5"
                                                 Margin="0,2">
-                                            <Grid ColumnDefinitions="150,*,Auto,Auto,Auto" ColumnSpacing="8" VerticalAlignment="Center">
-                                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-  <TextBlock Text="{Binding DisplayOrUsername}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                            <Grid ColumnDefinitions="150,*,Auto,Auto,Auto" ColumnSpacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+  <TextBlock Text="{Binding DisplayOrUsername}" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
 </StackPanel>
 
                                                 <TextBlock Grid.Column="1"
                                                            Text="{Binding DisplayScriptName}"
-                                                           FontSize="11"
+                                                           FontSize="{DynamicResource UiFontSmall}"
                                                            VerticalAlignment="Center"
                                                            Foreground="{DynamicResource SkuaTextBrush}"
                                                            TextTrimming="CharacterEllipsis" />
 
                                                 <Border Grid.Column="2"
-                                                        CornerRadius="4"
+                                                        CornerRadius="{DynamicResource UiRadiusControl}"
                                                         Background="{DynamicResource SkuaSurfaceBrush}"
                                                         Padding="6,2"
                                                         VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding RuntimeStatus}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                    <TextBlock Text="{Binding RuntimeStatus}" FontSize="{DynamicResource UiFontMicro}" FontWeight="SemiBold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                                 </Border>
 
-                                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
                                                     <Button Classes="skua-button"
-                                                            Height="24"
+                                                            Height="{DynamicResource UiSmallControlHeight}"
                                                             Padding="6,0"
                                                             ToolTip.Tip="Choose a script for this account (overrides the squad default)"
                                                             Command="{Binding $parent[UserControl].((vm:ArmyQueueViewModel)DataContext).OpenScriptRepoForMemberCommand}"
                                                             CommandParameter="{Binding}">
-  <TextBlock Text="Script" FontSize="10" VerticalAlignment="Center" />
+  <TextBlock Text="Script" FontSize="{DynamicResource UiFontMicro}" VerticalAlignment="Center" />
 </Button>
 
                                                     <Button Classes="skua-button"
-                                                            Height="24"
+                                                            Height="{DynamicResource UiSmallControlHeight}"
                                                             Width="24"
                                                             Padding="0"
                                                             ToolTip.Tip="Select a script for this account from disk (Right click: Open folder)"
                                                             Command="{Binding BrowseScriptCommand}">
-                                                        <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                         <Button.ContextMenu>
                                                             <ContextMenu>
                                                                 <MenuItem Header="Select script file..." Command="{Binding BrowseScriptCommand}" />
@@ -351,21 +352,21 @@
                                                     </Button>
 
                                                     <Button Classes="skua-button"
-                                                            Height="24"
+                                                            Height="{DynamicResource UiSmallControlHeight}"
                                                             Width="24"
                                                             Padding="0"
                                                             ToolTip.Tip="Configure options for this account's script"
                                                             IsVisible="{Binding HasCustomScript}"
                                                             Command="{Binding $parent[UserControl].((vm:ArmyQueueViewModel)DataContext).EditMemberScriptConfigCommand}"
                                                             CommandParameter="{Binding}">
-                                                        <materialIcons:MaterialIcon Kind="TuneVertical" Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        <materialIcons:MaterialIcon Kind="TuneVertical" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                     </Button>
 
                                                     <Button Classes="skua-button"
                                                             Height="20"
                                                             Width="20"
                                                             Padding="0"
-                                                            CornerRadius="10"
+                                                            CornerRadius="{DynamicResource UiRadiusCard}"
                                                             IsVisible="{Binding HasCustomScript}"
                                                             ToolTip.Tip="Revert to squad default script"
                                                             Command="{Binding ClearScriptCommand}">
@@ -379,7 +380,7 @@
                                                         ToolTip.Tip="Remove account from squad"
                                                         Command="{Binding $parent[UserControl].((vm:ArmyQueueViewModel)DataContext).RemoveMemberCommand}"
                                                         CommandParameter="{Binding}">
-                                                    <materialIcons:MaterialIcon Kind="DeleteOutline" Width="14" Height="14" />
+                                                    <materialIcons:MaterialIcon Kind="DeleteOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                                                 </Button>
                                             </Grid>
                                         </Border>
@@ -392,104 +393,37 @@
 
                 <Border Background="{DynamicResource SkuaSurfaceBrush}"
                         BorderBrush="{DynamicResource SkuaBorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="6"
+                        BorderThickness="{DynamicResource UiBorderThin}"
+                        CornerRadius="{DynamicResource UiRadiusCard}"
                         Padding="10,6">
-                    <Grid ColumnDefinitions="Auto,160,Auto,*,140,Auto" ColumnSpacing="8" VerticalAlignment="Center">
-                        <TextBlock Grid.Column="0" Text="Preset:" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" />
+                    <Grid ColumnDefinitions="Auto,160,Auto,*,140,Auto" ColumnSpacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
+                        <TextBlock Grid.Column="0" Text="Preset:" FontSize="{DynamicResource UiFontSmall}" FontWeight="Bold" VerticalAlignment="Center" />
 
                         <ComboBox Grid.Column="1"
                                   ItemsSource="{Binding Presets}"
                                   SelectedItem="{Binding SelectedPreset}"
-                                  Height="28"
+                                  Height="{DynamicResource UiControlHeight}"
                                   HorizontalAlignment="Stretch" />
 
                         <Button Grid.Column="2" Classes="skua-button" Padding="10,4" Command="{Binding LoadSelectedPresetCommand}">
-                            <TextBlock Text="Load" FontSize="11" />
+                            <TextBlock Text="Load" FontSize="{DynamicResource UiFontSmall}" />
                         </Button>
 
                         <TextBox Grid.Column="4"
                                  Text="{Binding QueueName}"
                                  PlaceholderText="Preset Name"
-                                 FontSize="11"
-                                 Height="28" />
+                                 FontSize="{DynamicResource UiFontSmall}"
+                                 Height="{DynamicResource UiControlHeight}" />
 
                         <Button Grid.Column="5" Classes="skua-button" Padding="10,4" Command="{Binding SavePresetCommand}">
-                            <TextBlock Text="Save Preset" FontSize="11" />
+                            <TextBlock Text="Save Preset" FontSize="{DynamicResource UiFontSmall}" />
                         </Button>
                     </Grid>
                 </Border>
             </StackPanel>
         </ScrollViewer>
 
-        <Border Grid.Row="0" Grid.RowSpan="2"
-                IsVisible="{Binding ShowAccountPicker}"
-                Background="#99000000"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Stretch">
-            <Border Background="{DynamicResource SkuaSurfaceBrush}"
-                    BorderBrush="{DynamicResource SkuaBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Width="380"
-                    MaxHeight="420"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Padding="14">
-                <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
-                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                        <TextBlock Text="Pick Accounts for Squad" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}" />
-                        <Button Grid.Column="1" Classes="skua-button" Padding="4" Height="22" Width="22" Command="{Binding CancelAccountPickerCommand}">
-                            <materialIcons:MaterialIcon Kind="Close" Width="12" Height="12" />
-                        </Button>
-                    </Grid>
-
-                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding AccountPickerSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                 PlaceholderText="Search accounts..."
-                                 FontSize="11"
-                                 Height="28" />
-                        <Button Grid.Column="1" Classes="skua-button" Padding="6,2" Command="{Binding SelectAllPickerCommand}">
-                            <TextBlock Text="All" FontSize="10" />
-                        </Button>
-                        <Button Grid.Column="2" Classes="skua-button" Padding="6,2" Command="{Binding DeselectAllPickerCommand}">
-                            <TextBlock Text="None" FontSize="10" />
-                        </Button>
-                    </Grid>
-
-                    <ListBox Grid.Row="2"
-                             ItemsSource="{Binding AvailableAccounts}"
-                             Height="240">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:AccountPickerItemViewModel">
-                                <CheckBox IsChecked="{Binding IsSelected}"
-                                          Margin="2,1">
-                                    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="12" Margin="4,0" />
-                                </CheckBox>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-
-                    <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="8">
-                        <Button Grid.Column="0"
-                                Classes="skua-button skua-primary"
-                                HorizontalAlignment="Stretch"
-                                Height="32"
-                                Command="{Binding ConfirmAccountPickerCommand}">
-                            <TextBlock Text="Done" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" />
-                        </Button>
-                        <Button Grid.Column="1"
-                                Classes="skua-button"
-                                HorizontalAlignment="Stretch"
-                                Height="32"
-                                Command="{Binding CancelAccountPickerCommand}">
-                            <TextBlock Text="Cancel" FontSize="12" HorizontalAlignment="Center" />
-                        </Button>
-                    </Grid>
-                </Grid>
-            </Border>
-        </Border>
+        <local:ArmyQueueAccountPickerOverlay Grid.Row="0" Grid.RowSpan="2" />
 
     </Grid>
 </UserControl>

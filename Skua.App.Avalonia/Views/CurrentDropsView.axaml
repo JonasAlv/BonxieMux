@@ -3,30 +3,29 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Skua.App.Avalonia.Views.CurrentDropsView"
              x:DataType="vms:CurrentDropsViewModel"
              mc:Ignorable="d" d:DesignHeight="400" d:DesignWidth="500">
 
-  <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="10">
-    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-      <TextBox Grid.Column="0"
-               PlaceholderText="Search drops"
-               Text="{Binding SearchText, Mode=TwoWay}">
-        <TextBox.InnerLeftContent>
-          <materialIcons:MaterialIcon Kind="Magnify" Width="16" Height="16" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-        </TextBox.InnerLeftContent>
-      </TextBox>
-      <TextBlock Grid.Column="1"
-                 x:Name="SelectedCountText"
-                 Text="None selected"
-                 FontSize="11"
-                 Foreground="{DynamicResource SkuaMutedTextBrush}"
-                 VerticalAlignment="Center" />
-      <Border Grid.Column="2" Classes="chip">
-        <TextBlock Text="{Binding FilteredCurrentDrops.Count, StringFormat='{}{0} drops'}" />
-      </Border>
-    </Grid>
+  <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapBase}">
+    <primitives:SearchFilterBar Grid.Row="0"
+                                PlaceholderText="Search drops"
+                                SearchText="{Binding SearchText, Mode=TwoWay}">
+      <primitives:SearchFilterBar.RightContent>
+        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
+          <TextBlock x:Name="SelectedCountText"
+                     Text="None selected"
+                     FontSize="{DynamicResource UiFontSmall}"
+                     Foreground="{DynamicResource SkuaMutedTextBrush}"
+                     VerticalAlignment="Center" />
+          <Border Classes="chip">
+            <TextBlock Text="{Binding FilteredCurrentDrops.Count, StringFormat='{}{0} drops'}" />
+          </Border>
+        </StackPanel>
+      </primitives:SearchFilterBar.RightContent>
+    </primitives:SearchFilterBar>
 
     <ListBox Grid.Row="1"
              x:Name="DropsList"
@@ -34,12 +33,12 @@
              SelectedItem="{Binding SelectedDrop, Mode=TwoWay}"
              SelectionMode="Multiple"
              SelectionChanged="DropsList_SelectionChanged"
-             Padding="4">
+             Padding="{DynamicResource UiPaddingXs}">
       <ListBox.ItemTemplate>
         <DataTemplate>
-          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" MinHeight="24">
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{DynamicResource UiGapMd}" MinHeight="24">
             <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-            <Border Grid.Column="1" Classes="chip gold" IsVisible="{Binding Coins}">
+            <Border Grid.Column="1" Classes="chip warning" IsVisible="{Binding Coins}">
               <TextBlock Text="AC" />
             </Border>
             <Border Grid.Column="2" Classes="count">
@@ -50,7 +49,7 @@
       </ListBox.ItemTemplate>
     </ListBox>
 
-    <Grid Grid.Row="2" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*,*" RowSpacing="8" ColumnSpacing="8">
+    <Grid Grid.Row="2" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*,*" RowSpacing="{DynamicResource UiGapMd}" ColumnSpacing="{DynamicResource UiGapMd}">
       <Button Grid.Row="0" Grid.Column="0" Classes="skua-button" Command="{Binding PickupACCommand}" ToolTip.Tip="Pick up only AC items">
   <TextBlock Text="AC only" VerticalAlignment="Center" />
 </Button>
@@ -77,7 +76,7 @@
       <TextBlock Grid.Row="2" Grid.ColumnSpan="3"
                  Text="{Binding Status}"
                  IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                 TextWrapping="Wrap" FontSize="11" Opacity="0.8" />
+                 TextWrapping="Wrap" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
     </Grid>
   </Grid>
 </UserControl>

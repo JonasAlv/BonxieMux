@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.HotKeys"
              x:Class="Skua.App.Avalonia.Views.HotKeysView"
              x:DataType="vms:HotKeysViewModel"
@@ -12,18 +13,18 @@
     <Style Selector="Border.hotkey-row">
       <Setter Property="MinHeight" Value="44" />
       <Setter Property="Padding" Value="10,4,6,4" />
-      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
       <Setter Property="Background" Value="Transparent" />
     </Style>
     <Style Selector="Border.hotkey-row:pointerover">
       <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
     </Style>
     <Style Selector="Button.keycap">
-      <Setter Property="Height" Value="26" />
+      <Setter Property="Height" Value="{DynamicResource UiSmallControlHeight}" />
       <Setter Property="MinWidth" Value="56" />
       <Setter Property="Padding" Value="8,0" />
-      <Setter Property="FontFamily" Value="Cascadia Mono,Consolas,Courier New,monospace" />
-      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontFamily" Value="{DynamicResource UiFontMono}" />
+      <Setter Property="FontSize" Value="{DynamicResource UiFontSmall}" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
@@ -32,8 +33,8 @@
     </Style>
   </UserControl.Styles>
 
-  <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="12" RowSpacing="10">
-    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+  <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="12" RowSpacing="{DynamicResource UiGapBase}">
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
       <Grid Grid.Column="0">
         <AutoCompleteBox x:Name="ActionAutoComplete"
                          Padding="34,0,8,0"
@@ -48,14 +49,14 @@
           <AutoCompleteBox.ItemTemplate>
             <DataTemplate>
               <StackPanel Spacing="1" Margin="0,4">
-                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
-                <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="{DynamicResource UiFontBody}" Foreground="{DynamicResource SkuaTextBrush}" />
+                <TextBlock Text="{Binding Description}" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" />
               </StackPanel>
             </DataTemplate>
           </AutoCompleteBox.ItemTemplate>
         </AutoCompleteBox>
         <materialIcons:MaterialIcon Kind="Magnify"
-                                    Width="16" Height="16"
+                                    Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}"
                                     Margin="10,0,0,0"
                                     HorizontalAlignment="Left"
                                     Foreground="{DynamicResource SkuaMutedTextBrush}"
@@ -70,45 +71,33 @@
 </Button>
     </Grid>
 
-    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,200" ColumnSpacing="6">
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,200" ColumnSpacing="{DynamicResource UiGapSm}">
       <TextBlock Grid.Column="0" Classes="section-label" Text="ASSIGNED" />
       <Border Grid.Column="1" Classes="count">
         <TextBlock Text="{Binding HotKeys.Count}" />
       </Border>
-      <TextBox Grid.Column="3"
-               Text="{Binding FilterHotKeysText, Mode=TwoWay}"
-               PlaceholderText="Filter">
-        <TextBox.InnerLeftContent>
-          <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-        </TextBox.InnerLeftContent>
-        <TextBox.InnerRightContent>
-          <Button Classes="icon"
-                  Margin="0,0,3,0"
-                  Command="{Binding ClearFilterCommand}"
-                  IsVisible="{Binding FilterHotKeysText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                  ToolTip.Tip="Clear filter">
-            <materialIcons:MaterialIcon Kind="Close" Width="13" Height="13" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-          </Button>
-        </TextBox.InnerRightContent>
-      </TextBox>
+      <primitives:SearchFilterBar Grid.Column="3"
+                                  SearchText="{Binding FilterHotKeysText, Mode=TwoWay}"
+                                  PlaceholderText="Filter"
+                                  ClearCommand="{Binding ClearFilterCommand}" />
     </Grid>
 
     <Border Grid.Row="2"
             Background="{DynamicResource SkuaSurfaceBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="1"
-            CornerRadius="8"
-            Padding="4">
+            BorderThickness="{DynamicResource UiBorderThin}"
+            CornerRadius="{DynamicResource UiRadiusCard}"
+            Padding="{DynamicResource UiPaddingXs}">
       <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
         <ItemsControl ItemsSource="{Binding FilteredHotKeys}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="vms:HotKeyItemViewModel">
               <Border Classes="hotkey-row" Margin="0,0,0,2">
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
                   <StackPanel Grid.Column="0" Spacing="1" VerticalAlignment="Center">
                     <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="{Binding Description}"
-                               FontSize="10"
+                               FontSize="{DynamicResource UiFontMicro}"
                                Foreground="{DynamicResource SkuaMutedTextBrush}"
                                TextTrimming="CharacterEllipsis"
                                IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -132,7 +121,7 @@
                           Classes="icon danger-icon"
                           Command="{Binding RemoveHotKeyCommand}"
                           ToolTip.Tip="Remove this hotkey">
-                    <materialIcons:MaterialIcon Kind="TrashCanOutline" Width="15" Height="15" />
+                    <materialIcons:MaterialIcon Kind="TrashCanOutline" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                   </Button>
                 </Grid>
               </Border>
@@ -142,6 +131,6 @@
       </ScrollViewer>
     </Border>
 
-    <TextBlock Grid.Row="3" Text="Click a key to change it." FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+    <TextBlock Grid.Row="3" Text="Click a key to change it." FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
   </Grid>
 </UserControl>

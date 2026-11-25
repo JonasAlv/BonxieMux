@@ -4,8 +4,8 @@
     <Style Selector="Expander">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusCard}" />
         <Setter Property="Margin" Value="0,0,0,6" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -21,10 +21,10 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="12,10" />
         <Setter Property="MinHeight" Value="40" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusCard}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     </Style>
 

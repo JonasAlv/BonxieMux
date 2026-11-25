@@ -35,10 +35,9 @@
     <SolidColorBrush x:Key="SkuaSuccessTintBorderBrush" Color="#5934D399" />
     <SolidColorBrush x:Key="SkuaWarningTintBrush" Color="#1FFBBF24" />
     <SolidColorBrush x:Key="SkuaWarningTintBorderBrush" Color="#59FBBF24" />
-    <SolidColorBrush x:Key="SkuaGoldTintBrush" Color="#1AFFD700" />
-    <SolidColorBrush x:Key="SkuaGoldTintBorderBrush" Color="#52FFD700" />
     <SolidColorBrush x:Key="SkuaWindowBorderBrush" Color="#454545" />
     <Thickness x:Key="SkuaWindowBorderThickness">1</Thickness>
+    <SolidColorBrush x:Key="SkuaOverlayBackdropBrush" Color="#A6000000" />
 
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
@@ -53,20 +52,14 @@
             <SolidColorBrush x:Key="SkuaTextBrush" Color="#FF1F1F1F" />
             <SolidColorBrush x:Key="SkuaMutedTextBrush" Color="#FF616161" />
             <SolidColorBrush x:Key="SkuaSelectionBrush" Color="#33005FB8" />
-            <SolidColorBrush x:Key="SkuaHoverBrush" Color="#14000000" />
-            <SolidColorBrush x:Key="SkuaHoverPressedBrush" Color="#22000000" />
-            <SolidColorBrush x:Key="SkuaNavChipBrush" Color="#FFF3F3F3" />
             <SolidColorBrush x:Key="SkuaScrollThumbBrush" Color="#FFC1C1C1" />
             <SolidColorBrush x:Key="SkuaScrollThumbHoverBrush" Color="#FF9E9E9E" />
             <SolidColorBrush x:Key="SkuaScrollThumbPressedBrush" Color="#FF757575" />
             <SolidColorBrush x:Key="SkuaSurfaceSubtleBrush" Color="#FFEBEBEB" />
             <SolidColorBrush x:Key="SkuaSuccessBrush" Color="#059669" />
             <SolidColorBrush x:Key="SkuaWarningBrush" Color="#B45309" />
-            <SolidColorBrush x:Key="SkuaGoldBrush" Color="#A16207" />
-            <SolidColorBrush x:Key="SkuaInfoBrush" Color="#005FB8" />
             <SolidColorBrush x:Key="SkuaBorderStrongBrush" Color="#FFB4B4B4" />
             <SolidColorBrush x:Key="SkuaPressedBrush" Color="#FFD6D6D6" />
-            <SolidColorBrush x:Key="SkuaControlOffBrush" Color="#FF9E9E9E" />
             <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUnchecked" Color="#FF868686" />
             <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPointerOver" Color="#FF1F1F1F" />
             <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPressed" Color="#FF1F1F1F" />
@@ -96,20 +89,14 @@
             <SolidColorBrush x:Key="SkuaTextBrush" Color="#CCCCCC" />
             <SolidColorBrush x:Key="SkuaMutedTextBrush" Color="#9D9D9D" />
             <SolidColorBrush x:Key="SkuaSelectionBrush" Color="#400078D4" />
-            <SolidColorBrush x:Key="SkuaHoverBrush" Color="#1FFFFFFF" />
-            <SolidColorBrush x:Key="SkuaHoverPressedBrush" Color="#2AFFFFFF" />
-            <SolidColorBrush x:Key="SkuaNavChipBrush" Color="#252526" />
             <SolidColorBrush x:Key="SkuaScrollThumbBrush" Color="#424242" />
             <SolidColorBrush x:Key="SkuaScrollThumbHoverBrush" Color="#5A5A5A" />
             <SolidColorBrush x:Key="SkuaScrollThumbPressedBrush" Color="#757575" />
             <SolidColorBrush x:Key="SkuaSurfaceSubtleBrush" Color="#2B2B2B" />
             <SolidColorBrush x:Key="SkuaSuccessBrush" Color="#34D399" />
             <SolidColorBrush x:Key="SkuaWarningBrush" Color="#FBBF24" />
-            <SolidColorBrush x:Key="SkuaGoldBrush" Color="#FFD700" />
-            <SolidColorBrush x:Key="SkuaInfoBrush" Color="#3794FF" />
             <SolidColorBrush x:Key="SkuaBorderStrongBrush" Color="#454545" />
             <SolidColorBrush x:Key="SkuaPressedBrush" Color="#37373D" />
-            <SolidColorBrush x:Key="SkuaControlOffBrush" Color="#6E6E6E" />
             <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUnchecked" Color="#6E6E6E" />
             <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPointerOver" Color="#CCCCCC" />
             <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPressed" Color="#CCCCCC" />

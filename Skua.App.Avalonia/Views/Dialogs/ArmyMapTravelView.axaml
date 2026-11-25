@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Skua.App.Avalonia.Views.Dialogs.ArmyMapTravelView">
+    <StackPanel Spacing="{DynamicResource UiGapLg}">
+        <TextBlock Text="Choose a recent destination or a saved preset to jump all clients."
+                   FontSize="{DynamicResource UiFontBody}"
+                   Foreground="{DynamicResource SkuaTextBrush}"
+                   TextWrapping="Wrap" />
+
+        <StackPanel Spacing="{DynamicResource UiGapMd}">
+            <TextBlock Text="Recent destinations"
+                       FontSize="{DynamicResource UiFontBody}"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource SkuaTextBrush}" />
+            <ComboBox x:Name="HistoryPicker"
+                      HorizontalAlignment="Stretch"
+                      MinWidth="360" />
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="{DynamicResource UiGapMd}">
+                <Button x:Name="JumpHistoryButton"
+                        Content="Select / Jump"
+                        Classes="skua-button"
+                        MinWidth="110" />
+                <Button x:Name="ClearHistoryButton"
+                        Content="Clear History"
+                        Classes="skua-button"
+                        MinWidth="100" />
+            </StackPanel>
+        </StackPanel>
+
+        <Separator />
+
+        <StackPanel Spacing="{DynamicResource UiGapMd}">
+            <TextBlock Text="Saved presets"
+                       FontSize="{DynamicResource UiFontBody}"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource SkuaTextBrush}" />
+            <ComboBox x:Name="PresetPicker"
+                      HorizontalAlignment="Stretch"
+                      MinWidth="360" />
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="{DynamicResource UiGapMd}">
+                <Button x:Name="JumpPresetButton"
+                        Content="Select / Jump"
+                        Classes="skua-button"
+                        MinWidth="110" />
+                <Button x:Name="CreatePresetButton"
+                        Content="Create"
+                        Classes="skua-button"
+                        MinWidth="80" />
+                <Button x:Name="EditPresetButton"
+                        Content="Edit"
+                        Classes="skua-button"
+                        MinWidth="70" />
+                <Button x:Name="DeletePresetButton"
+                        Content="Delete"
+                        Classes="skua-button"
+                        MinWidth="80" />
+            </StackPanel>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

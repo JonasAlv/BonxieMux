@@ -1,31 +1,30 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.App.Avalonia.Views.PacketLoggerView">
     
-    <Grid Margin="12" ColumnDefinitions="2*,*" ColumnSpacing="12">
+    <Grid Margin="12" ColumnDefinitions="2*,*" ColumnSpacing="{DynamicResource UiGapLg}">
         
         <Border Grid.Column="0"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="12">
-            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="10">
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
-                    <TextBox Grid.Column="0"
-                             Height="34"
-                             VerticalContentAlignment="Center"
-                             PlaceholderText="Filter logged packets..."
-                             Text="{Binding PacketSearchText}" />
+                BorderThickness="{DynamicResource UiBorderThin}"
+                CornerRadius="{DynamicResource UiRadiusCard}"
+                Padding="{DynamicResource UiPaddingLg}">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapBase}">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
+                    <primitives:SearchFilterBar Grid.Column="0"
+                                                PlaceholderText="Filter logged packets..."
+                                                SearchText="{Binding PacketSearchText, Mode=TwoWay}" />
                     <Border Grid.Column="1"
                             Background="{DynamicResource SkuaSurfaceAltBrush}"
                             BorderBrush="{DynamicResource SkuaBorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="16"
+                            BorderThickness="{DynamicResource UiBorderThin}"
+                            CornerRadius="{DynamicResource UiRadiusControl}"
                             Padding="10,4">
                         <TextBlock Text="{Binding FilteredPacketLogs.Count, StringFormat='Logged: {0}'}"
-                                   FontSize="11"
+                                   FontSize="{DynamicResource UiFontSmall}"
                                    FontWeight="Bold"
                                    Foreground="{DynamicResource SkuaTextBrush}" />
                     </Border>
@@ -34,9 +33,9 @@
                 <Border Grid.Row="1"
                         Background="{DynamicResource SkuaPageBrush}"
                         BorderBrush="{DynamicResource SkuaBorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="6"
-                        Padding="4">
+                        BorderThickness="{DynamicResource UiBorderThin}"
+                        CornerRadius="{DynamicResource UiRadiusCard}"
+                        Padding="{DynamicResource UiPaddingXs}">
                     <ListBox Classes="card-list" x:Name="PacketsListBox"
                              ItemsSource="{Binding FilteredPacketLogs}"
                              SelectionMode="Multiple"
@@ -45,13 +44,13 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Border Classes="list-card"
-                                        BorderThickness="1"
-                                        CornerRadius="4"
+                                        BorderThickness="{DynamicResource UiBorderThin}"
+                                        CornerRadius="{DynamicResource UiRadiusControl}"
                                         Margin="0,0,0,3"
                                         Padding="8,4">
                                     <TextBlock Text="{Binding}"
-                                               FontFamily="JetBrains Mono,Consolas,Courier New,monospace"
-                                               FontSize="11"
+                                               FontFamily="{DynamicResource UiFontMono}"
+                                               FontSize="{DynamicResource UiFontSmall}"
                                                Foreground="{DynamicResource SkuaTextBrush}"
                                                TextWrapping="Wrap" />
                                 </Border>
@@ -60,38 +59,38 @@
                     </ListBox>
                 </Border>
             
-                <Grid Grid.Row="2" ColumnDefinitions="Auto,*,*,*,*" ColumnSpacing="6">
+                <Grid Grid.Row="2" ColumnDefinitions="Auto,*,*,*,*" ColumnSpacing="{DynamicResource UiGapSm}">
                     <Button Grid.Column="0"
                             Classes="skua-button w112"
                             Classes.skua-danger="{Binding IsReceivingPackets}"
                             Classes.skua-primary="{Binding !IsReceivingPackets}"
-                            Height="32"
-                            Padding="10,0"
+                            Height="{DynamicResource UiControlHeight}"
+                            Padding="{DynamicResource UiControlPadding}"
                             Command="{Binding ToggleLoggingCommand}">
                         <TextBlock Text="{Binding StartStopText}" FontWeight="SemiBold" VerticalAlignment="Center" />
                     </Button>
 
                     <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="1"
                             Classes="skua-button outline"
-                            Height="32"
+                            Height="{DynamicResource UiControlHeight}"
                             Content="Unselect"
                             Click="UnselectAllLogs_Click" />
             
                     <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="2"
                             Classes="skua-button"
-                            Height="32"
+                            Height="{DynamicResource UiControlHeight}"
                             Content="Clear Filters"
                             Command="{Binding ClearFiltersCommand}" />
                 
                     <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="3"
                             Classes="skua-button skua-danger"
-                            Height="32"
+                            Height="{DynamicResource UiControlHeight}"
                             Content="Clear Logs"
                             Command="{Binding ClearPacketLogsCommand}" />
                     
                     <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="4"
                             Classes="skua-button"
-                            Height="32"
+                            Height="{DynamicResource UiControlHeight}"
                             Command="{Binding SavePacketLogsCommand}">
   <TextBlock Text="Save" VerticalAlignment="Center" />
 </Button>
@@ -102,27 +101,22 @@
         <Border Grid.Column="1"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="12">
-            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="10">
-                <StackPanel Grid.Row="0" Spacing="6">
-                    <TextBlock Text="PACKET FILTERS"
-                                FontSize="10"
-                                FontWeight="Bold"
-                                Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                    <TextBox Height="34"
-                             VerticalContentAlignment="Center"
-                             PlaceholderText="Search filter tags..."
-                             Text="{Binding FilterSearchText}" />
+                BorderThickness="{DynamicResource UiBorderThin}"
+                CornerRadius="{DynamicResource UiRadiusCard}"
+                Padding="{DynamicResource UiPaddingLg}">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapBase}">
+                <StackPanel Grid.Row="0" Spacing="{DynamicResource UiGapSm}">
+                    <TextBlock Classes="section-label" Text="PACKET FILTERS" />
+                    <primitives:SearchFilterBar PlaceholderText="Search filter tags..."
+                                                SearchText="{Binding FilterSearchText, Mode=TwoWay}" />
                 </StackPanel>
             
                 <Border Grid.Row="1"
                         Background="{DynamicResource SkuaPageBrush}"
                         BorderBrush="{DynamicResource SkuaBorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="6"
-                        Padding="6">
+                        BorderThickness="{DynamicResource UiBorderThin}"
+                        CornerRadius="{DynamicResource UiRadiusCard}"
+                        Padding="{DynamicResource UiPaddingSm}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding VisiblePacketFilters}">
                             <ItemsControl.ItemTemplate>
@@ -138,11 +132,11 @@
                     </ScrollViewer>
                 </Border>
             
-                <StackPanel Grid.Row="2" Spacing="8">
+                <StackPanel Grid.Row="2" Spacing="{DynamicResource UiGapMd}">
                     <Button Classes="skua-button"
                             Classes.skua-danger="{Binding IsReceivingPackets}"
                             Classes.skua-primary="{Binding !IsReceivingPackets}"
-                            Height="36"
+                            Height="{DynamicResource UiControlHeight}"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
                             Command="{Binding ToggleLoggingCommand}">

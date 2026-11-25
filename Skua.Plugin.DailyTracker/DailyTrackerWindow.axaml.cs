@@ -14,6 +14,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Skua.Core.Interfaces;
 using Skua.Core.Messaging;
 using Skua.Core.Models;
+using Skua.Shared.Avalonia.Theming;
 
 namespace Skua.Plugin.DailyTracker;
 
@@ -411,9 +412,6 @@ public class QuestCategory : INotifyPropertyChanged
 
 public class QuestItem : INotifyPropertyChanged
 {
-    private static readonly IBrush _completedBrush = new SolidColorBrush(Color.Parse("#2E7D32"));
-    private static readonly IBrush _incompleteBrush = new SolidColorBrush(Color.Parse("#C62828"));
-
     public int ID { get; set; }
     public string Name { get; set; } = string.Empty;
 
@@ -448,7 +446,9 @@ public class QuestItem : INotifyPropertyChanged
     public bool HasScript => !string.IsNullOrEmpty(ScriptName);
     public bool ShowScript => HasScript && !IsDone && (ID < 7156 || ID > 7165);
     public bool IsLordOfOrder => ID >= 7156 && ID <= 7165;
-    public IBrush StatusBrush => IsDone ? _completedBrush : _incompleteBrush;
+    public IBrush StatusBrush => IsDone
+        ? UiTokens.GetBrush(UiTokens.SkuaSuccessBrush, Brushes.SeaGreen)
+        : UiTokens.GetBrush(UiTokens.SkuaDangerBrush, Brushes.IndianRed);
     public string StatusText => IsDone ? "Completed" : "Incomplete";
 
     public event PropertyChangedEventHandler? PropertyChanged;

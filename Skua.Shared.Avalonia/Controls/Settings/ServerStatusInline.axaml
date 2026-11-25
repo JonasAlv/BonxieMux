@@ -13,21 +13,21 @@
       <Setter Property="Foreground" Value="{DynamicResource SkuaDangerBrush}" />
     </Style>
   </UserControl.Styles>
-  <StackPanel Orientation="Horizontal" Spacing="4">
+  <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}">
     <TextBlock x:Name="NameText" Text="{Binding Server.Name, ElementName=Root}" FontWeight="SemiBold" />
     <TextBlock Text="{Binding Server, ElementName=Root, Converter={StaticResource ServerMembershipTextConverter}}"
-               FontSize="11"
+               FontSize="{DynamicResource UiFontSmall}"
                Foreground="{DynamicResource SkuaMutedTextBrush}" />
-    <TextBlock Text=" - " FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+    <TextBlock Text=" - " FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
     <TextBlock Text="{Binding Server.PingText, ElementName=Root}"
-               FontSize="11"
+               FontSize="{DynamicResource UiFontSmall}"
                Foreground="{DynamicResource SkuaMutedTextBrush}" />
     <StackPanel Orientation="Horizontal"
                 IsVisible="{Binding Server.Online, ElementName=Root}"
-                Spacing="4">
-      <TextBlock Text=" - " FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-      <TextBlock Text="{Binding Server.PlayerCount, ElementName=Root}" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-      <TextBlock Text="players" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                Spacing="{DynamicResource UiGapXs}">
+      <TextBlock Text=" - " FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+      <TextBlock Text="{Binding Server.PlayerCount, ElementName=Root}" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+      <TextBlock Text="players" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
     </StackPanel>
   </StackPanel>
 </UserControl>

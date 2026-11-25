@@ -10,13 +10,13 @@
     </Style>
 
     <Style Selector="TabItem">
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="MinHeight" Value="{DynamicResource UiControlHeight}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Padding" Value="10,4" />
         <Setter Property="Cursor" Value="Hand" />
     </Style>
 
@@ -58,8 +58,8 @@
                             HorizontalAlignment="Left"
                             Background="{DynamicResource SkuaSurfaceAltBrush}"
                             BorderBrush="{DynamicResource SkuaBorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="4"
+                            BorderThickness="{DynamicResource UiBorderThin}"
+                            CornerRadius="{DynamicResource UiRadiusControl}"
                             Padding="3"
                             Margin="0,0,0,8">
                         <ItemsPresenter x:Name="PART_ItemsPresenter"
@@ -76,11 +76,11 @@
 
     <Style Selector="TabControl.section-tabs TabItem, TabControl.account-groups-switcher TabItem">
         <Setter Property="MinWidth" Value="120" />
-        <Setter Property="MinHeight" Value="26" />
-        <Setter Property="Height" Value="26" />
+        <Setter Property="MinHeight" Value="{DynamicResource UiListItemMinHeight}" />
+        <Setter Property="Height" Value="{DynamicResource UiMenuItemHeight}" />
         <Setter Property="Padding" Value="12,0" />
         <Setter Property="Margin" Value="0" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
         <Setter Property="Template">
@@ -88,8 +88,8 @@
                 <Border x:Name="SectionTabRoot"
                         Background="Transparent"
                         BorderBrush="Transparent"
-                        BorderThickness="1"
-                        CornerRadius="4"
+                        BorderThickness="{DynamicResource UiBorderThin}"
+                        CornerRadius="{DynamicResource UiRadiusControl}"
                         Margin="1,0"
                         Padding="{TemplateBinding Padding}">
                     <ContentPresenter x:Name="SectionTabHeader"
@@ -108,8 +108,8 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
     <Style Selector="TabControl.section-tabs TabItem:selected /template/ Border#SectionTabRoot, TabControl.account-groups-switcher TabItem:selected /template/ Border#SectionTabRoot">
-        <Setter Property="Background" Value="{DynamicResource SkuaAccentTintStrongBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
     </Style>
     <Style Selector="TabControl.section-tabs TabItem:selected, TabControl.account-groups-switcher TabItem:selected">
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />

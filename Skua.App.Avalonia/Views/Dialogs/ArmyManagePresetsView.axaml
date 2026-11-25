@@ -1,0 +1,17 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Skua.App.Avalonia.Views.Dialogs.ArmyManagePresetsView">
+    <StackPanel Spacing="{DynamicResource UiGapLg}">
+        <TextBlock Text="Create, inspect, edit, or delete saved map presets."
+                   FontSize="{DynamicResource UiFontBody}"
+                   Foreground="{DynamicResource SkuaTextBrush}"
+                   TextWrapping="Wrap" />
+        <ListBox x:Name="PresetList"
+                 MinHeight="100"
+                 MaxHeight="320" />
+        <TextBlock x:Name="DestinationText"
+                   FontSize="{DynamicResource UiFontBody}"
+                   Foreground="{DynamicResource SkuaMutedTextBrush}"
+                   TextWrapping="Wrap" />
+    </StackPanel>
+</UserControl>

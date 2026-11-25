@@ -3,8 +3,8 @@
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Skua.App.Avalonia.Views.LogsView">
 
-    <Grid Margin="12" RowDefinitions="Auto,*" RowSpacing="10">
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="8">
+    <Grid Margin="12" RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapBase}">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
             <ListBox Grid.Column="0"
                      Classes="top-tabs-client"
                      ItemsSource="{Binding LogTabs}"
@@ -24,19 +24,19 @@
             </ListBox>
             <Button Grid.Column="1" Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
                     Click="CopyButton_Click" ToolTip.Tip="Copy the selected lines (or all)">
-                <materialIcons:MaterialIcon Kind="ContentCopy" Width="14" Height="14" />
+                <materialIcons:MaterialIcon Kind="ContentCopy" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
             </Button>
             <Button Grid.Column="2" Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
                     Click="DeselectButton_Click" ToolTip.Tip="Clear the selected lines">
-                <materialIcons:MaterialIcon Kind="SelectionRemove" Width="14" Height="14" />
+                <materialIcons:MaterialIcon Kind="SelectionRemove" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
             </Button>
             <Button Grid.Column="3" Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
                     Command="{Binding SelectedTab.SaveLogCommand}" ToolTip.Tip="Save this log to a file">
-                <materialIcons:MaterialIcon Kind="ContentSave" Width="14" Height="14" />
+                <materialIcons:MaterialIcon Kind="ContentSave" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
             </Button>
             <Button Grid.Column="4" Classes="skua-button small skua-danger-soft" Width="26" Padding="0" HorizontalContentAlignment="Center"
                     Command="{Binding SelectedTab.ClearLogCommand}" ToolTip.Tip="Clear this log">
-                <materialIcons:MaterialIcon Kind="TrashCanOutline" Width="14" Height="14" />
+                <materialIcons:MaterialIcon Kind="TrashCanOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
             </Button>
         </Grid>
 

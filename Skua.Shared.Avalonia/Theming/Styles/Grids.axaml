@@ -16,9 +16,5 @@
     <Style Selector="Grid.header-row">
         <Setter Property="Margin" Value="0,0,0,3" />
     </Style>
-    
-    <Style Selector="Grid.gap-bottom-8">
-        <Setter Property="Margin" Value="0,0,0,8" />
-    </Style>
 </Styles>
 

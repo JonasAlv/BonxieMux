@@ -9,7 +9,9 @@ using Skua.App.Avalonia.ViewModels.AdvancedSkills;
 using Skua.App.Avalonia.ViewModels.Dialogs;
 using Skua.Core.Interfaces;
 using Skua.Shared.Avalonia.Controls;
+using Skua.Shared.Avalonia.Controls.Shell;
 using Skua.Shared.Avalonia.Services;
+using Skua.Shared.Avalonia.Theming;
 using Skua.Shared.Avalonia.ViewModels.Options;
 using System;
 using System.Collections.Generic;
@@ -30,8 +32,7 @@ public class DialogService : DialogServiceBase
 
     private static bool? ShowAssignHotKeyDialog(AssignHotKeyDialogViewModel vm, string title)
     {
-        Window dialog = CreateBaseDialog(string.IsNullOrWhiteSpace(title) ? "Assign HotKey" : title);
-        dialog.Width = 440;
+        ModalDialogWindow dialog = CreateModalDialog(string.IsNullOrWhiteSpace(title) ? "Assign HotKey" : title, 440);
 
         CheckBox ctrl = new() { Content = "Ctrl", IsChecked = vm.CtrlCheck };
         CheckBox shift = new() { Content = "Shift", IsChecked = vm.ShiftCheck };
@@ -40,7 +41,7 @@ public class DialogService : DialogServiceBase
         StackPanel modifiersPanel = new()
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 16,
+            Spacing = UiTokens.GetDouble(UiTokens.UiGapXl, 16),
             Children = { ctrl, shift, alt }
         };
 
@@ -48,24 +49,25 @@ public class DialogService : DialogServiceBase
         {
             Text = vm.KeyInput,
             IsReadOnly = true,
-            FontFamily = new FontFamily("JetBrains Mono,Consolas,Courier New,monospace"),
-            Watermark = "Click 'Capture Key' or press a key"
+            FontFamily = UiTokens.GetFontFamily(UiTokens.UiFontMono, FontFamily.Default),
+            PlaceholderText = "Click 'Capture Key' or press a key"
         };
 
         Button captureBtn = new()
         {
             Content = "Capture Key",
             Classes = { "skua-button" },
-            MinWidth = 100
+            MinWidth = 100,
+            Margin = new Thickness(UiTokens.GetDouble(UiTokens.UiGapMd, 8), 0, 0, 0)
         };
 
         TextBlock hintLabel = new()
         {
             Text = string.Empty,
-            Foreground = new SolidColorBrush(Color.Parse("#EF4444")),
-            FontSize = 12,
             TextWrapping = TextWrapping.Wrap
         };
+        UiTokens.Bind(hintLabel, TextBlock.ForegroundProperty, UiTokens.SkuaDangerBrush);
+        UiTokens.Bind(hintLabel, TextBlock.FontSizeProperty, UiTokens.UiFontBody);
 
         bool capturing = string.IsNullOrWhiteSpace(vm.KeyInput);
         if (capturing)
@@ -127,12 +129,9 @@ public class DialogService : DialogServiceBase
             e.Handled = true;
         }, RoutingStrategies.Tunnel, handledEventsToo: true);
 
-        Button ok = new() { Content = "OK", MinWidth = 84, Classes = { "skua-button", "skua-primary" } };
-        Button cancel = new() { Content = "Cancel", MinWidth = 84, Classes = { "skua-button" }, IsCancel = true };
-        ok.IsDefault = true;
-
         bool? result = null;
-        ok.Click += (_, _) =>
+        dialog.AddButton("Cancel", () => { result = false; dialog.Close(); }, isCancel: true);
+        dialog.AddButton("OK", () =>
         {
             string chosenKey = keyInput.Text ?? string.Empty;
             if (string.IsNullOrWhiteSpace(chosenKey) || chosenKey == "Press any key...")
@@ -158,13 +157,7 @@ public class DialogService : DialogServiceBase
             vm.KeyInput = chosenKey;
             result = true;
             dialog.Close();
-        };
-
-        cancel.Click += (_, _) =>
-        {
-            result = false;
-            dialog.Close();
-        };
+        }, isPrimary: true, isDefault: true);
 
         Grid keyRow = new()
         {
@@ -177,39 +170,29 @@ public class DialogService : DialogServiceBase
         };
         Grid.SetColumn(keyInput, 0);
         Grid.SetColumn(captureBtn, 1);
-        captureBtn.Margin = new Thickness(8, 0, 0, 0);
 
         StackPanel content = new()
         {
-            Margin = new Thickness(16),
-            Spacing = 12,
+            Spacing = UiTokens.GetDouble(UiTokens.UiGapLg, 12),
             Children =
             {
-                new TextBlock { Text = "Modifiers:", FontWeight = FontWeight.SemiBold, FontSize = 12 },
+                ModalDialogWindow.CreateFieldLabel("Modifiers:"),
                 modifiersPanel,
-                new TextBlock { Text = "Assigned Key:", FontWeight = FontWeight.SemiBold, FontSize = 12 },
+                ModalDialogWindow.CreateFieldLabel("Assigned Key:"),
                 keyRow,
-                hintLabel,
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Spacing = 8,
-                    Children = { cancel, ok }
-                }
+                hintLabel
             }
         };
 
-        dialog.Content = WrapWithShell(string.IsNullOrWhiteSpace(title) ? "Assign HotKey" : title, content);
+        dialog.SetBody(content);
         Show(dialog);
         return result;
     }
 
     private static bool? ShowSkillRuleEditorDialog(SkillRuleEditorDialogViewModel vm, string title)
     {
-        Window dialog = CreateBaseDialog(string.IsNullOrWhiteSpace(title) ? "Edit Rules" : title);
+        ModalDialogWindow dialog = CreateModalDialog(string.IsNullOrWhiteSpace(title) ? "Edit Rules" : title, 640);
         dialog.SizeToContent = SizeToContent.Manual;
-        dialog.Width = 640;
         dialog.Height = 600;
 
         SkillRulesViewModel scratch = new(vm.UseRules);
@@ -220,57 +203,29 @@ public class DialogService : DialogServiceBase
             MinHeight = 350
         };
 
-        TextBlock help = new()
-        {
-            Text = "Edit rule values then click Confirm. Multi-aura entries can be managed in the main Skills panel.",
-            FontSize = 12,
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 0, 0, 8)
-        };
-        help[!TextBlock.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaMutedTextBrush");
-
-        Button confirm = new() { Content = "Confirm", MinWidth = 84, Classes = { "skua-button", "skua-primary" } };
-        Button cancel = new() { Content = "Cancel", MinWidth = 84, Classes = { "skua-button" }, IsCancel = true };
-        confirm.IsDefault = true;
+        TextBlock help = ModalDialogWindow.CreateBodyText(
+            "Edit rule values then click Confirm. Multi-aura entries can be managed in the main Skills panel.",
+            muted: true);
+        help.Margin = new Thickness(0, 0, 0, UiTokens.GetDouble(UiTokens.UiGapMd, 8));
 
         bool? result = null;
-        confirm.Click += (_, _) =>
+        dialog.AddButton("Cancel", () => { result = false; dialog.Close(); }, isCancel: true);
+        dialog.AddButton("Confirm", () =>
         {
             CopySkillRules(scratch, vm.UseRules);
             result = true;
             dialog.Close();
-        };
-
-        cancel.Click += (_, _) =>
-        {
-            result = false;
-            dialog.Close();
-        };
+        }, isPrimary: true, isDefault: true);
 
         Grid content = new();
         content.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
         content.RowDefinitions.Add(new RowDefinition(GridLength.Star));
-        content.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-        content.Margin = new Thickness(16);
-
         Grid.SetRow(help, 0);
         Grid.SetRow(propertyGrid, 1);
-
-        StackPanel buttonPanel = new()
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = 8,
-            Margin = new Thickness(0, 12, 0, 0),
-            Children = { cancel, confirm }
-        };
-        Grid.SetRow(buttonPanel, 2);
-
         content.Children.Add(help);
         content.Children.Add(propertyGrid);
-        content.Children.Add(buttonPanel);
 
-        dialog.Content = WrapWithShell(string.IsNullOrWhiteSpace(title) ? "Edit Rules" : title, content);
+        dialog.SetBody(content);
         Show(dialog);
         return result;
     }

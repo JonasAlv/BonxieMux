@@ -4,6 +4,7 @@
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:managerVms="clr-namespace:Skua.Manager.Avalonia.ViewModels"
              xmlns:conv="clr-namespace:Skua.Manager.Avalonia.Converters"
+             xmlns:sharedConv="clr-namespace:Skua.Shared.Avalonia.Converters;assembly=Skua.Shared.Avalonia"
              xmlns:uc="clr-namespace:Skua.Manager.Avalonia.UserControls"
              xmlns:sharedVms="clr-namespace:Skua.Shared.Avalonia.ViewModels;assembly=Skua.Shared.Avalonia"
              xmlns:sharedViews="clr-namespace:Skua.Shared.Avalonia.Views;assembly=Skua.Shared.Avalonia"
@@ -18,7 +19,7 @@
                 <ResourceInclude Source="avares://Skua.Shared.Avalonia/Theming/Colors.axaml" />
             </ResourceDictionary.MergedDictionaries>
             <conv:AccountGridItemWidthConverter x:Key="AccountGridItemWidthConverter" />
-            <conv:IntGreaterThanZeroConverter x:Key="IntGreaterThanZeroConverter" />
+            <sharedConv:IntGreaterThanZeroConverter x:Key="IntGreaterThanZeroConverter" />
             <conv:ServerMembershipTextConverter x:Key="ServerMembershipTextConverter" />
         </ResourceDictionary>
     </Application.Resources>

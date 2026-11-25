@@ -1,21 +1,21 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.App.Avalonia.Views.PluginsView">
 
-  <Grid Margin="12" RowDefinitions="Auto,Auto,*" RowSpacing="10">
-    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-      <TextBox Grid.Column="0" PlaceholderText="Search plugins" Text="{Binding SearchText}">
-        <TextBox.InnerLeftContent>
-          <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-        </TextBox.InnerLeftContent>
-      </TextBox>
-      <Button Grid.Column="1" Classes="skua-button skua-primary w112" Command="{Binding LoadPluginCommand}" ToolTip.Tip="Load a plugin DLL">
-  <TextBlock Text="Load..." VerticalAlignment="Center" />
-</Button>
-    </Grid>
+  <Grid Margin="12" RowDefinitions="Auto,Auto,*" RowSpacing="{DynamicResource UiGapBase}">
+    <primitives:SearchFilterBar Grid.Row="0"
+                                PlaceholderText="Search plugins"
+                                SearchText="{Binding SearchText, Mode=TwoWay}">
+      <primitives:SearchFilterBar.RightContent>
+        <Button Classes="skua-button skua-primary w112" Command="{Binding LoadPluginCommand}" ToolTip.Tip="Load a plugin DLL">
+          <TextBlock Text="Load..." VerticalAlignment="Center" />
+        </Button>
+      </primitives:SearchFilterBar.RightContent>
+    </primitives:SearchFilterBar>
 
-    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="6">
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="{DynamicResource UiGapSm}">
       <TextBlock Grid.Column="0" Classes="section-label" Text="LOADED" />
       <Border Grid.Column="1" Classes="count">
         <TextBlock Text="{Binding Plugins.Count}" />
@@ -25,13 +25,13 @@
 </Button>
     </Grid>
 
-    <ListBox Grid.Row="2" ItemsSource="{Binding Plugins}" Padding="4">
+    <ListBox Grid.Row="2" ItemsSource="{Binding Plugins}" Padding="{DynamicResource UiPaddingXs}">
       <ListBox.ItemTemplate>
         <DataTemplate>
-          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" MinHeight="40" ToolTip.Tip="{Binding Description}">
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{DynamicResource UiGapBase}" MinHeight="40" ToolTip.Tip="{Binding Description}">
             <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="1">
               <TextBlock Text="{Binding Container.Plugin.Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-              <TextBlock FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis">
+              <TextBlock FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis">
                 <TextBlock.Text>
                   <MultiBinding StringFormat="{}by {0} · {1}">
                     <Binding Path="Author" />

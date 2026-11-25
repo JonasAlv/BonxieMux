@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.FastTravel"
              x:Class="Skua.App.Avalonia.Views.FastTravelView"
              x:DataType="vms:FastTravelViewModel">
@@ -8,8 +9,8 @@
     <Style Selector="Border.travel-card">
       <Setter Property="Height" Value="48" />
       <Setter Property="Margin" Value="3" />
-      <Setter Property="CornerRadius" Value="8" />
-      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusCard}" />
+      <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
       <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
       <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
     </Style>
@@ -31,7 +32,7 @@
       <Setter Property="VerticalAlignment" Value="Stretch" />
       <Setter Property="HorizontalContentAlignment" Value="Stretch" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
-      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusCard}" />
       <Setter Property="Cursor" Value="Hand" />
     </Style>
     <Style Selector="Button.card-hit /template/ ContentPresenter#PART_ContentPresenter, Button.card-hit:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.card-hit:pressed /template/ ContentPresenter#PART_ContentPresenter">
@@ -40,29 +41,29 @@
     </Style>
   </UserControl.Styles>
 
-  <Grid Margin="12" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="10">
-    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,96" ColumnSpacing="8">
-      <TextBox Grid.Column="0" PlaceholderText="Search name, map or cell" Text="{Binding SearchText, Mode=TwoWay}">
-        <TextBox.InnerLeftContent>
-          <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-        </TextBox.InnerLeftContent>
-      </TextBox>
-      <ToggleSwitch Grid.Column="1"
-                    Margin="6,0,0,0"
-                    VerticalAlignment="Center"
-                    OnContent=""
-                    OffContent=""
-                    IsChecked="{Binding MapService.UsePrivateRoom, Mode=TwoWay}"
-                    ToolTip.Tip="Join private rooms with this number" />
-      <TextBlock Grid.Column="2" Text="Private room" VerticalAlignment="Center" />
-      <TextBox Grid.Column="3" PlaceholderText="Room" Text="{Binding MapService.PrivateRoomNumber, Mode=TwoWay}">
-        <TextBox.InnerLeftContent>
-          <materialIcons:MaterialIcon Kind="Pound" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-        </TextBox.InnerLeftContent>
-      </TextBox>
-    </Grid>
+  <Grid Margin="12" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{DynamicResource UiGapBase}">
+    <primitives:SearchFilterBar Grid.Row="0"
+                                PlaceholderText="Search name, map or cell"
+                                SearchText="{Binding SearchText, Mode=TwoWay}">
+      <primitives:SearchFilterBar.RightContent>
+        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
+          <ToggleSwitch Margin="6,0,0,0"
+                        VerticalAlignment="Center"
+                        OnContent=""
+                        OffContent=""
+                        IsChecked="{Binding MapService.UsePrivateRoom, Mode=TwoWay}"
+                        ToolTip.Tip="Join private rooms with this number" />
+          <TextBlock Text="Private room" VerticalAlignment="Center" />
+          <TextBox Width="96" PlaceholderText="Room" Text="{Binding MapService.PrivateRoomNumber, Mode=TwoWay}">
+            <TextBox.InnerLeftContent>
+              <materialIcons:MaterialIcon Kind="Pound" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            </TextBox.InnerLeftContent>
+          </TextBox>
+        </StackPanel>
+      </primitives:SearchFilterBar.RightContent>
+    </primitives:SearchFilterBar>
 
-    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="6">
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="{DynamicResource UiGapSm}">
       <TextBlock Grid.Column="0" Classes="section-label" Text="DESTINATIONS" />
       <Border Grid.Column="1" Classes="count">
         <TextBlock Text="{Binding FilteredFastTravelItems.Count}" />
@@ -93,7 +94,7 @@
                         ToolTip.Tip="Travel here">
                   <StackPanel VerticalAlignment="Center" Spacing="1">
                     <TextBlock Text="{Binding DescriptionName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                    <TextBlock FontFamily="Cascadia Mono,Consolas,Courier New,monospace" FontSize="11"
+                    <TextBlock FontFamily="{DynamicResource UiFontMono}" FontSize="{DynamicResource UiFontSmall}"
                                Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis">
                       <TextBlock.Text>
                         <MultiBinding StringFormat="{}{0} · {1} · {2}">
@@ -105,13 +106,13 @@
                     </TextBlock>
                   </StackPanel>
                 </Button>
-                <Button Grid.Column="1" Classes="icon card-action" Width="26" Height="26"
+                <Button Grid.Column="1" Classes="icon card-action" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}"
                         Command="{Binding EditCommand}" ToolTip.Tip="Edit">
-                  <materialIcons:MaterialIcon Kind="PencilOutline" Width="14" Height="14" />
+                  <materialIcons:MaterialIcon Kind="PencilOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                 </Button>
-                <Button Grid.Column="2" Classes="icon danger-icon card-action" Width="26" Height="26"
+                <Button Grid.Column="2" Classes="icon danger-icon card-action" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}"
                         Command="{Binding RemoveCommand}" ToolTip.Tip="Remove">
-                  <materialIcons:MaterialIcon Kind="Close" Width="14" Height="14" />
+                  <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                 </Button>
               </Grid>
             </Border>
@@ -123,14 +124,14 @@
     <Border Grid.Row="3"
             Background="{DynamicResource SkuaSurfaceBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="1"
-            CornerRadius="8"
-            Padding="6">
-      <Grid ColumnDefinitions="1.4*,*,84,84,Auto,Auto" ColumnSpacing="6">
-        <TextBox Grid.Column="0" Height="26" PlaceholderText="Name, e.g. Ultra Alteon" Text="{Binding Editor.Travel.DescriptionName, Mode=TwoWay}" />
-        <TextBox Grid.Column="1" Height="26" PlaceholderText="Map" Text="{Binding Editor.Travel.MapName, Mode=TwoWay}" />
-        <TextBox Grid.Column="2" Height="26" PlaceholderText="Cell" Text="{Binding Editor.Travel.Cell, Mode=TwoWay}" />
-        <TextBox Grid.Column="3" Height="26" PlaceholderText="Pad" Text="{Binding Editor.Travel.Pad, Mode=TwoWay}" />
+            BorderThickness="{DynamicResource UiBorderThin}"
+            CornerRadius="{DynamicResource UiRadiusCard}"
+            Padding="{DynamicResource UiPaddingSm}">
+      <Grid ColumnDefinitions="1.4*,*,84,84,Auto,Auto" ColumnSpacing="{DynamicResource UiGapSm}">
+        <TextBox Grid.Column="0" Height="{DynamicResource UiSmallControlHeight}" PlaceholderText="Name, e.g. Ultra Alteon" Text="{Binding Editor.Travel.DescriptionName, Mode=TwoWay}" />
+        <TextBox Grid.Column="1" Height="{DynamicResource UiSmallControlHeight}" PlaceholderText="Map" Text="{Binding Editor.Travel.MapName, Mode=TwoWay}" />
+        <TextBox Grid.Column="2" Height="{DynamicResource UiSmallControlHeight}" PlaceholderText="Cell" Text="{Binding Editor.Travel.Cell, Mode=TwoWay}" />
+        <TextBox Grid.Column="3" Height="{DynamicResource UiSmallControlHeight}" PlaceholderText="Pad" Text="{Binding Editor.Travel.Pad, Mode=TwoWay}" />
         <Button Grid.Column="4" Classes="skua-button small w112" Command="{Binding Editor.GetCurrentCommand}" ToolTip.Tip="Fill in the map, cell and pad you are in">
   <TextBlock Text="Get current" VerticalAlignment="Center" />
 </Button>

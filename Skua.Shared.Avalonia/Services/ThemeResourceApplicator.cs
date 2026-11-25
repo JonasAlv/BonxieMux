@@ -396,6 +396,14 @@ public static class ThemeResourceApplicator
         SetOrUpdateBrush(app.Resources, "SkuaDangerBrush", palette.Danger);
         SetOrUpdateBrush(app.Resources, "SkuaDangerHoverBrush", Darken(palette.Danger, 0.12));
         SetOrUpdateBrush(app.Resources, "SkuaDangerPressedBrush", Darken(palette.Danger, 0.22));
+        SetOrUpdateBrush(app.Resources, "SkuaDangerForegroundBrush", VsCodeThemeLoader.GetContrastForeground(palette.Danger));
+        SetOrUpdateBrush(app.Resources, "SkuaDangerTintBrush", Color.FromArgb(0x1F, palette.Danger.R, palette.Danger.G, palette.Danger.B));
+        SetOrUpdateBrush(app.Resources, "SkuaDangerTintStrongBrush", Color.FromArgb(0x33, palette.Danger.R, palette.Danger.G, palette.Danger.B));
+        SetOrUpdateBrush(app.Resources, "SkuaDangerSoftBorderBrush", Color.FromArgb(0x73, palette.Danger.R, palette.Danger.G, palette.Danger.B));
+        SetOrUpdateBrush(app.Resources, "SkuaSuccessTintBrush", Color.FromArgb(0x1F, palette.Success.R, palette.Success.G, palette.Success.B));
+        SetOrUpdateBrush(app.Resources, "SkuaSuccessTintBorderBrush", Color.FromArgb(0x59, palette.Success.R, palette.Success.G, palette.Success.B));
+        SetOrUpdateBrush(app.Resources, "SkuaWarningTintBrush", Color.FromArgb(0x1F, palette.Warning.R, palette.Warning.G, palette.Warning.B));
+        SetOrUpdateBrush(app.Resources, "SkuaWarningTintBorderBrush", Color.FromArgb(0x59, palette.Warning.R, palette.Warning.G, palette.Warning.B));
     }
 
     private static void SetOrUpdateThemeBrush(Application app, ThemeVariant variant, string key, Color color)

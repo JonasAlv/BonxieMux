@@ -17,21 +17,22 @@
     <Border Classes="window-frame">
         <Grid x:Name="RootGrid" RowDefinitions="30,*">
             <sharedShell:WindowTitleBar x:Name="MainTitleBar" Grid.Row="0" TitleText="BonxieMux" />
+            <sharedShell:ToastHost Grid.RowSpan="2" ZIndex="200" />
 
         <Grid x:Name="WorkspaceGrid" Grid.Row="1" ColumnDefinitions="Auto,*">
             <Border x:Name="ActivityBarBorder"
                     Grid.Column="0"
-                    Width="36"
+                    Width="{DynamicResource UiActivityBarWidth}"
                     Background="{DynamicResource SkuaSurfaceBrush}"
                     BorderBrush="{DynamicResource SkuaBorderBrush}"
                     BorderThickness="0,0,1,0">
                 <DockPanel LastChildFill="False">
-                    <StackPanel DockPanel.Dock="Top" Orientation="Vertical" Spacing="2" Margin="0,4,0,0">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Vertical" Spacing="{DynamicResource UiGap2xs}" Margin="0,4,0,0">
                         <Border x:Name="GlobeBorder"
                                 Classes="activity-item"
                                 ToolTip.Tip="Army Control (synchronize actions across all open tabs)"
                                 PointerPressed="GlobeBorder_PointerPressed">
-                            <materialIcons:MaterialIcon Kind="Earth" Width="16" Height="16" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <materialIcons:MaterialIcon Kind="Earth" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             <FlyoutBase.AttachedFlyout>
                                 <MenuFlyout Placement="RightEdgeAlignedTop">
                                     <MenuItem x:Name="MenuStartScripts" Header="Start All Scripts" Click="MenuItem_StartAllScripts_Click" />
@@ -78,7 +79,7 @@
                                         Margin="0,5"
                                         Background="{DynamicResource SkuaAccentBrush}"
                                         IsVisible="False" />
-                                <materialIcons:MaterialIcon x:Name="GridViewIcon" Kind="ViewGridOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <materialIcons:MaterialIcon x:Name="GridViewIcon" Kind="ViewGridOutline" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Grid>
                         </Border>
 
@@ -86,7 +87,7 @@
                                 Classes="activity-item"
                                 ToolTip.Tip="Game Viewport Size: Auto (click to cycle)"
                                 PointerPressed="GameSizeBorder_PointerPressed">
-                            <materialIcons:MaterialIcon Kind="ResizeBottomRight" Width="16" Height="16" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <materialIcons:MaterialIcon Kind="ResizeBottomRight" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
 
                         <Border x:Name="GridLayoutBorder"
@@ -94,15 +95,16 @@
                                 Classes="activity-item"
                                 ToolTip.Tip="Grid View layout: automatic grid. Click to stack the accounts top to bottom."
                                 PointerPressed="GridLayoutBorder_PointerPressed">
-                            <materialIcons:MaterialIcon Kind="ViewDashboardOutline" Width="16" Height="16" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <materialIcons:MaterialIcon Kind="ViewDashboardOutline" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
 
-                        <ContentControl x:Name="ActivityAutoHost" Width="36" Height="28" />
-                        <ContentControl x:Name="ActivityJumpHost" Width="36" Height="28" />
-                        <ContentControl x:Name="ActivityBotWinHost" Width="36" Height="28" />
+                        <ContentControl x:Name="ActivityAutoHost" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiControlHeight}" />
+                        <ContentControl x:Name="ActivityJumpHost" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiControlHeight}" />
+                        <ContentControl x:Name="ActivityBotWinHost" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiControlHeight}" />
+                        <ContentControl x:Name="ActivitySearchScriptsHost" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiControlHeight}" />
                     </StackPanel>
 
-                    <ContentControl x:Name="ActivitySettingsHost" DockPanel.Dock="Bottom" Width="36" Height="28" Margin="0,0,0,4" />
+                    <ContentControl x:Name="ActivitySettingsHost" DockPanel.Dock="Bottom" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiControlHeight}" Margin="0,0,0,4" />
                 </DockPanel>
             </Border>
 
@@ -111,23 +113,23 @@
                         Background="{DynamicResource SkuaSurfaceBrush}"
                         BorderBrush="{DynamicResource SkuaBorderBrush}"
                         BorderThickness="0,0,0,1"
-                        Height="25">
+                        Height="{DynamicResource UiTabBarHeight}">
                     <Grid ColumnDefinitions="*,Auto">
                         <Grid Grid.Column="0" ColumnDefinitions="Auto,*,Auto">
                             <Button x:Name="ScrollTabsLeftButton"
                                     Grid.Column="0"
                                     Click="ScrollTabsLeftButton_Click"
                                     Width="20"
-                                    Height="28"
+                                    Height="22"
                                     VerticalAlignment="Center"
                                     Margin="2,0,1,0"
                                     Padding="0"
-                                    Classes="skua-button"
-                                    CornerRadius="4"
+                                    Classes="icon"
+                                    CornerRadius="{DynamicResource UiRadiusControl}"
                                     Cursor="Hand"
                                     IsVisible="False"
                                     ToolTip.Tip="Scroll tabs left (more tabs hidden)">
-                                <materialIcons:MaterialIcon Kind="ChevronLeft" Width="14" Height="14" Foreground="{DynamicResource SkuaTextBrush}" />
+                                <materialIcons:MaterialIcon Kind="ChevronLeft" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaTextBrush}" />
                             </Button>
 
                             <ScrollViewer x:Name="TabScrollViewer"
@@ -152,14 +154,14 @@
                                             <Setter Property="Margin" Value="0" />
                                             <Setter Property="BorderThickness" Value="0,1,1,0" />
                                             <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-                                            <Setter Property="CornerRadius" Value="0" />
-                                            <Setter Property="FontSize" Value="12" />
+                                            <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusNone}" />
+                                            <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
                                         </Style>
                                         <Style Selector="TabItem /template/ Border#PART_LayoutRoot">
                                             <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
                                             <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
                                             <Setter Property="BorderThickness" Value="0,1,1,0" />
-                                            <Setter Property="CornerRadius" Value="0" />
+                                            <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusNone}" />
                                         </Style>
                                         <Style Selector="TabItem:pointerover /template/ Border#PART_LayoutRoot">
                                             <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
@@ -171,7 +173,7 @@
                                             <Setter Property="Background" Value="{DynamicResource SkuaPageBrush}" />
                                             <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
                                             <Setter Property="BorderThickness" Value="0,0,1,0" />
-                                            <Setter Property="CornerRadius" Value="0" />
+                                            <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusNone}" />
                                         </Style>
                                         <Style Selector="TabItem:selected /template/ ContentPresenter#PART_ContentPresenter">
                                             <Setter Property="TextElement.Foreground" Value="{DynamicResource SkuaTextBrush}" />
@@ -198,23 +200,23 @@
                                             <Setter Property="Background" Value="{DynamicResource FollowGroupHoverBrush}" />
                                         </Style>
                                         <Style Selector="TabItem.tab-dragging /template/ Border#PART_LayoutRoot">
-                                            <Setter Property="Background" Value="#3338BDF8" />
-                                            <Setter Property="BorderBrush" Value="#38BDF8" />
+                                            <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
                                             <Setter Property="BorderThickness" Value="2,2,2,0" />
                                         </Style>
                                         <Style Selector="TabItem.tab-dragging /template/ ContentPresenter#PART_ContentPresenter">
-                                            <Setter Property="TextElement.Foreground" Value="#38BDF8" />
+                                            <Setter Property="TextElement.Foreground" Value="{DynamicResource SkuaAccentBrush}" />
                                             <Setter Property="TextElement.FontWeight" Value="Bold" />
                                         </Style>
                                         <Style Selector="TabItem.tab-detached /template/ Border#PART_LayoutRoot">
-                                            <Setter Property="BorderBrush" Value="#475569" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
                                             <Setter Property="BorderThickness" Value="1,1,1,1" />
                                         </Style>
                                         <Style Selector="TabItem.follow-group:selected /template/ Border#PART_LayoutRoot">
                                             <Setter Property="Background" Value="{DynamicResource FollowGroupSelectedBrush}" />
                                         </Style>
                                         <Style Selector="TabItem.drag-source">
-                                            <Setter Property="Opacity" Value="0.55" />
+                                            <Setter Property="Opacity" Value="{DynamicResource UiDragOpacity}" />
                                         </Style>
                                         <Style Selector="TabItem.insert-before /template/ Border#PART_LayoutRoot, TabItem.insert-before /template/ Border#PART_RootBorder">
                                             <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
@@ -237,16 +239,16 @@
                                     Grid.Column="2"
                                     Click="ScrollTabsRightButton_Click"
                                     Width="20"
-                                    Height="28"
+                                    Height="22"
                                     VerticalAlignment="Center"
                                     Margin="1,0,2,0"
                                     Padding="0"
-                                    Classes="skua-button"
-                                    CornerRadius="4"
+                                    Classes="icon"
+                                    CornerRadius="{DynamicResource UiRadiusControl}"
                                     Cursor="Hand"
                                     IsVisible="False"
                                     ToolTip.Tip="Scroll tabs right (more tabs hidden)">
-                                <materialIcons:MaterialIcon Kind="ChevronRight" Width="14" Height="14" Foreground="{DynamicResource SkuaTextBrush}" />
+                                <materialIcons:MaterialIcon Kind="ChevronRight" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaTextBrush}" />
                             </Button>
                         </Grid>
 
@@ -254,42 +256,42 @@
                                     Orientation="Horizontal"
                                     VerticalAlignment="Center"
                                     Margin="4,0,6,0"
-                                    Spacing="2">
+                                    Spacing="{DynamicResource UiGap2xs}">
                             <StackPanel.Styles>
                                 <Style Selector="Button.tab-strip-action:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.tab-strip-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-                                    <Setter Property="Background" Value="{DynamicResource SkuaAccentTintBrush}" />
+                                    <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
                                 </Style>
                                 <Style Selector="Button.tab-strip-action:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.tab-strip-action:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.tab-strip-action:checked /template/ ContentPresenter#PART_ContentPresenter">
-                                    <Setter Property="Background" Value="{DynamicResource SkuaAccentTintStrongBrush}" />
+                                    <Setter Property="Background" Value="{DynamicResource SkuaPressedBrush}" />
                                 </Style>
                             </StackPanel.Styles>
                             <Button x:Name="AddTabButton"
                                     Classes="tab-strip-action"
                                     Click="AddTabButton_Click"
                                     Width="24"
-                                    Height="24"
+                                    Height="{DynamicResource UiSmallControlHeight}"
                                     VerticalAlignment="Center"
                                     Padding="0"
                                     Background="Transparent"
                                     BorderThickness="0"
-                                    CornerRadius="4"
+                                    CornerRadius="{DynamicResource UiRadiusControl}"
                                     Cursor="Hand"
                                     ToolTip.Tip="Open New Client Tab">
-                                <materialIcons:MaterialIcon Kind="Plus" Width="18" Height="18" Foreground="{DynamicResource SkuaAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <materialIcons:MaterialIcon Kind="Plus" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Button>
                             <ToggleButton x:Name="AccountLaunchToggle"
                                           Classes="tab-strip-action"
                                           Width="24"
-                                          Height="24"
+                                          Height="{DynamicResource UiSmallControlHeight}"
                                           VerticalAlignment="Center"
                                           Padding="0"
                                           Background="Transparent"
                                           BorderThickness="0"
-                                          CornerRadius="4"
+                                          CornerRadius="{DynamicResource UiRadiusControl}"
                                           Cursor="Hand"
                                           Click="AccountLaunchToggle_Click"
                                           ToolTip.Tip="Quick Account Launch (Ctrl+Shift+L)">
-                                <materialIcons:MaterialIcon Kind="ChevronDown" Width="18" Height="18" Foreground="{DynamicResource SkuaAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <materialIcons:MaterialIcon Kind="ChevronDown" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </ToggleButton>
                             <Popup x:Name="AccountQuickLaunchPopup"
                                    Placement="Bottom"
@@ -300,13 +302,13 @@
                                 <Border Width="340"
                                         Background="{DynamicResource SkuaSurfaceBrush}"
                                         BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="8"
-                                        Padding="12">
+                                        BorderThickness="{DynamicResource UiBorderThin}"
+                                        CornerRadius="{DynamicResource UiRadiusCard}"
+                                        Padding="{DynamicResource UiPaddingLg}">
                                     <StackPanel Spacing="9">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}">
                                             <TextBlock Text="Quick Account Launch"
-                                                       FontSize="13"
+                                                       FontSize="{DynamicResource UiFontBody}"
                                                        FontWeight="SemiBold"
                                                        VerticalAlignment="Center"
                                                        Foreground="{DynamicResource SkuaTextBrush}" />
@@ -314,41 +316,41 @@
                                                     VerticalAlignment="Center"
                                                     ToolTip.ShowDelay="150">
                                                 <ToolTip.Tip>
-                                                    <StackPanel Spacing="4">
+                                                    <StackPanel Spacing="{DynamicResource UiGapXs}">
                                                         <TextBlock x:Name="AccountQuickLaunchCountText"
                                                                    Text="Loading saved accounts..." />
                                                         <TextBlock Text="Ctrl+Shift+L open · Space select · Enter launch · Esc close" />
                                                     </StackPanel>
                                                 </ToolTip.Tip>
                                                 <materialIcons:MaterialIcon Kind="InformationOutline"
-                                                                            Width="14"
-                                                                            Height="14"
+                                                                            Width="{DynamicResource UiIconSm}"
+                                                                            Height="{DynamicResource UiIconSm}"
                                                                             Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                             </Border>
                                         </StackPanel>
                                         <TextBox x:Name="AccountQuickLaunchSearch"
-                                                 Height="34"
+                                                 Height="{DynamicResource UiControlHeight}"
                                                  PlaceholderText="Search by username or display name"
                                                  TextChanged="AccountQuickLaunchSearch_TextChanged"
                                                  KeyDown="AccountQuickLaunchSearch_KeyDown" />
                                         <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="5">
                                             <ComboBox x:Name="AccountQuickLaunchGroupCombo"
                                                       Grid.Column="0"
-                                                      Height="32"
+                                                      Height="{DynamicResource UiControlHeight}"
                                                       VerticalAlignment="Center"
                                                       ToolTip.Tip="Choose a saved account group" />
                                             <Button x:Name="AccountQuickLaunchGroupButton"
                                                     Grid.Column="1"
-                                                    Height="32"
-                                                    Padding="8,0"
+                                                    Height="{DynamicResource UiControlHeight}"
+                                                    Padding="{DynamicResource UiButtonPadding}"
                                                     Classes="skua-button"
                                                     Content="Launch Group"
                                                     IsEnabled="False"
                                                     Click="AccountQuickLaunchGroupLaunch_Click" />
                                             <Button x:Name="AccountQuickLaunchGroupNewWindowButton"
                                                     Grid.Column="2"
-                                                    Height="32"
-                                                    Padding="8,0"
+                                                    Height="{DynamicResource UiControlHeight}"
+                                                    Padding="{DynamicResource UiButtonPadding}"
                                                     Classes="skua-button"
                                                     Content="New Window"
                                                     IsEnabled="False"
@@ -359,17 +361,17 @@
                                             <TextBlock x:Name="AccountQuickLaunchSelectionText"
                                                        Grid.Column="0"
                                                        VerticalAlignment="Center"
-                                                       FontSize="11"
+                                                       FontSize="{DynamicResource UiFontSmall}"
                                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
                                                        Text="0 selected" />
                                             <Button Grid.Column="1"
-                                                    Height="26"
+                                                    Height="{DynamicResource UiSmallControlHeight}"
                                                     Padding="7,0"
                                                     Classes="skua-button"
                                                     Content="Select All"
                                                     Click="AccountQuickLaunchSelectAll_Click" />
                                             <Button Grid.Column="2"
-                                                    Height="26"
+                                                    Height="{DynamicResource UiSmallControlHeight}"
                                                     Padding="7,0"
                                                     Classes="skua-button"
                                                     Content="Clear"
@@ -377,9 +379,9 @@
                                         </Grid>
                                         <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
                                                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                BorderThickness="1"
-                                                CornerRadius="6"
-                                                Padding="4">
+                                                BorderThickness="{DynamicResource UiBorderThin}"
+                                                CornerRadius="{DynamicResource UiRadiusCard}"
+                                                Padding="{DynamicResource UiPaddingXs}">
                                             <ScrollViewer MaxHeight="260"
                                                           VerticalScrollBarVisibility="Auto"
                                                           HorizontalScrollBarVisibility="Disabled">
@@ -388,20 +390,20 @@
                                                                HorizontalAlignment="Center"
                                                                VerticalAlignment="Center"
                                                                TextAlignment="Center"
-                                                               FontSize="11"
+                                                               FontSize="{DynamicResource UiFontSmall}"
                                                                Foreground="{DynamicResource SkuaMutedTextBrush}"
                                                                Text="No Manager accounts saved yet."
                                                                IsVisible="False"
                                                                Margin="8" />
                                                     <StackPanel x:Name="AccountQuickLaunchRows"
-                                                                Spacing="2" />
+                                                                Spacing="{DynamicResource UiGap2xs}" />
                                                 </Grid>
                                             </ScrollViewer>
                                         </Border>
-                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource UiGapSm}">
                                             <Button x:Name="AccountQuickLaunchLaunchButton"
                                                     Grid.Column="0"
-                                                    Height="34"
+                                                    Height="{DynamicResource UiControlHeight}"
                                                     HorizontalAlignment="Stretch"
                                                     Classes="skua-button skua-primary"
                                                     HorizontalContentAlignment="Center"
@@ -410,7 +412,7 @@
                                                     Click="AccountQuickLaunchLaunch_Click" />
                                             <Button x:Name="AccountQuickLaunchNewWindowButton"
                                                     Grid.Column="1"
-                                                    Height="34"
+                                                    Height="{DynamicResource UiControlHeight}"
                                                     HorizontalAlignment="Stretch"
                                                     Classes="skua-button"
                                                     HorizontalContentAlignment="Center"
@@ -422,15 +424,15 @@
                                         <Border x:Name="AccountQuickLaunchProgressPanel"
                                                 Background="{DynamicResource SkuaSurfaceAltBrush}"
                                                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                BorderThickness="1"
-                                                CornerRadius="6"
+                                                BorderThickness="{DynamicResource UiBorderThin}"
+                                                CornerRadius="{DynamicResource UiRadiusCard}"
                                                 Padding="8"
                                                 IsVisible="False">
-                                            <StackPanel Spacing="6">
+                                            <StackPanel Spacing="{DynamicResource UiGapSm}">
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <TextBlock x:Name="AccountQuickLaunchProgressText"
                                                                Grid.Column="0"
-                                                               FontSize="10"
+                                                               FontSize="{DynamicResource UiFontMicro}"
                                                                VerticalAlignment="Center"
                                                                TextWrapping="Wrap"
                                                                MinWidth="0"
@@ -438,7 +440,7 @@
                                                                Text="Ready" />
                                                     <Button x:Name="AccountQuickLaunchRetryButton"
                                                             Grid.Column="1"
-                                                            Height="24"
+                                                            Height="{DynamicResource UiSmallControlHeight}"
                                                             Padding="7,0"
                                                             Classes="skua-button"
                                                             Content="Retry Failed"
@@ -468,13 +470,13 @@
                     VerticalAlignment="Center"
                     Background="{DynamicResource SkuaSurfaceBrush}"
                     BorderBrush="{DynamicResource SkuaBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6"
+                    BorderThickness="{DynamicResource UiBorderThin}"
+                    CornerRadius="{DynamicResource UiRadiusCard}"
                     Padding="36,28">
                 <StackPanel Spacing="14" HorizontalAlignment="Center">
-                    <TextBlock x:Name="DetachedTabNameText" Text="Account is in Window Mode" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource SkuaTextBrush}" HorizontalAlignment="Center" />
-                    <TextBlock Text="This client is running as an independent floating window." FontSize="12" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" />
-                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center" Margin="0,8,0,0">
+                    <TextBlock x:Name="DetachedTabNameText" Text="Account is in Window Mode" FontSize="{DynamicResource UiFontHeading}" FontWeight="SemiBold" Foreground="{DynamicResource SkuaTextBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="This client is running as an independent floating window." FontSize="{DynamicResource UiFontBody}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapLg}" HorizontalAlignment="Center" Margin="0,8,0,0">
                         <Button x:Name="FocusDetachedButton" Content="Focus Window" Click="FocusDetachedButton_Click" MinWidth="110" />
                         <Button x:Name="DockDetachedButton" Content="Dock into Tabs" Click="DockDetachedButton_Click" MinWidth="110" />
                     </StackPanel>
@@ -484,7 +486,7 @@
                 <ProgressBar x:Name="TabLoadingBar"
                              Width="180"
                              Height="8"
-                             CornerRadius="4"
+                             CornerRadius="{DynamicResource UiRadiusControl}"
                              IsIndeterminate="True"
                              HorizontalAlignment="Center"
                              VerticalAlignment="Center"/>

@@ -364,13 +364,13 @@ public partial class TabbedHostWindow : Window
 
             _titleText = new TextBlock
             {
-                Foreground = Brushes.White,
-                FontSize = 12,
                 FontWeight = FontWeight.SemiBold,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0, 8, 0),
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
+            Skua.Shared.Avalonia.Theming.UiTokens.Bind(_titleText, TextBlock.ForegroundProperty, Skua.Shared.Avalonia.Theming.UiTokens.SkuaTextBrush);
+            Skua.Shared.Avalonia.Theming.UiTokens.Bind(_titleText, TextBlock.FontSizeProperty, Skua.Shared.Avalonia.Theming.UiTokens.UiFontBody);
 
             var titleRow = new StackPanel
             {
@@ -392,24 +392,20 @@ public partial class TabbedHostWindow : Window
                         Kind = MaterialIconKind.DockWindow,
                         Width = 96,
                         Height = 96,
-                        Foreground = new SolidColorBrush(Color.Parse("#38BDF8"))
+                        [!MaterialIcon.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(Skua.Shared.Avalonia.Theming.UiTokens.SkuaAccentBrush)
                     }
                 }
             };
 
             _titleBorder = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(200, 15, 23, 42)),
                 CornerRadius = new CornerRadius(6, 6, 0, 0),
                 Child = titleRow
             };
+            Skua.Shared.Avalonia.Theming.UiTokens.Bind(_titleBorder, Border.BackgroundProperty, Skua.Shared.Avalonia.Theming.UiTokens.SkuaSurfaceBrush);
 
             _rootBorder = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(160, 20, 24, 33)),
-                BorderBrush = new SolidColorBrush(Color.Parse("#38BDF8")),
-                BorderThickness = new Thickness(2),
-                CornerRadius = new CornerRadius(8),
                 Child = new Grid
                 {
                     RowDefinitions = new RowDefinitions("32,*"),
@@ -420,6 +416,10 @@ public partial class TabbedHostWindow : Window
                     }
                 }
             };
+            Skua.Shared.Avalonia.Theming.UiTokens.Bind(_rootBorder, Border.BackgroundProperty, Skua.Shared.Avalonia.Theming.UiTokens.SkuaPageBrush);
+            Skua.Shared.Avalonia.Theming.UiTokens.Bind(_rootBorder, Border.BorderBrushProperty, Skua.Shared.Avalonia.Theming.UiTokens.SkuaAccentBrush);
+            Skua.Shared.Avalonia.Theming.UiTokens.Bind(_rootBorder, Border.BorderThicknessProperty, Skua.Shared.Avalonia.Theming.UiTokens.UiFocusBorderThickness);
+            Skua.Shared.Avalonia.Theming.UiTokens.Bind(_rootBorder, Border.CornerRadiusProperty, Skua.Shared.Avalonia.Theming.UiTokens.UiRadiusCard);
 
             Content = _rootBorder;
         }
@@ -503,7 +503,7 @@ public partial class TabbedHostWindow : Window
         }
         if (tab.Header is StackPanel sp)
         {
-            sp.Background = new SolidColorBrush(Color.FromArgb(60, 56, 189, 248));
+            Skua.Shared.Avalonia.Theming.UiTokens.Bind(sp, Panel.BackgroundProperty, Skua.Shared.Avalonia.Theming.UiTokens.SkuaSelectionBrush);
         }
         Cursor = _horizontalDragCursor;
     }

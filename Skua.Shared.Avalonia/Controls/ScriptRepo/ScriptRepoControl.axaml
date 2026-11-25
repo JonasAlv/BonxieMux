@@ -1,39 +1,35 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives"
              xmlns:scriptRepo="clr-namespace:Skua.Shared.Avalonia.ViewModels.ScriptRepo;assembly=Skua.Shared.Avalonia"
              x:DataType="scriptRepo:ScriptRepoViewModel"
              x:Name="Root"
              Background="{DynamicResource SkuaPageBrush}"
              x:Class="Skua.Shared.Avalonia.Controls.ScriptRepo.ScriptRepoControl">
 
-    <Grid RowDefinitions="Auto,*,Auto" Margin="12" RowSpacing="10">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="12" RowSpacing="{DynamicResource UiGapBase}">
 
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8" IsEnabled="{Binding !IsBusy}">
-            <TextBox Grid.Column="0" PlaceholderText="Search scripts by name, path or tag" Text="{Binding SearchText, Mode=TwoWay}">
-                <TextBox.InnerLeftContent>
-                    <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                </TextBox.InnerLeftContent>
-                <TextBox.InnerRightContent>
-                    <Button Classes="icon icon-muted" Width="22" Height="22" Margin="0,0,6,0"
-                            Command="{Binding ClearSearchCommand}"
-                            IsVisible="{Binding SearchText.Length}"
-                            ToolTip.Tip="Clear search">
-                        <materialIcons:MaterialIcon Kind="CloseCircle" Width="14" Height="14" />
-                    </Button>
-                </TextBox.InnerRightContent>
-            </TextBox>
-            <ComboBox Grid.Column="1" Width="120" ItemsSource="{Binding SearchScopes}" SelectedItem="{Binding SearchScope, Mode=TwoWay}"
-                      ToolTip.Tip="Search in: all, name, tags, description or file path" />
-            <ComboBox Grid.Column="2" Width="140" ItemsSource="{Binding FilterOptions}" SelectedItem="{Binding FilterBy, Mode=TwoWay}"
-                      ToolTip.Tip="Category" />
-            <ToggleButton Grid.Column="3" Classes="app-toggle" Width="32" Padding="0" HorizontalContentAlignment="Center"
-                          IsChecked="{Binding IsSortReversed, Mode=OneWay}"
-                          Command="{Binding CycleSortCommand}"
-                          ToolTip.Tip="{Binding SortDirectionText, StringFormat='Order: {0}'}">
-                <materialIcons:MaterialIcon Kind="{Binding SortDirectionIcon}" Width="16" Height="16" />
-            </ToggleButton>
-        </Grid>
+        <primitives:SearchFilterBar Grid.Row="0"
+                                    IsEnabled="{Binding !IsBusy}"
+                                    PlaceholderText="Search scripts by name, path or tag"
+                                    SearchText="{Binding SearchText, Mode=TwoWay}"
+                                    ClearCommand="{Binding ClearSearchCommand}">
+            <primitives:SearchFilterBar.RightContent>
+                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}">
+                    <ComboBox Width="120" ItemsSource="{Binding SearchScopes}" SelectedItem="{Binding SearchScope, Mode=TwoWay}"
+                              ToolTip.Tip="Search in: all, name, tags, description or file path" />
+                    <ComboBox Width="140" ItemsSource="{Binding FilterOptions}" SelectedItem="{Binding FilterBy, Mode=TwoWay}"
+                              ToolTip.Tip="Category" />
+                    <ToggleButton Classes="app-toggle" Width="32" Padding="0" HorizontalContentAlignment="Center"
+                                  IsChecked="{Binding IsSortReversed, Mode=OneWay}"
+                                  Command="{Binding CycleSortCommand}"
+                                  ToolTip.Tip="{Binding SortDirectionText, StringFormat='Order: {0}'}">
+                        <materialIcons:MaterialIcon Kind="{Binding SortDirectionIcon}" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                    </ToggleButton>
+                </StackPanel>
+            </primitives:SearchFilterBar.RightContent>
+        </primitives:SearchFilterBar>
 
         <Grid Grid.Row="1">
             <Border Classes="option-list">
@@ -96,13 +92,13 @@
 
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="scriptRepo:ScriptInfoViewModel">
-                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource UiGapLg}">
                                     <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding StatusColor}" VerticalAlignment="Top" Margin="0,5,0,0"
                                              ToolTip.Tip="{Binding StatusText}" />
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="{DynamicResource UiGap2xs}">
+                                        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}">
                                             <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" VerticalAlignment="Center" />
-                                            <materialIcons:MaterialIcon Kind="Pin" Width="13" Height="13" Foreground="{DynamicResource SkuaGoldBrush}"
+                                            <materialIcons:MaterialIcon Kind="Pin" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaWarningBrush}"
                                                                         IsVisible="{Binding IsPinned}" VerticalAlignment="Center" />
                                             <Border Classes="chip warning" IsVisible="{Binding Outdated}">
                                                 <TextBlock Text="Update" />
@@ -111,17 +107,17 @@
                                                 <TextBlock Text="Local" />
                                             </Border>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding Info.Description}" FontSize="11" TextWrapping="Wrap"
+                                        <TextBlock Text="{Binding Info.Description}" FontSize="{DynamicResource UiFontSmall}" TextWrapping="Wrap"
                                                    Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                        <TextBlock Margin="0,2,0,0" FontSize="10.5" TextWrapping="Wrap" Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                        <TextBlock Margin="0,2,0,0" FontSize="{DynamicResource UiFontMicro}" TextWrapping="Wrap" Foreground="{DynamicResource SkuaMutedTextBrush}"
                                                    ToolTip.Tip="{Binding DisplayPath}">
-                                            <Run Text="{Binding WrappablePath}" FontFamily="JetBrains Mono,Consolas,Courier New,monospace" />
+                                            <Run Text="{Binding WrappablePath}" FontFamily="{DynamicResource UiFontMono}" />
                                             <Run Text="{Binding ListMeta}" />
                                         </TextBlock>
                                         <ItemsControl ItemsSource="{Binding InfoTags}" Margin="0,4,0,0">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
-                                                    <WrapPanel ItemSpacing="4" LineSpacing="4" />
+                                                    <WrapPanel ItemSpacing="{DynamicResource UiGapXs}" LineSpacing="{DynamicResource UiGapXs}" />
                                                 </ItemsPanelTemplate>
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
@@ -134,26 +130,26 @@
                                         </ItemsControl>
                                     </StackPanel>
 
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                        <Button Classes="skua-button skua-primary w90" Height="30" MinHeight="30"
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+                                        <Button Classes="skua-button skua-primary w90" Height="{DynamicResource UiControlHeight}" MinHeight="{DynamicResource UiControlHeight}"
                                                 IsVisible="{Binding #Root.((scriptRepo:ScriptRepoViewModel)DataContext).ShowStartButton}"
                                                 Command="{Binding StartScriptCommand}" CommandParameter="{Binding .}"
                                                 IsEnabled="{Binding Downloaded}" ToolTip.Tip="Start this script now">
   <TextBlock Text="Start" VerticalAlignment="Center" />
 </Button>
-                                        <Button Classes="skua-button w90" Height="30" MinHeight="30"
+                                        <Button Classes="skua-button w90" Height="{DynamicResource UiControlHeight}" MinHeight="{DynamicResource UiControlHeight}"
                                                 Command="{Binding LoadScriptCommand}" CommandParameter="{Binding .}"
                                                 IsEnabled="{Binding Downloaded}" ToolTip.Tip="Load into the Script Loader">
   <TextBlock Text="Load" VerticalAlignment="Center" />
 </Button>
-                                        <Button Classes="skua-button w90" Height="30" MinHeight="30"
+                                        <Button Classes="skua-button w90" Height="{DynamicResource UiControlHeight}" MinHeight="{DynamicResource UiControlHeight}"
                                                 Command="{Binding QueueScriptCommand}" CommandParameter="{Binding .}"
                                                 IsEnabled="{Binding Downloaded}" ToolTip.Tip="Add to the Scheduler queue">
   <TextBlock Text="Queue" VerticalAlignment="Center" />
 </Button>
-                                        <Button Classes="skua-button" Width="30" Height="30" MinHeight="30" Padding="0" HorizontalContentAlignment="Center"
+                                        <Button Classes="skua-button" Width="{DynamicResource UiControlHeight}" Height="{DynamicResource UiControlHeight}" MinHeight="{DynamicResource UiControlHeight}" Padding="0" HorizontalContentAlignment="Center"
                                                 ToolTip.Tip="Pin, download, update, VS Code, delete">
-                                            <materialIcons:MaterialIcon Kind="DotsHorizontal" Width="16" Height="16" />
+                                            <materialIcons:MaterialIcon Kind="DotsHorizontal" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                             <Button.Flyout>
                                                 <MenuFlyout Placement="BottomEdgeAlignedRight">
                                                     <MenuItem Header="{Binding PinToolTip}"
@@ -183,45 +179,38 @@
                     </ListBox>
 
                     <Panel IsVisible="{Binding IsLoadingScripts}">
-                        <StackPanel Spacing="12" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    IsVisible="{Binding !FilteredScripts.Count}">
-                            <materialIcons:MaterialIcon Kind="CloudDownloadOutline" Width="40" Height="40" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                            <TextBlock Text="Loading scripts..." FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
-                            <ProgressBar IsIndeterminate="True" Height="4" Width="200" HorizontalAlignment="Center" />
-                            <TextBlock Text="Getting the script list, this can take a few seconds." FontSize="12" Foreground="{DynamicResource SkuaMutedTextBrush}"
-                                       HorizontalAlignment="Center" />
-                        </StackPanel>
+                        <primitives:EmptyStateView IconKind="CloudDownloadOutline"
+                                                   Title="Loading scripts..."
+                                                   Description="Getting the script list, this can take a few seconds."
+                                                   IsLoading="True"
+                                                   IsVisible="{Binding !FilteredScripts.Count}" />
                     </Panel>
 
                     <Panel IsVisible="{Binding !IsLoadingScripts}">
-                        <StackPanel Spacing="10" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    IsVisible="{Binding !FilteredScripts.Count}">
-                            <materialIcons:MaterialIcon Kind="FolderSearchOutline" Width="40" Height="40" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                            <TextBlock Text="No scripts found" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
-                            <TextBlock Text="Nothing matches the search or category." FontSize="12" Foreground="{DynamicResource SkuaMutedTextBrush}"
-                                       HorizontalAlignment="Center" />
-                            <Button Classes="skua-button w140" HorizontalAlignment="Center" Command="{Binding ClearSearchCommand}">
-  <TextBlock Text="Clear search" VerticalAlignment="Center" />
-</Button>
-                        </StackPanel>
+                        <primitives:EmptyStateView IconKind="FolderSearchOutline"
+                                                   Title="No scripts found"
+                                                   Description="Nothing matches the search or category."
+                                                   ActionText="Clear search"
+                                                   ActionCommand="{Binding ClearSearchCommand}"
+                                                   IsVisible="{Binding !FilteredScripts.Count}" />
                     </Panel>
                 </Grid>
             </Border>
 
-            <Border Background="#B0000000" CornerRadius="8" IsVisible="{Binding IsBusy}">
+            <Border Background="{DynamicResource SkuaOverlayBackdropBrush}" CornerRadius="{DynamicResource UiRadiusCard}" IsVisible="{Binding IsBusy}">
                 <Border Background="{DynamicResource SkuaSurfaceBrush}"
                         BorderBrush="{DynamicResource SkuaBorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="12"
+                        BorderThickness="{DynamicResource UiBorderThin}"
+                        CornerRadius="{DynamicResource UiRadiusCard}"
                         Padding="28,24"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         MinWidth="320"
                         MaxWidth="450">
-                    <StackPanel Spacing="16" HorizontalAlignment="Center">
+                    <StackPanel Spacing="{DynamicResource UiGapXl}" HorizontalAlignment="Center">
                         <ProgressBar IsIndeterminate="True" Height="4" Width="240" HorizontalAlignment="Center" />
                         <TextBlock Text="{Binding ProgressReportMessage, FallbackValue='Processing...'}"
-                                   FontSize="12"
+                                   FontSize="{DynamicResource UiFontBody}"
                                    FontWeight="SemiBold"
                                    TextAlignment="Center"
                                    TextWrapping="Wrap" />
@@ -233,49 +222,50 @@
             </Border>
         </Grid>
 
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="6" IsEnabled="{Binding !IsBusy}">
-            <TextBlock Grid.Column="0" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource SkuaMutedTextBrush}"
-                       TextTrimming="CharacterEllipsis">
-                <Run Text="{Binding ScriptQuantity, StringFormat='{}{0:N0} scripts'}" />
-                <Run Text="·" />
-                <Run Text="{Binding DownloadedQuantity, StringFormat='{}{0:N0} local'}" />
-                <Run Text="·" />
-                <Run Text="{Binding PinnedQuantity, StringFormat='{}{0:N0} pinned'}" />
-                <Run Text="·" />
-                <Run Text="{Binding OutdatedQuantity, StringFormat='{}{0:N0} updates'}" Foreground="{DynamicResource SkuaWarningBrush}" />
-            </TextBlock>
-            <Button Grid.Column="1" Classes="skua-button small w112" Command="{Binding UpdateAllCommand}"
-                    ToolTip.Tip="Download every script that has an update">
-  <TextBlock Text="Update all" VerticalAlignment="Center" />
-</Button>
-            <Button Grid.Column="2" Classes="skua-button small w112" Command="{Binding DownloadAllCommand}"
-                    ToolTip.Tip="Download every script you don't have, and every update">
-  <TextBlock Text="Download all" VerticalAlignment="Center" />
-</Button>
-            <Button Grid.Column="3" Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
-                    Command="{Binding RefreshScriptsCommand}" ToolTip.Tip="Fetch the latest script list from the repo">
-                <materialIcons:MaterialIcon Kind="Refresh" Width="14" Height="14" />
-            </Button>
-            <Button Grid.Column="4" Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
-                    ToolTip.Tip="More">
-                <materialIcons:MaterialIcon Kind="DotsHorizontal" Width="14" Height="14" />
-                <Button.Flyout>
-                    <MenuFlyout Placement="TopEdgeAlignedRight">
-                        <MenuItem Header="Update dates from Git" Command="{Binding UpdateDatesCommand}">
-                        </MenuItem>
-                        <Separator />
-                        <MenuItem Header="Set custom scripts folder..." Command="{Binding AddCustomFolderCommand}">
-                        </MenuItem>
-                        <MenuItem Header="Clear custom scripts folder" Command="{Binding ClearCustomFolderCommand}">
-                        </MenuItem>
-                        <MenuItem Header="Load a script file..." Command="{Binding LoadLocalScriptCommand}">
-                        </MenuItem>
-                        <Separator />
-                        <MenuItem Header="Open the Scripts folder in VS Code" Command="{Binding OpenScriptFolderCommand}">
-                        </MenuItem>
-                    </MenuFlyout>
-                </Button.Flyout>
-            </Button>
-        </Grid>
+        <primitives:StatusFooterBar Grid.Row="2" ShowTopBorder="False" IsEnabled="{Binding !IsBusy}">
+            <primitives:StatusFooterBar.LeftContent>
+                <TextBlock FontSize="{DynamicResource UiFontSmall}" VerticalAlignment="Center" Foreground="{DynamicResource SkuaMutedTextBrush}"
+                           TextTrimming="CharacterEllipsis">
+                    <Run Text="{Binding ScriptQuantity, StringFormat='{}{0:N0} scripts'}" />
+                    <Run Text="·" />
+                    <Run Text="{Binding DownloadedQuantity, StringFormat='{}{0:N0} local'}" />
+                    <Run Text="·" />
+                    <Run Text="{Binding PinnedQuantity, StringFormat='{}{0:N0} pinned'}" />
+                    <Run Text="·" />
+                    <Run Text="{Binding OutdatedQuantity, StringFormat='{}{0:N0} updates'}" Foreground="{DynamicResource SkuaWarningBrush}" />
+                </TextBlock>
+            </primitives:StatusFooterBar.LeftContent>
+            <primitives:StatusFooterBar.RightContent>
+                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}">
+                    <Button Classes="skua-button small w112" Command="{Binding UpdateAllCommand}"
+                            ToolTip.Tip="Download every script that has an update">
+                        <TextBlock Text="Update all" VerticalAlignment="Center" />
+                    </Button>
+                    <Button Classes="skua-button small w112" Command="{Binding DownloadAllCommand}"
+                            ToolTip.Tip="Download every script you don't have, and every update">
+                        <TextBlock Text="Download all" VerticalAlignment="Center" />
+                    </Button>
+                    <Button Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
+                            Command="{Binding RefreshScriptsCommand}" ToolTip.Tip="Fetch the latest script list from the repo">
+                        <materialIcons:MaterialIcon Kind="Refresh" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                    </Button>
+                    <Button Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
+                            ToolTip.Tip="More">
+                        <materialIcons:MaterialIcon Kind="DotsHorizontal" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                        <Button.Flyout>
+                            <MenuFlyout Placement="TopEdgeAlignedRight">
+                                <MenuItem Header="Update dates from Git" Command="{Binding UpdateDatesCommand}" />
+                                <Separator />
+                                <MenuItem Header="Set custom scripts folder..." Command="{Binding AddCustomFolderCommand}" />
+                                <MenuItem Header="Clear custom scripts folder" Command="{Binding ClearCustomFolderCommand}" />
+                                <MenuItem Header="Load a script file..." Command="{Binding LoadLocalScriptCommand}" />
+                                <Separator />
+                                <MenuItem Header="Open the Scripts folder in VS Code" Command="{Binding OpenScriptFolderCommand}" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </StackPanel>
+            </primitives:StatusFooterBar.RightContent>
+        </primitives:StatusFooterBar>
     </Grid>
 </UserControl>

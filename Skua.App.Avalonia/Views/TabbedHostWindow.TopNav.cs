@@ -9,9 +9,11 @@ using Material.Icons;
 using Material.Icons.Avalonia;
 using Newtonsoft.Json.Linq;
 using Skua.App.Avalonia.Services;
+using Skua.App.Avalonia.Views.Popups;
 using Skua.Core.Interfaces;
 using Skua.Core.Interfaces.ViewModels;
 using Skua.Shared.Avalonia.Controls.Shell;
+using Skua.Shared.Avalonia.Theming;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,20 +27,12 @@ public partial class TabbedHostWindow
         public ToggleButton? AutoToggle;
         public ToggleButton? JumpToggle;
         public Border? AutoActiveDot;
-        public Border? AutoRunningBadge;
-        public Button? AutoAttackBtn;
-        public Button? AutoHuntBtn;
-        public Button? AutoStopBtn;
-        public ComboBox? AutoClassBox;
-        public ComboBox? AutoModeBox;
-        public TextBox? AutoMapIdsBox;
-        public ComboBox? JumpCellBox;
-        public ComboBox? JumpPadBox;
+        public AutoQuickPopupView? AutoView;
+        public JumpQuickPopupView? JumpView;
     }
 
     private readonly QuickBarControls _mainQuickBar = new();
     private readonly Dictionary<int, QuickBarControls> _detachedQuickBars = new();
-    private bool _suppressPopupSync;
     private Menu? _topMenuBar;
     private MenuItem? _overflowMenuItem;
     private readonly List<(TopMenuSpec Spec, MenuItem Item, double Width)> _topMenuEntries = new();
@@ -213,6 +207,15 @@ public partial class TabbedHostWindow
         botWinBtn.Click += (_, _) => SendActiveChildCommand("BOT_WINDOW");
         ActivityBotWinHost.Content = botWinBtn;
 
+        Button searchScriptsBtn = new()
+        {
+            Content = CreateNavIcon(MaterialIconKind.SourceBranch, 16, "SkuaMutedTextBrush")
+        };
+        searchScriptsBtn.Classes.Add("activity-item");
+        ToolTip.SetTip(searchScriptsBtn, "Search Scripts");
+        searchScriptsBtn.Click += (_, _) => SendActiveChildCommand("MENU|Script Repo");
+        ActivitySearchScriptsHost.Content = searchScriptsBtn;
+
         Button settingsBtn = new()
         {
             Content = CreateNavIcon(MaterialIconKind.CogOutline, 16, "SkuaMutedTextBrush")
@@ -358,22 +361,22 @@ public partial class TabbedHostWindow
             Width = 6,
             Height = 6,
             CornerRadius = new CornerRadius(3),
-            Background = Brush.Parse("#10B981"),
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Top,
             Margin = new Thickness(0, 4, 4, 0),
             IsVisible = false
         };
+        UiTokens.Bind(target.AutoActiveDot, Border.BackgroundProperty, UiTokens.SkuaSuccessBrush);
         Panel autoContent = new()
         {
-            Width = 28,
-            Height = 28,
             Children =
             {
-                CreateNavIcon(MaterialIconKind.RobotOutline, 16, "SkuaMutedTextBrush"),
+                CreateNavIcon(MaterialIconKind.RobotOutline, UiTokens.GetDouble(UiTokens.UiIconMd, 16), UiTokens.SkuaMutedTextBrush),
                 target.AutoActiveDot
             }
         };
+        UiTokens.Bind(autoContent, Layoutable.WidthProperty, UiTokens.UiControlHeight);
+        UiTokens.Bind(autoContent, Layoutable.HeightProperty, UiTokens.UiControlHeight);
         ToggleButton toggle = new()
         {
             Content = autoContent
@@ -382,79 +385,22 @@ public partial class TabbedHostWindow
         ToolTip.SetTip(toggle, "Automated Combat & Hunting Controls");
         target.AutoToggle = toggle;
 
-        target.AutoRunningBadge = new Border
+        AutoQuickPopupView view = new();
+        view.AutoAttackClicked += () => { send("AUTO_ATTACK"); if (target.AutoToggle != null) target.AutoToggle.IsChecked = false; };
+        view.AutoHuntClicked += () => { send("AUTO_HUNT"); if (target.AutoToggle != null) target.AutoToggle.IsChecked = false; };
+        view.AutoStopClicked += () => { send("AUTO_STOP"); if (target.AutoToggle != null) target.AutoToggle.IsChecked = false; };
+        view.ClassSelected += cls => send("AUTO_CLASS|" + cls);
+        view.ModeSelected += mode => send("AUTO_MODE|" + mode);
+        view.ManualMapIdsCommitted += maps => send("AUTO_MAPS|" + maps);
+        target.AutoView = view;
+
+        Popup popup = new()
         {
-            CornerRadius = new CornerRadius(4),
-            Padding = new Thickness(8, 2),
-            Background = Brush.Parse("#064E3B"),
-            BorderBrush = Brush.Parse("#059669"),
-            BorderThickness = new Thickness(1),
-            IsVisible = false,
-            Child = new TextBlock { Text = "RUNNING", FontSize = 10, FontWeight = FontWeight.Bold, Foreground = Brush.Parse("#34D399") }
+            Placement = placement,
+            IsLightDismissEnabled = true,
+            PlacementTarget = toggle,
+            Child = new TopbarPopupPanel { Content = view }
         };
-        Grid.SetColumn(target.AutoRunningBadge, 1);
-
-        Grid headerGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,Auto"), VerticalAlignment = VerticalAlignment.Center };
-        headerGrid.Children.Add(CreatePopupHeader("Combat Automation"));
-        headerGrid.Children.Add(target.AutoRunningBadge);
-
-        target.AutoAttackBtn = CreatePopupButton("Auto Attack", true, "skua-primary", () =>
-        {
-            send("AUTO_ATTACK");
-            if (target.AutoToggle != null) target.AutoToggle.IsChecked = false;
-        });
-
-        target.AutoHuntBtn = CreatePopupButton("Auto Hunt", true, null, () =>
-        {
-            send("AUTO_HUNT");
-            if (target.AutoToggle != null) target.AutoToggle.IsChecked = false;
-        });
-        Grid.SetColumn(target.AutoHuntBtn, 1);
-
-        target.AutoStopBtn = CreatePopupButton("Stop Automation", true, "skua-danger", () =>
-        {
-            send("AUTO_STOP");
-            if (target.AutoToggle != null) target.AutoToggle.IsChecked = false;
-        });
-        target.AutoStopBtn.IsVisible = false;
-        Grid.SetColumnSpan(target.AutoStopBtn, 2);
-
-        Grid actionsGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
-        actionsGrid.Children.Add(target.AutoAttackBtn);
-        actionsGrid.Children.Add(target.AutoHuntBtn);
-        actionsGrid.Children.Add(target.AutoStopBtn);
-
-        target.AutoClassBox = new ComboBox { Height = 34, MinWidth = 160, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Class..." };
-        target.AutoClassBox.SelectionChanged += (_, _) =>
-        {
-            if (!_suppressPopupSync && target.AutoClassBox.SelectedItem is string cls)
-                send("AUTO_CLASS|" + cls);
-        };
-
-        target.AutoModeBox = new ComboBox { Height = 34, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Mode..." };
-        Grid.SetColumn(target.AutoModeBox, 1);
-        target.AutoModeBox.SelectionChanged += (_, _) =>
-        {
-            if (!_suppressPopupSync && target.AutoModeBox.SelectedItem is string mode)
-                send("AUTO_MODE|" + mode);
-        };
-
-        Grid classModeGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
-        classModeGrid.Children.Add(target.AutoClassBox);
-        classModeGrid.Children.Add(target.AutoModeBox);
-
-        target.AutoMapIdsBox = new TextBox { Height = 32, FontSize = 12, Watermark = "Manual MapIDs (optional, e.g. 1, 2)" };
-        target.AutoMapIdsBox.LostFocus += (_, _) =>
-        {
-            if (!_suppressPopupSync)
-                send("AUTO_MAPS|" + (target.AutoMapIdsBox.Text ?? string.Empty));
-        };
-
-        Popup popup = CreatePopupCard(toggle, 360, new StackPanel
-        {
-            Spacing = 10,
-            Children = { headerGrid, CreatePopupSeparator(), actionsGrid, classModeGrid, target.AutoMapIdsBox }
-        }, placement);
 
         BindPopupToggle(toggle, popup, () => target.JumpToggle, "GET_AUTO_STATE", send);
         return (toggle, popup);
@@ -478,106 +424,21 @@ public partial class TabbedHostWindow
         ToolTip.SetTip(toggle, "Map & Cell Fast Jump Controls");
         target.JumpToggle = toggle;
 
-        StackPanel header = CreatePopupHeader("Fast Map Jump");
+        JumpQuickPopupView view = new();
+        view.CurrentClicked += () => send("JUMP_CURRENT");
+        view.JumpRequested += (cell, pad) => send($"JUMP_TO|{cell}|{pad}");
+        target.JumpView = view;
 
-        target.JumpCellBox = new ComboBox { Height = 34, MinWidth = 140, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Cell..." };
-        target.JumpPadBox = new ComboBox { Height = 34, MinWidth = 140, HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Select Pad..." };
-        Grid.SetColumn(target.JumpPadBox, 1);
-
-        target.JumpCellBox.SelectionChanged += (_, _) =>
-        {
-            if (_suppressPopupSync || target.JumpCellBox.SelectedItem is not string cell || string.IsNullOrEmpty(cell))
-                return;
-            if (cell == "Enter")
-                target.JumpPadBox.SelectedItem = "Spawn";
-            else if (target.JumpPadBox.SelectedItem is not string p || string.IsNullOrEmpty(p))
-                target.JumpPadBox.SelectedItem = "Left";
-            string pad = target.JumpPadBox.SelectedItem as string ?? "Spawn";
-            send($"JUMP_TO|{cell}|{pad}");
-        };
-
-        Grid selectGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
-        selectGrid.Children.Add(target.JumpCellBox);
-        selectGrid.Children.Add(target.JumpPadBox);
-
-        Button currentBtn = CreatePopupButton("Current", false, null, () => send("JUMP_CURRENT"));
-        Button jumpBtn = CreatePopupButton("Jump", true, "skua-primary", () =>
-        {
-            string cell = target.JumpCellBox?.SelectedItem as string ?? string.Empty;
-            string pad = target.JumpPadBox?.SelectedItem as string ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(cell) && !string.IsNullOrWhiteSpace(pad))
-                send($"JUMP_TO|{cell}|{pad}");
-        });
-        Grid.SetColumn(jumpBtn, 1);
-
-        Grid actionsGrid = new() { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
-        actionsGrid.Children.Add(currentBtn);
-        actionsGrid.Children.Add(jumpBtn);
-
-        Popup popup = CreatePopupCard(toggle, 320, new StackPanel
-        {
-            Spacing = 10,
-            Children = { header, CreatePopupSeparator(), selectGrid, actionsGrid }
-        }, placement);
-
-        BindPopupToggle(toggle, popup, () => target.AutoToggle, "GET_JUMP_STATE", send);
-        return (toggle, popup);
-    }
-
-    private static StackPanel CreatePopupHeader(string title) => new()
-    {
-        Orientation = Orientation.Horizontal,
-        Spacing = 6,
-        VerticalAlignment = VerticalAlignment.Center,
-        Children =
-        {
-            CreateNavTitle(title)
-        }
-    };
-
-    private static Button CreatePopupButton(string text, bool bold, string? accentClass, Action onClick)
-    {
-        Button btn = new()
-        {
-            Height = 34,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            Content = CreatePopupButtonContent(text, bold)
-        };
-        btn.Classes.Add("skua-button");
-        if (!string.IsNullOrEmpty(accentClass))
-            btn.Classes.Add(accentClass);
-        btn.Click += (_, _) => onClick();
-        return btn;
-    }
-
-    private static Border CreatePopupSeparator()
-    {
-        Border sep = new() { Height = 1 };
-        sep[!Border.BackgroundProperty] = new DynamicResourceExtension("SkuaBorderBrush");
-        return sep;
-    }
-
-    private static Popup CreatePopupCard(Control target, double width, Control body, PlacementMode placement = PlacementMode.Bottom)
-    {
-        Border card = new()
-        {
-            BorderThickness = new Thickness(1),
-            Padding = new Thickness(12),
-            CornerRadius = new CornerRadius(6),
-            MinWidth = width,
-            Width = width,
-            Child = body
-        };
-        card[!Border.BackgroundProperty] = new DynamicResourceExtension("SkuaSurfaceBrush");
-        card[!Border.BorderBrushProperty] = new DynamicResourceExtension("SkuaBorderBrush");
-
-        return new Popup
+        Popup popup = new()
         {
             Placement = placement,
             IsLightDismissEnabled = true,
-            PlacementTarget = target,
-            Child = new TopbarPopupPanel { Content = card }
+            PlacementTarget = toggle,
+            Child = new TopbarPopupPanel { Content = view }
         };
+
+        BindPopupToggle(toggle, popup, () => target.AutoToggle, "GET_JUMP_STATE", send);
+        return (toggle, popup);
     }
 
     private static void BindPopupToggle(ToggleButton toggle, Popup popup, Func<ToggleButton?> otherToggle, string stateCommand, Action<string> send)
@@ -594,22 +455,6 @@ public partial class TabbedHostWindow
         popup.Closed += (_, _) => toggle.IsChecked = false;
     }
 
-    private static TextBlock CreateNavTitle(string text)
-    {
-        TextBlock tb = new() { Text = text, FontWeight = FontWeight.Bold, FontSize = 13, VerticalAlignment = VerticalAlignment.Center };
-        tb[!TextBlock.ForegroundProperty] = new DynamicResourceExtension("SkuaTextBrush");
-        return tb;
-    }
-
-    private static TextBlock CreatePopupButtonContent(string text, bool bold) => new()
-    {
-        Text = text,
-        FontWeight = bold ? FontWeight.Bold : FontWeight.SemiBold,
-        FontSize = 11,
-        VerticalAlignment = VerticalAlignment.Center,
-        HorizontalAlignment = HorizontalAlignment.Center
-    };
-
     private void ApplyChildAutoState(int childPid, string json)
     {
         bool isSelected = InstancesTabControl.SelectedItem is TabItem sel &&
@@ -623,7 +468,6 @@ public partial class TabbedHostWindow
         try
         {
             JObject obj = JObject.Parse(json);
-            _suppressPopupSync = true;
             bool isRunning = obj.Value<bool>("isRunning");
             List<string> classes = obj["classes"]?.ToObject<List<string>>() ?? new List<string>();
             string? selectedClass = obj.Value<string?>("selectedClass");
@@ -634,25 +478,7 @@ public partial class TabbedHostWindow
             void ApplyTo(QuickBarControls target)
             {
                 if (target.AutoActiveDot != null) target.AutoActiveDot.IsVisible = isRunning;
-                if (target.AutoRunningBadge != null) target.AutoRunningBadge.IsVisible = isRunning;
-                if (target.AutoAttackBtn != null) target.AutoAttackBtn.IsVisible = !isRunning;
-                if (target.AutoHuntBtn != null) target.AutoHuntBtn.IsVisible = !isRunning;
-                if (target.AutoStopBtn != null) target.AutoStopBtn.IsVisible = isRunning;
-
-                if (target.AutoClassBox != null)
-                {
-                    target.AutoClassBox.ItemsSource = classes;
-                    target.AutoClassBox.SelectedItem = selectedClass;
-                }
-                if (target.AutoModeBox != null)
-                {
-                    target.AutoModeBox.ItemsSource = modes;
-                    target.AutoModeBox.SelectedItem = selectedMode;
-                }
-                if (target.AutoMapIdsBox != null)
-                {
-                    target.AutoMapIdsBox.Text = manualMapIds;
-                }
+                target.AutoView?.ApplyState(isRunning, classes, selectedClass, modes, selectedMode, manualMapIds);
             }
 
             if (isSelected)
@@ -661,10 +487,6 @@ public partial class TabbedHostWindow
                 ApplyTo(detachedBar);
         }
         catch { }
-        finally
-        {
-            _suppressPopupSync = false;
-        }
     }
 
     private void ApplyChildJumpState(int childPid, string json)
@@ -680,35 +502,16 @@ public partial class TabbedHostWindow
         try
         {
             JObject obj = JObject.Parse(json);
-            _suppressPopupSync = true;
             List<string> cells = obj["cells"]?.ToObject<List<string>>() ?? new List<string>();
             string? selectedCell = obj.Value<string?>("selectedCell");
             List<string> pads = obj["pads"]?.ToObject<List<string>>() ?? new List<string>();
             string? selectedPad = obj.Value<string?>("selectedPad");
 
-            void ApplyTo(QuickBarControls target)
-            {
-                if (target.JumpCellBox != null)
-                {
-                    target.JumpCellBox.ItemsSource = cells;
-                    target.JumpCellBox.SelectedItem = selectedCell;
-                }
-                if (target.JumpPadBox != null)
-                {
-                    target.JumpPadBox.ItemsSource = pads;
-                    target.JumpPadBox.SelectedItem = selectedPad;
-                }
-            }
-
             if (isSelected)
-                ApplyTo(_mainQuickBar);
+                _mainQuickBar.JumpView?.ApplyState(cells, selectedCell, pads, selectedPad);
             if (detachedBar != null)
-                ApplyTo(detachedBar);
+                detachedBar.JumpView?.ApplyState(cells, selectedCell, pads, selectedPad);
         }
         catch { }
-        finally
-        {
-            _suppressPopupSync = false;
-        }
     }
 }

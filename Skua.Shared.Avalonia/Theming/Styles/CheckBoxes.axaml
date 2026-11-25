@@ -125,7 +125,7 @@
     <Style Selector="CheckBox:not(:skua-never) /template/ Border#NormalRectangle">
         <Setter Property="Width" Value="18" />
         <Setter Property="Height" Value="18" />
-        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="BorderThickness" Value="1.5" />
     </Style>
     <Style Selector="RadioButton:not(:skua-never) /template/ Ellipse#OuterEllipse, RadioButton:not(:skua-never) /template/ Ellipse#CheckOuterEllipse">

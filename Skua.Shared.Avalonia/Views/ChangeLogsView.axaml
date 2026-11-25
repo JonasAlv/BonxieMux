@@ -8,19 +8,19 @@
              x:DataType="vms:ChangeLogsViewModel"
              d:DesignHeight="700" d:DesignWidth="600"
              mc:Ignorable="d">
-    <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="10">
+    <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapBase}">
         <Border Grid.Row="0"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="12,10">
-            <StackPanel Spacing="2">
+                BorderThickness="{DynamicResource UiBorderThin}"
+                CornerRadius="{DynamicResource UiRadiusCard}"
+                Padding="{DynamicResource UiCardCompactPadding}">
+            <StackPanel Spacing="{DynamicResource UiGap2xs}">
                 <TextBlock Text="UPDATES &amp; RELEASES"
-                           FontSize="10"
+                           FontSize="{DynamicResource UiFontMicro}"
                            FontWeight="Bold"
                            Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                <TextBlock FontSize="16"
+                <TextBlock FontSize="{DynamicResource UiFontHeading}"
                            FontWeight="Bold"
                            Foreground="{DynamicResource SkuaTextBrush}"
                            Text="Change Logs" />
@@ -30,14 +30,14 @@
         <Border Grid.Row="1"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
+                BorderThickness="{DynamicResource UiBorderThin}"
+                CornerRadius="{DynamicResource UiRadiusCard}"
                 Padding="16">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <SelectableTextBlock Text="{Binding MarkdownDoc}"
                                      TextWrapping="Wrap"
                                      Foreground="{DynamicResource SkuaTextBrush}"
-                                     FontSize="13"
+                                     FontSize="{DynamicResource UiFontBody}"
                                      LineHeight="20" />
             </ScrollViewer>
         </Border>
@@ -45,13 +45,13 @@
         <Border Grid.Row="2"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="12">
+                BorderThickness="{DynamicResource UiBorderThin}"
+                CornerRadius="{DynamicResource UiRadiusCard}"
+                Padding="{DynamicResource UiPaddingLg}">
             <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-                    <TextBlock Text="Support Development" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" />
-                    <TextBlock Text="Donations can be made via Ko-fi to support continuous improvements." FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="{DynamicResource UiGap2xs}">
+                    <TextBlock Text="Support Development" FontWeight="SemiBold" FontSize="{DynamicResource UiFontBody}" Foreground="{DynamicResource SkuaTextBrush}" />
+                    <TextBlock Text="Donations can be made via Ko-fi to support continuous improvements." FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                 </StackPanel>
                 <Button Grid.Column="1"
                         Classes="skua-button skua-primary"

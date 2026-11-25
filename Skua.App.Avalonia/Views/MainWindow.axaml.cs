@@ -288,7 +288,9 @@ public partial class MainWindow : Window
         {
             try
             {
-                new CommandPaletteWindow(_mainMenuVm.MainMenuItems).ShowDialog(this);
+                if (Skua.Shared.Avalonia.Controls.Shell.QuickPickWindow.DismissActive())
+                    return;
+                new CommandPaletteWindow(_mainMenuVm.MainMenuItems).ShowModeless(IsVisible ? this : null);
             }
             catch { }
         });

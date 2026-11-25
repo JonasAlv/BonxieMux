@@ -1,0 +1,25 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Skua.App.Avalonia.Views.Dialogs.ArmyMapPresetEditorView">
+    <StackPanel Spacing="{DynamicResource UiGapBase}">
+        <TextBlock Text="Preset name" FontSize="{DynamicResource UiFontBody}" FontWeight="SemiBold" Foreground="{DynamicResource SkuaTextBrush}" />
+        <TextBox x:Name="NameInput" PlaceholderText="Preset name" />
+
+        <TextBlock Text="Map" FontSize="{DynamicResource UiFontBody}" FontWeight="SemiBold" Foreground="{DynamicResource SkuaTextBrush}" />
+        <TextBox x:Name="MapInput" PlaceholderText="Map name" />
+
+        <TextBlock Text="Room number (optional)" FontSize="{DynamicResource UiFontBody}" FontWeight="SemiBold" Foreground="{DynamicResource SkuaTextBrush}" />
+        <TextBox x:Name="RoomInput" PlaceholderText="Room number (optional)" />
+
+        <TextBlock Text="Cell" FontSize="{DynamicResource UiFontBody}" FontWeight="SemiBold" Foreground="{DynamicResource SkuaTextBrush}" />
+        <TextBox x:Name="CellInput" PlaceholderText="Cell" />
+
+        <TextBlock Text="Pad" FontSize="{DynamicResource UiFontBody}" FontWeight="SemiBold" Foreground="{DynamicResource SkuaTextBrush}" />
+        <TextBox x:Name="PadInput" PlaceholderText="Pad" />
+
+        <Button x:Name="UseCurrentLocationButton"
+                Content="Use Current Client Location"
+                Classes="skua-button"
+                HorizontalAlignment="Left" />
+    </StackPanel>
+</UserControl>

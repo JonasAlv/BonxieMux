@@ -4,30 +4,30 @@
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.CoreBotsOptions"
              x:DataType="vms:CBOClassSelectViewModel"
              x:Class="Skua.App.Avalonia.Views.CBOClassSelectView">
-  <Grid RowDefinitions="Auto,*" RowSpacing="12" Margin="0">
+  <Grid RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapLg}" Margin="0">
     
     <Border Grid.Row="0"
             Background="{DynamicResource SkuaSurfaceAltBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="1"
-            CornerRadius="8"
+            BorderThickness="{DynamicResource UiBorderThin}"
+            CornerRadius="{DynamicResource UiRadiusCard}"
             Padding="12,8">
       <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
   <TextBlock Text="Combat Class &amp; Skill Configurations"
                      FontWeight="Bold"
-                     FontSize="12"
+                     FontSize="{DynamicResource UiFontBody}"
                      Foreground="{DynamicResource SkuaTextBrush}"
                      VerticalAlignment="Center" />
 </StackPanel>
 
         <Button Grid.Column="1"
                 Classes="skua-button"
-                Height="28"
-                Padding="10,0"
+                Height="{DynamicResource UiControlHeight}"
+                Padding="{DynamicResource UiControlPadding}"
                 Command="{Binding ReloadClassesCommand}"
                 ToolTip.Tip="Refresh player classes from current inventory">
-  <TextBlock Text="Reload Classes" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+  <TextBlock Text="Reload Classes" FontSize="{DynamicResource UiFontSmall}" FontWeight="SemiBold" VerticalAlignment="Center" />
 </Button>
       </Grid>
     </Border>
@@ -35,45 +35,45 @@
     <Grid Grid.Row="1"
           RowDefinitions="*,*"
           ColumnDefinitions="*,*"
-          RowSpacing="10"
-          ColumnSpacing="10">
+          RowSpacing="{DynamicResource UiGapBase}"
+          ColumnSpacing="{DynamicResource UiGapBase}">
       
       <Border Grid.Row="0"
               Grid.Column="0"
               Background="{DynamicResource SkuaSurfaceBrush}"
               BorderBrush="{DynamicResource SkuaBorderBrush}"
-              BorderThickness="1"
-              CornerRadius="8"
-              Padding="14,12">
-        <StackPanel Spacing="8">
+              BorderThickness="{DynamicResource UiBorderThin}"
+              CornerRadius="{DynamicResource UiRadiusCard}"
+              Padding="{DynamicResource UiCardCompactPadding}">
+        <StackPanel Spacing="{DynamicResource UiGapMd}">
           <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-  <TextBlock Text="Solo Class" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+  <TextBlock Text="Solo Class" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
 </StackPanel>
-            <Border Grid.Column="2" CornerRadius="10" Padding="6,2" Background="#064E3B" BorderBrush="#059669" BorderThickness="1">
-              <TextBlock Text="SINGLE TARGET" FontSize="9" FontWeight="Bold" Foreground="#34D399" />
+            <Border Grid.Column="2" Classes="chip success">
+              <TextBlock Text="SINGLE TARGET" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" />
             </Border>
           </Grid>
 
           <StackPanel Spacing="3">
-            <TextBlock Text="Selected Class" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <TextBlock Text="Selected Class" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
             <ComboBox ItemsSource="{Binding PlayerClasses}"
                       SelectedItem="{Binding SelectedSoloClass}"
                       HorizontalAlignment="Stretch"
-                      Height="30" />
+                      Height="{DynamicResource UiControlHeight}" />
           </StackPanel>
 
           <StackPanel Spacing="3">
-            <TextBlock Text="Skill Rule / Preset" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <TextBlock Text="Skill Rule / Preset" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
             <ComboBox ItemsSource="{Binding SoloModeStrings}"
                       SelectedItem="{Binding SelectedSoloModeString}"
                       HorizontalAlignment="Stretch"
-                      Height="30" />
+                      Height="{DynamicResource UiControlHeight}" />
           </StackPanel>
 
           <CheckBox Content="Use Dedicated Equipment Loadout"
                     IsChecked="{Binding UseSoloEquipment}"
-                    FontSize="11"
+                    FontSize="{DynamicResource UiFontSmall}"
                     Margin="0,2,0,0" />
         </StackPanel>
       </Border>
@@ -82,38 +82,38 @@
               Grid.Column="1"
               Background="{DynamicResource SkuaSurfaceBrush}"
               BorderBrush="{DynamicResource SkuaBorderBrush}"
-              BorderThickness="1"
-              CornerRadius="8"
-              Padding="14,12">
-        <StackPanel Spacing="8">
+              BorderThickness="{DynamicResource UiBorderThin}"
+              CornerRadius="{DynamicResource UiRadiusCard}"
+              Padding="{DynamicResource UiCardCompactPadding}">
+        <StackPanel Spacing="{DynamicResource UiGapMd}">
           <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-  <TextBlock Text="Farm Class" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+  <TextBlock Text="Farm Class" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
 </StackPanel>
-            <Border Grid.Column="2" CornerRadius="10" Padding="6,2" Background="#451A03" BorderBrush="#D97706" BorderThickness="1">
-              <TextBlock Text="AOE FARMING" FontSize="9" FontWeight="Bold" Foreground="#FBBF24" />
+            <Border Grid.Column="2" Classes="chip warning">
+              <TextBlock Text="AOE FARMING" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" />
             </Border>
           </Grid>
 
           <StackPanel Spacing="3">
-            <TextBlock Text="Selected Class" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <TextBlock Text="Selected Class" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
             <ComboBox ItemsSource="{Binding PlayerClasses}"
                       SelectedItem="{Binding SelectedFarmClass}"
                       HorizontalAlignment="Stretch"
-                      Height="30" />
+                      Height="{DynamicResource UiControlHeight}" />
           </StackPanel>
 
           <StackPanel Spacing="3">
-            <TextBlock Text="Skill Rule / Preset" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <TextBlock Text="Skill Rule / Preset" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
             <ComboBox ItemsSource="{Binding FarmModeStrings}"
                       SelectedItem="{Binding SelectedFarmModeString}"
                       HorizontalAlignment="Stretch"
-                      Height="30" />
+                      Height="{DynamicResource UiControlHeight}" />
           </StackPanel>
 
           <CheckBox Content="Use Dedicated Equipment Loadout"
                     IsChecked="{Binding UseFarmEquipment}"
-                    FontSize="11"
+                    FontSize="{DynamicResource UiFontSmall}"
                     Margin="0,2,0,0" />
         </StackPanel>
       </Border>
@@ -122,38 +122,38 @@
               Grid.Column="0"
               Background="{DynamicResource SkuaSurfaceBrush}"
               BorderBrush="{DynamicResource SkuaBorderBrush}"
-              BorderThickness="1"
-              CornerRadius="8"
-              Padding="14,12">
-        <StackPanel Spacing="8">
+              BorderThickness="{DynamicResource UiBorderThin}"
+              CornerRadius="{DynamicResource UiRadiusCard}"
+              Padding="{DynamicResource UiCardCompactPadding}">
+        <StackPanel Spacing="{DynamicResource UiGapMd}">
           <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-  <TextBlock Text="Dodge Class" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+  <TextBlock Text="Dodge Class" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
 </StackPanel>
-            <Border Grid.Column="2" CornerRadius="10" Padding="6,2" Background="#1E3A8A" BorderBrush="#3B82F6" BorderThickness="1">
-              <TextBlock Text="SURVIVABILITY" FontSize="9" FontWeight="Bold" Foreground="#93C5FD" />
+            <Border Grid.Column="2" Classes="chip accent">
+              <TextBlock Text="SURVIVABILITY" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" />
             </Border>
           </Grid>
 
           <StackPanel Spacing="3">
-            <TextBlock Text="Selected Class" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <TextBlock Text="Selected Class" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
             <ComboBox ItemsSource="{Binding PlayerClasses}"
                       SelectedItem="{Binding SelectedDodgeClass}"
                       HorizontalAlignment="Stretch"
-                      Height="30" />
+                      Height="{DynamicResource UiControlHeight}" />
           </StackPanel>
 
           <StackPanel Spacing="3">
-            <TextBlock Text="Skill Rule / Preset" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <TextBlock Text="Skill Rule / Preset" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
             <ComboBox ItemsSource="{Binding DodgeModeStrings}"
                       SelectedItem="{Binding SelectedDodgeModeString}"
                       HorizontalAlignment="Stretch"
-                      Height="30" />
+                      Height="{DynamicResource UiControlHeight}" />
           </StackPanel>
 
           <CheckBox Content="Use Dedicated Equipment Loadout"
                     IsChecked="{Binding UseDodgeEquipment}"
-                    FontSize="11"
+                    FontSize="{DynamicResource UiFontSmall}"
                     Margin="0,2,0,0" />
         </StackPanel>
       </Border>
@@ -162,38 +162,38 @@
               Grid.Column="1"
               Background="{DynamicResource SkuaSurfaceBrush}"
               BorderBrush="{DynamicResource SkuaBorderBrush}"
-              BorderThickness="1"
-              CornerRadius="8"
-              Padding="14,12">
-        <StackPanel Spacing="8">
+              BorderThickness="{DynamicResource UiBorderThin}"
+              CornerRadius="{DynamicResource UiRadiusCard}"
+              Padding="{DynamicResource UiCardCompactPadding}">
+        <StackPanel Spacing="{DynamicResource UiGapMd}">
           <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-  <TextBlock Text="Boss Class" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+  <TextBlock Text="Boss Class" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
 </StackPanel>
-            <Border Grid.Column="2" CornerRadius="10" Padding="6,2" Background="#2E1065" BorderBrush="#8B5CF6" BorderThickness="1">
-              <TextBlock Text="HEAVY BOSS" FontSize="9" FontWeight="Bold" Foreground="#C4B5FD" />
+            <Border Grid.Column="2" Classes="chip warning">
+              <TextBlock Text="HEAVY BOSS" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" />
             </Border>
           </Grid>
 
           <StackPanel Spacing="3">
-            <TextBlock Text="Selected Class" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <TextBlock Text="Selected Class" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
             <ComboBox ItemsSource="{Binding PlayerClasses}"
                       SelectedItem="{Binding SelectedBossClass}"
                       HorizontalAlignment="Stretch"
-                      Height="30" />
+                      Height="{DynamicResource UiControlHeight}" />
           </StackPanel>
 
           <StackPanel Spacing="3">
-            <TextBlock Text="Skill Rule / Preset" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <TextBlock Text="Skill Rule / Preset" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
             <ComboBox ItemsSource="{Binding BossModeStrings}"
                       SelectedItem="{Binding SelectedBossModeString}"
                       HorizontalAlignment="Stretch"
-                      Height="30" />
+                      Height="{DynamicResource UiControlHeight}" />
           </StackPanel>
 
           <CheckBox Content="Use Dedicated Equipment Loadout"
                     IsChecked="{Binding UseBossEquipment}"
-                    FontSize="11"
+                    FontSize="{DynamicResource UiFontSmall}"
                     Margin="0,2,0,0" />
         </StackPanel>
       </Border>

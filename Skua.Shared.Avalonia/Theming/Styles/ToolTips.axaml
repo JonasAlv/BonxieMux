@@ -5,17 +5,17 @@
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
         <Setter Property="Padding" Value="10,6" />
-        <Setter Property="CornerRadius" Value="4" />
-        <Setter Property="FontSize" Value="11" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontSmall}" />
         <Setter Property="FontWeight" Value="500" />
         <Setter Property="MaxWidth" Value="340" />
     </Style>
 
     <Style Selector="ToolTip TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
-        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontSmall}" />
         <Setter Property="LineHeight" Value="16" />
     </Style>
 

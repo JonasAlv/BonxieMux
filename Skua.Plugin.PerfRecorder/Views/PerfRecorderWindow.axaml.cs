@@ -11,6 +11,7 @@ using Avalonia.Threading;
 using Material.Icons;
 using Skua.Plugin.PerfRecorder.Models;
 using Skua.Plugin.PerfRecorder.Services;
+using Skua.Shared.Avalonia.Theming;
 
 namespace Skua.Plugin.PerfRecorder.Views;
 
@@ -143,18 +144,18 @@ public partial class PerfRecorderWindow : Window
         if (isRecording)
         {
             RecordingStatusText.Text = $"REC {elapsed:mm\\:ss} ({samples}s)";
-            RecordingStatusText.Foreground = Brushes.OrangeRed;
+            RecordingStatusText.Foreground = UiTokens.GetBrush(UiTokens.SkuaDangerBrush, Brushes.OrangeRed);
             RecordBtnText.Text = "Stop & Save .txt";
-            BtnToggleRecord.Classes.Set("primary-action", false);
-            BtnToggleRecord.Classes.Set("danger-action", true);
+            BtnToggleRecord.Classes.Set("skua-primary", false);
+            BtnToggleRecord.Classes.Set("skua-danger", true);
         }
         else
         {
             RecordingStatusText.Text = "IDLE";
-            RecordingStatusText.Foreground = Brushes.Gray;
+            RecordingStatusText.Foreground = UiTokens.GetBrush(UiTokens.SkuaMutedTextBrush, Brushes.Gray);
             RecordBtnText.Text = "Start Recording";
-            BtnToggleRecord.Classes.Set("danger-action", false);
-            BtnToggleRecord.Classes.Set("primary-action", true);
+            BtnToggleRecord.Classes.Set("skua-danger", false);
+            BtnToggleRecord.Classes.Set("skua-primary", true);
         }
     }
 

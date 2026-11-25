@@ -35,16 +35,16 @@
   </UserControl.Styles>
 
   <Grid Margin="14" ColumnDefinitions="240,*" ColumnSpacing="14">
-    <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto" RowSpacing="8">
-      <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6" MinHeight="26">
+    <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapMd}">
+      <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="{DynamicResource UiGapSm}" MinHeight="{DynamicResource UiSmallControlHeight}">
         <TextBlock Grid.Column="0" Classes="section-label" Text="LOADOUTS" VerticalAlignment="Center" />
         <ComboBox Grid.Column="1"
                   ItemsSource="{Binding Profiles}"
                   SelectedItem="{Binding SelectedProfile}"
                   PlaceholderText="Not Logged In"
                   MinWidth="110"
-                  Height="26"
-                  FontSize="11"
+                  Height="{DynamicResource UiSmallControlHeight}"
+                  FontSize="{DynamicResource UiFontSmall}"
                   FontWeight="Bold"
                   VerticalAlignment="Center"
                   DropDownOpened="ProfileComboBox_DropDownOpened"
@@ -53,23 +53,23 @@
           <TextBlock Text="{Binding Loadouts.Count}" />
         </Border>
         <Button Grid.Column="3" Classes="icon" Command="{Binding RefreshCommand}" ToolTip.Tip="Refresh loadouts">
-          <materialIcons:MaterialIcon Kind="Refresh" Width="16" Height="16" />
+          <materialIcons:MaterialIcon Kind="Refresh" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
         </Button>
       </Grid>
 
       <ListBox Grid.Row="1"
                Background="{DynamicResource SkuaSurfaceBrush}"
                BorderBrush="{DynamicResource SkuaBorderBrush}"
-               BorderThickness="1"
-               CornerRadius="10"
-               Padding="4"
+               BorderThickness="{DynamicResource UiBorderThin}"
+               CornerRadius="{DynamicResource UiRadiusCard}"
+               Padding="{DynamicResource UiPaddingXs}"
                ItemsSource="{Binding Loadouts}"
                SelectedItem="{Binding SelectedLoadout, Mode=TwoWay}">
         <ListBox.ItemTemplate>
           <DataTemplate>
             <StackPanel Spacing="3" Margin="4,4">
               <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-              <TextBlock Text="{Binding Class}" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="{Binding Class}" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis" />
             </StackPanel>
           </DataTemplate>
         </ListBox.ItemTemplate>
@@ -85,7 +85,7 @@
 </Button>
     </Grid>
 
-    <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
+    <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{DynamicResource UiGapMd}">
       <Grid Grid.Row="0" ColumnDefinitions="*,Auto" MinHeight="26">
         <TextBlock Grid.Column="0" Classes="section-label" Text="LOADOUT DETAILS" />
         <Button Grid.Column="1" Classes="skua-button small w140" Command="{Binding ShowCurrentCommand}" IsEnabled="{Binding IsOwnProfile}" ToolTip.Tip="Show what this character has equipped now">
@@ -101,8 +101,8 @@
       <Border Grid.Row="2"
               Background="{DynamicResource SkuaSurfaceBrush}"
               BorderBrush="{DynamicResource SkuaBorderBrush}"
-              BorderThickness="1"
-              CornerRadius="10">
+              BorderThickness="{DynamicResource UiBorderThin}"
+              CornerRadius="{DynamicResource UiRadiusCard}">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <StackPanel>
             <Grid Classes="slot" ColumnDefinitions="64,*,Auto">

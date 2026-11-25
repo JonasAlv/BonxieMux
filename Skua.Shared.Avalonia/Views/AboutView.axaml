@@ -12,16 +12,16 @@
         <Border Grid.Row="0"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="12,10"
+                BorderThickness="{DynamicResource UiBorderThin}"
+                CornerRadius="{DynamicResource UiRadiusCard}"
+                Padding="{DynamicResource UiCardCompactPadding}"
                 Margin="0,0,0,10">
-            <StackPanel Spacing="2">
+            <StackPanel Spacing="{DynamicResource UiGap2xs}">
                 <TextBlock Text="ABOUT &amp; INFO"
-                           FontSize="10"
+                           FontSize="{DynamicResource UiFontMicro}"
                            FontWeight="Bold"
                            Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                <TextBlock FontSize="16"
+                <TextBlock FontSize="{DynamicResource UiFontHeading}"
                            FontWeight="Bold"
                            Foreground="{DynamicResource SkuaTextBrush}"
                            Text="About BonxieMux" />
@@ -31,14 +31,14 @@
         <Border Grid.Row="1"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
+                BorderThickness="{DynamicResource UiBorderThin}"
+                CornerRadius="{DynamicResource UiRadiusCard}"
                 Padding="16">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <SelectableTextBlock Text="{Binding MarkdownDoc}"
                                      TextWrapping="Wrap"
                                      Foreground="{DynamicResource SkuaTextBrush}"
-                                     FontSize="13"
+                                     FontSize="{DynamicResource UiFontBody}"
                                      LineHeight="20" />
             </ScrollViewer>
         </Border>

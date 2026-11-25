@@ -10,44 +10,32 @@
         <Setter Property="Margin" Value="0,0,4,0" />
     </Style>
 
-    <Style Selector="ToggleButton.gap-left-8">
-        <Setter Property="Margin" Value="8,0,0,0" />
-    </Style>
-
-    <Style Selector="ToggleButton.gap-right-8">
-        <Setter Property="Margin" Value="0,0,8,0" />
-    </Style>
-
     <Style Selector="ToggleButton.app-toggle">
-        <Setter Property="Height" Value="26" />
-        <Setter Property="MinHeight" Value="26" />
-        <Setter Property="Padding" Value="10,0" />
-        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Height" Value="{DynamicResource UiSmallControlHeight}" />
+        <Setter Property="MinHeight" Value="{DynamicResource UiSmallControlHeight}" />
+        <Setter Property="Padding" Value="{DynamicResource UiControlPadding}" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontSmall}" />
     </Style>
 
     <Style Selector="ToggleButton.app-toggle-compact">
-        <Setter Property="Height" Value="26" />
+        <Setter Property="Height" Value="{DynamicResource UiSmallControlHeight}" />
         <Setter Property="MinWidth" Value="52" />
-    </Style>
-
-    <Style Selector="ToggleButton.app-toggle-filter">
-        <Setter Property="MinWidth" Value="56" />
     </Style>
 
     <Style Selector="ToggleButton.option-chip">
         <Setter Property="Margin" Value="2" />
         <Setter Property="Padding" Value="12,0" />
-        <Setter Property="Height" Value="32" />
-        <Setter Property="MinHeight" Value="32" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Height" Value="{DynamicResource UiControlHeight}" />
+        <Setter Property="MinHeight" Value="{DynamicResource UiControlHeight}" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
     </Style>
 
     <Style Selector="ToggleButton.app-toggle, ToggleButton.option-chip">
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -55,7 +43,7 @@
     <Style Selector="ToggleButton.app-toggle /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.option-chip /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
     </Style>
     <Style Selector="ToggleButton.app-toggle:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.option-chip:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -69,37 +57,34 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
     <Style Selector="ToggleButton.app-toggle:checked /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.option-chip:checked /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SkuaAccentTintBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
     <Style Selector="ToggleButton.app-toggle:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.option-chip:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaAccentTintStrongBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
     <Style Selector="ToggleButton.app-toggle:checked:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.option-chip:checked:pressed /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaAccentTintStrongBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
-    <Style Selector="ToggleButton.app-toggle:checked materialIcons|MaterialIcon, ToggleButton.option-chip:checked materialIcons|MaterialIcon">
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
-    </Style>
     <Style Selector="ToggleButton.app-toggle:disabled, ToggleButton.option-chip:disabled">
-        <Setter Property="Opacity" Value="0.45" />
+        <Setter Property="Opacity" Value="{DynamicResource UiDisabledOpacity}" />
     </Style>
 
     <Style Selector="ToggleButton.compare, ToggleButton.value-type">
-        <Setter Property="Height" Value="32" />
+        <Setter Property="Height" Value="{DynamicResource UiControlHeight}" />
         <Setter Property="MinWidth" Value="0" />
         <Setter Property="Padding" Value="2" />
-        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontHeading}" />
         <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
     </Style>
     <Style Selector="ToggleButton.compare">
@@ -110,11 +95,11 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}"
                         Padding="{TemplateBinding Padding}">
-                    <Grid ColumnDefinitions="24,24" ColumnSpacing="2">
-                        <Border x:Name="PART_First" CornerRadius="4" BorderThickness="1" BorderBrush="Transparent">
+                    <Grid ColumnDefinitions="24,24" ColumnSpacing="{DynamicResource UiGap2xs}">
+                        <Border x:Name="PART_First" CornerRadius="{DynamicResource UiRadiusControl}" BorderThickness="{DynamicResource UiBorderThin}" BorderBrush="Transparent">
                             <TextBlock Text="≤" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
-                        <Border x:Name="PART_Second" Grid.Column="1" CornerRadius="4" BorderThickness="1" BorderBrush="Transparent">
+                        <Border x:Name="PART_Second" Grid.Column="1" CornerRadius="{DynamicResource UiRadiusControl}" BorderThickness="{DynamicResource UiBorderThin}" BorderBrush="Transparent">
                             <TextBlock Text="≥" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                     </Grid>
@@ -123,7 +108,7 @@
         </Setter>
     </Style>
     <Style Selector="ToggleButton.value-type">
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
         <Setter Property="Template">
             <ControlTemplate>
                 <Border Background="{TemplateBinding Background}"
@@ -131,11 +116,11 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}"
                         Padding="{TemplateBinding Padding}">
-                    <Grid ColumnDefinitions="24,24" ColumnSpacing="2">
-                        <Border x:Name="PART_First" CornerRadius="4" BorderThickness="1" BorderBrush="Transparent">
+                    <Grid ColumnDefinitions="24,24" ColumnSpacing="{DynamicResource UiGap2xs}">
+                        <Border x:Name="PART_First" CornerRadius="{DynamicResource UiRadiusControl}" BorderThickness="{DynamicResource UiBorderThin}" BorderBrush="Transparent">
                             <TextBlock Text="#" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
-                        <Border x:Name="PART_Second" Grid.Column="1" CornerRadius="4" BorderThickness="1" BorderBrush="Transparent">
+                        <Border x:Name="PART_Second" Grid.Column="1" CornerRadius="{DynamicResource UiRadiusControl}" BorderThickness="{DynamicResource UiBorderThin}" BorderBrush="Transparent">
                             <TextBlock Text="%" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                     </Grid>
@@ -152,42 +137,15 @@
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
     </Style>
     <Style Selector="ToggleButton.compare:disabled, ToggleButton.value-type:disabled">
-        <Setter Property="Opacity" Value="0.45" />
-    </Style>
-
-    <Style Selector="ToggleButton.topbar-action">
-        <Setter Property="Height" Value="28" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="MinWidth" Value="50" />
-        <Setter Property="Padding" Value="10,0" />
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-    </Style>
-    <Style Selector="ToggleButton.topbar-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
-    </Style>
-    <Style Selector="ToggleButton.topbar-action:pressed /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SkuaPressedBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
-    </Style>
-    <Style Selector="ToggleButton.topbar-action:checked /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SkuaAccentTintBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="Opacity" Value="{DynamicResource UiDisabledOpacity}" />
     </Style>
 
     <Style Selector="ToggleButton.top-nav-item:checked /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SkuaAccentTintBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
     <Style Selector="ToggleButton.top-nav-item:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.top-nav-item:checked:pressed /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaAccentTintStrongBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
-    </Style>
-    <Style Selector="ToggleButton.top-nav-item:checked materialIcons|MaterialIcon">
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
     </Style>
 </Styles>

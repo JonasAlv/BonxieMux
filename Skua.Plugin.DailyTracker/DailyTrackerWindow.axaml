@@ -10,7 +10,7 @@
         MinWidth="440" MinHeight="500"
         WindowDecorations="None"
         ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaTitleBarHeightHint="32"
+        ExtendClientAreaTitleBarHeightHint="30"
         WindowStartupLocation="Manual">
 
     <Border Classes="window-frame">
@@ -20,7 +20,7 @@
             <Grid Grid.Row="1" Margin="16" RowDefinitions="Auto,*">
                 <DockPanel Grid.Row="0" Margin="0,0,0,16">
                     <TextBlock Text="Task Tracker"
-                               FontSize="20"
+                               FontSize="{DynamicResource UiFontHeading}"
                                FontWeight="Bold"
                                Foreground="{DynamicResource SkuaTextBrush}"
                                DockPanel.Dock="Left"
@@ -30,10 +30,10 @@
                             MinWidth="112"
                             DockPanel.Dock="Right"
                             HorizontalAlignment="Right"
-                            Height="32"
+                            Height="{DynamicResource UiControlHeight}"
                             Padding="12,0"
                             Click="Refresh_Click">
-  <TextBlock x:Name="RefreshText" Text="Refresh" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12"/>
+  <TextBlock x:Name="RefreshText" Text="Refresh" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="{DynamicResource UiFontBody}"/>
 </Button>
                 </DockPanel>
 
@@ -43,28 +43,28 @@
                             <DataTemplate x:DataType="local:QuestCategory">
                                 <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
                                         BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="8"
-                                        Padding="12"
+                                        BorderThickness="{DynamicResource UiBorderThin}"
+                                        CornerRadius="{DynamicResource UiRadiusCard}"
+                                        Padding="{DynamicResource UiPaddingLg}"
                                         Margin="0,0,0,12">
-                                    <StackPanel Spacing="8">
+                                    <StackPanel Spacing="{DynamicResource UiGapMd}">
                                         <DockPanel Margin="0,0,0,4">
                                             <TextBlock Text="{Binding Name}"
-                                                       FontSize="15"
+                                                       FontSize="{DynamicResource UiFontHeading}"
                                                        FontWeight="Bold"
-                                                       Foreground="{DynamicResource SkuaAccentBrush}"
+                                                       Foreground="{DynamicResource SkuaTextBrush}"
                                                        DockPanel.Dock="Left"
                                                        VerticalAlignment="Center"/>
                                             <Button Classes="skua-button skua-primary"
                                                     Content="Start"
-                                                    Height="26"
+                                                    Height="{DynamicResource UiSmallControlHeight}"
                                                     Padding="12,0"
                                                     DockPanel.Dock="Right"
                                                     HorizontalAlignment="Right"
                                                     Click="StartCategory_Click"
                                                     Tag="{Binding Name}"
                                                     IsVisible="{Binding HasCategoryScript}"
-                                                    FontSize="11"
+                                                    FontSize="{DynamicResource UiFontSmall}"
                                                     FontWeight="SemiBold"/>
                                         </DockPanel>
 
@@ -82,42 +82,42 @@
                                                         <TextBlock Grid.Column="0"
                                                                    Text="{Binding ID}"
                                                                    Foreground="{DynamicResource SkuaMutedTextBrush}"
-                                                                   FontSize="12"
+                                                                   FontSize="{DynamicResource UiFontBody}"
                                                                    VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="1"
                                                                    Text="{Binding Name}"
                                                                    Foreground="{DynamicResource SkuaTextBrush}"
-                                                                   FontSize="12"
+                                                                   FontSize="{DynamicResource UiFontBody}"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="6,0"
                                                                    VerticalAlignment="Center"/>
                                                         <Border Grid.Column="2"
                                                                 Background="{Binding StatusBrush}"
-                                                                CornerRadius="4"
-                                                                Height="22"
+                                                                CornerRadius="{DynamicResource UiRadiusControl}"
+                                                                Height="{DynamicResource UiChipHeight}"
                                                                 MinWidth="80"
                                                                 Padding="8,0"
                                                                 Margin="4,0"
                                                                 VerticalAlignment="Center">
                                                             <TextBlock Text="{Binding StatusText}"
-                                                                       Foreground="White"
+                                                                       Foreground="{DynamicResource SkuaAccentForegroundBrush}"
                                                                        FontWeight="SemiBold"
                                                                        TextAlignment="Center"
-                                                                       FontSize="11"
+                                                                       FontSize="{DynamicResource UiFontSmall}"
                                                                        VerticalAlignment="Center"
                                                                        HorizontalAlignment="Center"/>
                                                         </Border>
                                                         <Button Grid.Column="3"
                                                                 Classes="skua-button"
                                                                 Content="Start"
-                                                                Height="24"
+                                                                Height="{DynamicResource UiSmallControlHeight}"
                                                                 Padding="10,0"
                                                                 Margin="6,0,0,0"
                                                                 VerticalAlignment="Center"
                                                                 IsVisible="{Binding ShowScript}"
                                                                 Click="StartScript_Click"
                                                                 Tag="{Binding ScriptName}"
-                                                                FontSize="11"
+                                                                FontSize="{DynamicResource UiFontSmall}"
                                                                 FontWeight="SemiBold"/>
                                                     </Grid>
                                                 </DataTemplate>

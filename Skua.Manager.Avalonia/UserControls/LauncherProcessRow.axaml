@@ -11,22 +11,22 @@
         <Grid ColumnDefinitions="*,Auto">
             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                 <TextBlock Text="{Binding AccountName}"
-                           FontSize="14"
+                           FontSize="{DynamicResource UiFontHeading}"
                            FontWeight="SemiBold" />
                 <TextBlock Text="{Binding ProcessId, StringFormat=PID: {0}}"
-                           FontSize="11"
+                           FontSize="{DynamicResource UiFontSmall}"
                            Foreground="{DynamicResource SkuaMutedTextBrush}" />
             </StackPanel>
             <Button Grid.Column="1"
                     Classes="icon"
                     Width="28"
-                    Height="28"
+                    Height="{DynamicResource UiControlHeight}"
                     Padding="0"
                     Margin="8,0,0,0"
                     Command="{Binding StopCommand, ElementName=Root}"
                     CommandParameter="{Binding}"
                     ToolTip.Tip="Kill Process">
-                <materialIcons:MaterialIcon Kind="Close" Width="16" Height="16" />
+                <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
             </Button>
         </Grid>
     </Border>

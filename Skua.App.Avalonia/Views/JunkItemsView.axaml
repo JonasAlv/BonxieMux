@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.Runtime"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Skua.App.Avalonia.Views.JunkItemsView"
              x:DataType="vms:JunkItemsViewModel"
@@ -11,8 +12,8 @@
     <Style Selector="Border.junk-row">
       <Setter Property="MinHeight" Value="30" />
       <Setter Property="Padding" Value="8,0" />
-      <Setter Property="CornerRadius" Value="4" />
-      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+      <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
       <Setter Property="BorderBrush" Value="Transparent" />
       <Setter Property="Background" Value="Transparent" />
     </Style>
@@ -20,39 +21,35 @@
       <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
     </Style>
     <Style Selector="Border.junk-row.selected">
-      <Setter Property="Background" Value="{DynamicResource SkuaAccentTintBrush}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+      <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
     </Style>
     <Style Selector="ListBoxItem:pointerover Border.junk-row.selected">
       <Setter Property="Background" Value="{DynamicResource SkuaAccentTintStrongBrush}" />
     </Style>
   </UserControl.Styles>
 
-  <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="10">
-    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-      <TextBox Grid.Column="0"
-               PlaceholderText="Search by ID or name"
-               Text="{Binding SearchText, Mode=TwoWay}">
-        <TextBox.InnerLeftContent>
-          <materialIcons:MaterialIcon Kind="Magnify" Width="16" Height="16" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-        </TextBox.InnerLeftContent>
-      </TextBox>
-      <Button Grid.Column="1"
-              Classes="skua-button"
-              Width="32"
-              Padding="0"
-              Command="{Binding RefreshCommand}"
-              ToolTip.Tip="Refresh inventory and bank">
-        <materialIcons:MaterialIcon Kind="Refresh" Width="16" Height="16" />
-      </Button>
-    </Grid>
+  <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="{DynamicResource UiGapBase}">
+    <primitives:SearchFilterBar Grid.Row="0"
+                                PlaceholderText="Search by ID or name"
+                                SearchText="{Binding SearchText, Mode=TwoWay}">
+      <primitives:SearchFilterBar.RightContent>
+        <Button Classes="skua-button"
+                Width="32"
+                Padding="0"
+                Command="{Binding RefreshCommand}"
+                ToolTip.Tip="Refresh inventory and bank">
+          <materialIcons:MaterialIcon Kind="Refresh" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+        </Button>
+      </primitives:SearchFilterBar.RightContent>
+    </primitives:SearchFilterBar>
 
-    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8">
+    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource UiGapMd}">
       <ComboBox Grid.Column="0" ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" HorizontalAlignment="Stretch" ToolTip.Tip="Filter by item category" />
       <ComboBox Grid.Column="1" ItemsSource="{Binding AcFilterOptions}" SelectedItem="{Binding AcFilter, Mode=TwoWay}" HorizontalAlignment="Stretch" ToolTip.Tip="Filter AC items or non-AC items" />
     </Grid>
 
-    <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8" Margin="9,0,0,0">
+    <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{DynamicResource UiGapMd}" Margin="9,0,0,0">
       <CheckBox Grid.Column="0"
                 IsChecked="{Binding SelectionState, Mode=TwoWay}"
                 Content="{Binding SelectedCount, StringFormat='{}{0} selected'}"
@@ -67,16 +64,16 @@
     <ListBox Grid.Row="3"
              Classes="card-list"
              ItemsSource="{Binding FilteredItems}"
-             Padding="4">
+             Padding="{DynamicResource UiPaddingXs}">
       <ListBox.ItemTemplate>
         <DataTemplate x:DataType="vms:JunkItemEntry">
           <Border Classes="junk-row" Classes.selected="{Binding IsSelected}" Margin="0,0,0,2">
-            <Grid ColumnDefinitions="Auto,52,*,Auto,Auto,Auto" ColumnSpacing="8">
+            <Grid ColumnDefinitions="Auto,52,*,Auto,Auto,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
               <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" />
               <TextBlock Grid.Column="1"
                          Text="{Binding ID}"
-                         FontFamily="Cascadia Mono,Consolas,Courier New,monospace"
-                         FontSize="11"
+                         FontFamily="{DynamicResource UiFontMono}"
+                         FontSize="{DynamicResource UiFontSmall}"
                          Foreground="{DynamicResource SkuaMutedTextBrush}"
                          VerticalAlignment="Center" />
               <TextBlock Grid.Column="2"
@@ -89,7 +86,7 @@
               </Border>
               <TextBlock Grid.Column="4"
                          Text="{Binding QuantityDisplay}"
-                         FontSize="11"
+                         FontSize="{DynamicResource UiFontSmall}"
                          Foreground="{DynamicResource SkuaMutedTextBrush}"
                          VerticalAlignment="Center" />
               <Border Grid.Column="5" Classes="chip danger" IsVisible="{Binding IsJunk}">
@@ -101,7 +98,7 @@
       </ListBox.ItemTemplate>
     </ListBox>
 
-    <Grid Grid.Row="4" ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
+    <Grid Grid.Row="4" ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
       <CheckBox Grid.Column="0"
                 Content="Skip sell warning"
                 IsChecked="{Binding SkipSellWarning, Mode=TwoWay}"

@@ -3,6 +3,7 @@
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
         xmlns:shell="clr-namespace:Skua.Shared.Avalonia.Controls.Shell;assembly=Skua.Shared.Avalonia"
         xmlns:models="clr-namespace:Skua.Plugin.Cosmetics.Models"
+        xmlns:localViews="clr-namespace:Skua.Plugin.Cosmetics.Views"
         x:Class="Skua.Plugin.Cosmetics.Views.CosmeticsWindow"
         Classes="skua"
         Title="Cosmetics &amp; Outfits"
@@ -10,107 +11,26 @@
         MinWidth="880" MinHeight="580"
         WindowDecorations="None"
         ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaTitleBarHeightHint="32"
+        ExtendClientAreaTitleBarHeightHint="30"
         WindowStartupLocation="Manual">
 
     <Window.Styles>
-        <!-- Modern Main TabControl & TabItem Styling -->
-        <Style Selector="TabControl.cosmetics-tabs">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Padding" Value="0" />
-        </Style>
-        <Style Selector="TabControl.cosmetics-tabs /template/ ItemsPresenter#PART_ItemsPresenter">
-            <Setter Property="Margin" Value="0,0,0,10" />
-        </Style>
-        <Style Selector="TabControl.cosmetics-tabs /template/ Rectangle#PART_Separator">
-            <Setter Property="IsVisible" Value="False" />
-        </Style>
-
-        <Style Selector="TabControl.cosmetics-tabs TabItem">
-            <Setter Property="Height" Value="34" />
-            <Setter Property="MinHeight" Value="34" />
-            <Setter Property="Padding" Value="14,0" />
-            <Setter Property="Margin" Value="0,0,6,0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="FontSize" Value="12" />
-        </Style>
-
-        <Style Selector="TabControl.cosmetics-tabs TabItem /template/ Border#PART_LayoutRoot">
-            <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-        </Style>
-
-        <Style Selector="TabControl.cosmetics-tabs TabItem /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="TextElement.Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
-        </Style>
-
-        <Style Selector="TabControl.cosmetics-tabs TabItem:pointerover /template/ Border#PART_LayoutRoot">
-            <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-        </Style>
-
-        <Style Selector="TabControl.cosmetics-tabs TabItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="TextElement.Foreground" Value="{DynamicResource SkuaTextBrush}" />
-        </Style>
-
-        <!-- Selected State: Clean elevated card with crisp accent border, NO clunky block -->
-        <Style Selector="TabControl.cosmetics-tabs TabItem:selected /template/ Border#PART_LayoutRoot">
-            <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
-            <Setter Property="BorderThickness" Value="1.5" />
-            <Setter Property="CornerRadius" Value="6" />
-        </Style>
-
-        <Style Selector="TabControl.cosmetics-tabs TabItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="TextElement.Foreground" Value="{DynamicResource SkuaTextBrush}" />
-            <Setter Property="TextElement.FontWeight" Value="SemiBold" />
-        </Style>
-
-        <Style Selector="TabControl.cosmetics-tabs TabItem:selected:pointerover /template/ Border#PART_LayoutRoot">
-            <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
-        </Style>
-
-        <Style Selector="TabControl.cosmetics-tabs TabItem /template/ Border#PART_SelectedPipe">
-            <Setter Property="IsVisible" Value="False" />
-        </Style>
-
-        <!-- Tab Icons Reactive Styling -->
-        <Style Selector="TabControl.cosmetics-tabs TabItem materialIcons|MaterialIcon">
-            <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-        <Style Selector="TabControl.cosmetics-tabs TabItem:pointerover materialIcons|MaterialIcon">
-            <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
-        </Style>
-        <Style Selector="TabControl.cosmetics-tabs TabItem:selected materialIcons|MaterialIcon">
-            <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
-        </Style>
-
-        <!-- Refined Category Filter Chips -->
+        <!-- Category Filter Chips -->
         <Style Selector="Button.category-chip">
-            <Setter Property="Height" Value="28" />
-            <Setter Property="Padding" Value="12,0" />
-            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Height" Value="{DynamicResource UiSmallControlHeight}" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="FontSize" Value="{DynamicResource UiFontSmall}" />
             <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
             <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
             <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="Button.category-chip /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="CornerRadius" Value="14" />
-            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+            <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
             <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
             <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
             <Setter Property="TextBlock.Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
@@ -133,33 +53,32 @@
             <Setter Property="TextBlock.Foreground" Value="{DynamicResource SkuaAccentBrush}" />
         </Style>
 
-        <!-- Primary & Danger Buttons -->
-        <Style Selector="Button.primary-action">
-            <Setter Property="Background" Value="{DynamicResource SkuaAccentBrush}" />
-            <Setter Property="Foreground" Value="Black" />
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Height" Value="34" />
-            <Setter Property="CornerRadius" Value="6" />
-        </Style>
-        <Style Selector="Button.primary-action /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SkuaAccentBrush}" />
-            <Setter Property="TextBlock.Foreground" Value="Black" />
-        </Style>
-        <Style Selector="Button.danger-action">
-            <Setter Property="Background" Value="#E53935" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Height" Value="34" />
-            <Setter Property="CornerRadius" Value="6" />
-        </Style>
         <Style Selector="Button.preset-card">
             <Setter Property="Height" Value="52" />
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="{DynamicResource UiCardCompactPadding}" />
+            <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusCard}" />
             <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="Border.slot-card">
+            <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
+            <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
+            <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusCard}" />
+            <Setter Property="Padding" Value="{DynamicResource UiCardCompactPadding}" />
+        </Style>
+        <Style Selector="TextBox.cc-hex">
+            <Setter Property="Height" Value="{DynamicResource UiControlHeight}" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Margin" Value="10,0" />
+        </Style>
+        <Style Selector="Border.cc-swatch">
+            <Setter Property="Height" Value="{DynamicResource UiControlHeight}" />
+            <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
+            <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
         </Style>
     </Window.Styles>
 
@@ -178,38 +97,41 @@
                     <!-- Copy Target Look -->
                     <Button Grid.Column="0"
                             x:Name="BtnCopyTarget"
-                            Height="30"
+                            Classes="skua-button"
+                            Height="{DynamicResource UiControlHeight}"
                             Padding="10,0"
                             Margin="0,0,8,0"
                             ToolTip.Tip="Steal / copy the equipment and colors of your current targeted player"
                             Click="BtnCopyTarget_Click">
-  <TextBlock Text="Copy Target Look" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" />
+  <TextBlock Text="Copy Target Look" VerticalAlignment="Center" FontSize="{DynamicResource UiFontSmall}" FontWeight="SemiBold" />
 </Button>
 
                     <!-- Room Players Picker -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" Margin="0,0,12,0">
                         <ComboBox x:Name="RoomPlayersCombo"
                                   Width="130"
-                                  Height="30"
-                                  FontSize="11"
+                                  Height="{DynamicResource UiControlHeight}"
+                                  FontSize="{DynamicResource UiFontSmall}"
                                   PlaceholderText="Room players..."
                                   DropDownOpened="RoomPlayersCombo_DropDownOpened" />
-                        <Button Height="30"
-                                Width="30"
+                        <Button Classes="skua-button"
+                                Height="{DynamicResource UiControlHeight}"
+                                Width="{DynamicResource UiControlHeight}"
                                 Padding="0"
                                 ToolTip.Tip="Copy look from selected room player"
                                 Click="BtnCopyRoomPlayer_Click">
-                            <materialIcons:MaterialIcon Kind="AccountArrowRight" Width="15" Height="15" />
+                            <materialIcons:MaterialIcon Kind="AccountArrowRight" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                         </Button>
                     </StackPanel>
 
                     <!-- Reset to Real Gear -->
                     <Button Grid.Column="2"
-                            Height="30"
+                            Classes="skua-button"
+                            Height="{DynamicResource UiControlHeight}"
                             Padding="10,0"
                             ToolTip.Tip="Revert avatar back to your actual equipped inventory items"
                             Click="BtnResetRealGear_Click">
-  <TextBlock Text="Reset to Real Gear" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" />
+  <TextBlock Text="Reset to Real Gear" VerticalAlignment="Center" FontSize="{DynamicResource UiFontSmall}" FontWeight="SemiBold" />
 </Button>
 
                     <!-- Status Notification Text -->
@@ -218,26 +140,26 @@
                                Text=""
                                VerticalAlignment="Center"
                                HorizontalAlignment="Center"
-                               FontSize="11"
-                               Foreground="{DynamicResource SkuaAccentBrush}"
+                               FontSize="{DynamicResource UiFontSmall}"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}"
                                TextTrimming="CharacterEllipsis" />
 
                     <!-- Gender Morpher Quick Buttons -->
                     <Border Grid.Column="4"
                             Background="{DynamicResource SkuaSurfaceBrush}"
                             BorderBrush="{DynamicResource SkuaBorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="4"
+                            BorderThickness="{DynamicResource UiBorderThin}"
+                            CornerRadius="{DynamicResource UiRadiusControl}"
                             Padding="2">
                         <StackPanel Orientation="Horizontal" Spacing="2">
-                            <Button Height="26" Width="26" Padding="0" ToolTip.Tip="Morph Male" Click="GenderMale_Click">
-                                <materialIcons:MaterialIcon Kind="GenderMale" Width="14" Height="14" Foreground="#64B5F6" />
+                            <Button Classes="skua-button small" Height="{DynamicResource UiSmallControlHeight}" Width="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Morph Male" Click="GenderMale_Click">
+                                <materialIcons:MaterialIcon Kind="GenderMale" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                             </Button>
-                            <Button Height="26" Width="26" Padding="0" ToolTip.Tip="Morph Female" Click="GenderFemale_Click">
-                                <materialIcons:MaterialIcon Kind="GenderFemale" Width="14" Height="14" Foreground="#F06292" />
+                            <Button Classes="skua-button small" Height="{DynamicResource UiSmallControlHeight}" Width="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Morph Female" Click="GenderFemale_Click">
+                                <materialIcons:MaterialIcon Kind="GenderFemale" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                             </Button>
-                            <Button Height="26" Width="26" Padding="0" ToolTip.Tip="Swap Gender" Click="GenderSwap_Click">
-                                <materialIcons:MaterialIcon Kind="GenderTransgender" Width="14" Height="14" Foreground="{DynamicResource SkuaAccentBrush}" />
+                            <Button Classes="skua-button small" Height="{DynamicResource UiSmallControlHeight}" Width="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Swap Gender" Click="GenderSwap_Click">
+                                <materialIcons:MaterialIcon Kind="GenderTransgender" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                             </Button>
                         </StackPanel>
                     </Border>
@@ -245,7 +167,7 @@
             </Border>
 
             <!-- 3. Main Tabs -->
-            <TabControl Grid.Row="2" Classes="cosmetics-tabs" Margin="14,10,14,12">
+            <TabControl Grid.Row="2" Margin="14,10,14,12">
 
                 <!-- ==================== TAB 1: CATALOG ==================== -->
                 <TabItem>
@@ -261,43 +183,45 @@
                             <TextBox Grid.Column="0"
                                      x:Name="SearchBox"
                                      PlaceholderText="Search cosmetics by name or ID..."
-                                     Height="32"
+                                     Height="{DynamicResource UiControlHeight}"
                                      VerticalContentAlignment="Center"
                                      TextChanged="SearchBox_TextChanged"
                                      KeyUp="SearchBox_KeyUp" />
 
                             <Button Grid.Column="1"
-                                    Height="32"
-                                    Width="32"
+                                    Classes="skua-button"
+                                    Height="{DynamicResource UiControlHeight}"
+                                    Width="{DynamicResource UiControlHeight}"
                                     Margin="6,0,0,0"
                                     Padding="0"
                                     ToolTip.Tip="Clear Search"
                                     Click="ClearSearch_Click">
-                                <materialIcons:MaterialIcon Kind="Close" Width="16" Height="16" />
+                                <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                             </Button>
 
                             <!-- Sorting Dropdown -->
                             <ComboBox Grid.Column="2"
                                       x:Name="SortCombo"
-                                      Height="32"
+                                      Height="{DynamicResource UiControlHeight}"
                                       Width="160"
                                       Margin="6,0,0,0"
-                                      FontSize="11"
+                                      FontSize="{DynamicResource UiFontSmall}"
                                       SelectionChanged="SortCombo_SelectionChanged">
-                                <ComboBoxItem Content="Newest First (ID ↓)" IsSelected="True" Tag="Newest" />
-                                <ComboBoxItem Content="Oldest First (ID ↑)" Tag="Oldest" />
-                                <ComboBoxItem Content="Name (A → Z)" Tag="NameAsc" />
-                                <ComboBoxItem Content="Name (Z → A)" Tag="NameDesc" />
+                                <ComboBoxItem Content="Newest First (ID Desc)" IsSelected="True" Tag="Newest" />
+                                <ComboBoxItem Content="Oldest First (ID Asc)" Tag="Oldest" />
+                                <ComboBoxItem Content="Name (A-Z)" Tag="NameAsc" />
+                                <ComboBoxItem Content="Name (Z-A)" Tag="NameDesc" />
                             </ComboBox>
 
                             <Button Grid.Column="3"
                                     x:Name="BtnSyncUpdates"
-                                    Height="32"
+                                    Classes="skua-button"
+                                    Height="{DynamicResource UiControlHeight}"
                                     Padding="10,0"
                                     Margin="6,0,0,0"
                                     ToolTip.Tip="Check for new cosmetics in background"
                                     Click="CheckCatalogUpdates_Click">
-  <TextBlock Text="Check Updates" VerticalAlignment="Center" FontSize="12" />
+  <TextBlock Text="Check Updates" VerticalAlignment="Center" FontSize="{DynamicResource UiFontBody}" />
 </Button>
 
                             <TextBlock Grid.Column="4"
@@ -305,7 +229,7 @@
                                        Text="Loading local catalog..."
                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
                                        VerticalAlignment="Center"
-                                       FontSize="11"
+                                       FontSize="{DynamicResource UiFontSmall}"
                                        Margin="12,0,4,0" />
                         </Grid>
 
@@ -314,8 +238,8 @@
                             <ComboBox x:Name="WeaponSubcategoryCombo"
                                       DockPanel.Dock="Right"
                                       Width="130"
-                                      Height="28"
-                                      FontSize="11"
+                                      Height="{DynamicResource UiSmallControlHeight}"
+                                      FontSize="{DynamicResource UiFontSmall}"
                                       SelectionChanged="WeaponSubcategoryCombo_SelectionChanged"
                                       IsVisible="False"
                                       Margin="6,0,0,0">
@@ -358,8 +282,8 @@
                                 <Border Grid.Row="0"
                                         Background="{DynamicResource SkuaSurfaceAltBrush}"
                                         BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="6">
+                                        BorderThickness="{DynamicResource UiBorderThin}"
+                                        CornerRadius="{DynamicResource UiRadiusCard}">
                                     <ListBox x:Name="ItemsListBox"
                                              Background="Transparent"
                                              BorderThickness="0"
@@ -372,31 +296,31 @@
                                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                                             <TextBlock Text="{Binding Name}"
                                                                        FontWeight="SemiBold"
-                                                                       FontSize="12"
+                                                                       FontSize="{DynamicResource UiFontBody}"
                                                                        Foreground="{DynamicResource SkuaTextBrush}" />
                                                             <Border Background="{DynamicResource SkuaNavHoverBrush}"
-                                                                    CornerRadius="4"
+                                                                    CornerRadius="{DynamicResource UiRadiusControl}"
                                                                     Padding="5,1">
                                                                 <TextBlock Text="{Binding DisplayCategory}"
-                                                                           FontSize="10"
+                                                                           FontSize="{DynamicResource UiFontMicro}"
                                                                            FontWeight="SemiBold"
-                                                                           Foreground="{DynamicResource SkuaAccentBrush}" />
+                                                                           Foreground="{DynamicResource SkuaTagTextBrush}" />
                                                             </Border>
                                                         </StackPanel>
                                                         <TextBlock Text="{Binding Path}"
-                                                                   FontSize="10"
+                                                                   FontSize="{DynamicResource UiFontMicro}"
                                                                    Foreground="{DynamicResource SkuaMutedTextBrush}"
                                                                    TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
 
                                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding ID, StringFormat='ID: {0}'}"
-                                                                   FontSize="11"
+                                                                   FontSize="{DynamicResource UiFontSmall}"
                                                                    Foreground="{DynamicResource SkuaMutedTextBrush}"
                                                                    VerticalAlignment="Center" />
                                                         <materialIcons:MaterialIcon Kind="Heart"
-                                                                                  Width="14" Height="14"
-                                                                                  Foreground="Red"
+                                                                                  Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
+                                                                                  Foreground="{DynamicResource SkuaDangerBrush}"
                                                                                   IsVisible="{Binding IsFavorite}"
                                                                                   VerticalAlignment="Center" />
                                                     </StackPanel>
@@ -409,32 +333,32 @@
                                 <!-- Pagination Bar -->
                                 <DockPanel Grid.Row="1" Margin="0,8,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="4" DockPanel.Dock="Left">
-                                        <Button Width="28" Height="28" Padding="0" ToolTip.Tip="First Page" Click="PageFirst_Click">
-                                            <materialIcons:MaterialIcon Kind="ChevronDoubleLeft" Width="16" Height="16" />
+                                        <Button Classes="skua-button small" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="First Page" Click="PageFirst_Click">
+                                            <materialIcons:MaterialIcon Kind="ChevronDoubleLeft" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                         </Button>
-                                        <Button Width="28" Height="28" Padding="0" ToolTip.Tip="Previous Page" Click="PagePrev_Click">
-                                            <materialIcons:MaterialIcon Kind="ChevronLeft" Width="16" Height="16" />
+                                        <Button Classes="skua-button small" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Previous Page" Click="PagePrev_Click">
+                                            <materialIcons:MaterialIcon Kind="ChevronLeft" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                         </Button>
                                         <TextBlock x:Name="PaginationInfoText"
                                                    Text="Page 1 of 1"
                                                    VerticalAlignment="Center"
-                                                   FontSize="11"
+                                                   FontSize="{DynamicResource UiFontSmall}"
                                                    Margin="8,0"
                                                    Foreground="{DynamicResource SkuaTextBrush}" />
-                                        <Button Width="28" Height="28" Padding="0" ToolTip.Tip="Next Page" Click="PageNext_Click">
-                                            <materialIcons:MaterialIcon Kind="ChevronRight" Width="16" Height="16" />
+                                        <Button Classes="skua-button small" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Next Page" Click="PageNext_Click">
+                                            <materialIcons:MaterialIcon Kind="ChevronRight" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                         </Button>
-                                        <Button Width="28" Height="28" Padding="0" ToolTip.Tip="Last Page" Click="PageLast_Click">
-                                            <materialIcons:MaterialIcon Kind="ChevronDoubleRight" Width="16" Height="16" />
+                                        <Button Classes="skua-button small" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Last Page" Click="PageLast_Click">
+                                            <materialIcons:MaterialIcon Kind="ChevronDoubleRight" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                         </Button>
                                     </StackPanel>
 
                                     <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" DockPanel.Dock="Right">
-                                        <TextBlock Text="Per Page:" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                        <TextBlock Text="Per Page:" VerticalAlignment="Center" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                         <ComboBox x:Name="PageSizeCombo"
                                                   Width="75"
-                                                  Height="28"
-                                                  FontSize="11"
+                                                  Height="{DynamicResource UiSmallControlHeight}"
+                                                  FontSize="{DynamicResource UiFontSmall}"
                                                   SelectionChanged="PageSizeCombo_SelectionChanged">
                                             <ComboBoxItem Content="50" IsSelected="True" />
                                             <ComboBoxItem Content="100" />
@@ -450,32 +374,29 @@
                                     Margin="12,0,0,0"
                                     Background="{DynamicResource SkuaSurfaceAltBrush}"
                                     BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="6"
+                                    BorderThickness="{DynamicResource UiBorderThin}"
+                                    CornerRadius="{DynamicResource UiRadiusCard}"
                                     Padding="14">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                                     <StackPanel Spacing="12">
                                         <!-- Header / Title -->
                                         <StackPanel Spacing="4">
-                                            <TextBlock Text="SELECTED COSMETIC"
-                                                       FontSize="10"
-                                                       FontWeight="Bold"
-                                                       Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                            <TextBlock Classes="section-label" Text="SELECTED COSMETIC" />
                                             <TextBlock x:Name="DetailItemName"
                                                        Text="No Item Selected"
-                                                       FontSize="16"
+                                                       FontSize="{DynamicResource UiFontHeading}"
                                                        FontWeight="Bold"
-                                                       Foreground="{DynamicResource SkuaAccentBrush}"
+                                                       Foreground="{DynamicResource SkuaTextBrush}"
                                                        TextWrapping="Wrap" />
                                             <Border x:Name="DetailCategoryBadge"
                                                      Background="{DynamicResource SkuaNavHoverBrush}"
-                                                     CornerRadius="4"
+                                                     CornerRadius="{DynamicResource UiRadiusControl}"
                                                      Padding="6,2"
                                                      HorizontalAlignment="Left"
                                                      IsVisible="False">
                                                 <TextBlock x:Name="DetailCategoryText"
                                                            Text="Category"
-                                                           FontSize="10"
+                                                           FontSize="{DynamicResource UiFontMicro}"
                                                            FontWeight="SemiBold"
                                                            Foreground="{DynamicResource SkuaTextBrush}" />
                                             </Border>
@@ -485,9 +406,9 @@
 
                                         <!-- Meta Info -->
                                         <StackPanel Spacing="4">
-                                            <TextBlock x:Name="DetailItemID" Text="ID: -" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                            <TextBlock x:Name="DetailItemPath" Text="File: -" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" />
-                                            <TextBlock x:Name="DetailItemLink" Text="Link: -" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" />
+                                            <TextBlock x:Name="DetailItemID" Text="ID: -" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                            <TextBlock x:Name="DetailItemPath" Text="File: -" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" />
+                                            <TextBlock x:Name="DetailItemLink" Text="Link: -" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" />
                                         </StackPanel>
 
                                         <Separator Background="{DynamicResource SkuaBorderBrush}" Margin="0,2" />
@@ -495,23 +416,25 @@
                                         <!-- Action Buttons -->
                                         <StackPanel Spacing="8">
                                             <Button x:Name="BtnEquip"
-                                                    Classes="primary-action"
+                                                    Classes="skua-button skua-primary"
                                                     HorizontalAlignment="Stretch"
                                                     Click="BtnEquip_Click">
   <TextBlock Text="Equip Look" VerticalAlignment="Center" />
 </Button>
 
                                             <Button x:Name="BtnFavorite"
-                                                    Height="32"
+                                                    Classes="skua-button"
+                                                    Height="{DynamicResource UiControlHeight}"
                                                     HorizontalAlignment="Stretch"
                                                     Click="BtnFavorite_Click">
-  <TextBlock x:Name="FavBtnText" Text="Add to Favorites" VerticalAlignment="Center" FontSize="11" />
+  <TextBlock x:Name="FavBtnText" Text="Add to Favorites" VerticalAlignment="Center" FontSize="{DynamicResource UiFontSmall}" />
 </Button>
 
-                                            <Button Height="30"
+                                            <Button Classes="skua-button"
+                                                    Height="{DynamicResource UiControlHeight}"
                                                     HorizontalAlignment="Stretch"
                                                     Click="BtnWiki_Click">
-  <TextBlock Text="Open on AQW Wiki" VerticalAlignment="Center" FontSize="11" />
+  <TextBlock Text="Open on AQW Wiki" VerticalAlignment="Center" FontSize="{DynamicResource UiFontSmall}" />
 </Button>
                                         </StackPanel>
                                     </StackPanel>
@@ -533,7 +456,7 @@
                         <!-- Left Column: Saved Sets List -->
                         <Grid Grid.Column="0" RowDefinitions="Auto,*" Margin="0,0,12,0">
                             <DockPanel Grid.Row="0" Margin="0,0,0,10">
-                                <Button Height="32" Padding="12,0" Classes="primary-action" DockPanel.Dock="Left" Click="CaptureLook_Click">
+                                <Button Padding="12,0" Classes="skua-button skua-primary" DockPanel.Dock="Left" Click="CaptureLook_Click">
   <TextBlock Text="Save Current Look" VerticalAlignment="Center" />
 </Button>
 
@@ -543,14 +466,14 @@
                                            VerticalAlignment="Center"
                                            HorizontalAlignment="Right"
                                            DockPanel.Dock="Right"
-                                           FontSize="11" />
+                                           FontSize="{DynamicResource UiFontSmall}" />
                             </DockPanel>
 
                             <Border Grid.Row="1"
                                     Background="{DynamicResource SkuaSurfaceAltBrush}"
                                     BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="6">
+                                    BorderThickness="{DynamicResource UiBorderThin}"
+                                    CornerRadius="{DynamicResource UiRadiusCard}">
                                 <ListBox Classes="card-list" x:Name="SetsListBox"
                                          Background="Transparent"
                                          BorderThickness="0"
@@ -559,33 +482,32 @@
                                     <ListBox.ItemTemplate>
                                         <DataTemplate x:DataType="models:CosmeticSet">
                                             <Border Classes="list-card"
-                                                    BorderThickness="1"
-                                                    CornerRadius="6"
+                                                    BorderThickness="{DynamicResource UiBorderThin}"
+                                                    CornerRadius="{DynamicResource UiRadiusCard}"
                                                     Padding="12"
                                                     Margin="0,2">
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <StackPanel Grid.Column="0" Spacing="4">
                                                         <TextBlock Text="{Binding Name}"
-                                                                   FontSize="14"
+                                                                   FontSize="{DynamicResource UiFontHeading}"
                                                                    FontWeight="Bold"
-                                                                   Foreground="{DynamicResource SkuaAccentBrush}" />
+                                                                   Foreground="{DynamicResource SkuaTextBrush}" />
                                                         <TextBlock Text="{Binding Summary}"
-                                                                   FontSize="11"
+                                                                   FontSize="{DynamicResource UiFontSmall}"
                                                                    Foreground="{DynamicResource SkuaTextBrush}"
                                                                    TextWrapping="Wrap" />
                                                         <TextBlock Text="{Binding CreatedAt, StringFormat='Saved: {0:yyyy-MM-dd HH:mm}'}"
-                                                                   FontSize="10"
+                                                                   FontSize="{DynamicResource UiFontMicro}"
                                                                    Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                                     </StackPanel>
 
                                                     <Button Grid.Column="1"
-                                                            Height="30"
                                                             Padding="12,0"
                                                             VerticalAlignment="Center"
-                                                            Classes="primary-action"
+                                                            Classes="skua-button skua-primary"
                                                             Tag="{Binding}"
                                                             Click="ApplySetItem_Click">
-                                                        <TextBlock Text="Equip" FontSize="11" />
+                                                        <TextBlock Text="Equip" FontSize="{DynamicResource UiFontSmall}" />
                                                     </Button>
                                                 </Grid>
                                             </Border>
@@ -599,100 +521,97 @@
                         <Border Grid.Column="1"
                                 Background="{DynamicResource SkuaSurfaceAltBrush}"
                                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="6"
+                                BorderThickness="{DynamicResource UiBorderThin}"
+                                CornerRadius="{DynamicResource UiRadiusCard}"
                                 Padding="16">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel Spacing="12">
                                     <StackPanel Spacing="2">
-                                        <TextBlock Text="OUTFIT INSPECTOR"
-                                                   FontSize="10"
-                                                   FontWeight="Bold"
-                                                   Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                        <TextBlock Classes="section-label" Text="OUTFIT INSPECTOR" />
                                         <TextBlock x:Name="InspectorSetName"
                                                    Text="Select an Outfit"
-                                                   FontSize="16"
+                                                   FontSize="{DynamicResource UiFontHeading}"
                                                    FontWeight="Bold"
-                                                   Foreground="{DynamicResource SkuaAccentBrush}" />
+                                                   Foreground="{DynamicResource SkuaTextBrush}" />
                                         <TextBlock x:Name="InspectorSetDate"
                                                    Text="-"
-                                                   FontSize="10"
+                                                   FontSize="{DynamicResource UiFontMicro}"
                                                    Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                     </StackPanel>
 
                                     <Separator Background="{DynamicResource SkuaBorderBrush}" Margin="0,2" />
 
                                     <!-- Slot Rows -->
-                                    <StackPanel Spacing="8">
+                                    <StackPanel Spacing="{DynamicResource UiGapMd}">
                                         <!-- Armor Slot -->
-                                        <Border Background="{DynamicResource SkuaSurfaceBrush}" CornerRadius="6" Padding="10,8" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="1">
+                                        <Border Classes="slot-card">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="ShieldAccount" Width="18" Height="18" Foreground="{DynamicResource SkuaAccentBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="ShieldAccount" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                    <TextBlock Text="Armor / Class" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                                    <TextBlock x:Name="InspectArmorName" Text="None" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="Armor / Class" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                    <TextBlock x:Name="InspectArmorName" Text="None" FontSize="{DynamicResource UiFontSmall}" TextTrimming="CharacterEllipsis" />
                                                 </StackPanel>
-                                                <Button Grid.Column="2" x:Name="BtnInspectEquipArmor" Height="26" Padding="8,0" FontSize="10" Content="Equip" Click="BtnInspectEquipSlot_Click" Tag="Armor" IsEnabled="False" />
+                                                <Button Grid.Column="2" x:Name="BtnInspectEquipArmor" Classes="skua-button small" Height="{DynamicResource UiSmallControlHeight}" Padding="8,0" FontSize="{DynamicResource UiFontMicro}" Content="Equip" Click="BtnInspectEquipSlot_Click" Tag="Armor" IsEnabled="False" />
                                             </Grid>
                                         </Border>
 
                                         <!-- Helm Slot -->
-                                        <Border Background="{DynamicResource SkuaSurfaceBrush}" CornerRadius="6" Padding="10,8" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="1">
+                                        <Border Classes="slot-card">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="HardHat" Width="18" Height="18" Foreground="{DynamicResource SkuaAccentBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="HardHat" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                    <TextBlock Text="Helm" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                                    <TextBlock x:Name="InspectHelmName" Text="None" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="Helm" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                    <TextBlock x:Name="InspectHelmName" Text="None" FontSize="{DynamicResource UiFontSmall}" TextTrimming="CharacterEllipsis" />
                                                 </StackPanel>
-                                                <Button Grid.Column="2" x:Name="BtnInspectEquipHelm" Height="26" Padding="8,0" FontSize="10" Content="Equip" Click="BtnInspectEquipSlot_Click" Tag="Helm" IsEnabled="False" />
+                                                <Button Grid.Column="2" x:Name="BtnInspectEquipHelm" Classes="skua-button small" Height="{DynamicResource UiSmallControlHeight}" Padding="8,0" FontSize="{DynamicResource UiFontMicro}" Content="Equip" Click="BtnInspectEquipSlot_Click" Tag="Helm" IsEnabled="False" />
                                             </Grid>
                                         </Border>
 
                                         <!-- Cape Slot -->
-                                        <Border Background="{DynamicResource SkuaSurfaceBrush}" CornerRadius="6" Padding="10,8" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="1">
+                                        <Border Classes="slot-card">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="FlagVariant" Width="18" Height="18" Foreground="{DynamicResource SkuaAccentBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="FlagVariant" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                    <TextBlock Text="Cape" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                                    <TextBlock x:Name="InspectCapeName" Text="None" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="Cape" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                    <TextBlock x:Name="InspectCapeName" Text="None" FontSize="{DynamicResource UiFontSmall}" TextTrimming="CharacterEllipsis" />
                                                 </StackPanel>
-                                                <Button Grid.Column="2" x:Name="BtnInspectEquipCape" Height="26" Padding="8,0" FontSize="10" Content="Equip" Click="BtnInspectEquipSlot_Click" Tag="Cape" IsEnabled="False" />
+                                                <Button Grid.Column="2" x:Name="BtnInspectEquipCape" Classes="skua-button small" Height="{DynamicResource UiSmallControlHeight}" Padding="8,0" FontSize="{DynamicResource UiFontMicro}" Content="Equip" Click="BtnInspectEquipSlot_Click" Tag="Cape" IsEnabled="False" />
                                             </Grid>
                                         </Border>
 
                                         <!-- Weapon Slot -->
-                                        <Border Background="{DynamicResource SkuaSurfaceBrush}" CornerRadius="6" Padding="10,8" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="1">
+                                        <Border Classes="slot-card">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="Sword" Width="18" Height="18" Foreground="{DynamicResource SkuaAccentBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="Sword" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                    <TextBlock Text="Weapon" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                                    <TextBlock x:Name="InspectWeaponName" Text="None" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="Weapon" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                    <TextBlock x:Name="InspectWeaponName" Text="None" FontSize="{DynamicResource UiFontSmall}" TextTrimming="CharacterEllipsis" />
                                                 </StackPanel>
-                                                <Button Grid.Column="2" x:Name="BtnInspectEquipWeapon" Height="26" Padding="8,0" FontSize="10" Content="Equip" Click="BtnInspectEquipSlot_Click" Tag="Weapon" IsEnabled="False" />
+                                                <Button Grid.Column="2" x:Name="BtnInspectEquipWeapon" Classes="skua-button small" Height="{DynamicResource UiSmallControlHeight}" Padding="8,0" FontSize="{DynamicResource UiFontMicro}" Content="Equip" Click="BtnInspectEquipSlot_Click" Tag="Weapon" IsEnabled="False" />
                                             </Grid>
                                         </Border>
 
                                         <!-- Pet Slot -->
-                                        <Border Background="{DynamicResource SkuaSurfaceBrush}" CornerRadius="6" Padding="10,8" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="1">
+                                        <Border Classes="slot-card">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="Paw" Width="18" Height="18" Foreground="{DynamicResource SkuaAccentBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="Paw" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                    <TextBlock Text="Pet" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                                    <TextBlock x:Name="InspectPetName" Text="None" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="Pet" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                    <TextBlock x:Name="InspectPetName" Text="None" FontSize="{DynamicResource UiFontSmall}" TextTrimming="CharacterEllipsis" />
                                                 </StackPanel>
-                                                <Button Grid.Column="2" x:Name="BtnInspectEquipPet" Height="26" Padding="8,0" FontSize="10" Content="Equip" Click="BtnInspectEquipSlot_Click" Tag="Pet" IsEnabled="False" />
+                                                <Button Grid.Column="2" x:Name="BtnInspectEquipPet" Classes="skua-button small" Height="{DynamicResource UiSmallControlHeight}" Padding="8,0" FontSize="{DynamicResource UiFontMicro}" Content="Equip" Click="BtnInspectEquipSlot_Click" Tag="Pet" IsEnabled="False" />
                                             </Grid>
                                         </Border>
 
                                         <!-- Rune Slot -->
-                                        <Border Background="{DynamicResource SkuaSurfaceBrush}" CornerRadius="6" Padding="10,8" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="1">
+                                        <Border Classes="slot-card">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="CircleDouble" Width="18" Height="18" Foreground="{DynamicResource SkuaAccentBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="CircleDouble" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                    <TextBlock Text="Ground Rune" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                                    <TextBlock x:Name="InspectRuneName" Text="None" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="Ground Rune" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                    <TextBlock x:Name="InspectRuneName" Text="None" FontSize="{DynamicResource UiFontSmall}" TextTrimming="CharacterEllipsis" />
                                                 </StackPanel>
-                                                <Button Grid.Column="2" x:Name="BtnInspectEquipRune" Height="26" Padding="8,0" FontSize="10" Content="Equip" Click="BtnInspectEquipSlot_Click" Tag="Rune" IsEnabled="False" />
+                                                <Button Grid.Column="2" x:Name="BtnInspectEquipRune" Classes="skua-button small" Height="{DynamicResource UiSmallControlHeight}" Padding="8,0" FontSize="{DynamicResource UiFontMicro}" Content="Equip" Click="BtnInspectEquipSlot_Click" Tag="Rune" IsEnabled="False" />
                                             </Grid>
                                         </Border>
                                     </StackPanel>
@@ -702,7 +621,7 @@
                                     <!-- Bottom Set Actions -->
                                     <UniformGrid Columns="2" Margin="0,4,0,0">
                                         <Button x:Name="BtnInspectEquipAll"
-                                                Classes="primary-action"
+                                                Classes="skua-button skua-primary"
                                                 Margin="0,0,4,0"
                                                 IsEnabled="False"
                                                 Click="EquipSelectedSet_Click">
@@ -710,7 +629,7 @@
 </Button>
 
                                         <Button x:Name="BtnInspectDelete"
-                                                Classes="danger-action"
+                                                Classes="skua-button skua-danger"
                                                 Margin="4,0,0,0"
                                                 IsEnabled="False"
                                                 Click="DeleteSelectedSet_Click">
@@ -736,89 +655,89 @@
                         <Border Grid.Column="0"
                                 Background="{DynamicResource SkuaSurfaceAltBrush}"
                                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="8"
+                                BorderThickness="{DynamicResource UiBorderThin}"
+                                CornerRadius="{DynamicResource UiRadiusCard}"
                                 Padding="18"
                                 Margin="0,0,12,0">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel Spacing="16">
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="Character Color Customizer"
-                                                   FontSize="18"
+                                                   FontSize="{DynamicResource UiFontHeading}"
                                                    FontWeight="Bold"
-                                                   Foreground="{DynamicResource SkuaAccentBrush}" />
+                                                   Foreground="{DynamicResource SkuaTextBrush}" />
                                         <TextBlock Text="Directly modify your client-side Base, Trim, Accessory, and Eye colors."
-                                                   FontSize="12"
+                                                   FontSize="{DynamicResource UiFontBody}"
                                                    Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                     </StackPanel>
 
                                     <Separator Background="{DynamicResource SkuaBorderBrush}" />
 
                                     <!-- 6 Color Rows -->
-                                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="140,*,50" RowSpacing="10">
+                                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="140,*,50" RowSpacing="{DynamicResource UiGapBase}">
                                         <!-- Base Color -->
                                         <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center">
-                                            <TextBlock Text="Base Color" FontWeight="Bold" FontSize="12" />
-                                            <TextBlock Text="Primary Armor / Clothes" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                            <TextBlock Text="Base Color" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" />
+                                            <TextBlock Text="Primary Armor / Clothes" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                         </StackPanel>
-                                        <TextBox Grid.Row="0" Grid.Column="1" x:Name="CcBaseHex" PlaceholderText="#RRGGBB" Height="32" VerticalContentAlignment="Center" Margin="10,0" TextChanged="CcHex_TextChanged" />
-                                        <Border Grid.Row="0" Grid.Column="2" x:Name="CcBaseSwatch" CornerRadius="4" Height="32" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="1" />
+                                        <TextBox Grid.Row="0" Grid.Column="1" x:Name="CcBaseHex" Classes="cc-hex" PlaceholderText="#RRGGBB" TextChanged="CcHex_TextChanged" />
+                                        <Border Grid.Row="0" Grid.Column="2" x:Name="CcBaseSwatch" Classes="cc-swatch" />
 
                                         <!-- Trim Color -->
                                         <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center">
-                                            <TextBlock Text="Trim Color" FontWeight="Bold" FontSize="12" />
-                                            <TextBlock Text="Secondary Highlights" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                            <TextBlock Text="Trim Color" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" />
+                                            <TextBlock Text="Secondary Highlights" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                         </StackPanel>
-                                        <TextBox Grid.Row="1" Grid.Column="1" x:Name="CcTrimHex" PlaceholderText="#RRGGBB" Height="32" VerticalContentAlignment="Center" Margin="10,0" TextChanged="CcHex_TextChanged" />
-                                        <Border Grid.Row="1" Grid.Column="2" x:Name="CcTrimSwatch" CornerRadius="4" Height="32" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="1" />
+                                        <TextBox Grid.Row="1" Grid.Column="1" x:Name="CcTrimHex" Classes="cc-hex" PlaceholderText="#RRGGBB" TextChanged="CcHex_TextChanged" />
+                                        <Border Grid.Row="1" Grid.Column="2" x:Name="CcTrimSwatch" Classes="cc-swatch" />
 
                                         <!-- Accessory Color -->
                                         <StackPanel Grid.Row="2" Grid.Column="0" VerticalAlignment="Center">
-                                            <TextBlock Text="Accessory Color" FontWeight="Bold" FontSize="12" />
-                                            <TextBlock Text="Gems, Accents, Glows" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                            <TextBlock Text="Accessory Color" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" />
+                                            <TextBlock Text="Gems, Accents, Glows" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                         </StackPanel>
-                                        <TextBox Grid.Row="2" Grid.Column="1" x:Name="CcAccHex" PlaceholderText="#RRGGBB" Height="32" VerticalContentAlignment="Center" Margin="10,0" TextChanged="CcHex_TextChanged" />
-                                        <Border Grid.Row="2" Grid.Column="2" x:Name="CcAccSwatch" CornerRadius="4" Height="32" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="1" />
+                                        <TextBox Grid.Row="2" Grid.Column="1" x:Name="CcAccHex" Classes="cc-hex" PlaceholderText="#RRGGBB" TextChanged="CcHex_TextChanged" />
+                                        <Border Grid.Row="2" Grid.Column="2" x:Name="CcAccSwatch" Classes="cc-swatch" />
 
                                         <!-- Eye Color -->
                                         <StackPanel Grid.Row="3" Grid.Column="0" VerticalAlignment="Center">
-                                            <TextBlock Text="Eye Color" FontWeight="Bold" FontSize="12" />
-                                            <TextBlock Text="Pupils &amp; Eyes" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                            <TextBlock Text="Eye Color" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" />
+                                            <TextBlock Text="Pupils &amp; Eyes" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                         </StackPanel>
-                                        <TextBox Grid.Row="3" Grid.Column="1" x:Name="CcEyeHex" PlaceholderText="#RRGGBB" Height="32" VerticalContentAlignment="Center" Margin="10,0" TextChanged="CcHex_TextChanged" />
-                                        <Border Grid.Row="3" Grid.Column="2" x:Name="CcEyeSwatch" CornerRadius="4" Height="32" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="1" />
+                                        <TextBox Grid.Row="3" Grid.Column="1" x:Name="CcEyeHex" Classes="cc-hex" PlaceholderText="#RRGGBB" TextChanged="CcHex_TextChanged" />
+                                        <Border Grid.Row="3" Grid.Column="2" x:Name="CcEyeSwatch" Classes="cc-swatch" />
 
                                         <!-- Skin Color -->
                                         <StackPanel Grid.Row="4" Grid.Column="0" VerticalAlignment="Center">
-                                            <TextBlock Text="Skin Color" FontWeight="Bold" FontSize="12" />
-                                            <TextBlock Text="Body &amp; Face Tone" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                            <TextBlock Text="Skin Color" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" />
+                                            <TextBlock Text="Body &amp; Face Tone" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                         </StackPanel>
-                                        <TextBox Grid.Row="4" Grid.Column="1" x:Name="CcSkinHex" PlaceholderText="#RRGGBB" Height="32" VerticalContentAlignment="Center" Margin="10,0" TextChanged="CcHex_TextChanged" />
-                                        <Border Grid.Row="4" Grid.Column="2" x:Name="CcSkinSwatch" CornerRadius="4" Height="32" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="1" />
+                                        <TextBox Grid.Row="4" Grid.Column="1" x:Name="CcSkinHex" Classes="cc-hex" PlaceholderText="#RRGGBB" TextChanged="CcHex_TextChanged" />
+                                        <Border Grid.Row="4" Grid.Column="2" x:Name="CcSkinSwatch" Classes="cc-swatch" />
 
                                         <!-- Hair Color -->
                                         <StackPanel Grid.Row="5" Grid.Column="0" VerticalAlignment="Center">
-                                            <TextBlock Text="Hair Color" FontWeight="Bold" FontSize="12" />
-                                            <TextBlock Text="Hair &amp; Eyebrows" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                            <TextBlock Text="Hair Color" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" />
+                                            <TextBlock Text="Hair &amp; Eyebrows" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                         </StackPanel>
-                                        <TextBox Grid.Row="5" Grid.Column="1" x:Name="CcHairHex" PlaceholderText="#RRGGBB" Height="32" VerticalContentAlignment="Center" Margin="10,0" TextChanged="CcHex_TextChanged" />
-                                        <Border Grid.Row="5" Grid.Column="2" x:Name="CcHairSwatch" CornerRadius="4" Height="32" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="1" />
+                                        <TextBox Grid.Row="5" Grid.Column="1" x:Name="CcHairHex" Classes="cc-hex" PlaceholderText="#RRGGBB" TextChanged="CcHex_TextChanged" />
+                                        <Border Grid.Row="5" Grid.Column="2" x:Name="CcHairSwatch" Classes="cc-swatch" />
                                     </Grid>
 
                                     <Separator Background="{DynamicResource SkuaBorderBrush}" />
 
                                     <!-- Action Buttons -->
                                     <UniformGrid Columns="2">
-                                        <Button Classes="primary-action" Margin="0,0,6,0" Click="ApplyColors_Click">
+                                        <Button Classes="skua-button skua-primary" Margin="0,0,6,0" Click="ApplyColors_Click">
   <TextBlock Text="Apply Palette" VerticalAlignment="Center" />
 </Button>
 
-                                        <Button Height="34" Margin="6,0,0,0" Click="ReadCurrentColors_Click">
+                                        <Button Classes="skua-button" Height="{DynamicResource UiControlHeight}" Margin="6,0,0,0" Click="ReadCurrentColors_Click">
   <TextBlock Text="Read Avatar Colors" VerticalAlignment="Center" />
 </Button>
                                     </UniformGrid>
 
-                                    <TextBlock x:Name="CcStatusText" Text="" FontSize="11" HorizontalAlignment="Center" Foreground="{DynamicResource SkuaAccentBrush}" />
+                                    <TextBlock x:Name="CcStatusText" Text="" FontSize="{DynamicResource UiFontSmall}" HorizontalAlignment="Center" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                 </StackPanel>
                             </ScrollViewer>
                         </Border>
@@ -827,135 +746,37 @@
                         <Border Grid.Column="1"
                                 Background="{DynamicResource SkuaSurfaceAltBrush}"
                                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="8"
+                                BorderThickness="{DynamicResource UiBorderThin}"
+                                CornerRadius="{DynamicResource UiRadiusCard}"
                                 Padding="16">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel Spacing="10">
-                                    <TextBlock Text="THEMED PRESETS"
-                                               FontSize="10"
-                                               FontWeight="Bold"
-                                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                    <TextBlock Classes="section-label" Text="THEMED PRESETS" />
 
-                                    <!-- Preset 1: Void Fiend -->
-                                    <Button Classes="preset-card" Click="Preset_Click" Tag="#1A0826|#8A2BE2|#E0B0FF|#FF00FF">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Void Fiend" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
-                                                <TextBlock Text="Deep obsidian purple" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#1A0826" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#8A2BE2" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#E0B0FF" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </Button>
-
-                                    <!-- Preset 2: Legion Soul -->
-                                    <Button Classes="preset-card" Click="Preset_Click" Tag="#0D1117|#00E5FF|#1DE9B6|#00FFFF">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Legion Soul" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
-                                                <TextBlock Text="Underworld cyan glow" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#0D1117" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#00E5FF" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#1DE9B6" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </Button>
-
-                                    <!-- Preset 3: Shadow Assassin -->
-                                    <Button Classes="preset-card" Click="Preset_Click" Tag="#0D0D0D|#262626|#404040|#FF1744">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Shadow Assassin" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
-                                                <TextBlock Text="Pure stealth black &amp; crimson" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#0D0D0D" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#262626" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#FF1744" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </Button>
-
-                                    <!-- Preset 4: Celestial Light -->
-                                    <Button Classes="preset-card" Click="Preset_Click" Tag="#F5F5F5|#FFD700|#FFB300|#40C4FF">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Celestial Light" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
-                                                <TextBlock Text="Pure white &amp; heavenly gold" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#F5F5F5" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#FFD700" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#FFB300" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </Button>
-
-                                    <!-- Preset 5: Doom Crimson -->
-                                    <Button Classes="preset-card" Click="Preset_Click" Tag="#1F0000|#800000|#FF1A1A|#FF3333">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Doom Crimson" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
-                                                <TextBlock Text="Blood vampire scarlet" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#1F0000" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#800000" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#FF1A1A" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </Button>
-
-                                    <!-- Preset 6: Cyber Synth -->
-                                    <Button Classes="preset-card" Click="Preset_Click" Tag="#180033|#FF007F|#00F0FF|#FFFF00">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Cyber Synth" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
-                                                <TextBlock Text="Neon magenta &amp; cyan" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#180033" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#FF007F" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#00F0FF" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </Button>
-
-                                    <!-- Preset 7: Royal Gold -->
-                                    <Button Classes="preset-card" Click="Preset_Click" Tag="#1C1C1C|#D4AF37|#F3E5AB|#FFD700">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Royal Gold" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
-                                                <TextBlock Text="Gilded imperial regalia" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#1C1C1C" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#D4AF37" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#F3E5AB" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </Button>
-
-                                    <!-- Preset 8: Pure Frost -->
-                                    <Button Classes="preset-card" Click="Preset_Click" Tag="#E0F7FA|#80DEEA|#00BCD4|#00E5FF">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Pure Frost" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
-                                                <TextBlock Text="Glacial crystalline ice" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#E0F7FA" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#80DEEA" />
-                                                <Border Width="14" Height="24" CornerRadius="2" Background="#00BCD4" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </Button>
+                                    <ItemsControl x:Name="PresetPalettesList">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Spacing="{DynamicResource UiGapBase}" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="localViews:CosmeticPresetPalette">
+                                                <Button Classes="preset-card" Click="Preset_Click" Tag="{Binding Tag}">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <StackPanel Grid.Column="0">
+                                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" Foreground="{DynamicResource SkuaTextBrush}" />
+                                                            <TextBlock Text="{Binding Subtitle}" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
+                                                            <Border Width="14" Height="24" CornerRadius="{DynamicResource UiRadiusControl}" Background="{Binding Swatch1}" />
+                                                            <Border Width="14" Height="24" CornerRadius="{DynamicResource UiRadiusControl}" Background="{Binding Swatch2}" />
+                                                            <Border Width="14" Height="24" CornerRadius="{DynamicResource UiRadiusControl}" Background="{Binding Swatch3}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
                             </ScrollViewer>
                         </Border>
@@ -973,45 +794,45 @@
                     <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
                         <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
                                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="8"
+                                BorderThickness="{DynamicResource UiBorderThin}"
+                                CornerRadius="{DynamicResource UiRadiusCard}"
                                 Padding="20"
                                 MaxWidth="620"
                                 HorizontalAlignment="Center">
                             <StackPanel Spacing="14">
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Direct SWF Injection"
-                                               FontSize="18"
+                                               FontSize="{DynamicResource UiFontHeading}"
                                                FontWeight="Bold"
-                                               Foreground="{DynamicResource SkuaAccentBrush}" />
+                                               Foreground="{DynamicResource SkuaTextBrush}" />
                                     <TextBlock Text="Visually loads any raw SWF file onto your avatar by path and linkage ID."
-                                               FontSize="12"
+                                               FontSize="{DynamicResource UiFontBody}"
                                                Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                 </StackPanel>
 
                                 <Separator Background="{DynamicResource SkuaBorderBrush}" />
 
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="SWF File Path (sFile)" FontWeight="SemiBold" FontSize="12" />
+                                    <TextBlock Text="SWF File Path (sFile)" FontWeight="SemiBold" FontSize="{DynamicResource UiFontBody}" />
                                     <TextBox x:Name="ManualFileText"
                                              PlaceholderText="e.g. classes/M/Warrior.swf or items/helms/MyHelm.swf"
-                                             Height="32"
+                                             Height="{DynamicResource UiControlHeight}"
                                              VerticalContentAlignment="Center" />
                                 </StackPanel>
 
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Linkage Identifier (sLink)" FontWeight="SemiBold" FontSize="12" />
+                                    <TextBlock Text="Linkage Identifier (sLink)" FontWeight="SemiBold" FontSize="{DynamicResource UiFontBody}" />
                                     <TextBox x:Name="ManualLinkText"
                                              PlaceholderText="e.g. mWarrior or HelmLink"
-                                             Height="32"
+                                             Height="{DynamicResource UiControlHeight}"
                                              VerticalContentAlignment="Center" />
                                 </StackPanel>
 
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Equipment Slot / Group" FontWeight="SemiBold" FontSize="12" />
+                                    <TextBlock Text="Equipment Slot / Group" FontWeight="SemiBold" FontSize="{DynamicResource UiFontBody}" />
                                     <ComboBox x:Name="ManualSlotCombo"
                                               HorizontalAlignment="Stretch"
-                                              Height="32">
+                                              Height="{DynamicResource UiControlHeight}">
                                         <ComboBoxItem Content="Armor / Class (co)" IsSelected="True" Tag="co" />
                                         <ComboBoxItem Content="Helm (he)" Tag="he" />
                                         <ComboBoxItem Content="Cape (ba)" Tag="ba" />
@@ -1022,26 +843,25 @@
                                 </StackPanel>
 
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Meta Data (sMeta, Optional)" FontWeight="SemiBold" FontSize="12" />
+                                    <TextBlock Text="Meta Data (sMeta, Optional)" FontWeight="SemiBold" FontSize="{DynamicResource UiFontBody}" />
                                     <TextBox x:Name="ManualMetaText"
                                              PlaceholderText="Optional metadata or buff identifiers"
-                                             Height="32"
+                                             Height="{DynamicResource UiControlHeight}"
                                              VerticalContentAlignment="Center" />
                                 </StackPanel>
 
-                                <Button Height="38"
-                                        Classes="primary-action"
+                                <Button Classes="skua-button skua-primary"
                                         HorizontalAlignment="Stretch"
                                         Margin="0,8,0,0"
                                         Click="ManualInject_Click">
-  <TextBlock Text="Inject SWF Onto Character" VerticalAlignment="Center" FontSize="13" />
+  <TextBlock Text="Inject SWF Onto Character" VerticalAlignment="Center" FontSize="{DynamicResource UiFontBody}" />
 </Button>
 
                                 <TextBlock x:Name="ManualStatusText"
                                            Text=""
-                                           FontSize="12"
+                                           FontSize="{DynamicResource UiFontBody}"
                                            HorizontalAlignment="Center"
-                                           Foreground="{DynamicResource SkuaAccentBrush}" />
+                                           Foreground="{DynamicResource SkuaMutedTextBrush}" />
                             </StackPanel>
                         </Border>
                     </ScrollViewer>

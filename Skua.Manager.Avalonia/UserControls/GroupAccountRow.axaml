@@ -9,11 +9,11 @@
              d:DesignWidth="520"
              d:DesignHeight="62">
     <Border Classes="card"
-            CornerRadius="2"
+            CornerRadius="{DynamicResource UiRadiusControl}"
             Padding="12,5,10,5"
             Margin="0">
         <Grid ColumnDefinitions="*,Auto,Auto"
-              ColumnSpacing="4">
+              ColumnSpacing="{DynamicResource UiGapXs}">
             <Grid Grid.Column="0"
                   Classes="group-account-text"
                   Classes.tags-visible="{Binding DataContext.ShowTags, RelativeSource={RelativeSource AncestorType=managerUc:AccountManagerUserControl}}"
@@ -22,7 +22,7 @@
                   VerticalAlignment="Center">
                 <TextBlock Grid.Row="0"
                            Text="{Binding DisplayOrUsername}"
-                           FontSize="12"
+                           FontSize="{DynamicResource UiFontBody}"
                            FontWeight="Medium"
                            VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis" />
@@ -55,8 +55,8 @@
                     Click="ReplaceButton_Click"
                     ToolTip.Tip="Replace account in group">
                 <materialIcons:MaterialIcon Kind="Refresh"
-                                            Width="14"
-                                            Height="14"
+                                            Width="{DynamicResource UiIconSm}"
+                                            Height="{DynamicResource UiIconSm}"
                                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
             </Button>
 
@@ -67,8 +67,8 @@
                     Click="RemoveButton_Click"
                     ToolTip.Tip="Remove from group">
                 <materialIcons:MaterialIcon Kind="Close"
-                                            Width="14"
-                                            Height="14"
+                                            Width="{DynamicResource UiIconSm}"
+                                            Height="{DynamicResource UiIconSm}"
                                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
             </Button>
         </Grid>

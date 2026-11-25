@@ -36,10 +36,10 @@
                       VerticalAlignment="Center"
                       Margin="0,0,8,0" />
 
-            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+            <StackPanel Grid.Column="1" Spacing="{DynamicResource UiGap2xs}" VerticalAlignment="Center">
                 <TextBlock Text="{Binding DisplayOrUsername}"
                            VerticalAlignment="Center"
-                           FontSize="13"
+                           FontSize="{DynamicResource UiFontBody}"
                            FontWeight="Medium" />
                 <ItemsControl ItemsSource="{Binding Tags}"
                               Margin="0,3,0,0"
@@ -62,14 +62,14 @@
                 </ItemsControl>
             </StackPanel>
 
-            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="8,0,0,0">
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center" Margin="8,0,0,0">
                 <Button Command="{Binding EditCommand}"
                         Classes="icon"
                         VerticalAlignment="Center"
                         ToolTip.Tip="Edit Account">
                     <materialIcons:MaterialIcon Kind="PencilOutline"
-                                                Width="14"
-                                                Height="14"
+                                                Width="{DynamicResource UiIconSm}"
+                                                Height="{DynamicResource UiIconSm}"
                                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                 </Button>
                 <Button Command="{Binding RemoveCommand}"
@@ -77,8 +77,8 @@
                         VerticalAlignment="Center"
                         ToolTip.Tip="Remove Account">
                     <materialIcons:MaterialIcon Kind="DeleteOutline"
-                                                Width="14"
-                                                Height="14"
+                                                Width="{DynamicResource UiIconSm}"
+                                                Height="{DynamicResource UiIconSm}"
                                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                 </Button>
             </StackPanel>

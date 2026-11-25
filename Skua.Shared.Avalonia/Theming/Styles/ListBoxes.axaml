@@ -8,21 +8,21 @@
     <Style Selector="ListBox">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusCard}" />
     </Style>
 
     <Style Selector="ListBoxItem">
         <Setter Property="Padding" Value="6,4" />
-        <Setter Property="CornerRadius" Value="4" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
 
     <Style Selector="ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="CornerRadius" Value="4" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
@@ -33,19 +33,19 @@
     </Style>
 
     <Style Selector="ListBoxItem:selected">
-        <Setter Property="Background" Value="{DynamicResource SkuaAccentTintBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
     </Style>
 
     <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SkuaAccentTintBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
 
     <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaAccentTintStrongBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
 
@@ -65,20 +65,17 @@
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
     </Style>
-    <Style Selector="Border.list-card.alt">
-        <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
-    </Style>
     <Style Selector="ListBoxItem:pointerover Border.list-card">
         <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
     </Style>
     <Style Selector="ListBoxItem:selected Border.list-card">
-        <Setter Property="Background" Value="{DynamicResource SkuaAccentTintBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
     </Style>
     <Style Selector="ListBoxItem:selected:pointerover Border.list-card">
         <Setter Property="Background" Value="{DynamicResource SkuaAccentTintStrongBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
     </Style>
 
     <Style Selector="ListBox.embedded">
@@ -86,23 +83,19 @@
         <Setter Property="Background" Value="Transparent" />
     </Style>
 
-    <Style Selector="ListBox.gap-bottom-8">
-        <Setter Property="Margin" Value="0,0,0,8" />
-    </Style>
-
     <Style Selector="ListBox.top-tabs, ListBox.top-tabs-client">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusNone}" />
     </Style>
 
     <Style Selector="ListBox.top-tabs ListBoxItem,ListBox.top-tabs-client ListBoxItem">
-        <Setter Property="Height" Value="32" />
+        <Setter Property="Height" Value="{DynamicResource UiControlHeight}" />
         <Setter Property="MinWidth" Value="96" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="Margin" Value="0,0,4,0" />
-        <Setter Property="CornerRadius" Value="4" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -111,8 +104,8 @@
     <Style Selector="ListBox.top-tabs ListBoxItem /template/ ContentPresenter#PART_ContentPresenter, ListBox.top-tabs-client ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
     </Style>
     <Style Selector="ListBox.top-tabs ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.top-tabs-client ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -121,13 +114,13 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
     <Style Selector="ListBox.top-tabs ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBox.top-tabs-client ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SkuaAccentTintBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
     <Style Selector="ListBox.top-tabs ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.top-tabs-client ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaAccentTintStrongBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
     <Style Selector="ListBox.top-tabs ListBoxItem:selected TextBlock, ListBox.top-tabs-client ListBoxItem:selected TextBlock">
@@ -135,12 +128,12 @@
     </Style>
 
     <Style Selector="ListBox.segmented">
-        <Setter Property="Height" Value="32" />
+        <Setter Property="Height" Value="{DynamicResource UiControlHeight}" />
         <Setter Property="Padding" Value="2" />
-        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
         <Setter Property="ItemsPanel">
@@ -151,9 +144,9 @@
     </Style>
     <Style Selector="ListBox.segmented ListBoxItem">
         <Setter Property="MinWidth" Value="64" />
-        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="Padding" Value="{DynamicResource UiControlPadding}" />
         <Setter Property="Margin" Value="1,0" />
-        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -176,21 +169,21 @@
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
         <Setter Property="ItemsPanel">
             <ItemsPanelTemplate>
-                <WrapPanel Orientation="Horizontal" ItemSpacing="6" LineSpacing="6" />
+                <WrapPanel Orientation="Horizontal" ItemSpacing="{DynamicResource UiGapSm}" LineSpacing="{DynamicResource UiGapSm}" />
             </ItemsPanelTemplate>
         </Setter>
     </Style>
     <Style Selector="ListBox.chips ListBoxItem">
-        <Setter Property="Height" Value="28" />
-        <Setter Property="MinHeight" Value="28" />
-        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="Height" Value="{DynamicResource UiControlHeight}" />
+        <Setter Property="MinHeight" Value="{DynamicResource UiControlHeight}" />
+        <Setter Property="Padding" Value="{DynamicResource UiControlPadding}" />
         <Setter Property="Margin" Value="0" />
-        <Setter Property="CornerRadius" Value="14" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
-        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontSmall}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Cursor" Value="Hand" />
@@ -201,7 +194,33 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
     <Style Selector="ListBox.chips ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBox.chips ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SkuaAccentTintBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+    </Style>
+
+    <Style Selector="ListBox.sidebar-nav ListBoxItem">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0,1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
+    </Style>
+    <Style Selector="ListBox.sidebar-nav ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Padding" Value="8,5" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
+    </Style>
+    <Style Selector="ListBox.sidebar-nav ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+    </Style>
+    <Style Selector="ListBox.sidebar-nav ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter,
+                     ListBox.sidebar-nav ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiActiveBarThickness}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>

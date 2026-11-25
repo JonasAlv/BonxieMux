@@ -12,13 +12,13 @@
     <Grid Margin="16" IsEnabled="{Binding !IsBusy}">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
             <TextBlock Text="BonxieMux Scripts Updater"
-                       FontSize="26"
+                       FontSize="{DynamicResource UiFontDisplay}"
                        FontWeight="Light"
                        HorizontalAlignment="Center"
                        Margin="0,0,0,8" />
 
             <TextBlock Text="{Binding Status}"
-                       FontSize="15"
+                       FontSize="{DynamicResource UiFontHeading}"
                        Foreground="{DynamicResource SkuaMutedTextBrush}"
                        HorizontalAlignment="Center"
                        Margin="0,0,0,24" />
@@ -32,7 +32,7 @@
                          IsVisible="{Binding IsBusy}" />
 
             <TextBlock Text="{Binding ProgressStatus}"
-                       FontSize="13"
+                       FontSize="{DynamicResource UiFontBody}"
                        Foreground="{DynamicResource SkuaMutedTextBrush}"
                        HorizontalAlignment="Center"
                        Margin="0,0,0,24"

@@ -39,7 +39,7 @@
             <TextBlock Grid.Row="0"
                        Grid.Column="1"
                        Text="{Binding DisplayOrUsername}"
-                       FontSize="14"
+                       FontSize="{DynamicResource UiFontHeading}"
                        Margin="0,0,8,0"
                        VerticalAlignment="Center"
                        FontWeight="Medium"
@@ -47,15 +47,15 @@
             <StackPanel Grid.Row="0"
                         Grid.Column="2"
                         Orientation="Horizontal"
-                        Spacing="2"
+                        Spacing="{DynamicResource UiGap2xs}"
                         VerticalAlignment="Center">
                 <Button Command="{Binding EditCommand}"
                         Classes="icon"
                         VerticalAlignment="Center"
                         ToolTip.Tip="Edit Account">
                     <materialIcons:MaterialIcon Kind="PencilOutline"
-                                                Width="13"
-                                                Height="13"
+                                                Width="{DynamicResource UiIconSm}"
+                                                Height="{DynamicResource UiIconSm}"
                                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                 </Button>
                 <Button Command="{Binding RemoveCommand}"
@@ -63,8 +63,8 @@
                         VerticalAlignment="Center"
                         ToolTip.Tip="Remove Account">
                     <materialIcons:MaterialIcon Kind="DeleteOutline"
-                                                Width="13"
-                                                Height="13"
+                                                Width="{DynamicResource UiIconSm}"
+                                                Height="{DynamicResource UiIconSm}"
                                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                 </Button>
             </StackPanel>

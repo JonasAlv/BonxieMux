@@ -15,6 +15,7 @@ using Skua.Core.Models.Skills;
 using Skua.Core.Models.Items;
 using Skua.Core.Models.Quests;
 using Skua.Core.Models.Shops;
+using Skua.Shared.Avalonia.Theming;
 
 namespace Skua.Plugin.Omniscope;
 
@@ -27,14 +28,14 @@ public partial class OmniscopeWindow : Window
     private static readonly Regex ActionScriptTokenRegex = new(
         @"(?<comment>//.*|/\*.*?(?:\*/|$))|(?<string>""(?:\\.|[^""\\])*""|'(?:\\.|[^'\\])*')|(?<keyword>\b(?:package|import|class|interface|extends|implements|public|private|protected|internal|static|final|override|function|var|const|return|new|this|super|if|else|for|while|do|switch|case|break|continue|try|catch|throw|with|as|is|in|instanceof|typeof|void|delete|true|false|null|undefined|namespace)\b)|(?<number>\b(?:0[xX][0-9A-Fa-f]+|\d+(?:\.\d+)?)\b)|(?<function>\b[A-Za-z_$][A-Za-z0-9_$]*(?=\s*\())|(?<type>\b[A-Z][A-Za-z0-9_]*\b)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
-    private static readonly SolidColorBrush CodeDefaultBrush = new(Color.Parse("#DFF0FF"));
-    private static readonly SolidColorBrush CodeLineNumberBrush = new(Color.Parse("#7D92B1"));
-    private static readonly SolidColorBrush CodeCommentBrush = new(Color.Parse("#7CF2C5"));
-    private static readonly SolidColorBrush CodeStringBrush = new(Color.Parse("#FFD27F"));
-    private static readonly SolidColorBrush CodeKeywordBrush = new(Color.Parse("#C493FF"));
-    private static readonly SolidColorBrush CodeNumberBrush = new(Color.Parse("#FF83B9"));
-    private static readonly SolidColorBrush CodeFunctionBrush = new(Color.Parse("#65C8FF"));
-    private static readonly SolidColorBrush CodeTypeBrush = new(Color.Parse("#7BEAFF"));
+    private static IBrush CodeDefaultBrush => UiTokens.GetBrush(UiTokens.SkuaTextBrush, Brushes.Gainsboro);
+    private static IBrush CodeLineNumberBrush => UiTokens.GetBrush(UiTokens.SkuaMutedTextBrush, Brushes.Gray);
+    private static IBrush CodeCommentBrush => UiTokens.GetBrush(UiTokens.SkuaSuccessBrush, Brushes.SeaGreen);
+    private static IBrush CodeStringBrush => UiTokens.GetBrush(UiTokens.SkuaWarningBrush, Brushes.Goldenrod);
+    private static IBrush CodeKeywordBrush => UiTokens.GetBrush(UiTokens.SkuaAccentBrush, Brushes.CornflowerBlue);
+    private static IBrush CodeNumberBrush => UiTokens.GetBrush(UiTokens.SkuaDangerBrush, Brushes.IndianRed);
+    private static IBrush CodeFunctionBrush => UiTokens.GetBrush(UiTokens.SkuaTagTextBrush, Brushes.DeepSkyBlue);
+    private static IBrush CodeTypeBrush => UiTokens.GetBrush(UiTokens.SkuaTextBrush, Brushes.Gainsboro);
     private const int MaximumVisibleCodeCharacters = 200_000;
     private readonly DispatcherTimer _refreshTimer = new() { Interval = TimeSpan.FromMilliseconds(750) };
     private readonly ObservableCollection<EntityRow> _entities = [];
@@ -187,7 +188,11 @@ public partial class OmniscopeWindow : Window
             bool loggedIn = _bot.Player.LoggedIn;
             bool playing = _bot.Player.Playing;
             ConnectionText.Text = loggedIn ? playing ? "Live / Avatar Active" : "Connected / Loading Avatar" : "Waiting For Game Session";
-            ConnectionIndicator.Fill = playing ? Avalonia.Media.Brushes.MediumSpringGreen : loggedIn ? Avalonia.Media.Brushes.Goldenrod : Avalonia.Media.Brushes.IndianRed;
+            ConnectionIndicator.Fill = playing
+                ? UiTokens.GetBrush(UiTokens.SkuaSuccessBrush, Brushes.MediumSpringGreen)
+                : loggedIn
+                    ? UiTokens.GetBrush(UiTokens.SkuaWarningBrush, Brushes.Goldenrod)
+                    : UiTokens.GetBrush(UiTokens.SkuaDangerBrush, Brushes.IndianRed);
 
             int health = loggedIn ? _bot.Player.Health : 0;
             int maxHealth = loggedIn ? _bot.Player.MaxHealth : 0;
@@ -279,7 +284,7 @@ public partial class OmniscopeWindow : Window
         catch (Exception ex)
         {
             ConnectionText.Text = "Telemetry Degraded";
-            ConnectionIndicator.Fill = Avalonia.Media.Brushes.OrangeRed;
+            ConnectionIndicator.Fill = UiTokens.GetBrush(UiTokens.SkuaDangerBrush, Brushes.OrangeRed);
             System.Diagnostics.Trace.WriteLine($"OMNISCOPE telemetry refresh failed: {ex}");
         }
         finally
@@ -506,7 +511,7 @@ public partial class OmniscopeWindow : Window
             if (match.Index > position)
                 DataDetailText.Inlines.Add(new Run(line[position..match.Index]) { Foreground = CodeDefaultBrush });
 
-            SolidColorBrush brush = match.Groups["comment"].Success ? CodeCommentBrush
+            IBrush brush = match.Groups["comment"].Success ? CodeCommentBrush
                 : match.Groups["string"].Success ? CodeStringBrush
                 : match.Groups["keyword"].Success ? CodeKeywordBrush
                 : match.Groups["number"].Success ? CodeNumberBrush
@@ -1434,7 +1439,9 @@ public partial class OmniscopeWindow : Window
         _avatarLiveFollow = enabled;
         AvatarFollowButton.Content = enabled ? "Pause" : "Resume";
         AvatarFollowStatus.Text = enabled ? "Live" : "Paused";
-        AvatarFollowStatus.Foreground = enabled ? Avalonia.Media.Brushes.MediumSpringGreen : Avalonia.Media.Brushes.Goldenrod;
+        AvatarFollowStatus.Foreground = enabled
+            ? UiTokens.GetBrush(UiTokens.SkuaSuccessBrush, Brushes.MediumSpringGreen)
+            : UiTokens.GetBrush(UiTokens.SkuaWarningBrush, Brushes.Goldenrod);
         if (enabled)
             RefreshTelemetry();
     }
@@ -1601,7 +1608,7 @@ public partial class OmniscopeWindow : Window
                 .Take(12)
                 .Select(item => new InventoryRow
                 {
-                    Name = $"{(item.Equipped ? "EQUIPPED  /  " : string.Empty)}{(_bot.Inventory.IsFavorited(item.ID) ? "★  " : string.Empty)}{item.Name}",
+                    Name = $"{(item.Equipped ? "EQUIPPED  /  " : string.Empty)}{(_bot.Inventory.IsFavorited(item.ID) ? "FAV  /  " : string.Empty)}{item.Name}",
                     Quantity = $"×{item.Quantity:N0}"
                 })
                 .ToArray()

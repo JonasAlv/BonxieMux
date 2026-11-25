@@ -12,13 +12,13 @@
     <Grid Margin="16">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
             <TextBlock Text="BonxieMux Client Updater"
-                       FontSize="26"
+                       FontSize="{DynamicResource UiFontDisplay}"
                        FontWeight="Light"
                        HorizontalAlignment="Center"
                        Margin="0,0,0,8" />
 
             <TextBlock Text="{Binding UpdateStatus}"
-                       FontSize="15"
+                       FontSize="{DynamicResource UiFontHeading}"
                        Foreground="{DynamicResource SkuaMutedTextBrush}"
                        HorizontalAlignment="Center"
                        Margin="0,0,0,24" />

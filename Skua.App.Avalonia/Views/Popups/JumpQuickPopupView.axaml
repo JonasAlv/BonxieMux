@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Skua.App.Avalonia.Views.Popups.JumpQuickPopupView">
+    <Border Background="{DynamicResource SkuaSurfaceBrush}"
+            BorderBrush="{DynamicResource SkuaBorderBrush}"
+            BorderThickness="{DynamicResource UiBorderThin}"
+            CornerRadius="{DynamicResource UiRadiusCard}"
+            Padding="{DynamicResource UiPaddingLg}"
+            Width="320">
+        <StackPanel Spacing="{DynamicResource UiGapBase}">
+            <TextBlock Text="Fast Map Jump"
+                       FontSize="{DynamicResource UiFontHeading}"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource SkuaTextBrush}"
+                       VerticalAlignment="Center" />
+
+            <Separator />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource UiGapMd}">
+                <ComboBox x:Name="JumpCellBox"
+                          Grid.Column="0"
+                          MinWidth="140"
+                          Height="{DynamicResource UiControlHeight}"
+                          HorizontalAlignment="Stretch"
+                          PlaceholderText="Select Cell..." />
+                <ComboBox x:Name="JumpPadBox"
+                          Grid.Column="1"
+                          MinWidth="140"
+                          Height="{DynamicResource UiControlHeight}"
+                          HorizontalAlignment="Stretch"
+                          PlaceholderText="Select Pad..." />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource UiGapMd}">
+                <Button x:Name="CurrentBtn"
+                        Grid.Column="0"
+                        Classes="skua-button"
+                        Height="{DynamicResource UiControlHeight}"
+                        HorizontalAlignment="Stretch">
+                    <TextBlock Text="Current" FontSize="{DynamicResource UiFontSmall}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </Button>
+                <Button x:Name="JumpBtn"
+                        Grid.Column="1"
+                        Classes="skua-button skua-primary"
+                        Height="{DynamicResource UiControlHeight}"
+                        HorizontalAlignment="Stretch">
+                    <TextBlock Text="Jump" FontSize="{DynamicResource UiFontSmall}" FontWeight="Bold" VerticalAlignment="Center" />
+                </Button>
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>

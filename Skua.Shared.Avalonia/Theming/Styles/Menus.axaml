@@ -4,9 +4,9 @@
 
     <Style Selector="Menu.top-toolbar">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Height" Value="24" />
-        <Setter Property="MinHeight" Value="24" />
-        <Setter Property="MaxHeight" Value="24" />
+        <Setter Property="Height" Value="{DynamicResource UiSmallControlHeight}" />
+        <Setter Property="MinHeight" Value="{DynamicResource UiSmallControlHeight}" />
+        <Setter Property="MaxHeight" Value="{DynamicResource UiSmallControlHeight}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Padding" Value="0" />
     </Style>
@@ -14,14 +14,14 @@
     <Style Selector="Menu > MenuItem, Menu.top-toolbar > MenuItem, MenuItem.top-nav-item">
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
         <Setter Property="Padding" Value="8,0" />
-        <Setter Property="Height" Value="24" />
-        <Setter Property="MinHeight" Value="24" />
-        <Setter Property="MaxHeight" Value="24" />
+        <Setter Property="Height" Value="{DynamicResource UiSmallControlHeight}" />
+        <Setter Property="MinHeight" Value="{DynamicResource UiSmallControlHeight}" />
+        <Setter Property="MaxHeight" Value="{DynamicResource UiSmallControlHeight}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
         <Setter Property="FontWeight" Value="Normal" />
-        <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="Margin" Value="0" />
         <Setter Property="Template">
             <ControlTemplate TargetType="MenuItem">
@@ -48,13 +48,13 @@
                            WindowManagerAddShadowHint="False">
                         <Border Background="{DynamicResource SkuaSurfaceBrush}"
                                 BorderBrush="{DynamicResource SkuaBorderStrongBrush}"
-                                BorderThickness="1"
-                                CornerRadius="4"
-                                Padding="4"
+                                BorderThickness="{DynamicResource UiBorderThin}"
+                                CornerRadius="{DynamicResource UiRadiusControl}"
+                                Padding="{DynamicResource UiPaddingXs}"
                                 Margin="0,2,0,0">
                             <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                                           VerticalScrollBarVisibility="Auto"
-                                          MaxHeight="520">
+                                          MaxHeight="{DynamicResource UiMenuMaxHeight}">
                                 <ItemsPresenter x:Name="PART_ItemsPresenter"
                                                 ItemsPanel="{TemplateBinding ItemsPanel}" />
                             </ScrollViewer>
@@ -80,27 +80,27 @@
     <Style Selector="MenuFlyoutPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="4" />
-        <Setter Property="Padding" Value="4" />
-        <Setter Property="MinWidth" Value="195" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+        <Setter Property="Padding" Value="{DynamicResource UiMenuPadding}" />
+        <Setter Property="MinWidth" Value="{DynamicResource UiMenuMinWidth}" />
     </Style>
 
     <Style Selector="FlyoutPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusCard}" />
         <Setter Property="Padding" Value="8" />
     </Style>
 
     <Style Selector="ContextMenu">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="4" />
-        <Setter Property="Padding" Value="4" />
-        <Setter Property="MinWidth" Value="195" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+        <Setter Property="Padding" Value="{DynamicResource UiMenuPadding}" />
+        <Setter Property="MinWidth" Value="{DynamicResource UiMenuMinWidth}" />
     </Style>
 
     <Style Selector="MenuFlyoutPresenter Separator, ContextMenu Separator, Menu Separator">
@@ -112,13 +112,13 @@
     <Style Selector="MenuItem MenuItem, ContextMenu MenuItem, MenuFlyoutPresenter MenuItem">
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Height" Value="26" />
-        <Setter Property="MinHeight" Value="26" />
+        <Setter Property="Height" Value="{DynamicResource UiMenuItemHeight}" />
+        <Setter Property="MinHeight" Value="{DynamicResource UiListItemMinHeight}" />
         <Setter Property="Padding" Value="8,0" />
         <Setter Property="Margin" Value="0,1" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
         <Setter Property="FontWeight" Value="Normal" />
-        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Template">
             <ControlTemplate TargetType="MenuItem">
@@ -137,7 +137,7 @@
                                    IsVisible="False">
                                 <materialIcons:MaterialIcon x:Name="PART_ToggleCheck"
                                                             Kind="Check"
-                                                            Width="14" Height="14"
+                                                            Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
                                                             Opacity="0"
                                                             Foreground="{DynamicResource SkuaAccentBrush}" />
                             </Panel>
@@ -155,14 +155,14 @@
                                        Text="{TemplateBinding InputGesture}"
                                        Margin="16,0,4,0"
                                        VerticalAlignment="Center"
-                                       FontSize="11"
+                                       FontSize="{DynamicResource UiFontSmall}"
                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
                                        IsVisible="{TemplateBinding InputGesture, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
                             <materialIcons:MaterialIcon x:Name="PART_Chevron"
                                                         Grid.Column="3"
                                                         Kind="ChevronRight"
-                                                        Width="14" Height="14"
+                                                        Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
                                                         Margin="8,0,0,0"
                                                         VerticalAlignment="Center"
                                                         Foreground="{DynamicResource SkuaMutedTextBrush}" />
@@ -176,13 +176,13 @@
                            WindowManagerAddShadowHint="False">
                         <Border Background="{DynamicResource SkuaSurfaceBrush}"
                                 BorderBrush="{DynamicResource SkuaBorderStrongBrush}"
-                                BorderThickness="1"
-                                CornerRadius="4"
-                                Padding="4"
+                                BorderThickness="{DynamicResource UiBorderThin}"
+                                CornerRadius="{DynamicResource UiRadiusControl}"
+                                Padding="{DynamicResource UiPaddingXs}"
                                 Margin="0">
                             <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                                           VerticalScrollBarVisibility="Auto"
-                                          MaxHeight="520">
+                                          MaxHeight="{DynamicResource UiMenuMaxHeight}">
                                 <ItemsPresenter x:Name="PART_ItemsPresenter"
                                                 ItemsPanel="{TemplateBinding ItemsPanel}" />
                             </ScrollViewer>

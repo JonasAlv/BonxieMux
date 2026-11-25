@@ -155,7 +155,7 @@
     </DataTemplate>
     <DataTemplate DataType="viewModels:BotControlViewModelBase">
       <Border Classes="card"
-              Padding="10">
+              Padding="{DynamicResource UiCardPadding}">
         <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
       </Border>
     </DataTemplate>

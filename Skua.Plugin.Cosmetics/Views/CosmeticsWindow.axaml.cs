@@ -19,8 +19,22 @@ using Skua.Plugin.Cosmetics.Services;
 
 namespace Skua.Plugin.Cosmetics.Views;
 
+public sealed record CosmeticPresetPalette(string Name, string Subtitle, string Tag, string Swatch1, string Swatch2, string Swatch3);
+
 public partial class CosmeticsWindow : Window
 {
+    private static readonly CosmeticPresetPalette[] BuiltInPresets =
+    [
+        new("Void Fiend", "Deep obsidian purple", "#1A0826|#8A2BE2|#E0B0FF|#FF00FF", "#1A0826", "#8A2BE2", "#E0B0FF"),
+        new("Legion Soul", "Underworld cyan glow", "#0D1117|#00E5FF|#1DE9B6|#00FFFF", "#0D1117", "#00E5FF", "#1DE9B6"),
+        new("Shadow Assassin", "Pure stealth black & crimson", "#0D0D0D|#262626|#404040|#FF1744", "#0D0D0D", "#262626", "#FF1744"),
+        new("Celestial Light", "Pure white & heavenly gold", "#F5F5F5|#FFD700|#FFB300|#40C4FF", "#F5F5F5", "#FFD700", "#FFB300"),
+        new("Doom Crimson", "Blood vampire scarlet", "#1F0000|#800000|#FF1A1A|#FF3333", "#1F0000", "#800000", "#FF1A1A"),
+        new("Cyber Synth", "Neon magenta & cyan", "#180033|#FF007F|#00F0FF|#FFFF00", "#180033", "#FF007F", "#00F0FF"),
+        new("Royal Gold", "Gilded imperial regalia", "#1C1C1C|#D4AF37|#F3E5AB|#FFD700", "#1C1C1C", "#D4AF37", "#F3E5AB"),
+        new("Pure Frost", "Glacial crystalline ice", "#E0F7FA|#80DEEA|#00BCD4|#00E5FF", "#E0F7FA", "#80DEEA", "#00BCD4"),
+    ];
+
     private readonly IScriptInterface _bot;
     private readonly CosmeticsService _service;
 
@@ -38,6 +52,7 @@ public partial class CosmeticsWindow : Window
     public CosmeticsWindow()
     {
         InitializeComponent();
+        PresetPalettesList.ItemsSource = BuiltInPresets;
         _bot = null!;
         _service = null!;
     }
@@ -48,6 +63,7 @@ public partial class CosmeticsWindow : Window
         _service = service;
 
         InitializeComponent();
+        PresetPalettesList.ItemsSource = BuiltInPresets;
         Skua.Shared.Avalonia.Services.WindowPlacementHelper.CenterOnActiveScreen(this);
 
         _service.CatalogUpdated += OnServiceCatalogUpdated;

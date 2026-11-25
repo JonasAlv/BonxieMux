@@ -5,32 +5,31 @@
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.Options"
              xmlns:views="clr-namespace:Skua.App.Avalonia.Views"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:sharedOptions="clr-namespace:Skua.Shared.Avalonia.Controls.Options;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.App.Avalonia.Views.GameOptionsView"
              x:DataType="vms:GameOptionsViewModel"
              mc:Ignorable="d" d:DesignHeight="680" d:DesignWidth="640">
 
-  <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="10">
-    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="10">
-      <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+  <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="{DynamicResource UiGapBase}">
+    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="{DynamicResource UiGapBase}">
+      <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
   <TextBlock Text="Account" VerticalAlignment="Center" />
 </StackPanel>
       <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Accounts}" SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
                 ToolTip.Tip="Pick another open account to see and change its game options" />
     </Grid>
 
-    <TextBox Grid.Row="1" PlaceholderText="Search game options" Text="{Binding SearchText, Mode=TwoWay}">
-      <TextBox.InnerLeftContent>
-        <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-      </TextBox.InnerLeftContent>
-    </TextBox>
+    <primitives:SearchFilterBar Grid.Row="1"
+                                PlaceholderText="Search game options"
+                                SearchText="{Binding SearchText, Mode=TwoWay}" />
 
     <ListBox Grid.Row="2" Classes="chips" ItemsSource="{Binding Sections}" SelectedItem="{Binding SelectedSection, Mode=TwoWay}">
       <ListBox.ItemTemplate>
         <DataTemplate x:DataType="vms:OptionGroupViewModel">
           <StackPanel Orientation="Horizontal" Spacing="5" ToolTip.Tip="{Binding Title}">
             <TextBlock Text="{Binding ShortTitle}" VerticalAlignment="Center" />
-            <TextBlock Text="{Binding Count}" Opacity="0.7" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding Count}" Opacity="{DynamicResource UiSubtleOpacity}" VerticalAlignment="Center" />
           </StackPanel>
         </DataTemplate>
       </ListBox.ItemTemplate>
@@ -42,14 +41,14 @@
           <DataTemplate x:DataType="vms:OptionGroupViewModel">
             <Border Background="{DynamicResource SkuaSurfaceBrush}"
                     BorderBrush="{DynamicResource SkuaBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
+                    BorderThickness="{DynamicResource UiBorderThin}"
+                    CornerRadius="{DynamicResource UiRadiusCard}"
                     Margin="0,0,0,10"
-                    Padding="14,12">
-              <StackPanel Spacing="10">
-                <StackPanel Spacing="8"
+                    Padding="{DynamicResource UiCardCompactPadding}">
+              <StackPanel Spacing="{DynamicResource UiGapBase}">
+                <StackPanel Spacing="{DynamicResource UiGapMd}"
                             IsVisible="{Binding $parent[UserControl].DataContext.ShowSectionHeaders}">
-                  <StackPanel Orientation="Horizontal" Spacing="8">
+                  <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}">
                     <TextBlock Classes="section-label" Text="{Binding Title}" />
                     <Border Classes="count">
                       <TextBlock Text="{Binding Count}" />
@@ -78,14 +77,14 @@
       </ItemsControl>
     </ScrollViewer>
 
-    <Grid Grid.Row="4" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
+    <Grid Grid.Row="4" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
       <Button Grid.Column="0" Classes="skua-button w84" Command="{Binding ResetDefaultOptionsCommand}" ToolTip.Tip="Reset to application default values">
   <TextBlock Text="Defaults" VerticalAlignment="Center" />
 </Button>
       <Button Grid.Column="1" Classes="skua-button w84" Command="{Binding ResetOptionsCommand}" ToolTip.Tip="Reset to saved user values">
   <TextBlock Text="Reset" VerticalAlignment="Center" />
 </Button>
-      <TextBlock Grid.Column="2" Text="{Binding FooterNote}" FontSize="11" HorizontalAlignment="Right"
+      <TextBlock Grid.Column="2" Text="{Binding FooterNote}" FontSize="{DynamicResource UiFontSmall}" HorizontalAlignment="Right"
                  VerticalAlignment="Center" Foreground="{DynamicResource SkuaMutedTextBrush}" />
       <Button Grid.Column="3" Classes="skua-button skua-primary w112" Command="{Binding SaveOptionsCommand}" ToolTip.Tip="Keep these options for next time">
   <TextBlock Text="Save" VerticalAlignment="Center" />

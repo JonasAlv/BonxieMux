@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml.MarkupExtensions;
 using Skua.Shared.Avalonia.Controls.Shell;
+using Skua.Shared.Avalonia.Theming;
 
 namespace Skua.Shared.Avalonia.Services;
 
@@ -11,9 +11,9 @@ public static class ShellWindowHelper
     {
         window.WindowDecorations = WindowDecorations.None;
         window.ExtendClientAreaToDecorationsHint = true;
-        window.ExtendClientAreaTitleBarHeightHint = 32;
+        window.ExtendClientAreaTitleBarHeightHint = UiTokens.GetDouble(UiTokens.UiTitleBarHeight, 30);
         window.Classes.Add("skua");
-        window[!Window.BackgroundProperty] = new DynamicResourceExtension("SkuaPageBrush");
+        UiTokens.Bind(window, Window.BackgroundProperty, UiTokens.SkuaPageBrush);
         ThemeResourceApplicator.ApplyTitleBarTheme(window);
         if (attachResize)
             WindowResizeHelper.Attach(window);
@@ -43,11 +43,11 @@ public static class ShellWindowHelper
 
         Border rootBorder = new()
         {
-            BorderThickness = new Thickness(1),
             Child = root
         };
-        rootBorder[!Border.BorderBrushProperty] = new DynamicResourceExtension("SkuaBorderBrush");
-        rootBorder[!Border.BackgroundProperty] = new DynamicResourceExtension("SkuaPageBrush");
+        UiTokens.Bind(rootBorder, Border.BorderThicknessProperty, UiTokens.UiBorderThin);
+        UiTokens.Bind(rootBorder, Border.BorderBrushProperty, UiTokens.SkuaBorderBrush);
+        UiTokens.Bind(rootBorder, Border.BackgroundProperty, UiTokens.SkuaPageBrush);
 
         return rootBorder;
     }

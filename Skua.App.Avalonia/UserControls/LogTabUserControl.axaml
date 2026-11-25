@@ -2,19 +2,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Skua.App.Avalonia.UserControls.LogTabUserControl">
-  <Grid RowDefinitions="*,Auto" RowSpacing="8">
+  <Grid RowDefinitions="*,Auto" RowSpacing="{DynamicResource UiGapMd}">
     <ListBox x:Name="LogsListBox"
              Grid.Row="0"
              ItemsSource="{Binding Logs}"
              SelectionMode="Multiple"
              KeyDown="LogsListBox_KeyDown"
              SelectionChanged="LogsListBox_SelectionChanged"
-             Padding="4"
+             Padding="{DynamicResource UiPaddingXs}"
              ScrollViewer.VerticalScrollBarVisibility="Visible"
              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
              ScrollViewer.AllowAutoHide="False"
              FontFamily="JetBrains Mono,Noto Sans Symbols,Noto Sans Symbols 2,Noto Color Emoji,Consolas,Courier New,monospace"
-             FontSize="11"
+             FontSize="{DynamicResource UiFontSmall}"
              Foreground="{DynamicResource SkuaTextBrush}">
       <ListBox.ContextMenu>
         <ContextMenu>
@@ -31,7 +31,7 @@
         <Style Selector="ListBoxItem">
           <Setter Property="Padding" Value="4,2" />
           <Setter Property="MinHeight" Value="18" />
-          <Setter Property="CornerRadius" Value="3" />
+          <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         </Style>
         <Style Selector="ListBox.wrap TextBlock">
           <Setter Property="TextWrapping" Value="Wrap" />
@@ -45,8 +45,8 @@
     </ListBox>
 
     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
-      <TextBlock Grid.Column="0" x:Name="CountText" Text="0 lines" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-      <TextBlock Grid.Column="1" x:Name="CopyHint" Text="Ctrl+C or right-click to copy selected lines" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+      <TextBlock Grid.Column="0" x:Name="CountText" Text="0 lines" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+      <TextBlock Grid.Column="1" x:Name="CopyHint" Text="Ctrl+C or right-click to copy selected lines" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
     </Grid>
   </Grid>
 </UserControl>

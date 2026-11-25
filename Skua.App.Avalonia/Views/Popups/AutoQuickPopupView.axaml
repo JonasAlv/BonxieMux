@@ -1,0 +1,75 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Skua.App.Avalonia.Views.Popups.AutoQuickPopupView">
+    <Border Background="{DynamicResource SkuaSurfaceBrush}"
+            BorderBrush="{DynamicResource SkuaBorderBrush}"
+            BorderThickness="{DynamicResource UiBorderThin}"
+            CornerRadius="{DynamicResource UiRadiusCard}"
+            Padding="{DynamicResource UiPaddingLg}"
+            Width="360">
+        <StackPanel Spacing="{DynamicResource UiGapBase}">
+            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                <TextBlock Text="Combat Automation"
+                           FontSize="{DynamicResource UiFontHeading}"
+                           FontWeight="Bold"
+                           Foreground="{DynamicResource SkuaTextBrush}"
+                           VerticalAlignment="Center" />
+                <Border x:Name="AutoRunningBadge"
+                        Grid.Column="1"
+                        Classes="chip success"
+                        IsVisible="False">
+                    <TextBlock Text="RUNNING"
+                               FontSize="{DynamicResource UiFontMicro}"
+                               FontWeight="Bold" />
+                </Border>
+            </Grid>
+
+            <Separator />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource UiGapMd}">
+                <Button x:Name="AutoAttackBtn"
+                        Grid.Column="0"
+                        Classes="skua-button skua-primary"
+                        Height="{DynamicResource UiControlHeight}"
+                        HorizontalAlignment="Stretch">
+                    <TextBlock Text="Auto Attack" FontSize="{DynamicResource UiFontSmall}" FontWeight="Bold" VerticalAlignment="Center" />
+                </Button>
+                <Button x:Name="AutoHuntBtn"
+                        Grid.Column="1"
+                        Classes="skua-button"
+                        Height="{DynamicResource UiControlHeight}"
+                        HorizontalAlignment="Stretch">
+                    <TextBlock Text="Auto Hunt" FontSize="{DynamicResource UiFontSmall}" FontWeight="Bold" VerticalAlignment="Center" />
+                </Button>
+                <Button x:Name="AutoStopBtn"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Classes="skua-button skua-danger"
+                        Height="{DynamicResource UiControlHeight}"
+                        HorizontalAlignment="Stretch"
+                        IsVisible="False">
+                    <TextBlock Text="Stop Automation" FontSize="{DynamicResource UiFontSmall}" FontWeight="Bold" VerticalAlignment="Center" />
+                </Button>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource UiGapMd}">
+                <ComboBox x:Name="AutoClassBox"
+                          Grid.Column="0"
+                          MinWidth="160"
+                          Height="{DynamicResource UiControlHeight}"
+                          HorizontalAlignment="Stretch"
+                          PlaceholderText="Select Class..." />
+                <ComboBox x:Name="AutoModeBox"
+                          Grid.Column="1"
+                          Height="{DynamicResource UiControlHeight}"
+                          HorizontalAlignment="Stretch"
+                          PlaceholderText="Mode..." />
+            </Grid>
+
+            <TextBox x:Name="AutoMapIdsBox"
+                     Height="{DynamicResource UiControlHeight}"
+                     FontSize="{DynamicResource UiFontBody}"
+                     PlaceholderText="Manual MapIDs (optional, e.g. 1, 2)" />
+        </StackPanel>
+    </Border>
+</UserControl>

@@ -2,21 +2,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.CoreBotsOptions"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:sharedOptions="clr-namespace:Skua.Shared.Avalonia.Controls.Options;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.App.Avalonia.Views.CBOptionsView"
              x:DataType="vms:CBOptionsViewModel">
-  <Grid RowDefinitions="Auto,*" RowSpacing="8">
-    <TextBox Grid.Row="0" PlaceholderText="Filter CoreBots settings, delays, and parameters..." Text="{Binding SearchText, Mode=TwoWay}">
-      <TextBox.InnerLeftContent>
-        <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-      </TextBox.InnerLeftContent>
-    </TextBox>
+  <Grid RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapMd}">
+    <primitives:SearchFilterBar Grid.Row="0"
+                                PlaceholderText="Filter CoreBots settings, delays, and parameters..."
+                                SearchText="{Binding SearchText, Mode=TwoWay}" />
     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" AllowAutoHide="False">
       <Border Background="{DynamicResource SkuaSurfaceBrush}"
               BorderBrush="{DynamicResource SkuaBorderBrush}"
-              BorderThickness="1"
-              CornerRadius="8"
-              Padding="14,12"
+              BorderThickness="{DynamicResource UiBorderThin}"
+              CornerRadius="{DynamicResource UiRadiusCard}"
+              Padding="{DynamicResource UiCardCompactPadding}"
               VerticalAlignment="Top">
         <ItemsControl ItemsSource="{Binding FilteredOptions}" VerticalAlignment="Top">
           <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>

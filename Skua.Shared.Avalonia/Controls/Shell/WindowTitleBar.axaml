@@ -6,12 +6,12 @@
   <Border BorderBrush="{DynamicResource SkuaBorderBrush}"
           BorderThickness="0,0,0,1"
           Background="{DynamicResource SkuaSurfaceBrush}">
-  <Grid Height="30">
+  <Grid Height="{DynamicResource UiTitleBarHeight}">
     <Border Grid.ColumnSpan="3"
             Background="{DynamicResource SkuaAccentBrush}"
             IsVisible="{Binding UseAccentBackground, ElementName=Root}"
             IsHitTestVisible="False" />
-    <Image x:Name="ArtworkImage" Grid.ColumnSpan="3" Stretch="UniformToFill" Opacity="0.62" IsHitTestVisible="False" />
+    <Image x:Name="ArtworkImage" Grid.ColumnSpan="3" Stretch="UniformToFill" Opacity="{DynamicResource UiSubtleOpacity}" IsHitTestVisible="False" />
     <Border Grid.ColumnSpan="3" Background="{DynamicResource SkuaTitleBarOverlayBrush}" IsHitTestVisible="False" />
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="36" />
@@ -43,14 +43,14 @@
                Margin="90,0,104,0"
                HorizontalAlignment="Center"
                VerticalAlignment="Center"
-               FontSize="12"
+               FontSize="{DynamicResource UiFontBody}"
                Text="{Binding TitleText, ElementName=Root}"
                TextTrimming="CharacterEllipsis"
                IsHitTestVisible="False"
                Classes="titlebar-title" />
 
     <StackPanel Grid.Column="2"
-                Height="30"
+                Height="{DynamicResource UiTitleBarHeight}"
                 VerticalAlignment="Top"
                 Orientation="Horizontal">
       <ContentPresenter x:Name="RightContentPresenter"

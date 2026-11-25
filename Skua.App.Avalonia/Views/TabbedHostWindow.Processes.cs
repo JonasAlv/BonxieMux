@@ -422,31 +422,31 @@ public partial class TabbedHostWindow
 
         TextBox editTitle = new TextBox
         {
-            Text = tabName, 
-            IsVisible = false, 
-            MinWidth = 60, 
+            Text = tabName,
+            IsVisible = false,
+            MinWidth = 60,
             MaxWidth = 180,
-            Height = 24,
             VerticalAlignment = VerticalAlignment.Center,
             Padding = new Thickness(4, 1, 4, 1),
-            Margin = new Thickness(0, 0, 6, 0),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4)
+            Margin = new Thickness(0, 0, 6, 0)
         };
-        editTitle[!TextBox.BackgroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaSurfaceAltBrush");
-        editTitle[!TextBox.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaTextBrush");
-        editTitle[!TextBox.CaretBrushProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaTextBrush");
-        editTitle[!TextBox.BorderBrushProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaBorderBrush");
-        
+        Skua.Shared.Avalonia.Theming.UiTokens.Bind(editTitle, Layoutable.HeightProperty, Skua.Shared.Avalonia.Theming.UiTokens.UiSmallControlHeight);
+        Skua.Shared.Avalonia.Theming.UiTokens.Bind(editTitle, TextBox.BorderThicknessProperty, Skua.Shared.Avalonia.Theming.UiTokens.UiBorderThin);
+        Skua.Shared.Avalonia.Theming.UiTokens.Bind(editTitle, TextBox.CornerRadiusProperty, Skua.Shared.Avalonia.Theming.UiTokens.UiRadiusControl);
+        Skua.Shared.Avalonia.Theming.UiTokens.Bind(editTitle, TextBox.BackgroundProperty, Skua.Shared.Avalonia.Theming.UiTokens.SkuaSurfaceAltBrush);
+        Skua.Shared.Avalonia.Theming.UiTokens.Bind(editTitle, TextBox.ForegroundProperty, Skua.Shared.Avalonia.Theming.UiTokens.SkuaTextBrush);
+        Skua.Shared.Avalonia.Theming.UiTokens.Bind(editTitle, TextBox.CaretBrushProperty, Skua.Shared.Avalonia.Theming.UiTokens.SkuaTextBrush);
+        Skua.Shared.Avalonia.Theming.UiTokens.Bind(editTitle, TextBox.BorderBrushProperty, Skua.Shared.Avalonia.Theming.UiTokens.SkuaBorderBrush);
+
         TextBlock title = new TextBlock
         {
             Text = tabName,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 6, 0),
-            FontWeight = FontWeight.SemiBold,
-            FontSize = 12
+            FontWeight = FontWeight.SemiBold
         };
-        title[!TextBlock.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaTextBrush");
+        Skua.Shared.Avalonia.Theming.UiTokens.Bind(title, TextBlock.FontSizeProperty, Skua.Shared.Avalonia.Theming.UiTokens.UiFontBody);
+        Skua.Shared.Avalonia.Theming.UiTokens.Bind(title, TextBlock.ForegroundProperty, Skua.Shared.Avalonia.Theming.UiTokens.SkuaTextBrush);
 
         Border closeBtn = new Border
         {
@@ -478,7 +478,7 @@ public partial class TabbedHostWindow
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Top,
             Margin = new Thickness(0, -8, 6, 0),
-            Foreground = new SolidColorBrush(Color.Parse("#FBBF24")),
+            [!MaterialIcon.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaWarningBrush"),
         };
 
         MaterialIcon detachedIcon = new MaterialIcon
@@ -502,8 +502,16 @@ public partial class TabbedHostWindow
         headerPanel.Children.Add(title);
         headerPanel.Children.Add(closeBtn);
 
-        closeBtn.PointerEntered += (s, ev) => { closeTxt.Foreground = Brushes.White; closeBtn.Background = new SolidColorBrush(Color.Parse("#EF4444")); };
-        closeBtn.PointerExited += (s, ev) => { closeTxt[!TextBlock.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("SkuaMutedTextBrush"); closeBtn.Background = Brushes.Transparent; };
+        closeBtn.PointerEntered += (s, ev) =>
+        {
+            Skua.Shared.Avalonia.Theming.UiTokens.Bind(closeTxt, TextBlock.ForegroundProperty, Skua.Shared.Avalonia.Theming.UiTokens.SkuaDangerForegroundBrush);
+            Skua.Shared.Avalonia.Theming.UiTokens.Bind(closeBtn, Border.BackgroundProperty, Skua.Shared.Avalonia.Theming.UiTokens.SkuaDangerBrush);
+        };
+        closeBtn.PointerExited += (s, ev) =>
+        {
+            Skua.Shared.Avalonia.Theming.UiTokens.Bind(closeTxt, TextBlock.ForegroundProperty, Skua.Shared.Avalonia.Theming.UiTokens.SkuaMutedTextBrush);
+            closeBtn.Background = Brushes.Transparent;
+        };
         
         TabInfo info = new TabInfo
         {

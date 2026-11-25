@@ -85,6 +85,12 @@ public partial class TabbedHostWindow
             return;
         }
 
+        if (string.Equals(line, "QUICKLAUNCH", StringComparison.OrdinalIgnoreCase))
+        {
+            OpenQuickLaunchFromHotkey();
+            return;
+        }
+
         if (line.StartsWith("ARTWORK|", StringComparison.Ordinal))
         {
             string encodedPath = line["ARTWORK|".Length..];

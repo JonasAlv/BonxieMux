@@ -5,21 +5,18 @@
   <Grid Margin="12"
         ColumnDefinitions="*,180"
         RowDefinitions="*,Auto"
-        ColumnSpacing="12"
-        RowSpacing="10">
+        ColumnSpacing="{DynamicResource UiGapLg}"
+        RowSpacing="{DynamicResource UiGapBase}">
     
     <Border Grid.Row="0"
             Grid.Column="0"
             Background="{DynamicResource SkuaSurfaceBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="1"
-            CornerRadius="8"
-            Padding="12">
-      <Grid RowDefinitions="Auto,*" RowSpacing="8">
-        <TextBlock Text="PACKET QUEUE"
-                   FontSize="10"
-                   FontWeight="Bold"
-                   Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            BorderThickness="{DynamicResource UiBorderThin}"
+            CornerRadius="{DynamicResource UiRadiusCard}"
+            Padding="{DynamicResource UiPaddingLg}">
+      <Grid RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapMd}">
+        <TextBlock Classes="section-label" Text="PACKET QUEUE" />
         <Border Grid.Row="1" Classes="list-frame">
           <ListBox ItemsSource="{Binding Packets}"
                    SelectedIndex="{Binding SelectedIndex}"
@@ -32,15 +29,12 @@
             Grid.Column="1"
             Background="{DynamicResource SkuaSurfaceBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="1"
-            CornerRadius="8"
-            Padding="12">
+            BorderThickness="{DynamicResource UiBorderThin}"
+            CornerRadius="{DynamicResource UiRadiusCard}"
+            Padding="{DynamicResource UiPaddingLg}">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="8">
-          <TextBlock Text="CONTROLS"
-                     FontSize="10"
-                     FontWeight="Bold"
-                     Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        <StackPanel Spacing="{DynamicResource UiGapMd}">
+          <TextBlock Classes="section-label" Text="CONTROLS" />
           <Button Classes="skua-button"
                   Content="Add Packet"
                   HorizontalAlignment="Stretch"
@@ -68,7 +62,7 @@
           <Separator Margin="0,4" Background="{DynamicResource SkuaBorderBrush}" />
 
           <TextBlock Text="Spam Delay (ms)"
-                     FontSize="11"
+                     FontSize="{DynamicResource UiFontSmall}"
                      Foreground="{DynamicResource SkuaMutedTextBrush}" />
           <TextBox Text="{Binding SpamDelay}" />
 
@@ -79,7 +73,7 @@
           <Button Classes="skua-button skua-primary"
                   Content="Start / Stop"
                   HorizontalAlignment="Stretch"
-                  Height="36"
+                  Height="{DynamicResource UiControlHeight}"
                   Command="{Binding ToggleSpammerCommand}" />
         </StackPanel>
       </ScrollViewer>
@@ -90,10 +84,10 @@
             Grid.ColumnSpan="2"
             Background="{DynamicResource SkuaSurfaceBrush}"
             BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="1"
-            CornerRadius="8"
-            Padding="10">
-      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            BorderThickness="{DynamicResource UiBorderThin}"
+            CornerRadius="{DynamicResource UiRadiusCard}"
+            Padding="{DynamicResource UiCardPadding}">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
         <TextBox Grid.Column="0"
                  PlaceholderText="Enter packet string to send..."
                  Text="{Binding PacketText}" />

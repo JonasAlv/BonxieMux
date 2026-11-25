@@ -6,74 +6,68 @@
              x:DataType="vms:AutoViewModel">
   <Border Background="{DynamicResource SkuaSurfaceBrush}"
           BorderBrush="{DynamicResource SkuaBorderBrush}"
-          BorderThickness="1"
-          Padding="12"
-          CornerRadius="8"
+          BorderThickness="{DynamicResource UiBorderThin}"
+          Padding="{DynamicResource UiPaddingLg}"
+          CornerRadius="{DynamicResource UiRadiusCard}"
           MinWidth="360"
           Width="360">
-    <StackPanel Spacing="10">
+    <StackPanel Spacing="{DynamicResource UiGapBase}">
       
       <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-  <TextBlock Text="Combat Automation" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+  <TextBlock Text="Combat Automation" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
 </StackPanel>
 
         <Border Grid.Column="1"
-                CornerRadius="10"
-                Padding="8,2"
-                Background="#064E3B"
-                BorderBrush="#059669"
-                BorderThickness="1"
+                Classes="chip success"
                 IsVisible="{Binding Auto.IsRunning}">
-          <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-  <TextBlock Text="RUNNING" FontSize="10" FontWeight="Bold" Foreground="#34D399" />
-</StackPanel>
+          <TextBlock Text="RUNNING" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" />
         </Border>
       </Grid>
 
       <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
 
-      <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+      <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource UiGapMd}">
         <Button Grid.Column="0"
                 Classes="skua-button skua-primary"
-                Height="34"
+                Height="{DynamicResource UiControlHeight}"
                 HorizontalAlignment="Stretch"
                 Command="{Binding StartAutoAttackCommand}"
                 IsVisible="{Binding !Auto.IsRunning}">
-  <TextBlock Text="Auto Attack" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
+  <TextBlock Text="Auto Attack" FontWeight="Bold" FontSize="{DynamicResource UiFontSmall}" VerticalAlignment="Center" />
 </Button>
 
         <Button Grid.Column="1"
                 Classes="skua-button"
-                Height="34"
+                Height="{DynamicResource UiControlHeight}"
                 HorizontalAlignment="Stretch"
                 Command="{Binding StartAutoHuntCommand}"
                 IsVisible="{Binding !Auto.IsRunning}">
-  <TextBlock Text="Auto Hunt" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
+  <TextBlock Text="Auto Hunt" FontWeight="Bold" FontSize="{DynamicResource UiFontSmall}" VerticalAlignment="Center" />
 </Button>
 
         <Button Grid.Column="0"
                 Grid.ColumnSpan="2"
                 Classes="skua-button skua-danger"
-                Height="34"
+                Height="{DynamicResource UiControlHeight}"
                 HorizontalAlignment="Stretch"
                 Command="{Binding StopAutoAsyncCommand}"
                 IsVisible="{Binding Auto.IsRunning}">
-  <TextBlock Text="Stop Automation" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+  <TextBlock Text="Stop Automation" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" VerticalAlignment="Center" />
 </Button>
       </Grid>
 
-      <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+      <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource UiGapMd}">
         <ComboBox x:Name="ClassComboBox"
                   Grid.Column="0"
-                  Height="34"
+                  Height="{DynamicResource UiControlHeight}"
                   MinWidth="160"
                   HorizontalAlignment="Stretch"
                   PlaceholderText="Select Class..."
                   ItemsSource="{Binding PlayerClasses}"
                   SelectedItem="{Binding SelectedClass}" />
         <ComboBox Grid.Column="1"
-                  Height="34"
+                  Height="{DynamicResource UiControlHeight}"
                   MinWidth="160"
                   HorizontalAlignment="Stretch"
                   PlaceholderText="Select Mode..."
@@ -81,8 +75,8 @@
                   SelectedItem="{Binding SelectedClassModeString}" />
       </Grid>
 
-      <TextBox Height="34"
-               CornerRadius="6"
+      <TextBox Height="{DynamicResource UiControlHeight}"
+               CornerRadius="{DynamicResource UiRadiusCard}"
                VerticalContentAlignment="Center"
                Text="{Binding ManualMapIDs, UpdateSourceTrigger=PropertyChanged}"
                PlaceholderText="Manual MapIDs (optional, e.g. 1, 2)"

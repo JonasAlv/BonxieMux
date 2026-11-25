@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives"
+             x:Class="Skua.Shared.Avalonia.Controls.Primitives.SectionHeader">
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
+        <StackPanel Grid.Column="0" Spacing="{DynamicResource UiGap2xs}">
+            <TextBlock Text="{Binding Category, RelativeSource={RelativeSource AncestorType=local:SectionHeader}}"
+                       FontSize="{DynamicResource UiFontMicro}"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                       IsVisible="{Binding HasCategory, RelativeSource={RelativeSource AncestorType=local:SectionHeader}}" />
+            <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=local:SectionHeader}}"
+                       FontSize="{DynamicResource UiFontHeading}"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource SkuaTextBrush}" />
+            <TextBlock Text="{Binding Description, RelativeSource={RelativeSource AncestorType=local:SectionHeader}}"
+                       FontSize="{DynamicResource UiFontBody}"
+                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                       TextWrapping="Wrap"
+                       IsVisible="{Binding HasDescription, RelativeSource={RelativeSource AncestorType=local:SectionHeader}}" />
+        </StackPanel>
+        <ContentPresenter Grid.Column="1"
+                          VerticalAlignment="Center"
+                          Content="{Binding ActionContent, RelativeSource={RelativeSource AncestorType=local:SectionHeader}}" />
+    </Grid>
+</UserControl>

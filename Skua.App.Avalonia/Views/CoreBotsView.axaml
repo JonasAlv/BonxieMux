@@ -1,14 +1,15 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.CoreBotsOptions"
              x:DataType="vms:CoreBotsViewModel"
              Background="{DynamicResource SkuaPageBrush}"
              x:Class="Skua.App.Avalonia.Views.CoreBotsView">
-  <Grid Margin="12" RowDefinitions="Auto,Auto,*" RowSpacing="10">
-    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
+  <Grid Margin="12" RowDefinitions="Auto,Auto,*" RowSpacing="{DynamicResource UiGapBase}">
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
       <StackPanel Grid.Column="0" VerticalAlignment="Center">
-        <TextBlock Text="Account" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        <TextBlock Text="Account" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
         <ComboBox HorizontalAlignment="Stretch" MinWidth="180" ItemsSource="{Binding Accounts}" SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
                   ToolTip.Tip="Pick another open account: Load and Save use that account's CoreBots file. An account with no file yet starts from the values shown." />
       </StackPanel>
@@ -24,7 +25,7 @@
 </Button>
     </Grid>
 
-    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
       <ListBox Grid.Column="0"
                Classes="top-tabs-client"
                ItemsSource="{Binding CoreBotsTabs}"
@@ -42,13 +43,9 @@
           </DataTemplate>
         </ListBox.ItemTemplate>
       </ListBox>
-      <TextBox Grid.Column="1" Width="220" PlaceholderText="Search options"
-               IsVisible="{Binding IsOptionsTabSelected}"
-               Text="{Binding OptionsTab.SearchText, Mode=TwoWay}">
-        <TextBox.InnerLeftContent>
-          <materialIcons:MaterialIcon Kind="Magnify" Width="15" Height="15" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-        </TextBox.InnerLeftContent>
-      </TextBox>
+      <primitives:SearchFilterBar Grid.Column="1" Width="220" PlaceholderText="Search options"
+                                  IsVisible="{Binding IsOptionsTabSelected}"
+                                  SearchText="{Binding OptionsTab.SearchText, Mode=TwoWay}" />
     </Grid>
 
     <ContentControl Grid.Row="2" Content="{Binding SelectedTab.Content}" />

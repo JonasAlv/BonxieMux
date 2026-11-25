@@ -13,15 +13,15 @@
     <Style Selector="Border.cal-card">
       <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
       <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
+      <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusCard}" />
       <Setter Property="Padding" Value="12,10" />
       <Setter Property="ClipToBounds" Value="True" />
     </Style>
     <Style Selector="TextBlock.cal-heading">
-      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontSize" Value="{DynamicResource UiFontMicro}" />
       <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
       <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
     <Style Selector="TextBlock.cal-big">
@@ -36,7 +36,7 @@
     <Style Selector="Border.cal-tile">
       <Setter Property="Width" Value="26" />
       <Setter Property="Height" Value="26" />
-      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
       <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
@@ -47,18 +47,18 @@
       <Setter Property="CornerRadius" Value="3.5" />
       <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
     </Style>
-    <Style Selector="ProgressBar.cal-bar.blue"><Setter Property="Foreground" Value="#4C8DFF" /></Style>
+    <Style Selector="ProgressBar.cal-bar.blue"><Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" /></Style>
     <Style Selector="ProgressBar.cal-bar.green"><Setter Property="Foreground" Value="{DynamicResource SkuaSuccessBrush}" /></Style>
     <Style Selector="ProgressBar.cal-bar.ending"><Setter Property="Foreground" Value="{DynamicResource SkuaWarningBrush}" /></Style>
 
     <Style Selector="Border.boost-row">
       <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
-      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
       <Setter Property="Padding" Value="10,8,10,8" />
       <Setter Property="Margin" Value="0,3" />
     </Style>
     <Style Selector="TextBlock.boost-time">
-      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
@@ -68,16 +68,16 @@
   </UserControl.Styles>
 
   <ScrollViewer VerticalScrollBarVisibility="Auto">
-    <StackPanel Margin="12" Spacing="10">
+    <StackPanel Margin="12" Spacing="{DynamicResource UiGapBase}">
       <Border Classes="cal-card">
-        <StackPanel Spacing="2">
+        <StackPanel Spacing="{DynamicResource UiGap2xs}">
           <TextBlock Classes="cal-heading" Text="SERVER TIME" HorizontalAlignment="Center" />
-          <TextBlock Text="{Binding ServerTime}" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center"
-                     FontFamily="Cascadia Mono,Consolas,Courier New,monospace" Foreground="{DynamicResource SkuaTextBrush}" />
+          <TextBlock Text="{Binding ServerTime}" FontSize="{DynamicResource UiFontDisplay}" FontWeight="SemiBold" HorizontalAlignment="Center"
+                     FontFamily="{DynamicResource UiFontMono}" Foreground="{DynamicResource SkuaTextBrush}" />
         </StackPanel>
       </Border>
 
-      <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+      <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource UiGapBase}">
         <Border Grid.Column="0" Classes="cal-card">
           <StackPanel Spacing="7">
             <TextBlock Classes="cal-heading" Text="DAILY RESET" />
@@ -95,31 +95,31 @@
       </Grid>
 
       <Border Classes="cal-card">
-        <StackPanel Spacing="6">
+        <StackPanel Spacing="{DynamicResource UiGapSm}">
           <Grid ColumnDefinitions="*,Auto">
             <TextBlock Classes="cal-heading" Text="BOOSTS" VerticalAlignment="Center" />
             <Button Grid.Column="1" Classes="skua-button small" Command="{Binding RefreshCommand}">
   <TextBlock Text="Refresh" VerticalAlignment="Center" />
 </Button>
           </Grid>
-          <TextBlock Text="{Binding UpdatedText}" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-          <TextBlock Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" Foreground="{DynamicResource SkuaWarningBrush}" FontSize="12" />
+          <TextBlock Text="{Binding UpdatedText}" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+          <TextBlock Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" Foreground="{DynamicResource SkuaWarningBrush}" FontSize="{DynamicResource UiFontBody}" />
           <TextBlock Text="No boosts listed." IsVisible="{Binding HasNoBoosts}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
 
-          <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,8,0,0" IsVisible="{Binding HasActive}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" Margin="0,8,0,0" IsVisible="{Binding HasActive}">
   <TextBlock Classes="cal-heading" Text="ACTIVE NOW" Foreground="{DynamicResource SkuaSuccessBrush}" />
 </StackPanel>
           <ItemsControl ItemsSource="{Binding ActiveBoosts}" IsVisible="{Binding HasActive}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vms:CalendarBoost">
                 <Border Classes="boost-row on">
-                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10">
+                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="{DynamicResource UiGapBase}">
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="7">
                       <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource SkuaTextBrush}" />
                       <Border Classes="chip success"><TextBlock Text="ON" /></Border>
                     </StackPanel>
                     <TextBlock Grid.Column="1" Classes="boost-time on" Classes.ending="{Binding EndingSoon}" Text="{Binding Status}" />
-                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding Detail}" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding Detail}" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                     <ProgressBar Grid.Row="2" Grid.ColumnSpan="2" Margin="0,7,0,0" Classes="cal-bar green" Classes.ending="{Binding EndingSoon}" Minimum="0" Maximum="1" Value="{Binding Progress}" />
                   </Grid>
                 </Border>
@@ -127,19 +127,19 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
 
-          <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,8,0,0" IsVisible="{Binding HasUpcoming}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" Margin="0,8,0,0" IsVisible="{Binding HasUpcoming}">
   <TextBlock Classes="cal-heading" Text="COMING UP" Foreground="{DynamicResource SkuaWarningBrush}" />
 </StackPanel>
           <ItemsControl ItemsSource="{Binding UpcomingBoosts}" IsVisible="{Binding HasUpcoming}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vms:CalendarBoost">
                 <Border Classes="boost-row soon">
-                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="10">
+                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="{DynamicResource UiGapBase}">
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="7">
                       <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource SkuaTextBrush}" />
                     </StackPanel>
                     <TextBlock Grid.Column="1" Classes="boost-time soon" Text="{Binding Status}" />
-                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding Detail}" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding Detail}" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                   </Grid>
                 </Border>
               </DataTemplate>

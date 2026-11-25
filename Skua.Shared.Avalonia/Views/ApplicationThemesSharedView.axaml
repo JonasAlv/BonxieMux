@@ -8,7 +8,7 @@
              x:Name="Root"
              Background="{DynamicResource SkuaPageBrush}">
 
-  <Grid Margin="12" RowDefinitions="Auto,*" RowSpacing="10">
+  <Grid Margin="12" RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapBase}">
     <ListBox Grid.Row="0"
              Classes="top-tabs-client"
              ItemsSource="{Binding ThemeSections}"
@@ -34,25 +34,25 @@
         <Border IsVisible="{Binding IsThemesSection}"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="6"
+                BorderThickness="{DynamicResource UiBorderThin}"
+                CornerRadius="{DynamicResource UiRadiusCard}"
                 Padding="14"
                 VerticalAlignment="Top">
           <StackPanel Spacing="14">
-            <StackPanel Spacing="2" IsVisible="{Binding !IsManager, ElementName=Root}">
+            <StackPanel Spacing="{DynamicResource UiGap2xs}" IsVisible="{Binding !IsManager, ElementName=Root}">
               <CheckBox Content="Use theme accent on the main title bar"
                         IsChecked="{Binding UseAccentOnMainTitleBar, Mode=TwoWay}" />
               <TextBlock Text="When enabled, the main BonxieMux window title bar follows the active theme accent. Turn it off to keep the normal surface color."
-                         FontSize="11"
+                         FontSize="{DynamicResource UiFontSmall}"
                          Foreground="{DynamicResource SkuaMutedTextBrush}"
                          TextWrapping="Wrap" />
             </StackPanel>
 
-            <StackPanel Spacing="2" IsVisible="{Binding IsManager, ElementName=Root}">
+            <StackPanel Spacing="{DynamicResource UiGap2xs}" IsVisible="{Binding IsManager, ElementName=Root}">
               <CheckBox Content="Use theme accent on the Manager title bar"
                         IsChecked="{Binding UseAccentOnManagerTitleBar, Mode=TwoWay}" />
               <TextBlock Text="When enabled, the Manager window title bar follows the active theme accent. Turn it off to keep the normal surface color."
-                         FontSize="11"
+                         FontSize="{DynamicResource UiFontSmall}"
                          Foreground="{DynamicResource SkuaMutedTextBrush}"
                          TextWrapping="Wrap" />
             </StackPanel>
@@ -66,8 +66,8 @@
         <Border IsVisible="{Binding IsInstalledSection}"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="6"
+                BorderThickness="{DynamicResource UiBorderThin}"
+                CornerRadius="{DynamicResource UiRadiusCard}"
                 Padding="14"
                 VerticalAlignment="Top">
           <ItemsControl ItemsSource="{Binding InstalledThemes}">
@@ -75,22 +75,22 @@
               <DataTemplate x:DataType="sharedViews:InstalledThemeItemViewModel">
                 <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
                         BorderBrush="{DynamicResource SkuaBorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="4"
+                        BorderThickness="{DynamicResource UiBorderThin}"
+                        CornerRadius="{DynamicResource UiRadiusControl}"
                         Padding="10,8"
                         Margin="0,0,0,6">
-                  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapBase}">
+                    <StackPanel Grid.Column="0" Spacing="{DynamicResource UiGap2xs}" VerticalAlignment="Center">
                       <TextBlock Text="{Binding Name}"
-                                 FontSize="12"
+                                 FontSize="{DynamicResource UiFontBody}"
                                  FontWeight="SemiBold"
                                  Foreground="{DynamicResource SkuaTextBrush}" />
                       <TextBlock Text="{Binding Subtitle}"
-                                 FontSize="11"
+                                 FontSize="{DynamicResource UiFontSmall}"
                                  Foreground="{DynamicResource SkuaMutedTextBrush}" />
                     </StackPanel>
 
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
                       <Border Classes="chip" IsVisible="{Binding IsBuiltIn}">
                         <TextBlock Text="Built-in" />
                       </Border>

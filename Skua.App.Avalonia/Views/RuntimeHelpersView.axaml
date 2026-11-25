@@ -3,28 +3,25 @@
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Skua.App.Avalonia.Views.RuntimeHelpersView">
     
-    <Grid Margin="12" ColumnDefinitions="*,*" ColumnSpacing="12">
+    <Grid Margin="12" ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource UiGapLg}">
         
         <Border Grid.Column="0"
                 Background="{DynamicResource SkuaSurfaceBrush}"
                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="12"
+                BorderThickness="{DynamicResource UiBorderThin}"
+                CornerRadius="{DynamicResource UiRadiusCard}"
+                Padding="{DynamicResource UiPaddingLg}"
                 DataContext="{Binding ToPickupDropsViewModel}">
-            <Grid RowDefinitions="Auto,*,Auto,Auto,Auto,Auto" RowSpacing="8">
+            <Grid RowDefinitions="Auto,*,Auto,Auto,Auto,Auto" RowSpacing="{DynamicResource UiGapMd}">
                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                    <TextBlock Text="DROPS HELPER"
-                               FontSize="10"
-                               FontWeight="Bold"
-                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                    <TextBlock Classes="section-label" Text="DROPS HELPER" />
                     <Button Grid.Column="1"
                             Classes="skua-button outline"
                             Content="Remove Selected"
                             Click="RemoveSelectedDrops_Click"
                             Padding="8,2"
-                            Height="24"
-                            FontSize="11" />
+                            Height="{DynamicResource UiSmallControlHeight}"
+                            FontSize="{DynamicResource UiFontSmall}" />
                 </Grid>
                 
                 <Border Grid.Row="1" Classes="list-frame" MinHeight="160">
@@ -34,7 +31,7 @@
                              Classes="embedded" />
                 </Border>
 
-                <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
                     <TextBox Grid.Column="0"
                              PlaceholderText="Drop Name (e.g. Unidentified 13)"
                              Text="{Binding AddDropInput}" />
@@ -44,7 +41,7 @@
                             Command="{Binding AddDropCommand}" />
                 </Grid>
                 
-                <Grid Grid.Row="3" ColumnDefinitions="110,*,*" ColumnSpacing="8" VerticalAlignment="Center">
+                <Grid Grid.Row="3" ColumnDefinitions="110,*,*" ColumnSpacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
                     <TextBox Grid.Column="0"
                              PlaceholderText="Interval (ms)"
                              Text="{Binding Drops.Interval, UpdateSourceTrigger=PropertyChanged}"/>
@@ -58,7 +55,7 @@
                               VerticalAlignment="Center" />
                 </Grid>
                 
-                <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
                     <ToggleButton HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="0"
                                   Margin="0"
                                   Classes="option-chip"
@@ -73,28 +70,25 @@
             </Grid>
         </Border>
         
-        <Grid Grid.Column="1" RowDefinitions="*, Auto" RowSpacing="12">
+        <Grid Grid.Column="1" RowDefinitions="*, Auto" RowSpacing="{DynamicResource UiGapLg}">
             
             <Border Grid.Row="0"
                     Background="{DynamicResource SkuaSurfaceBrush}"
                     BorderBrush="{DynamicResource SkuaBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="12"
+                    BorderThickness="{DynamicResource UiBorderThin}"
+                    CornerRadius="{DynamicResource UiRadiusCard}"
+                    Padding="{DynamicResource UiPaddingLg}"
                     DataContext="{Binding RegisteredQuestsViewModel}">
-                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapMd}">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                        <TextBlock Text="QUESTS HELPER"
-                                   FontSize="10"
-                                   FontWeight="Bold"
-                                   Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                        <TextBlock Classes="section-label" Text="QUESTS HELPER" />
                         <Button Grid.Column="1"
                                 Classes="skua-button outline"
                                 Content="Remove Selected"
                                 Click="RemoveSelectedQuests_Click"
                                 Padding="8,2"
-                                Height="24"
-                                FontSize="11" />
+                                Height="{DynamicResource UiSmallControlHeight}"
+                                FontSize="{DynamicResource UiFontSmall}" />
                     </Grid>
                     
                     <Border Grid.Row="1" Classes="list-frame" MinHeight="140">
@@ -104,7 +98,7 @@
                                  Classes="embedded" />
                     </Border>
                     
-                    <Grid Grid.Row="2" ColumnDefinitions="*,130,Auto" ColumnSpacing="8">
+                    <Grid Grid.Row="2" ColumnDefinitions="*,130,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
                         <TextBox Grid.Column="0"
                                  PlaceholderText="Quest ID"
                                  Text="{Binding AddQuestInput}" />
@@ -122,18 +116,14 @@
             <Border Grid.Row="1"
                     Background="{DynamicResource SkuaSurfaceBrush}"
                     BorderBrush="{DynamicResource SkuaBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="12"
+                    BorderThickness="{DynamicResource UiBorderThin}"
+                    CornerRadius="{DynamicResource UiRadiusCard}"
+                    Padding="{DynamicResource UiPaddingLg}"
                     DataContext="{Binding BoostsViewModel}">
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
-                    <TextBlock Grid.Row="0"
-                               Text="BOOSTS HELPER"
-                               FontSize="10"
-                               FontWeight="Bold"
-                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{DynamicResource UiGapMd}">
+                    <TextBlock Grid.Row="0" Classes="section-label" Text="BOOSTS HELPER" />
 
-                    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource UiGapMd}">
                         <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="0"
                                 Classes="skua-button"
                                 Content="Search Inventory"
@@ -147,10 +137,10 @@
                     <Border Grid.Row="2"
                             Background="{DynamicResource SkuaSurfaceAltBrush}"
                             BorderBrush="{DynamicResource SkuaBorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="6"
+                            BorderThickness="{DynamicResource UiBorderThin}"
+                            CornerRadius="{DynamicResource UiRadiusCard}"
                             Padding="8">
-                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*, Auto" RowSpacing="4">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*, Auto" RowSpacing="{DynamicResource UiGapXs}">
                             <CheckBox Grid.Row="0" Grid.Column="0" Content="Class Boost"
                                       IsChecked="{Binding Boosts.UseClassBoost}" />
                             <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"

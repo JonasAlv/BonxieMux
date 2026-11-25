@@ -2,14 +2,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Style Selector="NumericUpDown">
-        <Setter Property="Height" Value="32" />
+        <Setter Property="Height" Value="{DynamicResource UiControlHeight}" />
         <Setter Property="MinHeight" Value="0" />
-        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
         <Setter Property="FontWeight" Value="Medium" />
     </Style>
 
@@ -33,7 +33,7 @@
         <Setter Property="Padding" Value="0" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusNone}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
     </Style>
     <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:pointerover /template/ ContentPresenter">
@@ -45,7 +45,7 @@
     </Style>
     <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:disabled /template/ ContentPresenter">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Opacity" Value="0.45" />
+        <Setter Property="Opacity" Value="{DynamicResource UiDisabledOpacity}" />
     </Style>
 
     <Style Selector="NumericUpDown.bottom-line">
@@ -53,7 +53,7 @@
             <Template>
                 <TextBlock Text="{Binding $parent[NumericUpDown].Tag}"
                            Foreground="{DynamicResource SkuaMutedTextBrush}"
-                           FontSize="11"
+                           FontSize="{DynamicResource UiFontSmall}"
                            FontWeight="Normal"
                            VerticalAlignment="Center"
                            Margin="10,0,0,0" />

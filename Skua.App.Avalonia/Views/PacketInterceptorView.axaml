@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:models="clr-namespace:Skua.Core.Models.Servers;assembly=Skua.Core.Models"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.Packets"
              xmlns:conv="clr-namespace:Skua.App.Avalonia.Converters"
              x:Class="Skua.App.Avalonia.Views.PacketInterceptorView"
@@ -14,13 +15,13 @@
         <conv:InterceptedPacketTagForegroundConverter x:Key="PacketTagFgConverter" />
     </UserControl.Resources>
 
-    <Grid Margin="8" ColumnDefinitions="2*,*" ColumnSpacing="8">
+    <Grid Margin="8" ColumnDefinitions="2*,*" ColumnSpacing="{DynamicResource UiGapMd}">
         
-        <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="6">
+        <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="{DynamicResource UiGapSm}">
             
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{DynamicResource UiGapSm}">
                 <ComboBox Grid.Column="0"
-                          Height="32"
+                          Height="{DynamicResource UiControlHeight}"
                           HorizontalAlignment="Stretch"
                           ItemsSource="{Binding ServerList}"
                           SelectedItem="{Binding SelectedServer}"
@@ -34,12 +35,12 @@
                 
                 <Button Grid.Column="1"
                         Classes="skua-button outline"
-                        Height="32"
+                        Height="{DynamicResource UiControlHeight}"
                         Width="36"
                         Padding="0"
                         ToolTip.Tip="Refresh server list"
                         Command="{Binding RefreshServersCommand}">
-                    <materialIcons:MaterialIcon Kind="Refresh" Width="16" Height="16" />
+                    <materialIcons:MaterialIcon Kind="Refresh" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                 </Button>
 
                 <Button Grid.Column="2"
@@ -60,9 +61,9 @@
                 </Button>
             </Grid>
 
-            <TextBox Grid.Row="1"
-                     PlaceholderText="Search packets..."
-                     Text="{Binding PacketSearchText, UpdateSourceTrigger=PropertyChanged}" />
+            <primitives:SearchFilterBar Grid.Row="1"
+                                        PlaceholderText="Search packets..."
+                                        SearchText="{Binding PacketSearchText, Mode=TwoWay}" />
 
             <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
                 <CheckBox Grid.Column="0"
@@ -74,36 +75,36 @@
                             Orientation="Horizontal"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            Spacing="4">
-                    <Border CornerRadius="4"
-                            Background="#28FFD54F"
-                            BorderBrush="#66FFD54F"
-                            BorderThickness="1"
+                            Spacing="{DynamicResource UiGapXs}">
+                    <Border CornerRadius="{DynamicResource UiRadiusControl}"
+                            Background="{DynamicResource SkuaWarningTintBrush}"
+                            BorderBrush="{DynamicResource SkuaWarningTintBorderBrush}"
+                            BorderThickness="{DynamicResource UiBorderThin}"
                             Padding="8,3">
                         <TextBlock Text="Outbound"
-                                   FontSize="11"
+                                   FontSize="{DynamicResource UiFontSmall}"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource SkuaWarningBrush}"
                                    VerticalAlignment="Center" />
                     </Border>
-                    <Border CornerRadius="4"
-                            Background="#2829B6F6"
-                            BorderBrush="#6629B6F6"
-                            BorderThickness="1"
+                    <Border CornerRadius="{DynamicResource UiRadiusControl}"
+                            Background="{DynamicResource SkuaAccentTintBrush}"
+                            BorderBrush="{DynamicResource SkuaTagBorderBrush}"
+                            BorderThickness="{DynamicResource UiBorderThin}"
                             Padding="8,3">
                         <TextBlock Text="Inbound"
-                                   FontSize="11"
+                                   FontSize="{DynamicResource UiFontSmall}"
                                    FontWeight="SemiBold"
-                                   Foreground="{DynamicResource SkuaInfoBrush}"
+                                   Foreground="{DynamicResource SkuaTagTextBrush}"
                                    VerticalAlignment="Center" />
                     </Border>
-                    <Border CornerRadius="4"
-                            Background="#28EF5350"
-                            BorderBrush="#66EF5350"
-                            BorderThickness="1"
+                    <Border CornerRadius="{DynamicResource UiRadiusControl}"
+                            Background="{DynamicResource SkuaDangerTintBrush}"
+                            BorderBrush="{DynamicResource SkuaDangerSoftBorderBrush}"
+                            BorderThickness="{DynamicResource UiBorderThin}"
                             Padding="8,3">
                         <TextBlock Text="Blocked"
-                                   FontSize="11"
+                                   FontSize="{DynamicResource UiFontSmall}"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource SkuaDangerBrush}"
                                    VerticalAlignment="Center" />
@@ -132,26 +133,26 @@
                     </ListBox.ContextMenu>
                     <ListBox.ItemTemplate>
                         <DataTemplate DataType="vms:InterceptedPacketViewModel">
-                            <Border CornerRadius="4"
+                            <Border CornerRadius="{DynamicResource UiRadiusControl}"
                                     Margin="0,1"
                                     Padding="6,3"
                                     Background="{Binding Outbound, Converter={StaticResource PacketBgConverter}}"
                                     BorderBrush="{Binding Outbound, Converter={StaticResource PacketBorderConverter}}"
-                                    BorderThickness="1">
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                                    BorderThickness="{DynamicResource UiBorderThin}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{DynamicResource UiGapSm}">
                                     <Border Grid.Column="0"
-                                            CornerRadius="3"
+                                            CornerRadius="{DynamicResource UiRadiusControl}"
                                             Padding="4,1"
                                             VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Outbound, Converter={StaticResource PacketTagConverter}}"
-                                                   FontSize="10"
+                                                   FontSize="{DynamicResource UiFontMicro}"
                                                    FontWeight="Bold"
                                                    Foreground="{Binding Outbound, Converter={StaticResource PacketTagFgConverter}}" />
                                     </Border>
                                     <TextBlock Grid.Column="1"
                                                Text="{Binding Packet}"
-                                               FontFamily="Consolas,Cascadia Code,Courier New,Monospace"
-                                               FontSize="12"
+                                               FontFamily="{DynamicResource UiFontMono}"
+                                               FontSize="{DynamicResource UiFontBody}"
                                                VerticalAlignment="Center"
                                                TextWrapping="NoWrap" />
                                 </Grid>
@@ -162,13 +163,13 @@
             </Border>
         </Grid>
 
-        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" RowSpacing="6">
+        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapSm}">
             
-            <TextBox Grid.Row="0"
-                     PlaceholderText="Search filters..."
-                     Text="{Binding FilterSearchText, UpdateSourceTrigger=PropertyChanged}" />
+            <primitives:SearchFilterBar Grid.Row="0"
+                                        PlaceholderText="Search filters..."
+                                        SearchText="{Binding FilterSearchText, Mode=TwoWay}" />
 
-            <Border Grid.Row="1" Classes="list-frame" Padding="6">
+            <Border Grid.Row="1" Classes="list-frame" Padding="{DynamicResource UiPaddingSm}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <ScrollViewer.ContextMenu>
                         <ContextMenu>
@@ -191,7 +192,7 @@
                 </ScrollViewer>
             </Border>
 
-            <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="6">
+            <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource UiGapSm}">
                 <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Grid.Column="0"
                         Classes="skua-button"
                         Content="Select All"

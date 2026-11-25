@@ -3,12 +3,12 @@
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Skua.App.Avalonia.Views.ConsoleView">
 
-    <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="8">
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+    <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapMd}">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}">
             <TextBlock Classes="section-label" Text="C# SNIPPET" VerticalAlignment="Center" />
-            <TextBlock FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center">
+            <TextBlock FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center">
                 <Run Text="runs inside" />
-                <Run Text="ScriptMain(IScriptInterface Bot)" FontFamily="Cascadia Mono,Consolas,Courier New,monospace" />
+                <Run Text="ScriptMain(IScriptInterface Bot)" FontFamily="{DynamicResource UiFontMono}" />
             </TextBlock>
         </StackPanel>
 
@@ -19,9 +19,9 @@
                  TextWrapping="Wrap"
                  VerticalContentAlignment="Top"
                  Padding="10,8"
-                 FontFamily="JetBrains Mono,Consolas,Courier New,monospace" />
+                 FontFamily="{DynamicResource UiFontMono}" />
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" HorizontalAlignment="Right">
             <Button Classes="skua-button w84" Command="{Binding ClearCommand}" ToolTip.Tip="Clear the snippet">
   <TextBlock Text="Clear" VerticalAlignment="Center" />
 </Button>

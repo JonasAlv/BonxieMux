@@ -1,0 +1,41 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:Skua.Shared.Avalonia.Controls.Shell"
+        x:Class="Skua.Shared.Avalonia.Controls.Shell.ModalDialogWindow"
+        Classes="skua"
+        Width="420"
+        MinWidth="250"
+        MinHeight="100"
+        SizeToContent="Height"
+        WindowDecorations="None"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="30"
+        WindowStartupLocation="Manual"
+        CanResize="True"
+        ShowActivated="True">
+    <Border Classes="window-frame">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <shell:WindowTitleBar Grid.Row="0" x:Name="DialogTitleBar" />
+
+            <ContentPresenter Grid.Row="1"
+                              x:Name="BodyHost"
+                              Margin="{DynamicResource UiPaddingLg}" />
+
+            <Border Grid.Row="2"
+                    x:Name="FooterBorder"
+                    Padding="12,0,12,12"
+                    IsVisible="False">
+                <Grid ColumnDefinitions="Auto,*">
+                    <ContentPresenter Grid.Column="0"
+                                      x:Name="LeftFooterHost"
+                                      VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1"
+                                x:Name="ButtonsPanel"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Spacing="{DynamicResource UiGapMd}" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

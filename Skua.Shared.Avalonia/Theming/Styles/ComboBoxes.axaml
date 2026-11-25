@@ -5,26 +5,18 @@
     <Style Selector="ComboBox.header-gap">
         <Setter Property="Margin" Value="0,0,4,0" />
     </Style>
-    
-    <Style Selector="ComboBox.gap-left-8">
-        <Setter Property="Margin" Value="8,0,0,0" />
-    </Style>
-
-    <Style Selector="ComboBox.gap-right-8">
-        <Setter Property="Margin" Value="0,0,8,0" />
-    </Style>
 
     <Style Selector="ComboBox">
-        <Setter Property="Height" Value="32" />
+        <Setter Property="Height" Value="{DynamicResource UiControlHeight}" />
         <Setter Property="MinHeight" Value="0" />
         <Setter Property="MinWidth" Value="56" />
-        <Setter Property="Padding" Value="10,0" />
-        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="{DynamicResource UiControlPadding}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -55,8 +47,8 @@
 
                             <materialIcons:MaterialIcon Grid.Column="1"
                                       Kind="ChevronDown"
-                                      Width="16"
-                                      Height="16"
+                                      Width="{DynamicResource UiIconMd}"
+                                      Height="{DynamicResource UiIconMd}"
                                       Margin="6,0,-2,0"
                                       Foreground="{DynamicResource SkuaMutedTextBrush}"
                                       VerticalAlignment="Center" />
@@ -69,12 +61,12 @@
                            Placement="Bottom"
                            IsLightDismissEnabled="True"
                            MinWidth="{Binding Bounds.Width, ElementName=PART_RootBorder}"
-                           MaxHeight="260">
+                           MaxHeight="{DynamicResource UiPopupMaxHeight}">
                         <Border Background="{DynamicResource SkuaSurfaceBrush}"
                                 BorderBrush="{DynamicResource SkuaBorderStrongBrush}"
-                                BorderThickness="1"
-                                CornerRadius="4"
-                                Padding="4"
+                                BorderThickness="{DynamicResource UiBorderThin}"
+                                CornerRadius="{DynamicResource UiRadiusControl}"
+                                Padding="{DynamicResource UiPaddingXs}"
                                 Margin="0,4,0,0">
                             <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                                           VerticalScrollBarVisibility="Auto">
@@ -93,7 +85,7 @@
     </Style>
 
     <Style Selector="ComboBox:disabled">
-        <Setter Property="Opacity" Value="0.45" />
+        <Setter Property="Opacity" Value="{DynamicResource UiDisabledOpacity}" />
     </Style>
 
     <Style Selector="ComboBox:focus, ComboBox:focus-within">
@@ -101,11 +93,11 @@
     </Style>
 
     <Style Selector="ComboBoxItem">
-        <Setter Property="Padding" Value="10,0" />
-        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Padding" Value="{DynamicResource UiControlPadding}" />
+        <Setter Property="MinHeight" Value="{DynamicResource UiListItemMinHeight}" />
         <Setter Property="Margin" Value="0,1" />
-        <Setter Property="CornerRadius" Value="4" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -115,7 +107,7 @@
     <Style Selector="ComboBoxItem /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
-        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
     </Style>
 
     <Style Selector="ComboBoxItem:pointerover">
@@ -148,7 +140,7 @@
     </Style>
 
     <Style Selector="ComboBoxItem:disabled /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Opacity" Value="0.45" />
+        <Setter Property="Opacity" Value="{DynamicResource UiDisabledOpacity}" />
     </Style>
 
     <Style Selector="ComboBox.columns-picker">

@@ -9,7 +9,7 @@
                Text="Select an item to view properties."
                VerticalAlignment="Center"
                HorizontalAlignment="Center"
-               Opacity="0.5"
+               Foreground="{DynamicResource SkuaMutedTextBrush}"
                IsVisible="False" />
 
     <ScrollViewer x:Name="ContentScrollViewer"
@@ -25,7 +25,7 @@
                          FontWeight="SemiBold"
                          VerticalAlignment="Center"
                          Text="{Binding Name}"
-                         Opacity="0.8"
+                         Foreground="{DynamicResource SkuaMutedTextBrush}"
                          ToolTip.Tip="{Binding Description}" />
               <TextBox Grid.Column="1"
                        Classes="option-pill-input"
@@ -35,7 +35,7 @@
                        IsVisible="{Binding IsNotCollection}" />
               <StackPanel Grid.Column="1"
                           Orientation="Horizontal"
-                          Spacing="6"
+                          Spacing="{DynamicResource UiGapSm}"
                           IsVisible="{Binding IsCollection}">
                 <TextBlock Text="{Binding Value}"
                            VerticalAlignment="Center" />

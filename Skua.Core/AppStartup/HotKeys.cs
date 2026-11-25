@@ -345,6 +345,14 @@ public class HotKeys
             ToggleGameFullScreenRequested?.Invoke();
     }
 
+    private static void OpenQuickLaunch()
+    {
+        if (!IsHostProcess)
+            SendHostCommand("QUICKLAUNCH");
+        else
+            OpenQuickLaunchRequested?.Invoke();
+    }
+
     private static void ExecuteOrForward(string actionName, Action localExecute)
     {
         if (IsHostProcess && ForwardHotKeyAction != null)
@@ -371,7 +379,7 @@ public class HotKeys
         _hotkeyRegistry["ToggleFullscreen"] = new RelayCommand(ToggleFullScreen);
         _hotkeyRegistry["ToggleGameFullScreen"] = new RelayCommand(ToggleGameFullScreen);
         _hotkeyRegistry["OpenCommandPalette"] = new RelayCommand(() => ExecuteOrForward("OpenCommandPalette", () => OpenCommandPaletteRequested?.Invoke()));
-        _hotkeyRegistry["OpenQuickLaunch"] = new RelayCommand(() => ExecuteOrForward("OpenQuickLaunch", () => OpenQuickLaunchRequested?.Invoke()));
+        _hotkeyRegistry["OpenQuickLaunch"] = new RelayCommand(OpenQuickLaunch);
         _hotkeyRegistry["ToggleHeadlessMode"] = new RelayCommand(() => ExecuteOrForward("ToggleHeadlessMode", () => Ioc.Default.GetRequiredService<IScriptOption>().HeadlessMode ^= true));
         _hotkeyRegistry["ToggleStreamerMode"] = new RelayCommand(() => ExecuteOrForward("ToggleStreamerMode", () => Ioc.Default.GetRequiredService<IScriptOption>().StreamerMode ^= true));
         _hotkeyRegistry["ToggleHidePlayers"] = new RelayCommand(() => ExecuteOrForward("ToggleHidePlayers", () => Ioc.Default.GetRequiredService<IScriptOption>().HidePlayers ^= true));

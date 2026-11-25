@@ -3,57 +3,38 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Skua.App.Avalonia.Views.UltraWikiView"
              x:DataType="vms:UltraWikiViewModel"
              mc:Ignorable="d" d:DesignHeight="760" d:DesignWidth="1120">
 
   <UserControl.Styles>
-    <Style Selector="Border.card">
-      <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="CornerRadius" Value="8" />
-      <Setter Property="Padding" Value="12,10" />
-    </Style>
-    <Style Selector="Border.chip">
-      <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="CornerRadius" Value="10" />
-      <Setter Property="Padding" Value="8,2" />
-      <Setter Property="Margin" Value="0,0,6,6" />
-    </Style>
-    <Style Selector="TextBlock.caption">
-      <Setter Property="FontSize" Value="10" />
-      <Setter Property="FontWeight" Value="Bold" />
-      <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
-      <Setter Property="Margin" Value="0,0,0,6" />
-    </Style>
     <Style Selector="TextBlock.stars">
-      <Setter Property="Foreground" Value="#FFC93C" />
-      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="{DynamicResource SkuaWarningBrush}" />
+      <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
     </Style>
   </UserControl.Styles>
 
-  <Grid Margin="12" ColumnDefinitions="240,*" ColumnSpacing="10">
+  <Grid Margin="12" ColumnDefinitions="240,*" ColumnSpacing="{DynamicResource UiGapBase}">
 
     <Border Grid.Column="0" Classes="card" Padding="8">
-      <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
-        <StackPanel Grid.Row="0" Spacing="2" Margin="4,2">
-          <TextBlock Text="ULTRA WIKI" Classes="caption" Margin="0" />
-          <TextBlock Text="{Binding Ultras.Count, StringFormat='{}{0} fights'}" FontSize="12" Foreground="{DynamicResource SkuaTextBrush}" />
+      <Grid RowDefinitions="Auto,Auto,*" RowSpacing="{DynamicResource UiGapMd}">
+        <StackPanel Grid.Row="0" Spacing="{DynamicResource UiGap2xs}" Margin="4,2">
+          <TextBlock Text="ULTRA WIKI" Classes="section-label" Margin="0" />
+          <TextBlock Text="{Binding Ultras.Count, StringFormat='{}{0} fights'}" FontSize="{DynamicResource UiFontBody}" Foreground="{DynamicResource SkuaTextBrush}" />
         </StackPanel>
-        <TextBox Grid.Row="1" Height="32" VerticalContentAlignment="Center"
-                 PlaceholderText="Search ultra..." Text="{Binding SearchText, Mode=TwoWay}" />
+        <primitives:SearchFilterBar Grid.Row="1"
+                                    PlaceholderText="Search ultra..."
+                                    SearchText="{Binding SearchText, Mode=TwoWay}" />
         <ListBox Grid.Row="2" ItemsSource="{Binding FilteredUltras}"
                  SelectedItem="{Binding SelectedUltra, Mode=TwoWay}"
                  Background="Transparent" BorderThickness="0">
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="vms:UltraEntry">
               <StackPanel Spacing="1" Margin="2,3">
-                <TextBlock Text="{Binding Boss}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis" />
-                <TextBlock Text="{Binding Tab}" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                <TextBlock Text="{Binding Boss}" FontWeight="SemiBold" FontSize="{DynamicResource UiFontBody}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Tab}" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
               </StackPanel>
             </DataTemplate>
           </ListBox.ItemTemplate>
@@ -62,18 +43,18 @@
     </Border>
 
     <ScrollViewer Grid.Column="1" IsVisible="{Binding HasUltra}" HorizontalScrollBarVisibility="Disabled">
-      <StackPanel Spacing="10" Margin="0,0,6,0">
+      <StackPanel Spacing="{DynamicResource UiGapBase}" Margin="0,0,6,0">
 
         <Border Classes="card">
-          <StackPanel Spacing="6">
+          <StackPanel Spacing="{DynamicResource UiGapSm}">
             <Grid ColumnDefinitions="*,Auto">
-              <StackPanel Spacing="2">
-                <TextBlock Text="{Binding SelectedUltra.Tab}" Classes="caption" Margin="0" />
-                <TextBlock Text="{Binding SelectedUltra.Boss}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}" />
+              <StackPanel Spacing="{DynamicResource UiGap2xs}">
+                <TextBlock Text="{Binding SelectedUltra.Tab}" Classes="section-label" Margin="0" />
+                <TextBlock Text="{Binding SelectedUltra.Boss}" FontSize="{DynamicResource UiFontDisplay}" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}" />
               </StackPanel>
               <Border Grid.Column="1" Classes="chip" VerticalAlignment="Center" Margin="0"
                       IsVisible="{Binding SelectedUltra.HasNote}">
-                <TextBlock Text="{Binding SelectedUltra.Note}" FontSize="11" FontWeight="Bold" />
+                <TextBlock Text="{Binding SelectedUltra.Note}" FontSize="{DynamicResource UiFontSmall}" FontWeight="Bold" />
               </Border>
             </Grid>
             <ItemsControl ItemsSource="{Binding SelectedUltra.Tags}">
@@ -84,8 +65,8 @@
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="x:String">
-                  <Border Classes="chip">
-                    <TextBlock Text="{Binding}" FontSize="11" />
+                  <Border Classes="chip" Margin="0,0,6,6">
+                    <TextBlock Text="{Binding}" FontSize="{DynamicResource UiFontSmall}" />
                   </Border>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
@@ -94,17 +75,17 @@
         </Border>
 
         <Border Classes="card">
-          <StackPanel Spacing="8">
+          <StackPanel Spacing="{DynamicResource UiGapMd}">
             <Grid ColumnDefinitions="*,Auto">
-              <TextBlock Text="TEAM BUILDER" Classes="caption" Margin="0" VerticalAlignment="Center" />
-              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                <Button Classes="skua-button" Height="30" Command="{Binding UseRecommendedCommand}">
+              <TextBlock Text="TEAM BUILDER" Classes="section-label" Margin="0" VerticalAlignment="Center" />
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}">
+                <Button Classes="skua-button" Height="{DynamicResource UiControlHeight}" Command="{Binding UseRecommendedCommand}">
   <TextBlock Text="Recommended" VerticalAlignment="Center" />
 </Button>
-                <Button Classes="skua-button skua-primary" Height="30" Command="{Binding SuggestBestCommand}">
+                <Button Classes="skua-button skua-primary" Height="{DynamicResource UiControlHeight}" Command="{Binding SuggestBestCommand}">
   <TextBlock Text="Best team" VerticalAlignment="Center" />
 </Button>
-                <Button Classes="skua-button" Height="30" Command="{Binding ClearTeamCommand}">
+                <Button Classes="skua-button" Height="{DynamicResource UiControlHeight}" Command="{Binding ClearTeamCommand}">
   <TextBlock Text="Clear" VerticalAlignment="Center" />
 </Button>
               </StackPanel>
@@ -118,8 +99,8 @@
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vms:TeamSlot">
-                  <StackPanel Spacing="2" Margin="0,0,8,8" Width="190">
-                    <TextBlock Text="{Binding Label}" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                  <StackPanel Spacing="{DynamicResource UiGap2xs}" Margin="0,0,8,8" Width="190">
+                    <TextBlock Text="{Binding Label}" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                     <ComboBox ItemsSource="{Binding Options}" SelectedItem="{Binding SelectedClass, Mode=TwoWay}"
                               HorizontalAlignment="Stretch" PlaceholderText="(empty)" MaxDropDownHeight="360" />
                   </StackPanel>
@@ -128,25 +109,25 @@
             </ItemsControl>
 
             <Border Background="{DynamicResource SkuaSurfaceAltBrush}" BorderBrush="{DynamicResource SkuaBorderBrush}"
-                    BorderThickness="1" CornerRadius="8" Padding="12,10">
+                    BorderThickness="{DynamicResource UiBorderThin}" CornerRadius="{DynamicResource UiRadiusCard}" Padding="{DynamicResource UiCardCompactPadding}">
               <Grid ColumnDefinitions="Auto,*" ColumnSpacing="18">
-                <StackPanel Spacing="2" VerticalAlignment="Center">
-                  <TextBlock Text="{Binding TeamStars}" Foreground="#FFC93C" FontSize="26" />
-                  <TextBlock FontSize="13" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}">
+                <StackPanel Spacing="{DynamicResource UiGap2xs}" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding TeamStars}" Foreground="{DynamicResource SkuaWarningBrush}" FontSize="{DynamicResource UiFontDisplay}" />
+                  <TextBlock FontSize="{DynamicResource UiFontHeading}" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}">
                     <Run Text="{Binding TeamScore}" />
                     <Run Text=" / 6" />
                   </TextBlock>
-                  <TextBlock Text="{Binding ScoreSummary}" FontSize="10" Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" MaxWidth="260" />
+                  <TextBlock Text="{Binding ScoreSummary}" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" MaxWidth="260" />
                 </StackPanel>
                 <ItemsControl Grid.Column="1" ItemsSource="{Binding ScoreBreakdown}" VerticalAlignment="Center">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vms:SlotResult">
                       <Grid ColumnDefinitions="22,170,120,90,*" Margin="0,1">
-                        <TextBlock Text="{Binding Slot}" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" />
-                        <TextBlock Grid.Column="1" Text="{Binding Cls}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Grid.Column="2" Text="{Binding Role}" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Slot}" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Cls}" FontSize="{DynamicResource UiFontBody}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="2" Text="{Binding Role}" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis" />
                         <TextBlock Grid.Column="3" Text="{Binding StarText}" Classes="stars" />
-                        <TextBlock Grid.Column="4" Text="{Binding Note}" FontSize="10" Foreground="#E08A5A" IsVisible="{Binding HasNote}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="4" Text="{Binding Note}" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaWarningBrush}" IsVisible="{Binding HasNote}" TextTrimming="CharacterEllipsis" />
                       </Grid>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
@@ -156,16 +137,16 @@
           </StackPanel>
         </Border>
 
-        <Grid ColumnDefinitions="3*,2*" ColumnSpacing="10">
+        <Grid ColumnDefinitions="3*,2*" ColumnSpacing="{DynamicResource UiGapBase}">
           <Border Classes="card">
             <StackPanel>
-              <TextBlock Text="BEST GROUP · ENHANCEMENTS" Classes="caption" />
+              <TextBlock Text="BEST GROUP · ENHANCEMENTS" Classes="section-label" />
               <ItemsControl ItemsSource="{Binding SelectedUltra.BestGroup}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vms:BestGroupEntry">
                     <StackPanel Margin="0,0,0,6" Spacing="1">
-                      <TextBlock Text="{Binding Cls}" FontWeight="SemiBold" FontSize="12" />
-                      <TextBlock Text="{Binding EnhText}" FontSize="11" Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding Cls}" FontWeight="SemiBold" FontSize="{DynamicResource UiFontBody}" />
+                      <TextBlock Text="{Binding EnhText}" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" />
                     </StackPanel>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -174,7 +155,7 @@
           </Border>
           <Border Grid.Column="1" Classes="card">
             <StackPanel>
-              <TextBlock Text="RECOMMENDED GROUP" Classes="caption" />
+              <TextBlock Text="RECOMMENDED GROUP" Classes="section-label" />
               <ItemsControl ItemsSource="{Binding SelectedUltra.Recommended}">
                 <ItemsControl.ItemsPanel>
                   <ItemsPanelTemplate>
@@ -184,7 +165,7 @@
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="x:String">
                     <Border Classes="chip">
-                      <TextBlock Text="{Binding}" FontSize="12" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding}" FontSize="{DynamicResource UiFontBody}" FontWeight="SemiBold" />
                     </Border>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -195,7 +176,7 @@
 
         <Border Classes="card">
           <StackPanel>
-            <TextBlock Text="CLASS RATINGS" Classes="caption" />
+            <TextBlock Text="CLASS RATINGS" Classes="section-label" />
             <ItemsControl ItemsSource="{Binding RatingColumns}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -204,14 +185,14 @@
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vms:RatingColumn">
-                  <StackPanel Margin="0,0,10,0" Spacing="2">
-                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="12" Margin="0,0,0,4" />
+                  <StackPanel Margin="0,0,10,0" Spacing="{DynamicResource UiGap2xs}">
+                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" Margin="0,0,0,4" />
                     <ItemsControl ItemsSource="{Binding Rows}">
                       <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vms:RatingRow">
                           <Grid ColumnDefinitions="*,Auto" Margin="0,1">
-                            <TextBlock Text="{Binding Cls}" FontSize="11" TextTrimming="CharacterEllipsis" />
-                            <TextBlock Grid.Column="1" Text="{Binding StarText}" Classes="stars" FontSize="11" Margin="6,0,0,0" />
+                            <TextBlock Text="{Binding Cls}" FontSize="{DynamicResource UiFontSmall}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Grid.Column="1" Text="{Binding StarText}" Classes="stars" FontSize="{DynamicResource UiFontSmall}" Margin="6,0,0,0" />
                           </Grid>
                         </DataTemplate>
                       </ItemsControl.ItemTemplate>
@@ -225,12 +206,12 @@
 
         <Border Classes="card" IsVisible="{Binding SelectedUltra.HasMechanics}">
           <StackPanel>
-            <TextBlock Text="MECHANICS" Classes="caption" />
-            <SelectableTextBlock Text="{Binding SelectedUltra.Mechanics}" TextWrapping="Wrap" FontSize="12" />
+            <TextBlock Text="MECHANICS" Classes="section-label" />
+            <SelectableTextBlock Text="{Binding SelectedUltra.Mechanics}" TextWrapping="Wrap" FontSize="{DynamicResource UiFontBody}" />
           </StackPanel>
         </Border>
 
-        <TextBlock Text="{Binding Source, StringFormat='Data: Ultras spreadsheet ({0})'}" FontSize="10"
+        <TextBlock Text="{Binding Source, StringFormat='Data: Ultras spreadsheet ({0})'}" FontSize="{DynamicResource UiFontMicro}"
                    Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" Margin="2,0,2,4" />
       </StackPanel>
     </ScrollViewer>

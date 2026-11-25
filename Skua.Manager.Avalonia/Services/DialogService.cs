@@ -6,9 +6,10 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Skua.Core.Interfaces.ViewModels;
-using Skua.Manager.Avalonia.Controls;
+using Skua.Shared.Avalonia.Controls.Shell;
 using Skua.Manager.Avalonia.ViewModels;
 using Skua.Shared.Avalonia.Services;
+using Skua.Shared.Avalonia.Theming;
 using System;
 
 namespace Skua.Manager.Avalonia.Services;
@@ -43,42 +44,44 @@ public class DialogService : DialogServiceBase
 
     private static bool? ShowJobEditorDialog(JobEditorDialogViewModel vm, string title)
     {
-        Window dialog = CreateBaseDialog(title);
-        dialog.Width = 640;
+        ModalDialogWindow dialog = CreateModalDialog(title, 640);
+        dialog.SizeToContent = SizeToContent.Manual;
         dialog.Height = 720;
         dialog.CanResize = true;
 
         vm.CloseAction = () => dialog.Close();
         dialog.Closed += (_, _) => vm.Cleanup();
 
-        dialog.Content = WrapWithShell(title, new ContentControl { Content = vm });
+        dialog.SetBody(new ContentControl { Content = vm }, new Thickness(0));
         Show(dialog);
         return vm.DialogResult;
     }
 
     private static bool? ShowAccountEditorDialog(AccountEditorViewModel vm, string title)
     {
-        Window dialog = CreateBaseDialog(title);
-        dialog.Width = 440;
+        ModalDialogWindow dialog = CreateModalDialog(title, 440);
+        double gapBase = UiTokens.GetDouble(UiTokens.UiGapBase, 10);
+        double iconMd = UiTokens.GetDouble(UiTokens.UiIconMd, 16);
+        double ctrlH = UiTokens.GetDouble(UiTokens.UiControlHeight, 28);
 
         TextBox usernameBox = new()
         {
             Text = vm.Username,
-            Watermark = "Username",
-            Margin = new Thickness(0, 0, 0, 10)
+            PlaceholderText = "Username",
+            Margin = new Thickness(0, 0, 0, gapBase)
         };
 
         TextBox displayNameBox = new()
         {
             Text = vm.DisplayName,
-            Watermark = "Display Name (optional)",
-            Margin = new Thickness(0, 0, 0, 10)
+            PlaceholderText = "Display Name (optional)",
+            Margin = new Thickness(0, 0, 0, gapBase)
         };
 
         TextBox passwordBox = new()
         {
             Text = vm.Password,
-            Watermark = "Password",
+            PlaceholderText = "Password",
             PasswordChar = '*',
             Padding = new Thickness(8, 6, 34, 6)
         };
@@ -86,16 +89,16 @@ public class DialogService : DialogServiceBase
         Material.Icons.Avalonia.MaterialIcon eyeIcon = new()
         {
             Kind = Material.Icons.MaterialIconKind.EyeOutline,
-            Width = 16,
-            Height = 16
+            Width = iconMd,
+            Height = iconMd
         };
 
         Button eyeButton = new()
         {
             Content = eyeIcon,
             Classes = { "icon" },
-            Width = 28,
-            Height = 28,
+            Width = ctrlH,
+            Height = ctrlH,
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 2, 0)
@@ -112,23 +115,19 @@ public class DialogService : DialogServiceBase
 
         Grid passwordContainer = new()
         {
-            Margin = new Thickness(0, 0, 0, 10),
+            Margin = new Thickness(0, 0, 0, gapBase),
             Children = { passwordBox, eyeButton }
         };
 
         TextBox tagsBox = new()
         {
             Text = vm.Tags,
-            Watermark = "Tags (comma-separated, e.g. farm, daily)",
-            Margin = new Thickness(0, 0, 0, 16)
+            PlaceholderText = "Tags (comma-separated, e.g. farm, daily)"
         };
 
         bool? result = null;
-        Button ok = new() { Content = "Save", MinWidth = 84, Classes = { "skua-button", "skua-primary" } };
-        Button cancel = new() { Content = "Cancel", MinWidth = 84, Classes = { "skua-button" }, IsCancel = true };
-        ok.IsDefault = true;
-
-        ok.Click += (_, _) =>
+        dialog.AddButton("Cancel", () => { result = false; dialog.Close(); }, isCancel: true);
+        dialog.AddButton("Save", () =>
         {
             vm.Username = usernameBox.Text ?? string.Empty;
             vm.DisplayName = displayNameBox.Text ?? string.Empty;
@@ -136,45 +135,39 @@ public class DialogService : DialogServiceBase
             vm.Tags = tagsBox.Text ?? string.Empty;
             result = true;
             dialog.Close();
-        };
+        }, isPrimary: true, isDefault: true);
 
-        cancel.Click += (_, _) =>
+        double gapXs = UiTokens.GetDouble(UiTokens.UiGapXs, 4);
+        TextBlock Label(string text)
         {
-            result = false;
-            dialog.Close();
-        };
+            TextBlock tb = ModalDialogWindow.CreateFieldLabel(text);
+            tb.Margin = new Thickness(0, 0, 0, gapXs);
+            return tb;
+        }
 
         StackPanel formPanel = new()
         {
-            Margin = new Thickness(16),
             Children =
             {
-                new TextBlock { Text = "Username", FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 0, 0, 4), FontSize = 12 },
+                Label("Username"),
                 usernameBox,
-                new TextBlock { Text = "Display Name", FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 0, 0, 4), FontSize = 12 },
+                Label("Display Name"),
                 displayNameBox,
-                new TextBlock { Text = "Password", FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 0, 0, 4), FontSize = 12 },
+                Label("Password"),
                 passwordContainer,
-                new TextBlock { Text = "Tags", FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 0, 0, 4), FontSize = 12 },
-                tagsBox,
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Spacing = 8,
-                    Children = { cancel, ok }
-                }
+                Label("Tags"),
+                tagsBox
             }
         };
 
-        dialog.Content = WrapWithShell(title, formPanel);
+        dialog.SetBody(formPanel);
         Show(dialog);
         return result;
     }
 
     private static bool? ShowSelectGroupDialog(SelectGroupDialogViewModel vm, string title)
     {
-        Window dialog = CreateBaseDialog(title);
+        ModalDialogWindow dialog = CreateModalDialog(title);
         ComboBox groups = new()
         {
             ItemsSource = vm.Groups,
@@ -184,105 +177,67 @@ public class DialogService : DialogServiceBase
         };
 
         bool? result = null;
-        Button ok = new() { Content = "OK", MinWidth = 84, Classes = { "skua-button", "skua-primary" } };
-        Button cancel = new() { Content = "Cancel", MinWidth = 84, Classes = { "skua-button" }, IsCancel = true };
-        ok.IsDefault = true;
-        ok.Click += (_, _) =>
+        dialog.AddButton("Cancel", () => { result = false; dialog.Close(); }, isCancel: true);
+        dialog.AddButton("OK", () =>
         {
             vm.SelectedGroup = groups.SelectedItem as GroupItemViewModel;
             result = vm.SelectedGroup != null;
             dialog.Close();
-        };
-        cancel.Click += (_, _) =>
-        {
-            result = false;
-            dialog.Close();
-        };
+        }, isPrimary: true, isDefault: true);
 
         StackPanel content = new()
         {
-            Margin = new Thickness(14),
-            Spacing = 10,
+            Spacing = UiTokens.GetDouble(UiTokens.UiGapBase, 10),
             Children =
             {
-                new TextBlock { Text = "Select group" },
-                groups,
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Spacing = 8,
-                    Children = { cancel, ok }
-                }
+                ModalDialogWindow.CreateBodyText("Select group"),
+                groups
             }
         };
-        dialog.Content = WrapWithShell(title, content);
+        dialog.SetBody(content);
         Show(dialog);
         return result;
     }
 
     private static bool? ShowSelectAccountDialog(SelectAccountDialogViewModel vm, string title)
     {
-        Window dialog = CreateBaseDialog(title);
+        ModalDialogWindow dialog = CreateModalDialog(title);
         TextBox searchBox = new()
         {
-            Watermark = "Search accounts...",
+            PlaceholderText = "Search accounts...",
             Text = vm.SearchText
         };
-        searchBox.TextChanged += (_, _) =>
-        {
-            vm.SearchText = searchBox.Text ?? string.Empty;
-        };
+        searchBox.TextChanged += (_, _) => vm.SearchText = searchBox.Text ?? string.Empty;
 
         ListBox accounts = new()
         {
-            MaxHeight = 260,
+            MaxHeight = UiTokens.GetDouble(UiTokens.UiPopupMaxHeight, 260),
             ItemsSource = vm.FilteredAccounts,
             SelectedItem = vm.SelectedAccount,
             ItemTemplate = new FuncDataTemplate<IAccountItemViewModel>((a, _) =>
-            {
-                return new TextBlock { Text = a?.DisplayOrUsername ?? string.Empty };
-            }, true)
+                new TextBlock { Text = a?.DisplayOrUsername ?? string.Empty }, true)
         };
-        accounts.SelectionChanged += (_, _) =>
-        {
-            vm.SelectedAccount = accounts.SelectedItem as IAccountItemViewModel;
-        };
+        accounts.SelectionChanged += (_, _) => vm.SelectedAccount = accounts.SelectedItem as IAccountItemViewModel;
 
         bool? result = null;
-        Button ok = new() { Content = "OK", MinWidth = 84, Classes = { "skua-button", "skua-primary" } };
-        Button cancel = new() { Content = "Cancel", MinWidth = 84, Classes = { "skua-button" }, IsCancel = true };
-        ok.IsDefault = true;
-        ok.Click += (_, _) =>
+        dialog.AddButton("Cancel", () => { result = false; dialog.Close(); }, isCancel: true);
+        dialog.AddButton("OK", () =>
         {
             result = vm.SelectedAccount != null;
             dialog.Close();
-        };
-        cancel.Click += (_, _) =>
-        {
-            result = false;
-            dialog.Close();
-        };
+        }, isPrimary: true, isDefault: true);
 
         StackPanel content = new()
         {
-            Margin = new Thickness(14),
-            Spacing = 10,
+            Spacing = UiTokens.GetDouble(UiTokens.UiGapBase, 10),
             Children =
             {
-                new TextBlock { Text = "Select replacement account" },
+                ModalDialogWindow.CreateBodyText("Select replacement account"),
                 searchBox,
-                accounts,
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Spacing = 8,
-                    Children = { cancel, ok }
-                }
+                accounts
             }
         };
-        dialog.Content = WrapWithShell(title, content);
+        dialog.SetBody(content);
         Show(dialog);
         return result;
     }

@@ -34,7 +34,7 @@
       <sharedShell:WindowTitleBar.LeftContent>
         <Border x:Name="TopNavBorder"
                 Background="Transparent"
-                Height="30"
+                Height="{DynamicResource UiTitleBarHeight}"
                 Padding="0">
           <DockPanel x:Name="MainMenuBar"
                      DataContext="{Binding MainMenu}"
@@ -49,22 +49,22 @@
       <sharedShell:WindowTitleBar.RightContent>
         <StackPanel DataContext="{Binding MainMenu}"
                     Orientation="Horizontal"
-                    Spacing="2"
+                    Spacing="{DynamicResource UiGap2xs}"
                     VerticalAlignment="Center">
           <ToggleButton x:Name="AutoToggle"
                         Classes="titlebar"
-                        Width="26" Height="26"
+                        Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}"
                         Padding="0"
                         ToolTip.Tip="Automated Combat &amp; Hunting Controls">
             <Panel>
               <materialIcons:MaterialIcon Kind="RobotOutline"
-                                          Width="14" Height="14"
+                                          Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
                                           Foreground="{DynamicResource SkuaMutedTextBrush}"
                                           HorizontalAlignment="Center"
                                           VerticalAlignment="Center" />
               <Border Width="6" Height="6"
-                      CornerRadius="3"
-                      Background="#10B981"
+                      CornerRadius="{DynamicResource UiRadiusControl}"
+                      Background="{DynamicResource SkuaSuccessBrush}"
                       HorizontalAlignment="Right"
                       VerticalAlignment="Top"
                       Margin="0,3,3,0"
@@ -82,11 +82,11 @@
 
           <ToggleButton x:Name="JumpToggle"
                         Classes="titlebar"
-                        Width="26" Height="26"
+                        Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}"
                         Padding="0"
                         ToolTip.Tip="Map &amp; Cell Fast Jump Controls">
             <materialIcons:MaterialIcon Kind="RunFast"
-                                        Width="14" Height="14"
+                                        Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
                                         Foreground="{DynamicResource SkuaMutedTextBrush}"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center" />
@@ -101,12 +101,12 @@
           </Popup>
 
           <Button Classes="titlebar"
-                  Width="26" Height="26"
+                  Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}"
                   Padding="0"
                   Command="{Binding ShowBotWindowCommand}"
                   ToolTip.Tip="Show All Bot Windows &amp; Tools">
             <materialIcons:MaterialIcon Kind="Apps"
-                                        Width="14" Height="14"
+                                        Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
                                         Foreground="{DynamicResource SkuaMutedTextBrush}"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center" />
@@ -121,15 +121,15 @@
         <ProgressBar x:Name="LoadingBar"
                      Width="180"
                      Height="8"
-                     CornerRadius="4"
+                     CornerRadius="{DynamicResource UiRadiusControl}"
                      IsIndeterminate="True"
                      HorizontalAlignment="Center"
                      VerticalAlignment="Center"/>
         <Grid x:Name="HeadlessOverlay" Background="{DynamicResource SkuaPageBrush}" IsVisible="False">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="{DynamicResource UiGapMd}">
                 <materialIcons:MaterialIcon Kind="MonitorOff" Width="36" Height="36" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" />
-                <TextBlock Foreground="{DynamicResource SkuaTextBrush}" HorizontalAlignment="Center" FontSize="18" FontWeight="SemiBold" Text="Headless Mode Active" />
-                <TextBlock Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" FontSize="12" Text="Viewport suspended to minimize CPU and GPU usage" />
+                <TextBlock Foreground="{DynamicResource SkuaTextBrush}" HorizontalAlignment="Center" FontSize="{DynamicResource UiFontDisplay}" FontWeight="SemiBold" Text="Headless Mode Active" />
+                <TextBlock Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" FontSize="{DynamicResource UiFontBody}" Text="Viewport suspended to minimize CPU and GPU usage" />
             </StackPanel>
         </Grid>
       </Grid>
