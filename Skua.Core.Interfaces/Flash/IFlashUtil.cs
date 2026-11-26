@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using System.Globalization;
 using System.Text;
 using System.Xml.Linq;
 
@@ -175,6 +176,67 @@ public interface IFlashUtil : IDisposable
         }
     };
 
+    private static bool TryFastParsePrimitive<T>(string trimmed, out T? value)
+    {
+        Type t = typeof(T);
+        if (t == typeof(int))
+        {
+            if (int.TryParse(trimmed, NumberStyles.Integer, CultureInfo.InvariantCulture, out int iv))
+            {
+                value = (T)(object)iv;
+                return true;
+            }
+        }
+        else if (t == typeof(long))
+        {
+            if (long.TryParse(trimmed, NumberStyles.Integer, CultureInfo.InvariantCulture, out long lv))
+            {
+                value = (T)(object)lv;
+                return true;
+            }
+        }
+        else if (t == typeof(double))
+        {
+            if (double.TryParse(trimmed, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double dv))
+            {
+                value = (T)(object)dv;
+                return true;
+            }
+        }
+        else if (t == typeof(float))
+        {
+            if (float.TryParse(trimmed, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out float fv))
+            {
+                value = (T)(object)fv;
+                return true;
+            }
+        }
+        else if (t == typeof(bool))
+        {
+            if (string.Equals(trimmed, "true", StringComparison.OrdinalIgnoreCase))
+            {
+                value = (T)(object)true;
+                return true;
+            }
+            if (string.Equals(trimmed, "false", StringComparison.OrdinalIgnoreCase))
+            {
+                value = (T)(object)false;
+                return true;
+            }
+        }
+        else if (t == typeof(string))
+        {
+            if (trimmed.Length >= 2 && trimmed[0] == '"' && trimmed[^1] == '"' && trimmed.IndexOf('\\') < 0)
+            {
+                value = (T)(object)trimmed[1..^1];
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
     /// <summary>
     /// Gets an actionscript object at the given location and deserializes it as JSON to the given type.
     /// </summary>
@@ -190,6 +252,8 @@ public interface IFlashUtil : IDisposable
             string? trimmed = raw?.Trim();
             if (string.IsNullOrWhiteSpace(trimmed) || trimmed == "null" || trimmed == "undefined" || trimmed == "\"\"" || trimmed == "''")
                 return def;
+            if (TryFastParsePrimitive<T>(trimmed, out T? fast))
+                return fast;
             var result = JsonConvert.DeserializeObject<T>(trimmed, SafeJsonSettings);
             return result is null ? def : result;
         }
@@ -225,6 +289,8 @@ public interface IFlashUtil : IDisposable
             string? trimmed = raw?.Trim();
             if (string.IsNullOrWhiteSpace(trimmed) || trimmed == "null" || trimmed == "undefined" || trimmed == "\"\"" || trimmed == "''")
                 return def;
+            if (TryFastParsePrimitive<T>(trimmed, out T? fast))
+                return fast;
             var result = JsonConvert.DeserializeObject<T>(trimmed, SafeJsonSettings);
             return result is null ? def : result;
         }

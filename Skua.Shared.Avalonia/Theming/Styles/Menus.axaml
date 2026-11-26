@@ -103,6 +103,12 @@
         <Setter Property="MinWidth" Value="{DynamicResource UiMenuMinWidth}" />
     </Style>
 
+    <Style Selector="Separator">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource SkuaBorderBrush}" />
+        <Setter Property="Margin" Value="0,4" />
+    </Style>
+
     <Style Selector="MenuFlyoutPresenter Separator, ContextMenu Separator, Menu Separator">
         <Setter Property="Height" Value="1" />
         <Setter Property="Background" Value="{DynamicResource SkuaBorderBrush}" />

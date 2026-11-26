@@ -25,7 +25,6 @@
         <PackageReference Include="Avalonia.Themes.Fluent" />
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport" />
 
-        <PackageReference Include="Material.Avalonia" />
         <PackageReference Include="Material.Icons" />
         <PackageReference Include="Material.Icons.Avalonia" />
     </ItemGroup>

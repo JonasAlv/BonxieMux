@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Interactivity;
+using System;
 using System.Windows.Input;
 
 namespace Skua.Shared.Avalonia.Controls.Primitives;
@@ -47,9 +48,18 @@ public partial class SearchFilterBar : UserControl
         set => SetValue(RightContentProperty, value);
     }
 
+    public event EventHandler<string>? SearchTextChanged;
+
     public SearchFilterBar()
     {
         InitializeComponent();
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == SearchTextProperty)
+            SearchTextChanged?.Invoke(this, SearchText ?? string.Empty);
     }
 
     private void ClearBtn_Click(object? sender, RoutedEventArgs e)

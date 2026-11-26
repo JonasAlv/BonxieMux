@@ -5,21 +5,16 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using System;
-using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace Skua.Shared.Avalonia.Services;
 
 public static class ThemeResourceApplicator
 {
-    private static bool _materialChecked;
-    private static bool _hasMaterialStyles;
-
-    public static void ApplyTitleBarTheme(Application app, bool isDark, Color? accentColor = null, Color? accentTextColor = null)
+    public static void ApplyTitleBarTheme(Application app, bool isDark)
     {
         if (!Dispatcher.UIThread.CheckAccess())
         {
-            Dispatcher.UIThread.Post(() => ApplyTitleBarTheme(app, isDark, accentColor, accentTextColor));
+            Dispatcher.UIThread.Post(() => ApplyTitleBarTheme(app, isDark));
             return;
         }
 
@@ -31,12 +26,12 @@ public static class ThemeResourceApplicator
         {
             foreach (Window window in desktop.Windows.ToArray())
             {
-                ApplyTitleBarTheme(window, isDark, accentColor, accentTextColor);
+                ApplyTitleBarTheme(window, isDark);
             }
         }
     }
 
-    public static void ApplyTitleBarTheme(Window window, bool? isDarkTheme = null, Color? accentColor = null, Color? accentTextColor = null)
+    public static void ApplyTitleBarTheme(Window window, bool? isDarkTheme = null)
     {
         WindowResizeHelper.Attach(window);
 
@@ -48,11 +43,6 @@ public static class ThemeResourceApplicator
         ThemeVariant targetVariant = isDark ? ThemeVariant.Dark : ThemeVariant.Light;
         if (window.RequestedThemeVariant != targetVariant)
             window.RequestedThemeVariant = targetVariant;
-
-    }
-
-    public static void ApplyNativeTitleBar(IntPtr hwnd, bool isDark, Color captionColor, Color textColor)
-    {
     }
 
     public static void ApplyAccentBrushes(
@@ -61,17 +51,16 @@ public static class ThemeResourceApplicator
         Color primaryForeground,
         Color? secondary = null,
         Color? secondaryForeground = null,
-        bool? isDarkTheme = null)
+        bool? isDarkTheme = null,
+        Color? accentHover = null,
+        Color? accentPressed = null)
     {
-        Color sec = secondary ?? primary;
-        Color secFore = secondaryForeground ?? primaryForeground;
-
         SetOrUpdateColor(app.Resources, "SkuaAccentColor", primary);
         SetOrUpdateColor(app.Resources, "SkuaAccentForegroundColor", primaryForeground);
         SetOrUpdateBrush(app.Resources, "SkuaAccentBrush", primary);
         SetOrUpdateBrush(app.Resources, "SkuaAccentForegroundBrush", primaryForeground);
-        SetOrUpdateBrush(app.Resources, "SkuaAccentHoverBrush", Lighten(primary, 0.1));
-        SetOrUpdateBrush(app.Resources, "SkuaAccentPressedBrush", Darken(primary, 0.12));
+        SetOrUpdateBrush(app.Resources, "SkuaAccentHoverBrush", accentHover ?? Lighten(primary, 0.1));
+        SetOrUpdateBrush(app.Resources, "SkuaAccentPressedBrush", accentPressed ?? Darken(primary, 0.12));
 
         ApplyFluentAccent(app, primary, primaryForeground);
 
@@ -112,14 +101,6 @@ public static class ThemeResourceApplicator
             SetOrUpdateBrush(selDarkDict, "SkuaTagBorderBrush", Color.FromArgb(0x4D, primary.R, primary.G, primary.B));
             SetOrUpdateBrush(selDarkDict, "SkuaTagBorderHoverBrush", Color.FromArgb(0x80, primary.R, primary.G, primary.B));
             SetOrUpdateBrush(selDarkDict, "SkuaTagTextBrush", Lighten(primary, 0.18));
-        }
-
-        ApplyMaterialPaletteResources(app, primary, primaryForeground, sec, secFore);
-        TrySetMaterialAccent(app, primary, sec);
-
-        if (isDarkTheme is bool dark)
-        {
-            TrySetMaterialBaseTheme(app, dark);
         }
     }
 
@@ -182,176 +163,6 @@ public static class ThemeResourceApplicator
             return;
 
         dict[key] = color;
-    }
-
-    private static void EnsureMaterialChecked(Application app)
-    {
-        if (_materialChecked)
-            return;
-
-        foreach (object style in app.Styles)
-        {
-            string? fullName = style.GetType().FullName;
-            if (!string.IsNullOrWhiteSpace(fullName) && fullName.StartsWith("Material.Styles.Themes.", StringComparison.Ordinal))
-            {
-                _hasMaterialStyles = true;
-                break;
-            }
-        }
-        _materialChecked = true;
-    }
-
-    private static void TrySetMaterialBaseTheme(Application app, bool isDark)
-    {
-        EnsureMaterialChecked(app);
-        if (!_hasMaterialStyles)
-            return;
-
-        foreach (object style in app.Styles)
-        {
-            Type type = style.GetType();
-            string? fullName = type.FullName;
-            if (string.IsNullOrWhiteSpace(fullName) || !fullName.StartsWith("Material.Styles.Themes.", StringComparison.Ordinal))
-                continue;
-
-            try
-            {
-                PropertyInfo? property = type.GetProperty("BaseTheme", BindingFlags.Public | BindingFlags.Instance);
-                if (property?.CanWrite == true)
-                    property.SetValue(style, Enum.Parse(property.PropertyType, isDark ? "Dark" : "Light", ignoreCase: true));
-            }
-            catch
-            {
-            }
-        }
-    }
-
-    private static void TrySetMaterialAccent(Application app, Color primary, Color secondary)
-    {
-        EnsureMaterialChecked(app);
-        if (!_hasMaterialStyles)
-            return;
-
-        foreach (object style in app.Styles)
-        {
-            Type type = style.GetType();
-            string? fullName = type.FullName;
-            if (string.IsNullOrWhiteSpace(fullName) || !fullName.StartsWith("Material.Styles.Themes.", StringComparison.Ordinal))
-                continue;
-
-            TrySetThemeColor(style, type, "PrimaryColor", primary);
-            TrySetThemeColor(style, type, "SecondaryColor", secondary);
-            TrySetThemeColor(style, type, "PrimaryMid", primary);
-            TrySetThemeColor(style, type, "SecondaryMid", secondary);
-            TryInvokeThemeMethod(style, type, "SetPrimaryColor", primary);
-            TryInvokeThemeMethod(style, type, "SetSecondaryColor", secondary);
-        }
-    }
-
-    private static void ApplyMaterialPaletteResources(Application app, Color primary, Color primaryForeground, Color secondary, Color secondaryForeground)
-    {
-        Color primaryLight = Lighten(primary, 0.1);
-        Color primaryDark = Darken(primary, 0.12);
-        Color secondaryLight = Lighten(secondary, 0.1);
-        Color secondaryDark = Darken(secondary, 0.12);
-
-        SetColorResource(app, "MaterialPrimaryLightColor", primaryLight);
-        SetColorResource(app, "MaterialPrimaryMidColor", primary);
-        SetColorResource(app, "MaterialPrimaryDarkColor", primaryDark);
-        SetColorResource(app, "MaterialSecondaryLightColor", secondaryLight);
-        SetColorResource(app, "MaterialSecondaryMidColor", secondary);
-        SetColorResource(app, "MaterialSecondaryDarkColor", secondaryDark);
-
-        SetColorResource(app, "MaterialPrimaryLightForegroundColor", primaryForeground);
-        SetColorResource(app, "MaterialPrimaryMidForegroundColor", primaryForeground);
-        SetColorResource(app, "MaterialPrimaryForegroundColor", primaryForeground);
-        SetColorResource(app, "MaterialSecondaryLightForegroundColor", secondaryForeground);
-        SetColorResource(app, "MaterialSecondaryMidForegroundColor", secondaryForeground);
-        SetColorResource(app, "MaterialSecondaryDarkForegroundColor", secondaryForeground);
-
-        SetColorResource(app, "MaterialPrimaryColor", primary);
-        SetColorResource(app, "MaterialSecondaryColor", secondary);
-        SetColorResource(app, "MaterialSelectionColor", Color.FromArgb(0x55, primary.R, primary.G, primary.B));
-        SetColorResource(app, "MaterialFlatButtonClickColor", Color.FromArgb(0x66, primary.R, primary.G, primary.B));
-        SetColorResource(app, "MaterialFlatButtonRippleColor", Color.FromArgb(0x33, primary.R, primary.G, primary.B));
-    }
-
-    private static void SetColorResource(Application app, string colorKey, Color color)
-    {
-        SetOrUpdateColor(app.Resources, colorKey, color);
-
-        if (colorKey.EndsWith("Color", StringComparison.Ordinal))
-        {
-            string brushKey = colorKey[..^"Color".Length] + "Brush";
-            SetOrUpdateBrush(app.Resources, brushKey, color);
-        }
-    }
-
-    private static void TrySetThemeColor(object theme, Type themeType, string propertyName, Color color)
-    {
-        try
-        {
-            PropertyInfo? property = themeType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-            if (property?.CanWrite != true)
-                return;
-
-            object? value = CoerceValue(property.PropertyType, color);
-            if (value is not null)
-                property.SetValue(theme, value);
-        }
-        catch
-        {
-        }
-    }
-
-    private static void TryInvokeThemeMethod(object theme, Type themeType, string methodName, Color color)
-    {
-        try
-        {
-            MethodInfo[] methods = themeType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
-            foreach (MethodInfo method in methods)
-            {
-                if (!string.Equals(method.Name, methodName, StringComparison.Ordinal))
-                    continue;
-
-                ParameterInfo[] parameters = method.GetParameters();
-                if (!method.IsStatic && parameters.Length == 1)
-                {
-                    object? arg = CoerceValue(parameters[0].ParameterType, color);
-                    if (arg is null)
-                        continue;
-                    method.Invoke(theme, [arg]);
-                    return;
-                }
-
-                if (method.IsStatic && parameters.Length == 2 && parameters[0].ParameterType.IsInstanceOfType(theme))
-                {
-                    object? arg = CoerceValue(parameters[1].ParameterType, color);
-                    if (arg is null)
-                        continue;
-                    method.Invoke(null, [theme, arg]);
-                    return;
-                }
-            }
-        }
-        catch
-        {
-        }
-    }
-
-    private static object? CoerceValue(Type targetType, Color color)
-    {
-        if (targetType == typeof(Color))
-            return color;
-
-        ConstructorInfo? colorCtor = targetType.GetConstructor([typeof(Color)]);
-        if (colorCtor is not null)
-            return colorCtor.Invoke([color]);
-
-        if (targetType == typeof(string))
-            return color.ToString();
-
-        return null;
     }
 
     private static Color Lighten(Color color, double amount)
@@ -462,14 +273,17 @@ public static class ThemeResourceApplicator
             if (themeService is AvaloniaThemeService ats)
             {
                 ApplyVsCodePalette(app, ats.ActivePalette);
-                ApplyTitleBarTheme(app, isDark, ats.PrimaryColor, ats.PrimaryForegroundColor);
+                ApplyUiDensity(app, ats.IsComfortableDensity);
+                ApplyTitleBarTheme(app, isDark);
                 ApplyAccentBrushes(
                     app,
                     ats.PrimaryColor,
                     ats.PrimaryForegroundColor,
                     ats.SecondaryColor,
                     ats.SecondaryForegroundColor,
-                    isDarkTheme: isDark);
+                    isDarkTheme: isDark,
+                    accentHover: ats.UseThemeAccentColor ? ats.ActivePalette.AccentHover : null,
+                    accentPressed: ats.UseThemeAccentColor ? ats.ActivePalette.AccentPressed : null);
                 onApplied?.Invoke(ats);
                 return;
             }
@@ -484,5 +298,57 @@ public static class ThemeResourceApplicator
         themeService.ThemeChanged += theme => Apply(themeArg: theme);
         themeService.SchemeChanged += (scheme, color) => Apply(themeArg: color, scheme: scheme);
         Apply();
+    }
+
+    public static void ApplyUiDensity(Application app, bool comfortable)
+    {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(() => ApplyUiDensity(app, comfortable));
+            return;
+        }
+
+        double titleBarHeight = comfortable ? 35.0 : 30.0;
+        IResourceDictionary res = app.Resources;
+        res["UiTitleBarHeight"] = titleBarHeight;
+        res["UiTabBarHeight"] = comfortable ? 35.0 : 25.0;
+        res["UiActivityBarWidth"] = comfortable ? 48.0 : 36.0;
+        res["UiControlHeight"] = comfortable ? 32.0 : 28.0;
+        res["UiSmallControlHeight"] = comfortable ? 28.0 : 24.0;
+        res["UiChipHeight"] = comfortable ? 24.0 : 20.0;
+        res["UiMenuItemHeight"] = comfortable ? 28.0 : 26.0;
+        res["UiListItemMinHeight"] = comfortable ? 28.0 : 26.0;
+        res["UiScrollbarSize"] = comfortable ? 8.0 : 6.0;
+
+        res["UiFontMicro"] = 10.0;
+        res["UiFontSmall"] = comfortable ? 12.0 : 11.0;
+        res["UiFontBody"] = comfortable ? 13.0 : 12.0;
+        res["UiFontHeading"] = 14.0;
+        res["UiFontDisplay"] = 18.0;
+
+        res["UiGap2xs"] = comfortable ? 4.0 : 2.0;
+        res["UiGapXs"] = comfortable ? 6.0 : 4.0;
+        res["UiGapSm"] = comfortable ? 8.0 : 6.0;
+        res["UiGapMd"] = comfortable ? 10.0 : 8.0;
+        res["UiGapBase"] = comfortable ? 12.0 : 10.0;
+        res["UiGapLg"] = comfortable ? 16.0 : 12.0;
+        res["UiGapXl"] = comfortable ? 20.0 : 16.0;
+
+        res["UiPaddingXs"] = comfortable ? new Thickness(6) : new Thickness(4);
+        res["UiPaddingSm"] = comfortable ? new Thickness(8) : new Thickness(6);
+        res["UiCardPadding"] = comfortable ? new Thickness(14) : new Thickness(10);
+        res["UiCardCompactPadding"] = comfortable ? new Thickness(14, 12) : new Thickness(12, 10);
+        res["UiPaddingLg"] = comfortable ? new Thickness(16) : new Thickness(12);
+        res["UiControlPadding"] = comfortable ? new Thickness(12, 0) : new Thickness(10, 0);
+        res["UiButtonPadding"] = comfortable ? new Thickness(12, 0) : new Thickness(8, 0);
+
+        if (app.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            foreach (Window window in desktop.Windows.ToArray())
+            {
+                if (window.ExtendClientAreaToDecorationsHint)
+                    window.ExtendClientAreaTitleBarHeightHint = titleBarHeight;
+            }
+        }
     }
 }

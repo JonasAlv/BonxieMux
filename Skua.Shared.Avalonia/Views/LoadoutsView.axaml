@@ -34,7 +34,7 @@
     </Style>
   </UserControl.Styles>
 
-  <Grid Margin="14" ColumnDefinitions="240,*" ColumnSpacing="14">
+  <Grid Margin="14" ColumnDefinitions="240,*" ColumnSpacing="{DynamicResource UiGapLg}">
     <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapMd}">
       <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="{DynamicResource UiGapSm}" MinHeight="{DynamicResource UiSmallControlHeight}">
         <TextBlock Grid.Column="0" Classes="section-label" Text="LOADOUTS" VerticalAlignment="Center" />
@@ -67,7 +67,7 @@
                SelectedItem="{Binding SelectedLoadout, Mode=TwoWay}">
         <ListBox.ItemTemplate>
           <DataTemplate>
-            <StackPanel Spacing="3" Margin="4,4">
+            <StackPanel Spacing="{DynamicResource UiGapXs}" Margin="4,4">
               <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
               <TextBlock Text="{Binding Class}" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" TextTrimming="CharacterEllipsis" />
             </StackPanel>

@@ -41,11 +41,7 @@
                     <ItemsControl x:Name="CategoriesControl" Grid.IsSharedSizeScope="True">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="local:QuestCategory">
-                                <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                        BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                        BorderThickness="{DynamicResource UiBorderThin}"
-                                        CornerRadius="{DynamicResource UiRadiusCard}"
-                                        Padding="{DynamicResource UiPaddingLg}"
+                                <Border Classes="card-flat"                                        Padding="{DynamicResource UiPaddingLg}"
                                         Margin="0,0,0,12">
                                     <StackPanel Spacing="{DynamicResource UiGapMd}">
                                         <DockPanel Margin="0,0,0,4">
@@ -96,7 +92,7 @@
                                                                 CornerRadius="{DynamicResource UiRadiusControl}"
                                                                 Height="{DynamicResource UiChipHeight}"
                                                                 MinWidth="80"
-                                                                Padding="8,0"
+                                                                Padding="{DynamicResource UiButtonPadding}"
                                                                 Margin="4,0"
                                                                 VerticalAlignment="Center">
                                                             <TextBlock Text="{Binding StatusText}"
@@ -111,7 +107,7 @@
                                                                 Classes="skua-button"
                                                                 Content="Start"
                                                                 Height="{DynamicResource UiSmallControlHeight}"
-                                                                Padding="10,0"
+                                                                Padding="{DynamicResource UiControlPadding}"
                                                                 Margin="6,0,0,0"
                                                                 VerticalAlignment="Center"
                                                                 IsVisible="{Binding ShowScript}"

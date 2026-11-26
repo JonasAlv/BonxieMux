@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,6 +11,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Skua.Core.Interfaces;
+using Skua.Core.Messaging;
 using Skua.Core.Models;
 using Skua.Core.Utils;
 
@@ -26,6 +28,13 @@ public partial class AppUpdaterViewModel : ObservableObject
     {
         _dispatcherService = dispatcherService;
         _settingsService = settingsService;
+
+        StrongReferenceMessenger.Default.Register<AppUpdaterViewModel, CheckClientUpdateMessage>(this, async (recipient, _) =>
+        {
+            await recipient.CheckForUpdateAsync();
+            if (recipient.UpdateAvailable)
+                StrongReferenceMessenger.Default.Send<ShowMainWindowMessage>();
+        });
     }
 
     [ObservableProperty]

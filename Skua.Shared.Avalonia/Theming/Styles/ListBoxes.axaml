@@ -49,6 +49,10 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
 
+    <Style Selector="ListBoxItem:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+    </Style>
+
     <Style Selector="ListBox.card-list ListBoxItem">
         <Setter Property="Padding" Value="0" />
         <Setter Property="BorderThickness" Value="0" />
@@ -83,13 +87,13 @@
         <Setter Property="Background" Value="Transparent" />
     </Style>
 
-    <Style Selector="ListBox.top-tabs, ListBox.top-tabs-client">
+    <Style Selector="ListBox.top-tabs">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusNone}" />
     </Style>
 
-    <Style Selector="ListBox.top-tabs ListBoxItem,ListBox.top-tabs-client ListBoxItem">
+    <Style Selector="ListBox.top-tabs ListBoxItem">
         <Setter Property="Height" Value="{DynamicResource UiControlHeight}" />
         <Setter Property="MinWidth" Value="96" />
         <Setter Property="Padding" Value="0" />
@@ -101,29 +105,29 @@
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
-    <Style Selector="ListBox.top-tabs ListBoxItem /template/ ContentPresenter#PART_ContentPresenter, ListBox.top-tabs-client ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="ListBox.top-tabs ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
         <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
         <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
     </Style>
-    <Style Selector="ListBox.top-tabs ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.top-tabs-client ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="ListBox.top-tabs ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
-    <Style Selector="ListBox.top-tabs ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBox.top-tabs-client ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="ListBox.top-tabs ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
-    <Style Selector="ListBox.top-tabs ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.top-tabs-client ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="ListBox.top-tabs ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaAccentTintStrongBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
-    <Style Selector="ListBox.top-tabs ListBoxItem:selected TextBlock, ListBox.top-tabs-client ListBoxItem:selected TextBlock">
+    <Style Selector="ListBox.top-tabs ListBoxItem:selected TextBlock">
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 

@@ -126,10 +126,7 @@ public partial class App : Application
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
                 desktop.MainWindow is Views.TabbedHostWindow hostWindow)
             {
-                hostWindow.MainTitleBar.UseAccentBackground = ats.UseAccentOnMainTitleBar;
-                ThemeResourceApplicator.ApplyTitleBarTheme(hostWindow, ats.IsDarkTheme,
-                    ats.UseAccentOnMainTitleBar ? ats.PrimaryColor : (Color?)null,
-                    ats.UseAccentOnMainTitleBar ? ats.PrimaryForegroundColor : (Color?)null);
+                ThemeResourceApplicator.ApplyTitleBarTheme(hostWindow, ats.IsDarkTheme);
             }
             QueueHostThemeSync(ats);
         });
@@ -384,12 +381,7 @@ public partial class App : Application
                 SetupTrayIcon();
                 Views.TabbedHostWindow masterWindow = new(clientArgs);
                 desktop.MainWindow = masterWindow;
-                if (themeService is AvaloniaThemeService activeTheme)
-                    ThemeResourceApplicator.ApplyTitleBarTheme(masterWindow, activeTheme.IsDarkTheme,
-                        activeTheme.UseAccentOnMainTitleBar ? activeTheme.PrimaryColor : (Color?)null,
-                        activeTheme.UseAccentOnMainTitleBar ? activeTheme.PrimaryForegroundColor : (Color?)null);
-                else
-                    ThemeResourceApplicator.ApplyTitleBarTheme(masterWindow, themeService.IsDarkTheme);
+                ThemeResourceApplicator.ApplyTitleBarTheme(masterWindow, themeService.IsDarkTheme);
             }
             desktop.Exit += OnDesktopExit;
         }
@@ -594,7 +586,7 @@ public partial class App : Application
     {
         try
         {
-            string message = $"THEME|{themeService.UseAccentOnMainTitleBar}|{themeService.IsDarkTheme}|{themeService.PrimaryHex}|{themeService.ForegroundHex}|{themeService.ActiveThemeName}";
+            string message = $"THEME|{themeService.IsDarkTheme}|{themeService.PrimaryHex}|{themeService.ForegroundHex}|{themeService.ActiveThemeName}|{themeService.IsComfortableDensity}";
             _ = Task.Run(() =>
             {
                 for (int attempt = 0; attempt < 5; attempt++)

@@ -16,8 +16,8 @@
                    FontWeight="Bold"
                    HorizontalAlignment="Center"
                    Foreground="{DynamicResource SkuaTextBrush}" />
-        <ProgressBar IsIndeterminate="True"
-                     Height="4"
+        <ProgressBar Classes="slim"
+                     IsIndeterminate="True"
                      Width="200"
                      HorizontalAlignment="Center"
                      IsVisible="{Binding IsLoading, RelativeSource={RelativeSource AncestorType=local:EmptyStateView}}" />

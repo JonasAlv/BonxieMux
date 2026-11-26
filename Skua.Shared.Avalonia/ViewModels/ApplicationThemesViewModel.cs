@@ -25,6 +25,18 @@ public class ApplicationThemesViewModel : BotControlViewModelBase
         _settingsService = settingsService;
         _managerTitleBarArtworkPath = _settingsService.Get<string>("ManagerTitleBarArtworkPath") ?? string.Empty;
 
+        if (themeService is AvaloniaThemeService ats)
+        {
+            ats.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(AvaloniaThemeService.IsComfortableDensity))
+                {
+                    OnPropertyChanged(nameof(IsCompactDensity));
+                    OnPropertyChanged(nameof(IsComfortableDensity));
+                }
+            };
+        }
+
         UninstallInstalledThemeCommand = new RelayCommand<InstalledThemeItemViewModel?>(UninstallInstalledTheme);
         RefreshInstalledThemes();
     }
@@ -89,29 +101,27 @@ public class ApplicationThemesViewModel : BotControlViewModelBase
         }
     }
 
-    public bool UseAccentOnMainTitleBar
+    public bool IsCompactDensity
     {
-        get => ThemeService is AvaloniaThemeService avaloniaTheme && avaloniaTheme.UseAccentOnMainTitleBar;
+        get => ThemeService is not AvaloniaThemeService avaloniaTheme || !avaloniaTheme.IsComfortableDensity;
         set
         {
-            if (ThemeService is not AvaloniaThemeService avaloniaTheme || avaloniaTheme.UseAccentOnMainTitleBar == value)
-                return;
-
-            avaloniaTheme.UseAccentOnMainTitleBar = value;
-            OnPropertyChanged();
+            if (value)
+                IsComfortableDensity = false;
         }
     }
 
-    public bool UseAccentOnManagerTitleBar
+    public bool IsComfortableDensity
     {
-        get => ThemeService is AvaloniaThemeService avaloniaTheme && avaloniaTheme.UseAccentOnManagerTitleBar;
+        get => ThemeService is AvaloniaThemeService avaloniaTheme && avaloniaTheme.IsComfortableDensity;
         set
         {
-            if (ThemeService is not AvaloniaThemeService avaloniaTheme || avaloniaTheme.UseAccentOnManagerTitleBar == value)
+            if (ThemeService is not AvaloniaThemeService avaloniaTheme || avaloniaTheme.IsComfortableDensity == value)
                 return;
 
-            avaloniaTheme.UseAccentOnManagerTitleBar = value;
-            OnPropertyChanged();
+            avaloniaTheme.IsComfortableDensity = value;
+            OnPropertyChanged(nameof(IsCompactDensity));
+            OnPropertyChanged(nameof(IsComfortableDensity));
         }
     }
 }

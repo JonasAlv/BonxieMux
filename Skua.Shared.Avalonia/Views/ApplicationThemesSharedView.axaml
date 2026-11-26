@@ -10,7 +10,7 @@
 
   <Grid Margin="12" RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapBase}">
     <ListBox Grid.Row="0"
-             Classes="top-tabs-client"
+             Classes="top-tabs"
              ItemsSource="{Binding ThemeSections}"
              SelectedItem="{Binding SelectedThemeSection, Mode=TwoWay}"
              ScrollViewer.HorizontalScrollBarVisibility="Auto"
@@ -31,27 +31,24 @@
                   HorizontalScrollBarVisibility="Disabled"
                   VerticalScrollBarVisibility="Auto">
       <Panel>
-        <Border IsVisible="{Binding IsThemesSection}"
-                Background="{DynamicResource SkuaSurfaceBrush}"
-                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="{DynamicResource UiBorderThin}"
-                CornerRadius="{DynamicResource UiRadiusCard}"
+        <Border Classes="card" IsVisible="{Binding IsThemesSection}"
                 Padding="14"
                 VerticalAlignment="Top">
-          <StackPanel Spacing="14">
-            <StackPanel Spacing="{DynamicResource UiGap2xs}" IsVisible="{Binding !IsManager, ElementName=Root}">
-              <CheckBox Content="Use theme accent on the main title bar"
-                        IsChecked="{Binding UseAccentOnMainTitleBar, Mode=TwoWay}" />
-              <TextBlock Text="When enabled, the main BonxieMux window title bar follows the active theme accent. Turn it off to keep the normal surface color."
-                         FontSize="{DynamicResource UiFontSmall}"
-                         Foreground="{DynamicResource SkuaMutedTextBrush}"
-                         TextWrapping="Wrap" />
-            </StackPanel>
-
-            <StackPanel Spacing="{DynamicResource UiGap2xs}" IsVisible="{Binding IsManager, ElementName=Root}">
-              <CheckBox Content="Use theme accent on the Manager title bar"
-                        IsChecked="{Binding UseAccentOnManagerTitleBar, Mode=TwoWay}" />
-              <TextBlock Text="When enabled, the Manager window title bar follows the active theme accent. Turn it off to keep the normal surface color."
+          <StackPanel Spacing="{DynamicResource UiGapLg}">
+            <StackPanel Spacing="{DynamicResource UiGapXs}">
+              <TextBlock Text="UI Density"
+                         FontSize="{DynamicResource UiFontBody}"
+                         FontWeight="SemiBold"
+                         Foreground="{DynamicResource SkuaTextBrush}" />
+              <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapLg}">
+                <RadioButton Content="Compact"
+                             GroupName="UiDensity"
+                             IsChecked="{Binding IsCompactDensity, Mode=TwoWay}" />
+                <RadioButton Content="Comfortable"
+                             GroupName="UiDensity"
+                             IsChecked="{Binding IsComfortableDensity, Mode=TwoWay}" />
+              </StackPanel>
+              <TextBlock Text="Compact uses dense VS Code-style metrics (28px controls). Comfortable increases control heights, spacing, and typography."
                          FontSize="{DynamicResource UiFontSmall}"
                          Foreground="{DynamicResource SkuaMutedTextBrush}"
                          TextWrapping="Wrap" />
@@ -63,11 +60,7 @@
           </StackPanel>
         </Border>
 
-        <Border IsVisible="{Binding IsInstalledSection}"
-                Background="{DynamicResource SkuaSurfaceBrush}"
-                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="{DynamicResource UiBorderThin}"
-                CornerRadius="{DynamicResource UiRadiusCard}"
+        <Border Classes="card" IsVisible="{Binding IsInstalledSection}"
                 Padding="14"
                 VerticalAlignment="Top">
           <ItemsControl ItemsSource="{Binding InstalledThemes}">

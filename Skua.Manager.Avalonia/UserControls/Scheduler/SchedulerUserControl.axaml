@@ -1,0 +1,247 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Skua.Manager.Avalonia.ViewModels"
+             xmlns:local="clr-namespace:Skua.Manager.Avalonia.UserControls"
+             xmlns:models="clr-namespace:Skua.Core.Models;assembly=Skua.Core.Models"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.Manager.Avalonia.UserControls.SchedulerUserControl"
+             x:DataType="vm:SchedulerViewModel"
+             d:DesignWidth="900"
+             d:DesignHeight="600"
+             mc:Ignorable="d">
+
+    <UserControl.Styles>
+        <Style Selector="Button.card-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Border.history-card">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
+            <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
+            <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusCard}" />
+            <Setter Property="Padding" Value="7,5" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.1" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.1" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.history-card:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
+        </Style>
+        <Style Selector="Border.history-card.selected">
+            <Setter Property="Background" Value="{DynamicResource SkuaSelectionBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid Margin="12" RowDefinitions="Auto,Auto,*" RowSpacing="{DynamicResource UiGapBase}">
+
+        <!-- 1. Header Toolbar (Row 0) -->
+        <Border Classes="card" Grid.Row="0" Padding="{DynamicResource UiCardCompactPadding}">
+            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                
+                <!-- Left Title & Master Status Pill -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapBase}" VerticalAlignment="Center">
+                    <TextBlock Text="Task Scheduler" FontSize="{DynamicResource UiFontHeading}" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+
+                    <!-- Master Active / Paused Pill -->
+                    <Border Background="{DynamicResource SkuaSurfaceAltBrush}" CornerRadius="{DynamicResource UiRadiusControl}" Padding="8,3" VerticalAlignment="Center"
+                            ToolTip.Tip="Master Scheduler Engine. When active, all enabled tasks are automatically evaluated and triggered according to their schedule. When paused, the background timer stops running tasks.">
+                        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+                            <ToggleSwitch IsChecked="{Binding IsSchedulerActive}" OnContent="" OffContent="" Margin="0"
+                                          ToolTip.Tip="Master Scheduler Engine. When active, all enabled tasks are automatically evaluated and triggered according to their schedule. When paused, the background timer stops running tasks." />
+                            <TextBlock Text="{Binding EngineStatusText}" 
+                                       Foreground="{Binding EngineStatusBrush}"
+                                       FontSize="{DynamicResource UiFontSmall}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Right Action Buttons -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
+                    <Button Classes="skua-button skua-primary" Height="{DynamicResource UiControlHeight}" Padding="14,0" Command="{Binding AddJobCommand}"
+                            Content="New Task" FontWeight="Bold" FontSize="{DynamicResource UiFontSmall}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 2. Compact Settings & Summary Strip (Row 1) -->
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center" Margin="2,0">
+            <!-- Left: Compact Toggles -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapLg}">
+                <Border Background="{DynamicResource SkuaSurfaceAltBrush}" CornerRadius="{DynamicResource UiRadiusControl}" Padding="8,3"
+                        ToolTip.Tip="When checked, the Scheduler engine automatically turns on and begins evaluating scheduled tasks whenever BonxieMux Manager is launched.">
+                    <CheckBox IsChecked="{Binding AutoStartWithManager}" Content="Auto-start with Manager" FontSize="{DynamicResource UiFontSmall}" Margin="0"
+                              ToolTip.Tip="When checked, the Scheduler engine automatically turns on and begins evaluating scheduled tasks whenever BonxieMux Manager is launched." />
+                </Border>
+                <Border Background="{DynamicResource SkuaSurfaceAltBrush}" CornerRadius="{DynamicResource UiRadiusControl}" Padding="6,2"
+                        ToolTip.Tip="Select preferred clock format (12-hour AM/PM or 24-hour) across the task scheduler.">
+                    <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+                        <TextBlock Text="Clock:" FontSize="{DynamicResource UiFontSmall}" VerticalAlignment="Center" />
+                        <ComboBox SelectedIndex="{Binding ClockFormatIndex, Mode=TwoWay}" Width="120" Height="{DynamicResource UiSmallControlHeight}" FontSize="{DynamicResource UiFontSmall}" VerticalAlignment="Center">
+                            <ComboBoxItem Content="12-Hour (AM/PM)" />
+                            <ComboBoxItem Content="24-Hour" />
+                        </ComboBox>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Right: Live Count -->
+            <TextBlock Grid.Column="2" 
+                       Text="{Binding Jobs.Count, StringFormat='{}{0} Tasks Configured'}" 
+                       FontSize="{DynamicResource UiFontSmall}" 
+                       FontWeight="SemiBold" 
+                       Opacity="{DynamicResource UiSubtleOpacity}" 
+                       VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- 3. Task Cards List (Row 2) -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="{DynamicResource UiGapMd}">
+
+                <!-- Empty State -->
+                <Border Classes="card" IsVisible="{Binding !Jobs.Count}"
+                        Padding="36"
+                        Margin="0,20,0,0"
+                        HorizontalAlignment="Center">
+                    <primitives:EmptyStateView IconKind="CalendarClockOutline"
+                                               Title="No Scheduled Tasks Yet"
+                                               Description="Click '+ New Task' above to schedule automated script playlists or army presets."
+                                               ActionText="+ Create Your First Task"
+                                               ActionCommand="{Binding AddJobCommand}" />
+                </Border>
+
+                <!-- Cards List -->
+                <ItemsControl ItemsSource="{Binding Jobs}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:ScheduledJobViewModel">
+                            <Border Classes="card"                                    Padding="{DynamicResource UiCardCompactPadding}" 
+                                    Margin="0,0,0,8">
+                                <Grid RowDefinitions="Auto,Auto,Auto">
+
+                                    <!-- Top Row: Status Dot, Name, Toggle, Next Run, Action Toolbar -->
+                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{DynamicResource UiGapBase}" VerticalAlignment="Center">
+                                        
+                                        <!-- Status Badge -->
+                                        <Border Grid.Column="0" Background="{Binding StatusBrush}" CornerRadius="{DynamicResource UiRadiusControl}" Padding="6,2" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource SkuaAccentForegroundBrush}" FontWeight="Bold" FontSize="{DynamicResource UiFontMicro}" />
+                                        </Border>
+
+                                        <!-- Task Name + Enable Switch -->
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" FontSize="{DynamicResource UiFontHeading}" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+                                            <ToggleSwitch IsChecked="{Binding IsEnabled}" OnContent="" OffContent="" Margin="0" VerticalAlignment="Center" ToolTip.Tip="Toggle Task Enabled" />
+                                        </StackPanel>
+
+                                        <!-- Next Run Pill -->
+                                        <Border Grid.Column="2" Background="{DynamicResource SkuaSurfaceAltBrush}" CornerRadius="{DynamicResource UiRadiusControl}" Padding="6,2" VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}">
+                                                <TextBlock Text="{Binding NextRunCountdownText}" FontSize="{DynamicResource UiFontSmall}" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding NextRunFormatted, StringFormat='{}· {0}'}" FontSize="{DynamicResource UiFontMicro}" Opacity="{DynamicResource UiSubtleOpacity}" VerticalAlignment="Center" IsVisible="{Binding IsEnabled}" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Quick Action Toolbar -->
+                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
+                                            <Button Classes="skua-button" Width="28" Height="{DynamicResource UiControlHeight}" Padding="0" ToolTip.Tip="Run Now" Command="{Binding RunNowCommand}">
+                                                <materialIcons:MaterialIcon Kind="Play" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaSuccessBrush}" />
+                                            </Button>
+
+                                            <Button Classes="skua-button" Width="28" Height="{DynamicResource UiControlHeight}" Padding="0" ToolTip.Tip="Stop Execution" IsVisible="{Binding IsRunning}" Command="{Binding StopJobCommand}">
+                                                <materialIcons:MaterialIcon Kind="Stop" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaDangerBrush}" />
+                                            </Button>
+
+                                            <Button Classes="skua-button" Width="28" Height="{DynamicResource UiControlHeight}" Padding="0" ToolTip.Tip="Edit Task"
+                                                    Command="{Binding $parent[UserControl].((vm:SchedulerViewModel)DataContext).EditJobCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <materialIcons:MaterialIcon Kind="Pencil" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                                            </Button>
+
+                                            <Button Classes="skua-button" Width="28" Height="{DynamicResource UiControlHeight}" Padding="0" ToolTip.Tip="Duplicate Task"
+                                                    Command="{Binding $parent[UserControl].((vm:SchedulerViewModel)DataContext).DuplicateJobCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <materialIcons:MaterialIcon Kind="ContentCopy" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                                            </Button>
+
+                                            <Button Classes="skua-button" Width="28" Height="{DynamicResource UiControlHeight}" Padding="0" ToolTip.Tip="Delete Task"
+                                                    Command="{Binding $parent[UserControl].((vm:SchedulerViewModel)DataContext).DeleteJobCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <materialIcons:MaterialIcon Kind="DeleteOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaDangerBrush}" />
+                                            </Button>
+
+                                            <Button Classes="skua-button" Width="28" Height="{DynamicResource UiControlHeight}" Padding="0" ToolTip.Tip="History &amp; Logs" Command="{Binding ToggleExpandedCommand}">
+                                                <materialIcons:MaterialIcon Kind="{Binding ExpandIconKind}" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Bottom Row: Metadata Badges Strip -->
+                                    <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,6,0,0">
+                                        <!-- Target Badge -->
+                                        <Border Background="{DynamicResource SkuaSurfaceAltBrush}" CornerRadius="{DynamicResource UiRadiusControl}" Padding="5,2" Margin="0,0,6,2"
+                                                ToolTip.Tip="{Binding TargetTooltipText}">
+                                            <TextBlock Text="{Binding TargetDisplayText}" FontSize="{DynamicResource UiFontMicro}" FontWeight="Medium" />
+                                        </Border>
+
+                                        <!-- Trigger Badge -->
+                                        <Border Background="{DynamicResource SkuaSurfaceAltBrush}" CornerRadius="{DynamicResource UiRadiusControl}" Padding="5,2" Margin="0,0,6,2"
+                                                ToolTip.Tip="{Binding TriggerTooltipText}">
+                                            <TextBlock Text="{Binding TriggerDisplayText}" FontSize="{DynamicResource UiFontMicro}" FontWeight="Medium" />
+                                        </Border>
+
+                                        <!-- Scripts Badge -->
+                                        <Border Background="{DynamicResource SkuaSurfaceAltBrush}" CornerRadius="{DynamicResource UiRadiusControl}" Padding="5,2" Margin="0,0,6,2"
+                                                ToolTip.Tip="{Binding ScriptsTooltipText}">
+                                            <TextBlock Text="{Binding PipelineDisplayText}" FontSize="{DynamicResource UiFontMicro}" FontWeight="Medium" />
+                                        </Border>
+
+                                        <!-- Last Run Badge -->
+                                        <Border Background="{DynamicResource SkuaSurfaceAltBrush}" CornerRadius="{DynamicResource UiRadiusControl}" Padding="5,2" Margin="0,0,6,2"
+                                                ToolTip.Tip="{Binding LastRunTooltipText}">
+                                            <TextBlock Text="{Binding LastRunDisplayText}" FontSize="{DynamicResource UiFontMicro}" FontWeight="Medium" />
+                                        </Border>
+                                    </WrapPanel>
+
+                                    <!-- Expandable History & Logs Drawer -->
+                                    <Border Grid.Row="2" IsVisible="{Binding IsExpanded}" 
+                                            Background="Transparent" 
+                                            BorderBrush="{DynamicResource SkuaBorderBrush}" 
+                                            BorderThickness="0,1,0,0" 
+                                            Margin="0,8,0,0" 
+                                            Padding="0,10,0,2">
+                                        <local:SchedulerRunDiagnosticsPanel />
+                                    </Border>
+
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </StackPanel>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>

@@ -251,6 +251,8 @@ struct DmabufState {
     start_time: Instant,
     desired_width: i32,
     desired_height: i32,
+    configured_width: i32,
+    configured_height: i32,
     main_surface: Option<WlSurface>,
     toplevel: Option<XdgToplevel>,
     xdg_surface: Option<XdgSurface>,
@@ -267,6 +269,8 @@ struct DmabufState {
     uncapped: bool,
     interpolation: bool,
     visible: bool,
+    hidden_since: Option<Instant>,
+    hidden_shrunk: bool,
     uncapped_path: Option<PathBuf>,
     interpolation_path: Option<PathBuf>,
     last_uncapped_check: Instant,
@@ -274,6 +278,10 @@ struct DmabufState {
     pending_cb_since: Option<Instant>,
     last_cb_flush: Instant,
 }
+
+const MIN_SURFACE_W: i32 = 160;
+const MIN_SURFACE_H: i32 = 92;
+const HIDDEN_SHRINK_DELAY: Duration = Duration::from_secs(3);
 
 impl DmabufState {
     fn next_serial(&mut self) -> u32 {
@@ -283,6 +291,22 @@ impl DmabufState {
 
     fn time_ms(&self) -> u32 {
         self.start_time.elapsed().as_millis() as u32
+    }
+
+    fn send_configure_size(&mut self, w: i32, h: i32) {
+        if w != self.configured_width || h != self.configured_height {
+            self.configured_width = w;
+            self.configured_height = h;
+            for out in &self.outputs {
+                out.mode(Mode::Current | Mode::Preferred, w, h, self.refresh_mhz as i32);
+                out.done();
+            }
+            if let (Some(tl), Some(xs)) = (self.toplevel.clone(), self.xdg_surface.clone()) {
+                let serial = self.next_serial();
+                tl.configure(w, h, vec![4, 0, 0, 0]);
+                xs.configure(serial);
+            }
+        }
     }
 
     // Mugetsu's uncapped and FPS-limit settings only apply when Frame Interpolation is enabled.
@@ -357,12 +381,12 @@ fn decide_frame_cb_action(
     }
 
     if !visible {
-        const HIDDEN_CB_INTERVAL: Duration = Duration::from_millis(100);
+        const HIDDEN_CB_INTERVAL: Duration = Duration::from_millis(50);
         if elapsed_since_pending >= HIDDEN_CB_INTERVAL {
             return FrameCbDecision::FlushNow;
         }
         let rem = HIDDEN_CB_INTERVAL.saturating_sub(elapsed_since_pending);
-        return FrameCbDecision::WaitMs((rem.as_millis() as i32).clamp(1, 100));
+        return FrameCbDecision::WaitMs((rem.as_millis() as i32).clamp(1, 50));
     }
 
     if uncapped {
@@ -437,6 +461,8 @@ fn run_dmabuf_loop(
         start_time: Instant::now(),
         desired_width: width as i32,
         desired_height: height as i32,
+        configured_width: width as i32,
+        configured_height: height as i32,
         main_surface: None,
         toplevel: None,
         xdg_surface: None,
@@ -453,6 +479,8 @@ fn run_dmabuf_loop(
         uncapped: initial_uncapped,
         interpolation: initial_interpolation,
         visible: true,
+        hidden_since: None,
+        hidden_shrunk: false,
         uncapped_path,
         interpolation_path,
         last_uncapped_check: Instant::now(),
@@ -484,11 +512,31 @@ fn run_dmabuf_loop(
             }
         }
 
+        if !state.visible
+            && !state.hidden_shrunk
+            && state
+                .hidden_since
+                .is_some_and(|t| t.elapsed() >= HIDDEN_SHRINK_DELAY)
+        {
+            state.hidden_shrunk = true;
+            state.send_configure_size(MIN_SURFACE_W, MIN_SURFACE_H);
+            if let Ok(mut g) = state.frame.lock() {
+                *g = None;
+            }
+            if let Some(old_disp) = state.displayed_buffer.take() {
+                old_disp.release();
+            }
+            if let Some((_, old_staged)) = state.staged_buffer.take() {
+                old_staged.release();
+            }
+            state.flush_frame_callbacks();
+        }
+
         let elapsed_since_flush = state.last_cb_flush.elapsed();
         let elapsed_since_pending = state
             .pending_cb_since
             .map_or(Duration::ZERO, |s| s.elapsed());
-        let poll_timeout_ms = match decide_frame_cb_action(
+        let mut poll_timeout_ms = match decide_frame_cb_action(
             !state.pending_frame_callbacks.is_empty(),
             state.visible,
             state.effective_uncapped(),
@@ -504,6 +552,13 @@ fn run_dmabuf_loop(
             }
             FrameCbDecision::WaitMs(ms) => ms,
         };
+        if !state.visible && !state.hidden_shrunk {
+            if let Some(since) = state.hidden_since {
+                let rem = HIDDEN_SHRINK_DELAY.saturating_sub(since.elapsed());
+                let rem_ms = (rem.as_millis() as i32).clamp(1, 1000);
+                poll_timeout_ms = poll_timeout_ms.min(rem_ms);
+            }
+        }
 
         let _ = display.flush_clients();
         let mut pfds = [
@@ -656,20 +711,12 @@ fn handle_input(state: &mut DmabufState, ev: DmabufInput) {
             }
         }
         DmabufInput::Resize { width, height } => {
-            let w = width.max(320) as i32;
-            let h = height.max(240) as i32;
-            if w != state.desired_width || h != state.desired_height {
-                state.desired_width = w;
-                state.desired_height = h;
-                for out in &state.outputs {
-                    out.mode(Mode::Current | Mode::Preferred, w, h, state.refresh_mhz as i32);
-                    out.done();
-                }
-                if let (Some(tl), Some(xs)) = (state.toplevel.clone(), state.xdg_surface.clone()) {
-                    let serial = state.next_serial();
-                    tl.configure(w, h, vec![4, 0, 0, 0]);
-                    xs.configure(serial);
-                }
+            let w = (width as i32).max(MIN_SURFACE_W);
+            let h = (height as i32).max(MIN_SURFACE_H);
+            state.desired_width = w;
+            state.desired_height = h;
+            if !state.hidden_shrunk {
+                state.send_configure_size(w, h);
             }
         }
         DmabufInput::SetRefreshMhz { mhz } => {
@@ -701,8 +748,18 @@ fn handle_input(state: &mut DmabufState, ev: DmabufInput) {
         }
         DmabufInput::SetVisible { visible } => {
             let became_visible = visible && !state.visible;
+            let became_hidden = !visible && state.visible;
             state.visible = visible;
-            if became_visible {
+            if became_hidden {
+                state.hidden_since = Some(Instant::now());
+            } else if became_visible {
+                state.hidden_since = None;
+                if state.hidden_shrunk {
+                    state.hidden_shrunk = false;
+                    let w = state.desired_width;
+                    let h = state.desired_height;
+                    state.send_configure_size(w, h);
+                }
                 state.flush_frame_callbacks();
             }
         }
@@ -797,7 +854,7 @@ impl Dispatch<WlSurface, Mutex<SurfaceData>> for DmabufState {
                 let is_main = state.main_surface.as_ref() == Some(resource);
                 let has_buf = buf_opt.is_some();
                 if let Some(buf) = buf_opt {
-                    if is_main {
+                    if is_main && state.visible {
                         if let Some(DmabufBufferKind::Dmabuf(dframe)) = buf.data::<DmabufBufferKind>() {
                             publish_dmabuf_frame(state, dframe);
                         }
@@ -807,6 +864,14 @@ impl Dispatch<WlSurface, Mutex<SurfaceData>> for DmabufState {
                             old_staged.release();
                         }
                     } else {
+                        if is_main {
+                            if let Some(old_disp) = state.displayed_buffer.take() {
+                                old_disp.release();
+                            }
+                            if let Some((_, old_staged)) = state.staged_buffer.take() {
+                                old_staged.release();
+                            }
+                        }
                         buf.release();
                     }
                 }
@@ -1762,7 +1827,7 @@ mod tests {
     }
 
     #[test]
-    fn hidden_tab_throttles_to_100ms_and_uncapped_flushes_immediately() {
+    fn hidden_tab_throttles_to_50ms_and_uncapped_flushes_immediately() {
         assert_eq!(
             decide_frame_cb_action(
                 true,
@@ -1774,7 +1839,7 @@ mod tests {
                 Duration::from_millis(20),
                 Duration::from_millis(20),
             ),
-            FrameCbDecision::WaitMs(80)
+            FrameCbDecision::WaitMs(30)
         );
         assert_eq!(
             decide_frame_cb_action(
@@ -1784,8 +1849,8 @@ mod tests {
                 60_000,
                 8,
                 8,
-                Duration::from_millis(100),
-                Duration::from_millis(100),
+                Duration::from_millis(50),
+                Duration::from_millis(50),
             ),
             FrameCbDecision::FlushNow
         );

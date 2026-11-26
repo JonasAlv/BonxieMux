@@ -15,6 +15,7 @@ public static class UiTokens
     public const string UiSmallControlHeight = nameof(UiSmallControlHeight);
     public const string UiTitleBarHeight = nameof(UiTitleBarHeight);
     public const string UiTabBarHeight = nameof(UiTabBarHeight);
+    public const string UiStatusBarHeight = nameof(UiStatusBarHeight);
     public const string UiActivityBarWidth = nameof(UiActivityBarWidth);
     public const string UiSidebarWidth = nameof(UiSidebarWidth);
     public const string UiChipHeight = nameof(UiChipHeight);
@@ -58,28 +59,43 @@ public static class UiTokens
     public const string UiButtonPadding = nameof(UiButtonPadding);
     public const string UiMenuPadding = nameof(UiMenuPadding);
 
-    // Borders & Bounds
+    // Borders & Bounds & Opacities
     public const string UiBorderThin = nameof(UiBorderThin);
     public const string UiFocusBorderThickness = nameof(UiFocusBorderThickness);
     public const string UiActiveBarThickness = nameof(UiActiveBarThickness);
     public const string UiPopupMaxHeight = nameof(UiPopupMaxHeight);
     public const string UiMenuMaxHeight = nameof(UiMenuMaxHeight);
     public const string UiMenuMinWidth = nameof(UiMenuMinWidth);
+    public const string UiDisabledOpacity = nameof(UiDisabledOpacity);
+    public const string UiDragOpacity = nameof(UiDragOpacity);
+    public const string UiSubtleOpacity = nameof(UiSubtleOpacity);
 
-    // Semantic Brushes
+    // Semantic Colors & Brushes
+    public const string SkuaAccentColor = nameof(SkuaAccentColor);
+    public const string SkuaAccentForegroundColor = nameof(SkuaAccentForegroundColor);
     public const string SkuaPageBrush = nameof(SkuaPageBrush);
     public const string SkuaSurfaceBrush = nameof(SkuaSurfaceBrush);
     public const string SkuaSurfaceAltBrush = nameof(SkuaSurfaceAltBrush);
     public const string SkuaSurfaceSubtleBrush = nameof(SkuaSurfaceSubtleBrush);
     public const string SkuaBorderBrush = nameof(SkuaBorderBrush);
     public const string SkuaBorderStrongBrush = nameof(SkuaBorderStrongBrush);
+    public const string SkuaWindowBorderBrush = nameof(SkuaWindowBorderBrush);
+    public const string SkuaWindowBorderThickness = nameof(SkuaWindowBorderThickness);
+    public const string SkuaTitleBarOverlayBrush = nameof(SkuaTitleBarOverlayBrush);
     public const string SkuaTextBrush = nameof(SkuaTextBrush);
     public const string SkuaMutedTextBrush = nameof(SkuaMutedTextBrush);
     public const string SkuaAccentBrush = nameof(SkuaAccentBrush);
     public const string SkuaAccentForegroundBrush = nameof(SkuaAccentForegroundBrush);
+    public const string SkuaAccentHoverBrush = nameof(SkuaAccentHoverBrush);
+    public const string SkuaAccentPressedBrush = nameof(SkuaAccentPressedBrush);
+    public const string SkuaAccentTintBrush = nameof(SkuaAccentTintBrush);
+    public const string SkuaAccentTintStrongBrush = nameof(SkuaAccentTintStrongBrush);
     public const string SkuaDangerBrush = nameof(SkuaDangerBrush);
+    public const string SkuaDangerHoverBrush = nameof(SkuaDangerHoverBrush);
+    public const string SkuaDangerPressedBrush = nameof(SkuaDangerPressedBrush);
     public const string SkuaDangerForegroundBrush = nameof(SkuaDangerForegroundBrush);
     public const string SkuaDangerTintBrush = nameof(SkuaDangerTintBrush);
+    public const string SkuaDangerTintStrongBrush = nameof(SkuaDangerTintStrongBrush);
     public const string SkuaDangerSoftBorderBrush = nameof(SkuaDangerSoftBorderBrush);
     public const string SkuaSuccessBrush = nameof(SkuaSuccessBrush);
     public const string SkuaSuccessTintBrush = nameof(SkuaSuccessTintBrush);
@@ -87,11 +103,17 @@ public static class UiTokens
     public const string SkuaWarningBrush = nameof(SkuaWarningBrush);
     public const string SkuaWarningTintBrush = nameof(SkuaWarningTintBrush);
     public const string SkuaWarningTintBorderBrush = nameof(SkuaWarningTintBorderBrush);
-    public const string SkuaAccentTintBrush = nameof(SkuaAccentTintBrush);
+    public const string SkuaTagBackgroundBrush = nameof(SkuaTagBackgroundBrush);
+    public const string SkuaTagBackgroundHoverBrush = nameof(SkuaTagBackgroundHoverBrush);
     public const string SkuaTagBorderBrush = nameof(SkuaTagBorderBrush);
+    public const string SkuaTagBorderHoverBrush = nameof(SkuaTagBorderHoverBrush);
     public const string SkuaTagTextBrush = nameof(SkuaTagTextBrush);
     public const string SkuaSelectionBrush = nameof(SkuaSelectionBrush);
     public const string SkuaNavHoverBrush = nameof(SkuaNavHoverBrush);
+    public const string SkuaPressedBrush = nameof(SkuaPressedBrush);
+    public const string SkuaScrollThumbBrush = nameof(SkuaScrollThumbBrush);
+    public const string SkuaScrollThumbHoverBrush = nameof(SkuaScrollThumbHoverBrush);
+    public const string SkuaScrollThumbPressedBrush = nameof(SkuaScrollThumbPressedBrush);
     public const string SkuaOverlayBackdropBrush = nameof(SkuaOverlayBackdropBrush);
 
     public static DynamicResourceExtension Resource(string key) => new(key);

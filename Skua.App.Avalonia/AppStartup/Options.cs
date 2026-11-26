@@ -22,7 +22,7 @@ internal class Options
 {
     private static readonly Dictionary<string, (string Label, string Description)> HeadlessTexts = new()
     {
-        [nameof(IScriptOption.HeadlessMode)] = ("Headless Mode", "Manual. Hides this client's game and drops it to 2 fps until you turn it off. Automatic headless never turns it off."),
+        [nameof(IScriptOption.HeadlessMode)] = ("Headless Mode", "Manual. Hides this client's game and suspends GPU rendering while keeping game/script ticks at full speed until you turn it off. Automatic headless never turns it off."),
         [nameof(IScriptOption.AutoHeadless)] = ("Auto Headless", "Master switch. Puts all tabs in headless automatically based on focus, using the exclusions below."),
         [nameof(IScriptOption.AutoHeadlessExcludeFocused)] = ("Exclude focused tab", "Needs Auto Headless. Focusing a tab disables Auto Headless for that tab."),
         [nameof(IScriptOption.AutoHeadlessExcludeGridView)] = ("Exclude Grid View", "Needs Auto Headless. Keeps Grid View tiles out of Auto Headless while the window is focused."),

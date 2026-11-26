@@ -9,11 +9,7 @@
              d:DesignHeight="700" d:DesignWidth="600"
              mc:Ignorable="d">
     <Grid Margin="12" RowDefinitions="Auto,*">
-        <Border Grid.Row="0"
-                Background="{DynamicResource SkuaSurfaceBrush}"
-                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="{DynamicResource UiBorderThin}"
-                CornerRadius="{DynamicResource UiRadiusCard}"
+        <Border Classes="card" Grid.Row="0"
                 Padding="{DynamicResource UiCardCompactPadding}"
                 Margin="0,0,0,10">
             <StackPanel Spacing="{DynamicResource UiGap2xs}">
@@ -28,11 +24,7 @@
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="1"
-                Background="{DynamicResource SkuaSurfaceBrush}"
-                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                BorderThickness="{DynamicResource UiBorderThin}"
-                CornerRadius="{DynamicResource UiRadiusCard}"
+        <Border Classes="card" Grid.Row="1"
                 Padding="16">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <SelectableTextBlock Text="{Binding MarkdownDoc}"

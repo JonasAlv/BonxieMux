@@ -1,0 +1,116 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.App.Avalonia.Views.DiagnosticsView">
+    <Grid RowDefinitions="Auto,Auto,*" Margin="12" RowSpacing="{DynamicResource UiGapLg}">
+        
+        <Border Classes="card" Grid.Row="0"
+                Padding="{DynamicResource UiCardCompactPadding}">
+            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" Spacing="{DynamicResource UiGap2xs}">
+                    <TextBlock Text="PERFORMANCE &amp; HEALTH DIAGNOSTICS"
+                               FontSize="{DynamicResource UiFontMicro}"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                    <TextBlock FontSize="{DynamicResource UiFontHeading}"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaTextBrush}"
+                               Text="{Binding MonitoringStatus}" />
+                    <TextBlock Text="{Binding LastUpdated, StringFormat='Last Sample: {0}'}"
+                               FontSize="{DynamicResource UiFontSmall}"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
+                    <Button Classes="skua-button"
+                            Height="{DynamicResource UiControlHeight}"
+                            Command="{Binding RefreshCommand}">
+  <TextBlock Text="Refresh" VerticalAlignment="Center" />
+</Button>
+                    <Button Classes="skua-button outline"
+                            Height="{DynamicResource UiControlHeight}"
+                            Command="{Binding ExportCommand}">
+  <TextBlock Text="Export JSON" VerticalAlignment="Center" />
+</Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="{DynamicResource UiGapBase}">
+            <Border Classes="card" Grid.Column="0"
+                    Padding="{DynamicResource UiPaddingLg}">
+                <StackPanel Spacing="{DynamicResource UiGapSm}">
+                    <TextBlock Text="PROCESS &amp; CPU"
+                               FontSize="{DynamicResource UiFontMicro}"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                    <TextBlock Text="{Binding Process}" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" />
+                    <TextBlock Text="{Binding CpuTime}" FontSize="{DynamicResource UiFontBody}" Foreground="{DynamicResource SkuaTextBrush}" />
+                    <TextBlock Text="{Binding Threads, StringFormat='Active Threads: {0}'}" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                </StackPanel>
+            </Border>
+
+            <Border Classes="card" Grid.Column="1"
+                    Padding="{DynamicResource UiPaddingLg}">
+                <StackPanel Spacing="{DynamicResource UiGapSm}">
+                    <TextBlock Classes="section-label" Text="MEMORY USAGE" />
+                    <TextBlock Text="{Binding WorkingSet, StringFormat='Working Set: {0}'}" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" />
+                    <TextBlock Text="{Binding ManagedHeap, StringFormat='Managed Heap: {0}'}" FontSize="{DynamicResource UiFontBody}" Foreground="{DynamicResource SkuaTextBrush}" />
+                    <TextBlock Text="{Binding TotalAllocated, StringFormat='Total Allocated: {0}'}" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                </StackPanel>
+            </Border>
+
+            <Border Classes="card" Grid.Column="2"
+                    Padding="{DynamicResource UiPaddingLg}">
+                <StackPanel Spacing="{DynamicResource UiGapSm}">
+                    <TextBlock Text="RUNTIME &amp; GC"
+                               FontSize="{DynamicResource UiFontMicro}"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                    <TextBlock Text="{Binding Collections}" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" />
+                    <TextBlock Text="{Binding ThreadPool}" FontSize="{DynamicResource UiFontBody}" Foreground="{DynamicResource SkuaTextBrush}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border Classes="list-frame" Grid.Row="2"
+                Padding="{DynamicResource UiPaddingSm}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top"
+                           Classes="section-label"
+                           Text="RECENT DIAGNOSTIC EVENTS"
+                           Margin="6,4,0,8" />
+                <ListBox Classes="card-list" ItemsSource="{Binding Events}"
+                         Background="Transparent"
+                         BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="list-card"
+                                    BorderThickness="{DynamicResource UiBorderThin}"
+                                    CornerRadius="{DynamicResource UiRadiusCard}"
+                                    Margin="0,0,0,4"
+                                    Padding="10,6">
+                                <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="{DynamicResource UiGapLg}" VerticalAlignment="Center">
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Timestamp}"
+                                               FontFamily="{DynamicResource UiFontMono}"
+                                               FontSize="{DynamicResource UiFontSmall}"
+                                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                    <Border Classes="card-flat" Grid.Column="1"
+                                            Padding="6,2">
+                                        <TextBlock Text="{Binding Category}"
+                                                   FontSize="{DynamicResource UiFontMicro}"
+                                                   FontWeight="Bold"
+                                                   Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                    </Border>
+                                    <TextBlock Grid.Column="2" Text="{Binding Name}" FontWeight="Medium" FontSize="{DynamicResource UiFontBody}" />
+                                    <TextBlock Grid.Column="3" Text="{Binding Value}" FontFamily="{DynamicResource UiFontMono}" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaTextBrush}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

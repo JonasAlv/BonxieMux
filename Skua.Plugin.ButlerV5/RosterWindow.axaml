@@ -15,10 +15,10 @@
         <Grid RowDefinitions="Auto,*">
             <shell:WindowTitleBar Grid.Row="0" TitleText="ButlerV5" />
 
-            <Grid Grid.Row="1" Margin="14" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="10">
+            <Grid Grid.Row="1" Margin="14" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{DynamicResource UiGapBase}">
                 <!-- Header -->
                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="2,0">
-                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                    <StackPanel VerticalAlignment="Center" Spacing="{DynamicResource UiGap2xs}">
                         <TextBlock x:Name="MeText"
                                    Text="(not logged in)"
                                    FontSize="{DynamicResource UiFontHeading}"
@@ -30,7 +30,7 @@
                                    Foreground="{DynamicResource SkuaMutedTextBrush}" />
                     </StackPanel>
 
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="6">
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="{DynamicResource UiGapSm}">
                         <Button x:Name="StopButton"
                                 Classes="skua-button skua-danger"
                                 Content="Stop following"
@@ -46,7 +46,7 @@
                 </Grid>
 
                 <!-- External Target Bar -->
-                <Grid Grid.Row="1" ColumnDefinitions="*,150,Auto" ColumnSpacing="6" Margin="2,0">
+                <Grid Grid.Row="1" ColumnDefinitions="*,150,Auto" ColumnSpacing="{DynamicResource UiGapSm}" Margin="2,0">
                     <TextBox x:Name="TargetPlayerText"
                              Grid.Column="0"
                              Height="{DynamicResource UiControlHeight}"
@@ -86,7 +86,7 @@
                 </Border>
 
                 <!-- Footer -->
-                <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" Margin="2,0">
+                <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{DynamicResource UiGapSm}" Margin="2,0">
                     <TextBlock x:Name="FooterText"
                                Grid.Column="0"
                                FontSize="{DynamicResource UiFontMicro}"

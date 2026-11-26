@@ -4,7 +4,7 @@ using Skua.Shared.Avalonia.Services;
 
 namespace Skua.Shared.Avalonia.Controls.Shell;
 
-public sealed record QuickPickItem(string Category, string Title, string? Detail, Action OnSelect);
+public sealed record QuickPickItem(string Category, string Title, string? Detail, Action OnSelect, string? Shortcut = null);
 
 public partial class QuickPickWindow : Window
 {
@@ -52,6 +52,40 @@ public partial class QuickPickWindow : Window
             return false;
         _active.SafeClose();
         return true;
+    }
+
+    public static void AddThemePreferenceItems(
+        List<QuickPickItem> items,
+        AvaloniaThemeService themeService,
+        Window? owner = null)
+    {
+        items.Add(new QuickPickItem(
+            "Preferences",
+            "Color Theme…",
+            themeService.ActiveThemeName,
+            () =>
+            {
+                List<QuickPickItem> themeItems = themeService.AvailableThemes
+                    .Select(name => new QuickPickItem(
+                        "Color Theme",
+                        name,
+                        string.Equals(name, themeService.ActiveThemeName, StringComparison.OrdinalIgnoreCase) ? "Active" : null,
+                        () => themeService.ActiveThemeName = name))
+                    .ToList();
+                new QuickPickWindow(themeItems, "Color Theme", "Select a VS Code color theme…").ShowModeless(owner);
+            }));
+
+        items.Add(new QuickPickItem(
+            "Preferences",
+            "Toggle UI Density",
+            themeService.IsComfortableDensity ? "Comfortable → Compact" : "Compact → Comfortable",
+            () => themeService.IsComfortableDensity = !themeService.IsComfortableDensity));
+
+        items.Add(new QuickPickItem(
+            "Preferences",
+            "Toggle Dark / Light Mode",
+            themeService.IsDarkTheme ? "Dark → Light" : "Light → Dark",
+            () => themeService.IsDarkTheme = !themeService.IsDarkTheme));
     }
 
     public void ShowModeless(Window? owner)

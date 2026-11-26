@@ -148,4 +148,8 @@
         <Setter Property="Background" Value="{DynamicResource SkuaAccentTintStrongBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
     </Style>
+    <Style Selector="ToggleButton:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
+    </Style>
 </Styles>

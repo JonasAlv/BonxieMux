@@ -1,0 +1,89 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Skua.App.Avalonia.Views.PacketSpammerView">
+  <Grid Margin="12"
+        ColumnDefinitions="*,180"
+        RowDefinitions="*,Auto"
+        ColumnSpacing="{DynamicResource UiGapLg}"
+        RowSpacing="{DynamicResource UiGapBase}">
+    
+    <Border Classes="card" Grid.Row="0"
+            Grid.Column="0"
+            Padding="{DynamicResource UiPaddingLg}">
+      <Grid RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapMd}">
+        <TextBlock Classes="section-label" Text="PACKET QUEUE" />
+        <Border Grid.Row="1" Classes="list-frame">
+          <ListBox ItemsSource="{Binding Packets}"
+                   SelectedIndex="{Binding SelectedIndex}"
+                   Classes="embedded" />
+        </Border>
+      </Grid>
+    </Border>
+
+    <Border Classes="card" Grid.Row="0"
+            Grid.Column="1"
+            Padding="{DynamicResource UiPaddingLg}">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="{DynamicResource UiGapMd}">
+          <TextBlock Classes="section-label" Text="CONTROLS" />
+          <Button Classes="skua-button"
+                  Content="Add Packet"
+                  HorizontalAlignment="Stretch"
+                  Command="{Binding AddPacketCommand}" />
+          <Button Classes="skua-button"
+                  Content="Remove Selected"
+                  HorizontalAlignment="Stretch"
+                  Command="{Binding RemovePacketCommand}" />
+          <Button Classes="skua-button outline"
+                  Content="Clear All"
+                  HorizontalAlignment="Stretch"
+                  Command="{Binding ClearPacketsCommand}" />
+          
+          <Separator Margin="0,4" Background="{DynamicResource SkuaBorderBrush}" />
+          
+          <Button Classes="skua-button"
+                  Content="Load List"
+                  HorizontalAlignment="Stretch"
+                  Command="{Binding LoadSpammerCommand}" />
+          <Button Classes="skua-button"
+                  Content="Save List"
+                  HorizontalAlignment="Stretch"
+                  Command="{Binding SaveSpammerCommand}" />
+
+          <Separator Margin="0,4" Background="{DynamicResource SkuaBorderBrush}" />
+
+          <TextBlock Text="Spam Delay (ms)"
+                     FontSize="{DynamicResource UiFontSmall}"
+                     Foreground="{DynamicResource SkuaMutedTextBrush}" />
+          <TextBox Text="{Binding SpamDelay}" />
+
+          <CheckBox Content="Send to Client"
+                    IsChecked="{Binding SendToClient}"
+                    Margin="0,4,0,0" />
+
+          <Button Classes="skua-button skua-primary"
+                  Content="Start / Stop"
+                  HorizontalAlignment="Stretch"
+                  Height="{DynamicResource UiControlHeight}"
+                  Command="{Binding ToggleSpammerCommand}" />
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+
+    <Border Classes="card" Grid.Row="1"
+            Grid.Column="0"
+            Grid.ColumnSpan="2">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
+        <TextBox Grid.Column="0"
+                 PlaceholderText="Enter packet string to send..."
+                 Text="{Binding PacketText}" />
+        <Button Grid.Column="1"
+                Classes="skua-button skua-primary"
+                MinWidth="100"
+                Content="Send Now"
+                Command="{Binding SendPacketCommand}" />
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

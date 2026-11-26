@@ -4,7 +4,7 @@
     <Style Selector="ToolTip">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderStrongBrush}" />
         <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
         <Setter Property="Padding" Value="10,6" />
         <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />

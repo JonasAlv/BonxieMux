@@ -176,7 +176,7 @@
         <Setter Property="MinHeight" Value="{DynamicResource UiControlHeight}" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="6,0,0,6" />
+        <Setter Property="CornerRadius" Value="4,0,0,4" />
         <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
         <Setter Property="Padding" Value="{DynamicResource UiControlPadding}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
@@ -188,13 +188,24 @@
     <Style Selector="TextBox.option-pill-input /template/ Border#PART_BorderElement">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="6,0,0,6" />
+        <Setter Property="CornerRadius" Value="4,0,0,4" />
     </Style>
 
     <Style Selector="TextBox.option-pill-input:empty /template/ TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
         <Setter Property="Margin" Value="0" />
         <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="DatePicker">
+        <Setter Property="Height" Value="{DynamicResource UiControlHeight}" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
+        <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
+        <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource UiFontBody}" />
     </Style>
 
 </Styles>

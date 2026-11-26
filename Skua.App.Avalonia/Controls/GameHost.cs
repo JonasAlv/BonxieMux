@@ -776,6 +776,7 @@ public class GameHost : Control, ICustomHitTest
     }
 
     private bool _stretchToFill;
+    private double _renderResolutionScale = 1.0;
 
     public bool StretchToFill
     {
@@ -791,9 +792,24 @@ public class GameHost : Control, ICustomHitTest
         }
     }
 
+    public double RenderResolutionScale
+    {
+        get => _renderResolutionScale;
+        set
+        {
+            double clamped = Math.Clamp(value, 0.5, 1.0);
+            if (Math.Abs(_renderResolutionScale - clamped) < 0.001)
+                return;
+            _renderResolutionScale = clamped;
+            if (_glViewport is WaylandDmabufViewport dmaVp)
+                dmaVp.ForceScaleToBounds = clamped < 0.999;
+            SendResizeIfNeeded();
+        }
+    }
+
     private (double X, double Y) MapPointerPosition(Point p, double scale)
     {
-        if (_stretchToFill && _lastSentWidth > 0 && _lastSentHeight > 0 && Bounds.Width > 0 && Bounds.Height > 0)
+        if ((_stretchToFill || _renderResolutionScale < 0.999) && _lastSentWidth > 0 && _lastSentHeight > 0 && Bounds.Width > 0 && Bounds.Height > 0)
             return (p.X / Bounds.Width * _lastSentWidth, p.Y / Bounds.Height * _lastSentHeight);
         return (p.X * scale, p.Y * scale);
     }
@@ -802,7 +818,9 @@ public class GameHost : Control, ICustomHitTest
     {
         if ((_flash is null && _remoteChildPid <= 0 && _waylandHost == IntPtr.Zero) || !IsVisible)
             return;
-        double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
+        double scale = _renderResolutionScale < 0.999
+            ? _renderResolutionScale
+            : (TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0);
         double rw = Bounds.Width * scale;
         double rh = Bounds.Height * scale;
         int w;

@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vms="clr-namespace:Skua.Manager.Avalonia.ViewModels"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
+             xmlns:sharedOptions="clr-namespace:Skua.Shared.Avalonia.Controls.Options;assembly=Skua.Shared.Avalonia"
+             x:Class="Skua.Manager.Avalonia.UserControls.ManagerOptionsUserControl"
+             d:DataContext="{d:DesignInstance vms:ManagerOptionsViewModel}"
+             d:DesignWidth="800"
+             d:DesignHeight="500"
+             mc:Ignorable="d">
+    <Grid Margin="12" RowDefinitions="Auto,Auto,*" RowSpacing="{DynamicResource UiGapLg}">
+        
+        <Border Classes="card" Grid.Row="0"
+                Padding="16,14">
+            <primitives:SectionHeader Category="PREFERENCES &amp; WORKSPACE"
+                                      Title="Manager Configuration"
+                                      Description="Configure launch behavior, theme synchronization, and download paths." />
+        </Border>
+
+        <Border Classes="card" Grid.Row="1"
+                Padding="16">
+            <StackPanel Spacing="{DynamicResource UiGapMd}">
+                <TextBlock Classes="section-label" Text="CLIENT DOWNLOAD LOCATION" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
+                    <Border Classes="card-flat" Grid.Column="0"
+                            Padding="12,8"
+                            ToolTip.Tip="Target destination folder for downloaded updates and clients.">
+                        <TextBlock VerticalAlignment="Center"
+                                   Text="{Binding DownloadPath, FallbackValue='Client Download Folder'}"
+                                   FontFamily="{DynamicResource UiFontMono}"
+                                   FontSize="{DynamicResource UiFontBody}"
+                                   Foreground="{DynamicResource SkuaTextBrush}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </Border>
+                    <Button Grid.Column="1"
+                            Height="{DynamicResource UiControlHeight}"
+                            Command="{Binding ChangeDownloadPathCommand}"
+                            Classes="skua-button">
+  <TextBlock Text="Change Path" VerticalAlignment="Center" />
+</Button>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <Border Classes="card" Grid.Row="2"
+                Padding="16">
+            <Grid RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapBase}">
+                <TextBlock Grid.Row="0" Classes="section-label" Text="APPLICATION BEHAVIOR" />
+                <ScrollViewer Grid.Row="1"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto"
+                              AllowAutoHide="False">
+                    <ItemsControl ItemsSource="{Binding ManagerOptions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Classes="card-flat"                                        Margin="0,0,0,6"
+                                        Padding="{DynamicResource UiCardCompactPadding}">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapLg}" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="0" Spacing="{DynamicResource UiGap2xs}">
+                                            <TextBlock Text="{Binding Content}" FontWeight="SemiBold" FontSize="{DynamicResource UiFontBody}" Foreground="{DynamicResource SkuaTextBrush}" />
+                                            <TextBlock Text="{Binding Description}" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <sharedOptions:OptionValueEditorControl Grid.Column="1"
+                                                                                  VerticalAlignment="Center"
+                                                                                  HorizontalAlignment="Right" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

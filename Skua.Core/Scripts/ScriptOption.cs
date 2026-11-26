@@ -1197,7 +1197,11 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
                 isReduced = isHeadless || _isBackgroundThrottled;
                 bool allowFullQuality = !isReduced && _isForegroundFocused;
 
-                int targetFps = isReduced ? 2 : (SetFPS > 2 ? SetFPS : 24);
+                int normalFps = SetFPS > 2 ? SetFPS : 24;
+                // Mugetsu suspends GPU rendering via SkuaVisible(false) when hidden/headless, so we keep
+                // AQW's native 24 FPS tick rate (capping only if SetFPS > 24) to avoid slowing down scripts
+                // or ENTER_FRAME game actions while still saving GPU/CPU/energy.
+                int targetFps = isReduced ? Math.Min(normalFps, 24) : normalFps;
                 double targetVolume = shouldMute ? 0.0 : (_mutedByHeadless ? 1.0 : -1.0);
 
                 bool isAuto = string.Equals(StageQuality, "AUTO", StringComparison.OrdinalIgnoreCase);
@@ -1300,12 +1304,15 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
             }
             catch { }
 
-            if (isHeadless && DateTime.UtcNow - _lastWorkingSetTrimUtc >= TimeSpan.FromSeconds(60))
+            if (isReduced && DateTime.UtcNow - _lastWorkingSetTrimUtc >= TimeSpan.FromSeconds(60))
             {
                 _lastWorkingSetTrimUtc = DateTime.UtcNow;
                 _ = Task.Delay(2000).ContinueWith(_ =>
                 {
-                    if (IsHeadlessNow())
+                    bool stillReduced;
+                    lock (_renderLock)
+                        stillReduced = IsHeadlessNow() || _isBackgroundThrottled;
+                    if (stillReduced)
                     {
                         try { Skua.Core.Utils.MemoryUtils.TrimWorkingSet(); } catch { }
                     }

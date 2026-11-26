@@ -6,6 +6,7 @@ using Avalonia.Styling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Skua.Core.Interfaces;
+using Skua.Shared.Avalonia.Theming;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,6 +50,13 @@ public class WindowServiceBase : IWindowService
 
         if (!window.IsVisible)
             ShowHostWindow(window);
+        else if (OperatingSystem.IsLinux() && !window.IsActive)
+        {
+            if (window.WindowState == WindowState.Minimized)
+                window.WindowState = WindowState.Normal;
+            window.Hide();
+            ShowHostWindow(window);
+        }
         if (window.WindowState == WindowState.Minimized)
             window.WindowState = WindowState.Normal;
         window.Activate();
@@ -158,16 +166,19 @@ public class WindowServiceBase : IWindowService
         return window;
     }
 
-    private static Control CreateFallbackContent(string title) =>
-        new Border
+    private static Control CreateFallbackContent(string title)
+    {
+        TextBlock tb = new()
         {
-            Padding = new Thickness(16),
-            Child = new TextBlock
-            {
-                Text = title,
-                FontSize = 16,
-                VerticalAlignment = VerticalAlignment.Top,
-                HorizontalAlignment = HorizontalAlignment.Left
-            }
+            Text = title,
+            VerticalAlignment = VerticalAlignment.Top,
+            HorizontalAlignment = HorizontalAlignment.Left
         };
+        UiTokens.Bind(tb, TextBlock.FontSizeProperty, UiTokens.UiFontHeading);
+        return new Border
+        {
+            Padding = UiTokens.GetThickness(UiTokens.UiPaddingLg, new Thickness(12)),
+            Child = tb
+        };
+    }
 }

@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Platform;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Skua.Core.Interfaces;
 using Skua.Core.Models;
@@ -50,8 +51,7 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
     private bool _syncThemeWithSystem = true;
     private bool _useSystemAccentColor;
     private bool _useThemeAccentColor = true;
-    private bool _useAccentOnMainTitleBar;
-    private bool _useAccentOnManagerTitleBar;
+    private bool _isComfortableDensity;
     private string _activeThemeName = VsCodeThemeLoader.DarkModernName;
     private string _preferredDarkTheme = VsCodeThemeLoader.DarkModernName;
     private string _preferredLightTheme = VsCodeThemeLoader.LightModernName;
@@ -77,8 +77,6 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         _settingsService = settingsService;
         (_availableDarkThemes, _availableLightThemes) = VsCodeThemeLoader.DiscoverThemesByKind();
         _availableThemes = VsCodeThemeLoader.DiscoverAvailableThemeNames();
-        _useAccentOnMainTitleBar = ReadExtensionFlag("UseAccentOnMainTitleBar");
-        _useAccentOnManagerTitleBar = ReadExtensionFlag("UseAccentOnManagerTitleBar");
         _syncThemeWithSystem = _settingsService.Get("SyncThemeWithSystem", true);
         _useSystemAccentColor = _settingsService.Get("UseSystemAccentColor", false);
 
@@ -96,13 +94,14 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             SaveProcessThemeFile();
         };
 
+        bool hasSavedThemeFile = File.Exists(ProcessThemeFilePath);
         LoadProcessThemeFile();
         _activeThemeName = _isDarkTheme ? _preferredDarkTheme : _preferredLightTheme;
         _activePalette = VsCodeThemeLoader.LoadByName(_activeThemeName);
         SetSelectedColorSilently(GetColorForScheme(_activeScheme));
         HookSystemThemeChanges();
 
-        if (_syncThemeWithSystem)
+        if (_syncThemeWithSystem && (!OperatingSystem.IsLinux() || !hasSavedThemeFile))
             SyncWithSystemTheme();
 
         if (_useSystemAccentColor)
@@ -116,7 +115,14 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         }
 
         if (Application.Current is { } app)
+        {
+            ThemeVariant targetVariant = _isDarkTheme ? ThemeVariant.Dark : ThemeVariant.Light;
+            if (app.RequestedThemeVariant != targetVariant)
+                app.RequestedThemeVariant = targetVariant;
+
             ThemeResourceApplicator.ApplyVsCodePalette(app, _activePalette);
+            ThemeResourceApplicator.ApplyUiDensity(app, _isComfortableDensity);
+        }
 
         SaveProcessThemeFile();
     }
@@ -311,7 +317,10 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         OnPropertyChanged(nameof(ActiveThemeName));
 
         if (Application.Current is { } app)
+        {
             ThemeResourceApplicator.ApplyVsCodePalette(app, _activePalette);
+            ThemeResourceApplicator.ApplyUiDensity(app, _isComfortableDensity);
+        }
 
         if (_isDarkTheme != _activePalette.IsDark)
         {
@@ -325,32 +334,18 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
             ThemeChanged?.Invoke(_primaryColor);
     }
 
-    public bool UseAccentOnMainTitleBar
+    public bool IsComfortableDensity
     {
-        get => _useAccentOnMainTitleBar;
+        get => _isComfortableDensity;
         set
         {
-            if (_useAccentOnMainTitleBar == value)
+            if (_isComfortableDensity == value)
                 return;
 
-            _useAccentOnMainTitleBar = value;
-            PersistExtensionFlag("UseAccentOnMainTitleBar", value);
-            OnPropertyChanged();
-            ThemeChanged?.Invoke(_primaryColor);
-            SaveProcessThemeFile();
-        }
-    }
+            _isComfortableDensity = value;
+            if (Application.Current is { } app)
+                ThemeResourceApplicator.ApplyUiDensity(app, value);
 
-    public bool UseAccentOnManagerTitleBar
-    {
-        get => _useAccentOnManagerTitleBar;
-        set
-        {
-            if (_useAccentOnManagerTitleBar == value)
-                return;
-
-            _useAccentOnManagerTitleBar = value;
-            PersistExtensionFlag("UseAccentOnManagerTitleBar", value);
             OnPropertyChanged();
             ThemeChanged?.Invoke(_primaryColor);
             SaveProcessThemeFile();
@@ -427,25 +422,37 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         SaveProcessThemeFile();
     }
 
-    public void ApplyExternalThemeSnapshot(bool isDark, Color primary, Color foreground, bool useAccentOnMainTitleBar, string? activeThemeName = null)
+    public void ApplyExternalThemeSnapshot(
+        bool isDark,
+        Color primary,
+        Color foreground,
+        string? activeThemeName = null,
+        bool? isComfortableDensity = null)
     {
-        _useAccentOnMainTitleBar = useAccentOnMainTitleBar;
         _isDarkTheme = isDark;
         if (!string.IsNullOrWhiteSpace(activeThemeName))
             _activeThemeName = activeThemeName;
         else
             _activeThemeName = isDark ? _preferredDarkTheme : _preferredLightTheme;
 
+        if (isComfortableDensity is bool comfortable && _isComfortableDensity != comfortable)
+        {
+            _isComfortableDensity = comfortable;
+            OnPropertyChanged(nameof(IsComfortableDensity));
+        }
+
         _activePalette = VsCodeThemeLoader.LoadByName(_activeThemeName);
         if (Application.Current is { } app)
+        {
             ThemeResourceApplicator.ApplyVsCodePalette(app, _activePalette);
+            ThemeResourceApplicator.ApplyUiDensity(app, _isComfortableDensity);
+        }
 
         _primaryColor = primary;
         _secondaryColor = primary;
         _primaryForegroundColor = foreground;
         _secondaryForegroundColor = foreground;
         SetSelectedColorSilently(GetColorForScheme(_activeScheme));
-        OnPropertyChanged(nameof(UseAccentOnMainTitleBar));
         OnPropertyChanged(nameof(IsDarkTheme));
         OnPropertyChanged(nameof(ActiveThemeName));
         OnPropertyChanged(nameof(SelectedColor));
@@ -738,30 +745,6 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         return null;
     }
 
-    private bool ReadExtensionFlag(string key)
-    {
-        try
-        {
-            Dictionary<string, object>? ext = _settingsService.GetShared().ExtensionData;
-            if (ext is not null && ext.TryGetValue(key, out object? val) && bool.TryParse(val?.ToString(), out bool b))
-                return b;
-        }
-        catch { }
-        return false;
-    }
-
-    private void PersistExtensionFlag(string key, bool enabled)
-    {
-        try
-        {
-            SharedSettings shared = _settingsService.GetShared();
-            shared.ExtensionData ??= new Dictionary<string, object>();
-            shared.ExtensionData[key] = enabled;
-            _settingsService.Set("TitleBarArtworkPath", shared.TitleBarArtworkPath);
-        }
-        catch { }
-    }
-
     private sealed class ProcessThemeFileState
     {
         public bool IsDarkTheme { get; set; }
@@ -771,8 +754,7 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
         public string? ActiveThemeName { get; set; }
         public string? PreferredDarkTheme { get; set; }
         public string? PreferredLightTheme { get; set; }
-        public bool UseAccentOnMainTitleBar { get; set; }
-        public bool UseAccentOnManagerTitleBar { get; set; }
+        public bool IsComfortableDensity { get; set; }
         public string? PrimaryColor { get; set; }
         public string? TextOnAccentColor { get; set; }
         public string? DarkAccentColor { get; set; }
@@ -801,8 +783,7 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
                 _preferredDarkTheme = state.PreferredDarkTheme;
             if (!string.IsNullOrWhiteSpace(state.PreferredLightTheme))
                 _preferredLightTheme = state.PreferredLightTheme;
-            _useAccentOnMainTitleBar = state.UseAccentOnMainTitleBar;
-            _useAccentOnManagerTitleBar = state.UseAccentOnManagerTitleBar;
+            _isComfortableDensity = state.IsComfortableDensity;
             _isDarkTheme = state.IsDarkTheme;
             _darkAccentColorHex = state.DarkAccentColor;
             _darkTextOnAccentColorHex = state.DarkTextOnAccentColor;
@@ -842,8 +823,7 @@ public class AvaloniaThemeService : IThemeService, INotifyPropertyChanged
                 ActiveThemeName = _activeThemeName,
                 PreferredDarkTheme = _preferredDarkTheme,
                 PreferredLightTheme = _preferredLightTheme,
-                UseAccentOnMainTitleBar = _useAccentOnMainTitleBar,
-                UseAccentOnManagerTitleBar = _useAccentOnManagerTitleBar,
+                IsComfortableDensity = _isComfortableDensity,
                 PrimaryColor = PrimaryHex,
                 TextOnAccentColor = ForegroundHex,
                 DarkAccentColor = _darkAccentColorHex,

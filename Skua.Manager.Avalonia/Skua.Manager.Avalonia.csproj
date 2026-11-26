@@ -24,8 +24,6 @@
     <PackageReference Include="Avalonia.Wayland" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport" />
-    <PackageReference Include="Material.Avalonia" />
-    <PackageReference Include="Material.Avalonia.Dialogs" />
     <PackageReference Include="Material.Icons.Avalonia" />
   </ItemGroup>
 

@@ -142,9 +142,9 @@ public partial class GetScriptsService : ObservableObject, IGetScriptsService
                 }
                 catch { }
             }
-            catch when (!refresh && File.Exists(cacheFile))
+            catch when (File.Exists(cacheFile))
             {
-                // Gracefully fallback to existing cache if offline or GitHub request fails during background refresh
+                // Gracefully fallback to existing cache if offline or GitHub request fails
                 try
                 {
                     string cachedJson = await File.ReadAllTextAsync(cacheFile, token).ConfigureAwait(false);
@@ -170,6 +170,8 @@ public partial class GetScriptsService : ObservableObject, IGetScriptsService
                             string dir = Path.GetDirectoryName(cacheFile)!;
                             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
                             await File.WriteAllTextAsync(cacheFile, content).ConfigureAwait(false);
+                            _scripts.ReplaceRange(freshScripts);
+                            OnPropertyChanged(nameof(Scripts));
                         }
                     }
                 }
@@ -438,6 +440,9 @@ public partial class GetScriptsService : ObservableObject, IGetScriptsService
         {
             throw;
         }
+
+        if (completed > 0)
+            OnPropertyChanged(nameof(Scripts));
 
         return completed;
     }

@@ -6,7 +6,7 @@
     <Color x:Key="SkuaAccentForegroundColor">#FFFFFFFF</Color>
     <SolidColorBrush x:Key="SkuaAccentBrush" Color="{StaticResource SkuaAccentColor}" />
     <SolidColorBrush x:Key="SkuaAccentForegroundBrush" Color="{StaticResource SkuaAccentForegroundColor}" />
-    <SolidColorBrush x:Key="SkuaAccentHoverBrush" Color="#1A86D9" />
+    <SolidColorBrush x:Key="SkuaAccentHoverBrush" Color="#026EC1" />
     <SolidColorBrush x:Key="SkuaAccentPressedBrush" Color="#005FB8" />
     <SolidColorBrush x:Key="SkuaDangerBrush" Color="#F85149" />
     <SolidColorBrush x:Key="SkuaDangerHoverBrush" Color="#DC2626" />

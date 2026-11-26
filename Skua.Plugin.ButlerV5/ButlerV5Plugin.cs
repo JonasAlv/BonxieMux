@@ -663,7 +663,15 @@ public class ButlerV5Plugin : ISkuaPlugin
                 else
                 {
                     _window.RefreshRoster();
+                    if (_window.WindowState == Avalonia.Controls.WindowState.Minimized)
+                        _window.WindowState = Avalonia.Controls.WindowState.Normal;
+                    if (OperatingSystem.IsLinux() && !_window.IsActive)
+                    {
+                        _window.Hide();
+                        _window.Show();
+                    }
                     _window.Activate();
+                    _window.Focus();
                 }
             });
         }

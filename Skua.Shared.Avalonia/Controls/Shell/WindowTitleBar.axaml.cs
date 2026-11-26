@@ -10,6 +10,7 @@ using Avalonia.Styling;
 using Avalonia.VisualTree;
 using Material.Icons;
 using Material.Icons.Avalonia;
+using Skua.Shared.Avalonia.Theming;
 using System;
 
 namespace Skua.Shared.Avalonia.Controls.Shell;
@@ -65,9 +66,6 @@ public partial class WindowTitleBar : UserControl
     public static readonly StyledProperty<IImage?> IconSourceProperty =
         AvaloniaProperty.Register<WindowTitleBar, IImage?>(nameof(IconSource));
 
-    public static readonly StyledProperty<bool> UseAccentBackgroundProperty =
-        AvaloniaProperty.Register<WindowTitleBar, bool>(nameof(UseAccentBackground), false);
-
     public static readonly StyledProperty<object?> LeftContentProperty =
         AvaloniaProperty.Register<WindowTitleBar, object?>(nameof(LeftContent));
 
@@ -84,12 +82,6 @@ public partial class WindowTitleBar : UserControl
     {
         get => GetValue(RightContentProperty);
         set => SetValue(RightContentProperty, value);
-    }
-
-    public bool UseAccentBackground
-    {
-        get => GetValue(UseAccentBackgroundProperty);
-        set => SetValue(UseAccentBackgroundProperty, value);
     }
 
     public string TitleText
@@ -130,21 +122,12 @@ public partial class WindowTitleBar : UserControl
         SizeChanged += (_, _) => TitleLayoutChanged?.Invoke(this, EventArgs.Empty);
         TitleTextBlock.SizeChanged += (_, _) => TitleLayoutChanged?.Invoke(this, EventArgs.Empty);
         ApplyThemeIcon();
-        ActualThemeVariantChanged += (_, _) =>
-        {
-            ApplyAccentForeground();
-        };
-        PropertyChanged += (_, e) =>
-        {
-            if (e.Property == UseAccentBackgroundProperty)
-                ApplyAccentForeground();
-        };
+        ApplyForegroundTokens();
         Loaded += (_, _) =>
         {
             ArtworkPathChanged -= ApplyArtworkPath;
             ArtworkPathChanged += ApplyArtworkPath;
             ApplyArtworkPath(_artworkPath);
-            ApplyAccentForeground();
         };
         Unloaded += (_, _) => ArtworkPathChanged -= ApplyArtworkPath;
         PointerPressed += OnTitleBarPointerPressed;
@@ -197,17 +180,13 @@ public partial class WindowTitleBar : UserControl
         SetCurrentValue(IconSourceProperty, icon);
     }
 
-    private void ApplyAccentForeground()
+    private void ApplyForegroundTokens()
     {
-        string dockKey = UseAccentBackground ? "SkuaAccentForegroundBrush" : "SkuaAccentBrush";
-        string titleKey = UseAccentBackground ? "SkuaAccentForegroundBrush" : "SkuaTextBrush";
-        var dockDyn = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(dockKey);
-        var titleDyn = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(titleKey);
-        TitleTextBlock[!TextBlock.ForegroundProperty] = titleDyn;
-        MinimizeButton[!Button.ForegroundProperty] = titleDyn;
-        MaximizeButton[!Button.ForegroundProperty] = titleDyn;
-        CloseButton[!Button.ForegroundProperty] = titleDyn;
-        DockButton[!Button.ForegroundProperty] = dockDyn;
+        UiTokens.Bind(TitleTextBlock, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
+        UiTokens.Bind(MinimizeButton, Button.ForegroundProperty, UiTokens.SkuaTextBrush);
+        UiTokens.Bind(MaximizeButton, Button.ForegroundProperty, UiTokens.SkuaTextBrush);
+        UiTokens.Bind(CloseButton, Button.ForegroundProperty, UiTokens.SkuaTextBrush);
+        UiTokens.Bind(DockButton, Button.ForegroundProperty, UiTokens.SkuaAccentBrush);
     }
 
     private void ApplyArtworkPath(string? path)

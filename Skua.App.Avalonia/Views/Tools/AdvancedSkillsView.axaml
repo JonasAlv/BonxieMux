@@ -1,0 +1,368 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vmas="clr-namespace:Skua.App.Avalonia.ViewModels.AdvancedSkills"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:DataType="vmas:AdvancedSkillsViewModel"
+             x:Class="Skua.App.Avalonia.Views.AdvancedSkillsView">
+    
+    <TabControl Classes="section-tabs" SelectedIndex="{Binding SelectedTabIndex}" Margin="6">
+        
+        <TabItem Header="Create / Edit Skill">
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <Grid DataContext="{Binding EditViewModel}"
+                      Margin="8"
+                      RowDefinitions="Auto, Auto, Auto"
+                      RowSpacing="{DynamicResource UiGapLg}"
+                      ColumnDefinitions="*, *"
+                      ColumnSpacing="{DynamicResource UiGapLg}">
+                    
+                    <Border Classes="card" Grid.Row="0" Grid.Column="0"
+                            Padding="{DynamicResource UiPaddingLg}">
+                        <StackPanel Spacing="{DynamicResource UiGapMd}">
+                            <TextBlock Classes="section-label" Text="SKILL TIMEOUT" />
+                            <NumericUpDown Classes="bottom-line"
+                                           Tag="Timeout (ms)"
+                                           Minimum="0"
+                                           Maximum="5000"
+                                           Increment="10"
+                                           Value="{Binding CurrentSkillTimeoutMs}" />
+                        </StackPanel>
+                    </Border>
+                    
+                    <Border Classes="card" Grid.Row="1" Grid.Column="0"
+                            Padding="{DynamicResource UiPaddingLg}">
+                        <Grid RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapMd}">
+                            <TextBlock Grid.Row="0"
+                                       Classes="section-label"
+                                       Text="SKILLS SEQUENCE" />
+                            
+                            <Border Grid.Row="1" Classes="list-frame" MinHeight="140">
+                                <ListBox ItemsSource="{Binding CurrentSkillsList}"
+                                         SelectedItem="{Binding SelectedSkill}"
+                                         SelectedIndex="{Binding SelectedSkillIndex}"
+                                         Classes="embedded">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Margin="8,6" Text="{Binding DisplayString}" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Border>
+
+                            <Grid Grid.Row="2" ColumnDefinitions="Auto,*">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}">
+                                    <Button Classes="icon"
+                                            Command="{Binding MoveSkillUpCommand}"
+                                            ToolTip.Tip="Move Skill Up">
+                                        <materialIcons:MaterialIcon Kind="ArrowUp" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                    </Button>
+                                    <Button Classes="icon"
+                                            Command="{Binding MoveSkillDownCommand}"
+                                            ToolTip.Tip="Move Skill Down">
+                                        <materialIcons:MaterialIcon Kind="ArrowDown" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                    </Button>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" HorizontalAlignment="Right">
+                                    <Button Classes="icon"
+                                            Command="{Binding EditSkillCommand}"
+                                            ToolTip.Tip="Edit Selected Skill">
+                                        <materialIcons:MaterialIcon Kind="Pencil" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                    </Button>
+                                    <Button Classes="icon"
+                                            Command="{Binding RemoveSkillCommand}"
+                                            ToolTip.Tip="Remove Selected Skill">
+                                        <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                    
+                    <Border Classes="card" Grid.Row="2" Grid.Column="0"
+                            Padding="{DynamicResource UiPaddingLg}">
+                        <TextBox Classes="bottom-line"
+                                 PlaceholderText="Class Name (e.g. Void Highlord)"
+                                 Text="{Binding CurrentClassName}" />
+                    </Border>
+                    
+                    <Border Classes="card" Grid.Row="0" Grid.Column="1"
+                            Padding="{DynamicResource UiPaddingLg}">
+                        <StackPanel Spacing="{DynamicResource UiGapMd}">
+                            <TextBlock Classes="section-label" Text="USE MODE" />
+                            <WrapPanel Orientation="Horizontal">
+                                <CheckBox Margin="0,0,16,0"
+                                          VerticalAlignment="Center"
+                                          Content="Wait for Cooldown"
+                                          IsChecked="{Binding UseWaitModeBool}"
+                                          ToolTip.Tip="Will wait for either the skill to fully cooldown or the defined skill timeout." />
+                                <CheckBox Margin="0,0,16,0"
+                                          VerticalAlignment="Center"
+                                          Content="Use if available"
+                                          IsChecked="{Binding UseIfAvailableBool}"
+                                          ToolTip.Tip="Whenever a skill is available it will be used, if not it will be skipped." />
+                                <CheckBox VerticalAlignment="Center"
+                                          Content="Reset on Target Change"
+                                          IsChecked="{Binding ResetComboOnTargetChange}"
+                                          ToolTip.Tip="Reset skill combo sequence when the target changes or is lost." />
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+                    
+                    <Border Classes="card" Grid.Row="1" Grid.Column="1"
+                            Padding="{DynamicResource UiPaddingLg}">
+                        <Grid RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapMd}">
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Center">
+                                <TextBlock Grid.Column="0"
+                                           Classes="section-label"
+                                           Text="USE RULES"
+                                           Margin="0,0,10,0" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
+                                    <CheckBox Content="Any (OR)"
+                                              IsChecked="{Binding UseRules.MatchAnyBool}"
+                                              IsEnabled="{Binding UseRules.UseRuleBool}"
+                                              ToolTip.Tip="Use when any condition holds (OR) instead of requiring all (AND)"
+                                              VerticalAlignment="Center" />
+                                    <CheckBox Content="Enable Rule" IsChecked="{Binding UseRules.UseRuleBool}" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <CheckBox Grid.Column="2" Content="Multi Aura" IsChecked="{Binding UseRules.MultiAuraBool}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                <Button Grid.Column="3" Classes="skua-button small"
+                                        Content="Reset"
+                                        Command="{Binding ResetUseRulesCommand}" />
+                            </Grid>
+
+                            <Grid Grid.Row="1"
+                                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                                  RowSpacing="{DynamicResource UiGapSm}">
+                                
+                                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource UiGapSm}">
+                                    <ToggleButton Grid.Column="0"
+                                                  Classes="compare"
+                                                  VerticalAlignment="Bottom"
+                                                  IsChecked="{Binding UseRules.HealthGreaterThanBool}"
+                                                  ToolTip.Tip="Comparison: ≥ (greater or equal) / ≤ (less or equal)" />
+                                    <NumericUpDown Grid.Column="1"
+                                                   Classes="bottom-line"
+                                                   Tag="Health"
+                                                   Minimum="0"
+                                                   Maximum="100"
+                                                   Value="{Binding UseRules.HealthUseValue}" />
+                                    <ToggleButton Grid.Column="2"
+                                                  Classes="value-type"
+                                                  VerticalAlignment="Bottom"
+                                                  IsChecked="{Binding UseRules.HealthIsPercentage}"
+                                                  ToolTip.Tip="Value Type: % (percentage) / # (flat value)" />
+                                </Grid>
+                                
+                                <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource UiGapSm}">
+                                    <ToggleButton Grid.Column="0"
+                                                  Classes="compare"
+                                                  VerticalAlignment="Bottom"
+                                                  IsChecked="{Binding UseRules.ManaGreaterThanBool}"
+                                                  ToolTip.Tip="Comparison: ≥ (greater or equal) / ≤ (less or equal)" />
+                                    <NumericUpDown Grid.Column="1"
+                                                   Classes="bottom-line"
+                                                   Tag="Mana"
+                                                   Minimum="0"
+                                                   Maximum="100"
+                                                   Value="{Binding UseRules.ManaUseValue}" />
+                                    <ToggleButton Grid.Column="2"
+                                                  Classes="value-type"
+                                                  VerticalAlignment="Bottom"
+                                                  IsChecked="{Binding UseRules.ManaIsPercentage}"
+                                                  ToolTip.Tip="Value Type: % (percentage) / # (flat value)" />
+                                </Grid>
+
+                                <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource UiGapSm}">
+                                    <ToggleButton Grid.Column="0"
+                                                  Classes="compare"
+                                                  VerticalAlignment="Bottom"
+                                                  IsChecked="{Binding UseRules.PartyMemberHealthGreaterThanBool}"
+                                                  ToolTip.Tip="Comparison: ≥ (greater or equal) / ≤ (less or equal)" />
+                                    <NumericUpDown Grid.Column="1"
+                                                   Classes="bottom-line"
+                                                   Tag="Party HP"
+                                                   Minimum="0"
+                                                   Maximum="100"
+                                                   Value="{Binding UseRules.PartyMemberHealthUseValue}" />
+                                    <ToggleButton Grid.Column="2"
+                                                  Classes="value-type"
+                                                  VerticalAlignment="Bottom"
+                                                  IsChecked="{Binding UseRules.PartyMemberHealthIsPercentage}"
+                                                  ToolTip.Tip="Value Type: % (percentage) / # (flat value)" />
+                                </Grid>
+
+                                <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource UiGapSm}" IsVisible="{Binding UseRules.MultiAuraBool}">
+                                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Operator:" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                    <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" 
+                                              VerticalAlignment="Center"
+                                              DataContext="{Binding UseRules}"
+                                              SelectedIndex="{Binding MultiAuraOperatorIndex}">
+                                        <ComboBoxItem Content="AND" />
+                                        <ComboBoxItem Content="OR" />
+                                    </ComboBox>
+                                    <Button Grid.Column="2" Classes="skua-button small w84" Content="Add Aura" 
+                                            VerticalAlignment="Center"
+                                            DataContext="{Binding UseRules}"
+                                            Command="{Binding AddAuraCheckCommand}" />
+                                </Grid>
+
+                                <Grid Grid.Row="4" ColumnDefinitions="Auto,2*,*,Auto" ColumnSpacing="{DynamicResource UiGapSm}" IsVisible="{Binding !UseRules.MultiAuraBool}">
+                                    <ToggleButton Grid.Column="0"
+                                                  Classes="compare"
+                                                  VerticalAlignment="Bottom"
+                                                  IsChecked="{Binding UseRules.AuraGreaterThanBool}"
+                                                  ToolTip.Tip="Comparison: ≥ (greater or equal) / ≤ (less or equal)" />
+                                    <TextBox Grid.Column="1"
+                                             Classes="bottom-line"
+                                             PlaceholderText="Aura name"
+                                             Text="{Binding UseRules.AuraName}" />
+                                    <TextBox Grid.Column="2"
+                                             Classes="bottom-line"
+                                             PlaceholderText="Stacks"
+                                             Text="{Binding UseRules.AuraUseValue}" />
+                                    <ComboBox Grid.Column="3"
+                                              MinWidth="90"
+                                              SelectedIndex="{Binding UseRules.AuraTargetIndex}"
+                                              VerticalAlignment="Bottom">
+                                        <ComboBoxItem Content="Self" />
+                                        <ComboBoxItem Content="Target" />
+                                    </ComboBox>
+                                </Grid>
+
+                                <ItemsControl Grid.Row="5" ItemsSource="{Binding UseRules.MultiAuraChecks}" IsVisible="{Binding UseRules.MultiAuraBool}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vmas:AuraCheckViewModel">
+                                            <Grid ColumnDefinitions="Auto,2*,*,Auto,Auto" ColumnSpacing="{DynamicResource UiGapSm}" Margin="0,3">
+                                                <ToggleButton Grid.Column="0" Classes="compare" VerticalAlignment="Bottom"
+                                                              IsChecked="{Binding IsGreater}"
+                                                              ToolTip.Tip="Comparison: ≥ (greater or equal) / ≤ (less or equal)" />
+                                                <TextBox Grid.Column="1" Classes="bottom-line" PlaceholderText="Aura name" 
+                                                         Text="{Binding AuraName}" />
+                                                <TextBox Grid.Column="2" Classes="bottom-line" PlaceholderText="Stacks" 
+                                                         Text="{Binding StackCount}" />
+                                                <ComboBox Grid.Column="3"
+                                                          MinWidth="90"
+                                                          SelectedIndex="{Binding AuraTargetIndex}"
+                                                          VerticalAlignment="Bottom">
+                                                    <ComboBoxItem Content="Self" />
+                                                    <ComboBoxItem Content="Target" />
+                                                </ComboBox>
+                                                <Button Grid.Column="4" Classes="icon" 
+                                                        VerticalAlignment="Bottom"
+                                                        Command="{Binding $parent[ItemsControl].((vmas:AdvancedSkillEditorViewModel)DataContext).UseRules.RemoveAuraCheckCommand}" 
+                                                        CommandParameter="{Binding}">
+                                                    <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                                                </Button>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Grid Grid.Row="6" ColumnDefinitions="*, *" ColumnSpacing="{DynamicResource UiGapLg}" VerticalAlignment="Center" Margin="0,4,0,0">
+                                    <CheckBox Grid.Column="0" Content="Skip if not available" IsChecked="{Binding UseRules.SkipUseBool}" VerticalAlignment="Center" />
+                                    <NumericUpDown Grid.Column="1" Classes="bottom-line"
+                                                   Tag="Wait (ms)"
+                                                   Minimum="0"
+                                                   Maximum="5000"
+                                                   Increment="10"
+                                                   Value="{Binding UseRules.WaitUseValue}" />
+                                </Grid>
+
+                                <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Center"
+                                            Spacing="{DynamicResource UiGapSm}"
+                                            Margin="0,8,0,0">
+                                    <Button Classes="skua-button" Content="0" Width="32" Height="{DynamicResource UiControlHeight}" Command="{Binding AddSkillToCurrentCommand}" CommandParameter="0" />
+                                    <Button Classes="skua-button" Content="1" Width="32" Height="{DynamicResource UiControlHeight}" Command="{Binding AddSkillToCurrentCommand}" CommandParameter="1" />
+                                    <Button Classes="skua-button" Content="2" Width="32" Height="{DynamicResource UiControlHeight}" Command="{Binding AddSkillToCurrentCommand}" CommandParameter="2" />
+                                    <Button Classes="skua-button" Content="3" Width="32" Height="{DynamicResource UiControlHeight}" Command="{Binding AddSkillToCurrentCommand}" CommandParameter="3" />
+                                    <Button Classes="skua-button" Content="4" Width="32" Height="{DynamicResource UiControlHeight}" Command="{Binding AddSkillToCurrentCommand}" CommandParameter="4" />
+                                    <Button Classes="skua-button" Content="5" Width="32" Height="{DynamicResource UiControlHeight}" Command="{Binding AddSkillToCurrentCommand}" CommandParameter="5" />
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                    
+                    <Border Classes="card" Grid.Row="2" Grid.Column="1"
+                            Padding="{DynamicResource UiPaddingLg}">
+                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="{DynamicResource UiGapMd}">
+                            <ComboBox Grid.Column="0"
+                                      ItemsSource="{Binding ClassUseModes}"
+                                      SelectedIndex="{Binding SelectedClassUseMode}"
+                                      HorizontalAlignment="Stretch" />
+                            <Button Grid.Column="1"
+                                    Classes="skua-button skua-primary"
+                                    MinWidth="100"
+                                    Content="Save Skill"
+                                    Command="{Binding SaveSkillsCommand}" />
+                        </Grid>
+                    </Border>
+
+                </Grid>
+            </ScrollViewer>
+        </TabItem>
+
+        <TabItem Header="Saved Skills">
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <Border Classes="card"                        Padding="{DynamicResource UiPaddingLg}"
+                        Margin="8">
+                    <Grid DataContext="{Binding SavedViewModel}"
+                          RowDefinitions="Auto,*,Auto"
+                          RowSpacing="{DynamicResource UiGapBase}">
+                        
+                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,*,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
+                            <Button Grid.Column="0"
+                                    Classes="skua-button"
+                                    Content="Load Classes"
+                                    Command="{Binding LoadAvailableClassesCommand}" />
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding AvailableClasses}"
+                                      SelectedItem="{Binding SelectedClassName}"
+                                      HorizontalAlignment="Stretch"
+                                      PlaceholderText="Select Class..." />
+                            <ComboBox Grid.Column="2"
+                                      ItemsSource="{Binding AvailableModes}"
+                                      SelectedItem="{Binding SelectedMode}"
+                                      HorizontalAlignment="Stretch"
+                                      PlaceholderText="Select Mode..." />
+                            <Button Grid.Column="3"
+                                    Classes="skua-button skua-primary"
+                                    Content="Open"
+                                    Command="{Binding LoadSelectedClassModeCommand}" />
+                        </Grid>
+
+                        <Border Grid.Row="1" Classes="list-frame" MinHeight="260">
+                            <ListBox ItemsSource="{Binding FilteredLoadedSkills}"
+                                     SelectedItem="{Binding SelectedSkill}"
+                                     Classes="embedded"
+                                     DoubleTapped="OnSkillDoubleTapped">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Margin="8,6" Text="{Binding SaveString}" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Border>
+
+                        <StackPanel Grid.Row="2"
+                                    Orientation="Horizontal"
+                                    Spacing="{DynamicResource UiGapMd}">
+                            <Button Classes="skua-button"
+                                    Content="Edit Selected"
+                                    Command="{Binding EditSelectedCommand}" />
+                            <Button Classes="skua-button"
+                                    Content="Remove Selected"
+                                    Command="{Binding RemoveSelectedCommand}" />
+                            <Button Classes="skua-button"
+                                    Content="Refresh"
+                                    Command="{Binding RefreshSkillsCommand}" />
+                            <Button Classes="skua-button outline"
+                                    Content="Reset Sets"
+                                    Command="{Binding ResetSkillsSetCommand}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </ScrollViewer>
+        </TabItem>
+    </TabControl>
+</UserControl>

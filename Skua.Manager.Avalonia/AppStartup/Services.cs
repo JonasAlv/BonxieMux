@@ -22,9 +22,7 @@ public static class Services
         services.AddSingleton<LauncherViewModel>();
         services.AddSingleton<AppUpdaterViewModel>();
         services.AddSingleton<ScriptUpdaterViewModel>();
-        services.AddSingleton<IClientUpdateService, ClientUpdateService>();
         services.AddSingleton<IClientFilesService, ClientFilesService>();
-        services.AddSingleton<ClientUpdatesViewModel>();
         services.AddSingleton<ScriptRepoViewModel>(s =>
         {
             ScriptRepoViewModel vm = new(

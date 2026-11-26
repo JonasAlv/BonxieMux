@@ -19,8 +19,8 @@
     <Style Selector="Expander /template/ ToggleButton#PART_Header, Expander /template/ ToggleButton">
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceBrush}" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="12,10" />
-        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="{DynamicResource UiCardCompactPadding}" />
+        <Setter Property="MinHeight" Value="{DynamicResource UiControlHeight}" />
         <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusCard}" />
         <Setter Property="Foreground" Value="{DynamicResource SkuaTextBrush}" />
         <Setter Property="FontWeight" Value="SemiBold" />
@@ -32,13 +32,18 @@
         <Setter Property="Background" Value="{DynamicResource SkuaSurfaceAltBrush}" />
     </Style>
 
+    <Style Selector="Expander /template/ ToggleButton#PART_Header:focus-visible, Expander /template/ ToggleButton:focus-visible">
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource UiBorderThin}" />
+    </Style>
+
     <Style Selector="Expander:expanded /template/ ToggleButton#PART_Header, Expander:expanded /template/ ToggleButton">
         <Setter Property="CornerRadius" Value="6,6,0,0" />
     </Style>
 
     <Style Selector="Expander /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SkuaPageBrush}" />
-        <Setter Property="Padding" Value="10" />
+        <Setter Property="Padding" Value="{DynamicResource UiCardPadding}" />
         <Setter Property="BorderThickness" Value="0,1,0,0" />
         <Setter Property="BorderBrush" Value="{DynamicResource SkuaBorderBrush}" />
         <Setter Property="CornerRadius" Value="0,0,6,6" />

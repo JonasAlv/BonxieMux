@@ -79,7 +79,7 @@ public partial class App : Application
                 if (getScripts is null)
                     return;
 
-                await getScripts.GetScriptsAsync(null, default);
+                await getScripts.RefreshScriptsAsync(null, default);
 
                 ISettingsService settings = Ioc.Default.GetRequiredService<ISettingsService>();
                 if (settings.Get<bool>("CheckBotScriptsUpdates") && settings.Get<bool>("AutoUpdateBotScripts")
@@ -107,8 +107,9 @@ public partial class App : Application
             desktop.MainWindow = mainWindow;
         mainWindow.Show();
 
+        AppUpdaterViewModel appUpdater = Ioc.Default.GetRequiredService<AppUpdaterViewModel>();
         if (Ioc.Default.GetRequiredService<ISettingsService>().Get("CheckClientUpdates", true))
-            _ = Ioc.Default.GetRequiredService<ClientUpdatesViewModel>().Refresh();
+            _ = appUpdater.CheckForUpdateAsync();
 
         if (Ioc.Default.GetRequiredService<ISettingsService>().Get("SchedulerAutoStart", true))
             Ioc.Default.GetService<Services.ISchedulerService>()?.Start();

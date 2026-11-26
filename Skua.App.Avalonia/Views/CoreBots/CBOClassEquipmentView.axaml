@@ -1,0 +1,158 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.CoreBotsOptions"
+             x:DataType="vms:CBOClassEquipmentViewModel"
+             x:Class="Skua.App.Avalonia.Views.CBOClassEquipmentView">
+  <Grid RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapLg}" Margin="0">
+    
+    <Border Classes="card-flat" Grid.Row="0"
+            Padding="12,8">
+      <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
+  <TextBlock Text="Equipment Slots Per Combat Mode"
+                     FontWeight="Bold"
+                     FontSize="{DynamicResource UiFontBody}"
+                     Foreground="{DynamicResource SkuaTextBrush}"
+                     VerticalAlignment="Center" />
+</StackPanel>
+
+        <Button Grid.Column="1"
+                Classes="skua-button"
+                Height="{DynamicResource UiControlHeight}"
+                Padding="{DynamicResource UiControlPadding}"
+                Command="{Binding RefreshInventoryCommand}"
+                ToolTip.Tip="Refresh items from player inventory">
+  <TextBlock Text="Refresh Inventory" FontSize="{DynamicResource UiFontSmall}" FontWeight="SemiBold" VerticalAlignment="Center" />
+</Button>
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1"
+          RowDefinitions="*,*"
+          ColumnDefinitions="*,*"
+          RowSpacing="{DynamicResource UiGapBase}"
+          ColumnSpacing="{DynamicResource UiGapBase}">
+      
+      <Border Classes="card" Grid.Row="0"
+              Grid.Column="0"
+              Padding="{DynamicResource UiCardCompactPadding}">
+        <StackPanel Spacing="{DynamicResource UiGapSm}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center" Margin="0,0,0,2">
+  <TextBlock Text="Solo Equipment" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
+
+          <Grid ColumnDefinitions="55,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{DynamicResource UiGapXs}" ColumnSpacing="{DynamicResource UiGapSm}">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Helm" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Helms}" SelectedItem="{Binding SelectedSoloHelm}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Armor" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Armors}" SelectedItem="{Binding SelectedSoloArmor}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Cape" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Capes}" SelectedItem="{Binding SelectedSoloCape}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="Weapon" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding Weapons}" SelectedItem="{Binding SelectedSoloWeapon}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Pet" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="4" Grid.Column="1" ItemsSource="{Binding Pets}" SelectedItem="{Binding SelectedSoloPet}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="5" Grid.Column="0" Text="Ground" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="5" Grid.Column="1" ItemsSource="{Binding GroundItems}" SelectedItem="{Binding SelectedSoloGroundItem}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card" Grid.Row="0"
+              Grid.Column="1"
+              Padding="{DynamicResource UiCardCompactPadding}">
+        <StackPanel Spacing="{DynamicResource UiGapSm}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center" Margin="0,0,0,2">
+  <TextBlock Text="Farm Equipment" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
+
+          <Grid ColumnDefinitions="55,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{DynamicResource UiGapXs}" ColumnSpacing="{DynamicResource UiGapSm}">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Helm" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Helms}" SelectedItem="{Binding SelectedFarmHelm}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Armor" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Armors}" SelectedItem="{Binding SelectedFarmArmor}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Cape" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Capes}" SelectedItem="{Binding SelectedFarmCape}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="Weapon" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding Weapons}" SelectedItem="{Binding SelectedFarmWeapon}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Pet" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="4" Grid.Column="1" ItemsSource="{Binding Pets}" SelectedItem="{Binding SelectedFarmPet}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="5" Grid.Column="0" Text="Ground" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="5" Grid.Column="1" ItemsSource="{Binding GroundItems}" SelectedItem="{Binding SelectedFarmGroundItem}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card" Grid.Row="1"
+              Grid.Column="0"
+              Padding="{DynamicResource UiCardCompactPadding}">
+        <StackPanel Spacing="{DynamicResource UiGapSm}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center" Margin="0,0,0,2">
+  <TextBlock Text="Dodge Equipment" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
+
+          <Grid ColumnDefinitions="55,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{DynamicResource UiGapXs}" ColumnSpacing="{DynamicResource UiGapSm}">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Helm" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Helms}" SelectedItem="{Binding SelectedDodgeHelm}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Armor" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Armors}" SelectedItem="{Binding SelectedDodgeArmor}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Cape" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Capes}" SelectedItem="{Binding SelectedDodgeCape}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="Weapon" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding Weapons}" SelectedItem="{Binding SelectedDodgeWeapon}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Pet" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="4" Grid.Column="1" ItemsSource="{Binding Pets}" SelectedItem="{Binding SelectedDodgePet}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="5" Grid.Column="0" Text="Ground" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="5" Grid.Column="1" ItemsSource="{Binding GroundItems}" SelectedItem="{Binding SelectedDodgeGroundItem}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card" Grid.Row="1"
+              Grid.Column="1"
+              Padding="{DynamicResource UiCardCompactPadding}">
+        <StackPanel Spacing="{DynamicResource UiGapSm}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center" Margin="0,0,0,2">
+  <TextBlock Text="Boss Equipment" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
+
+          <Grid ColumnDefinitions="55,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{DynamicResource UiGapXs}" ColumnSpacing="{DynamicResource UiGapSm}">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Helm" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Helms}" SelectedItem="{Binding SelectedBossHelm}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Armor" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Armors}" SelectedItem="{Binding SelectedBossArmor}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Cape" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Capes}" SelectedItem="{Binding SelectedBossCape}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="Weapon" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding Weapons}" SelectedItem="{Binding SelectedBossWeapon}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Pet" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="4" Grid.Column="1" ItemsSource="{Binding Pets}" SelectedItem="{Binding SelectedBossPet}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+
+            <TextBlock Grid.Row="5" Grid.Column="0" Text="Ground" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="5" Grid.Column="1" ItemsSource="{Binding GroundItems}" SelectedItem="{Binding SelectedBossGroundItem}" Height="{DynamicResource UiControlHeight}" HorizontalAlignment="Stretch" />
+          </Grid>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>

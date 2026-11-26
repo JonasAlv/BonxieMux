@@ -1,11 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Skua.App.Avalonia.Views.Popups.AutoQuickPopupView">
-    <Border Background="{DynamicResource SkuaSurfaceBrush}"
-            BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="{DynamicResource UiBorderThin}"
-            CornerRadius="{DynamicResource UiRadiusCard}"
-            Padding="{DynamicResource UiPaddingLg}"
+    <Border Classes="card"            Padding="{DynamicResource UiPaddingLg}"
             Width="360">
         <StackPanel Spacing="{DynamicResource UiGapBase}">
             <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">

@@ -52,13 +52,9 @@
                              PlaceholderText="Optional test label (e.g. Battleon crowded, Void Highlord solo)..."
                              Margin="0,0,8,0" />
 
-                    <Border Grid.Column="1"
+                    <Border Classes="card" Grid.Column="1"
                             x:Name="RecordingBadge"
-                            Background="{DynamicResource SkuaSurfaceBrush}"
-                            BorderBrush="{DynamicResource SkuaBorderBrush}"
-                            BorderThickness="{DynamicResource UiBorderThin}"
-                            CornerRadius="{DynamicResource UiRadiusCard}"
-                            Padding="10,0"
+                            Padding="{DynamicResource UiControlPadding}"
                             Height="{DynamicResource UiControlHeight}"
                             Margin="0,0,8,0">
                         <TextBlock x:Name="RecordingStatusText"
@@ -81,7 +77,7 @@
                     <Button Grid.Column="3"
                             Classes="skua-button"
                             Height="{DynamicResource UiControlHeight}"
-                            Padding="10,0"
+                            Padding="{DynamicResource UiControlPadding}"
                             Margin="0,0,8,0"
                             ToolTip.Tip="Save an immediate 1-sample .txt snapshot with current Mugetsu &amp; Host metrics"
                             Click="BtnSnapshot_Click">
@@ -91,7 +87,7 @@
                     <Button Grid.Column="4"
                             Classes="skua-button"
                             Height="{DynamicResource UiControlHeight}"
-                            Padding="10,0"
+                            Padding="{DynamicResource UiControlPadding}"
                             ToolTip.Tip="Open saved reports directory"
                             Click="BtnOpenFolder_Click">
   <TextBlock Text="Reports" VerticalAlignment="Center" FontSize="{DynamicResource UiFontSmall}" />
@@ -100,15 +96,15 @@
             </Border>
 
             <!-- 3. Main Content -->
-            <ScrollViewer Grid.Row="2" Padding="12,10">
-                <StackPanel Spacing="10">
+            <ScrollViewer Grid.Row="2" Padding="{DynamicResource UiCardCompactPadding}">
+                <StackPanel Spacing="{DynamicResource UiGapBase}">
                     <!-- Top Summary Cards -->
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto">
                         <!-- Pipeline & GPU Card -->
                         <Border Grid.Column="0" Classes="card" Padding="{DynamicResource UiCardCompactPadding}" Margin="0,0,5,0">
-                            <StackPanel Spacing="5">
+                            <StackPanel Spacing="{DynamicResource UiGapSm}">
                                 <TextBlock Classes="card-title" Text="PIPELINE &amp; GRAPHICS BACKEND" />
-                                <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+                                <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{DynamicResource UiGapXs}">
                                     <TextBlock Grid.Row="0" Grid.Column="0" Classes="stat-label" Text="Transport Mode" />
                                     <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtTransportMode" Classes="stat-value" Text="--" />
 
@@ -129,9 +125,9 @@
 
                         <!-- Process Resource Usage Card -->
                         <Border Grid.Column="1" Classes="card" Padding="{DynamicResource UiCardCompactPadding}" Margin="5,0,0,0">
-                            <StackPanel Spacing="5">
+                            <StackPanel Spacing="{DynamicResource UiGapSm}">
                                 <TextBlock Classes="card-title" Text="PROCESS CPU &amp; MEMORY" />
-                                <Grid ColumnDefinitions="120,*,*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+                                <Grid ColumnDefinitions="120,*,*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{DynamicResource UiGapXs}">
                                     <TextBlock Grid.Row="0" Grid.Column="0" Classes="stat-label" Text="Process" FontWeight="SemiBold" />
                                     <TextBlock Grid.Row="0" Grid.Column="1" Classes="stat-label" Text="PID" />
                                     <TextBlock Grid.Row="0" Grid.Column="2" Classes="stat-label" Text="CPU %" />
@@ -165,9 +161,9 @@
                     <Grid ColumnDefinitions="*,*">
                         <!-- Host Viewport Card -->
                         <Border Grid.Column="0" Classes="card" Padding="{DynamicResource UiCardCompactPadding}" Margin="0,0,5,0">
-                            <StackPanel Spacing="5">
+                            <StackPanel Spacing="{DynamicResource UiGapSm}">
                                 <TextBlock Classes="card-title" Text="HOST VIEWPORT PRESENTATION (AVALONIA)" />
-                                <Grid ColumnDefinitions="145,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="4">
+                                <Grid ColumnDefinitions="145,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{DynamicResource UiGapXs}">
                                     <TextBlock Grid.Row="0" Grid.Column="0" Classes="stat-label" Text="Host Presented FPS" />
                                     <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtHostFps" Classes="stat-value" Text="--" FontSize="{DynamicResource UiFontHeading}" />
 
@@ -185,9 +181,9 @@
 
                         <!-- Mugetsu Internal Card -->
                         <Border Grid.Column="1" Classes="card" Padding="{DynamicResource UiCardCompactPadding}" Margin="5,0,0,0">
-                            <StackPanel Spacing="5">
+                            <StackPanel Spacing="{DynamicResource UiGapSm}">
                                 <TextBlock Classes="card-title" Text="MUGETSU ENGINE TELEMETRY (5s WINDOW)" />
-                                <Grid ColumnDefinitions="155,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="4">
+                                <Grid ColumnDefinitions="155,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{DynamicResource UiGapXs}">
                                     <TextBlock Grid.Row="0" Grid.Column="0" Classes="stat-label" Text="Game / Drawn / Presented" />
                                     <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtMugFpsTriple" Classes="stat-value" Text="--" FontSize="{DynamicResource UiFontBody}" />
 
@@ -206,7 +202,7 @@
 
                     <!-- Mugetsu Detailed Render Breakdown Card -->
                     <Border Classes="card" Padding="{DynamicResource UiCardCompactPadding}">
-                        <StackPanel Spacing="4">
+                        <StackPanel Spacing="{DynamicResource UiGapXs}">
                             <TextBlock Classes="card-title" Text="MUGETSU RENDER &amp; MEMORY DETAILS" />
                             <TextBlock x:Name="TxtRenderBreakdown" FontFamily="{DynamicResource UiFontMono}" FontSize="{DynamicResource UiFontSmall}" TextWrapping="Wrap" Foreground="{DynamicResource SkuaTextBrush}" Text="render time per drawn frame: waiting for first 5s summary..." />
                             <TextBlock x:Name="TxtPerDrawn" FontFamily="{DynamicResource UiFontMono}" FontSize="{DynamicResource UiFontSmall}" TextWrapping="Wrap" Foreground="{DynamicResource SkuaMutedTextBrush}" Text="per drawn frame: --" />
@@ -216,7 +212,7 @@
 
                     <!-- Live ruffle_aqw_perf Stream -->
                     <Border Classes="card" Padding="{DynamicResource UiCardCompactPadding}">
-                        <StackPanel Spacing="6">
+                        <StackPanel Spacing="{DynamicResource UiGapSm}">
                             <TextBlock Classes="card-title" Text="LIVE MUGETSU PERF LOG STREAM (ruffle_aqw_perf)" Margin="0" />
                             <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
                                     BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -251,7 +247,7 @@
                 <primitives:StatusFooterBar.RightContent>
                     <Button x:Name="BtnCopyPath"
                             Classes="skua-button small"
-                            Padding="10,0"
+                            Padding="{DynamicResource UiControlPadding}"
                             IsVisible="False"
                             Click="BtnCopyPath_Click">
                         <TextBlock Text="Copy Path" VerticalAlignment="Center" FontSize="{DynamicResource UiFontSmall}" />

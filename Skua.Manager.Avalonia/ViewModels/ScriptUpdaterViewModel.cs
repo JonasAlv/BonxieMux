@@ -136,8 +136,17 @@ public partial class ScriptUpdaterViewModel : BotControlViewModelBase
         {
             await _scriptsService.RefreshScriptsAsync(_progress, token);
 
-            int count = await _scriptsService.DownloadAllWhereAsync(s => !s.Downloaded || s.Outdated, token: token);
-            ProgressStatus = $"Downloaded {count} scripts.";
+            int count = await _scriptsService.DownloadAllWhereAsync(s => !s.Downloaded || s.Outdated, _progress, token);
+
+            ProgressStatus = "Updating skills, quests, and junk data...";
+            await Task.WhenAll(
+                _scriptsService.UpdateSkillSetsFile(),
+                _scriptsService.UpdateQuestDataFile(),
+                _scriptsService.UpdateJunkItemsFile());
+
+            ProgressStatus = count > 0
+                ? $"Downloaded {count} script(s) and refreshed data files."
+                : "All scripts and data files are up to date.";
             Status = "Scripts are up to date.";
         }
         catch (OperationCanceledException)

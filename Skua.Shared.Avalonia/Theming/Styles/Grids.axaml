@@ -13,7 +13,7 @@
         <Setter Property="VerticalAlignment" Value="Top" />
     </Style>
     
-    <Style Selector="Grid.header-row">
+    <Style Selector="Grid.header-row, DockPanel.header-row">
         <Setter Property="Margin" Value="0,0,0,3" />
     </Style>
 </Styles>

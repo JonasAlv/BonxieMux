@@ -8,6 +8,7 @@ using Skua.Core.Messaging;
 using Skua.Core.Models;
 using Skua.Core.Utils;
 using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -15,7 +16,6 @@ using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -23,37 +23,110 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using STJ = System.Text.Json;
 
 namespace Skua.App.Avalonia.Flash;
 
 public class FlashUtil : IFlashUtil, IRestartableGamePlayer
 {
     private static readonly TimeSpan CallTimeout = TimeSpan.FromSeconds(10);
+    private static readonly long ShortReadCacheTtlTicks = (long)(Stopwatch.Frequency * 0.025);
+    private static readonly long StaticReadCacheTtlTicks = (long)(Stopwatch.Frequency * 0.250);
+
+    private static readonly HashSet<string> ShortReadCacheFunctions = new(StringComparer.Ordinal)
+    {
+        "isNull",
+        "isTrue",
+        "isLoggedIn",
+        "getGameObject",
+        "getGameObjectKey",
+        "getTargetMonster",
+        "availableMonsters",
+        "getMonsters",
+        "getSubjectAuras",
+        "GetAuraSnapshots",
+        "GetAuraRuleStacks",
+        "HasAnyActiveAura",
+        "getAvatar",
+        "hasInventoryCategories",
+        "inventoryBagUsedSlots",
+        "inventoryMiscSlots",
+        "inventoryMiscUsedSlots"
+    };
+
+    private static readonly HashSet<string> StaticReadCacheFunctions = new(StringComparer.Ordinal)
+    {
+        "getGameObjectS",
+        "gender"
+    };
+
+    private static readonly string[] VolatileReadPathMarkers =
+    [
+        "mcConnDetail",
+        "mcLogin",
+        "ui.mcPopup",
+        "world.mapLoadInProgress",
+        "artLoaded",
+        "isKicked"
+    ];
+
+    private sealed class PendingCall
+    {
+        public readonly ManualResetEventSlim Ready = new(false);
+        public bool HasResult;
+        public string? RawResult;
+
+        public void Reset()
+        {
+            Ready.Reset();
+            HasResult = false;
+            RawResult = null;
+        }
+    }
+
+    private readonly record struct ReadCacheKey(string Function, string Arg0, string Arg1);
+    private readonly record struct CachedReadValue(long Epoch, long ExpiresTimestamp, string? RawResult);
 
     private readonly IMessenger _messenger;
     private readonly Lazy<IScriptManager> _lazyManager;
-    private readonly ConcurrentDictionary<int, TaskCompletionSource<JObject>> _pending = new();
+    private readonly ConcurrentDictionary<int, PendingCall> _pending = new();
+    private readonly ConcurrentBag<PendingCall> _pendingPool = new();
+    private readonly ConcurrentDictionary<ReadCacheKey, CachedReadValue> _readCache = new();
+    private readonly ArrayBufferWriter<byte> _sendBuffer = new(512);
     private readonly object _sendLock = new();
     private readonly object _playerLock = new();
     private readonly object _telemetryLock = new();
-    private TcpListener? _listener;
+    private Socket? _unixListener;
+    private string? _unixSocketPath;
     private Process? _player;
     private int _acceptedPlayerPid;
     private MugetsuPerfSnapshot? _telemetry;
-    private StreamWriter? _bridge;
-    private string? _lastVisiblePayloadJson;
-    private string? _lastFocusPayloadJson;
-    private string? _lastResizePayloadJson;
-    private string? _pendingFreeMemoryPayloadJson;
-    private readonly Dictionary<string, string> _lastMugetsuSettings = new(StringComparer.Ordinal);
+    private NetworkStream? _bridgeStream;
+    private byte[]? _lastVisiblePayloadBytes;
+    private byte[]? _lastFocusPayloadBytes;
+    private byte[]? _lastResizePayloadBytes;
+    private byte[]? _pendingFreeMemoryPayloadBytes;
+    private readonly Dictionary<string, byte[]> _lastMugetsuSettings = new(StringComparer.Ordinal);
+    private long _cacheEpoch;
     private int _nextId;
     private readonly BridgeStats _stats = new();
+
+    private const int SOL_SOCKET = 1;
+    private const int SO_PEERCRED = 17;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct LinuxUcred
+    {
+        public int Pid;
+        public uint Uid;
+        public uint Gid;
+    }
 
     [DllImport("libc", SetLastError = true)]
     private static extern uint geteuid();
 
     [DllImport("libc", SetLastError = true)]
-    private static extern nint readlink(string path, byte[] buf, nuint bufsiz);
+    private static extern int getsockopt(int sockfd, int level, int optname, out LinuxUcred optval, ref uint optlen);
 
     public FlashUtil(IMessenger messenger, Lazy<IScriptManager> manager)
     {
@@ -141,11 +214,22 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         if (!File.Exists(PlayerPath))
             throw new FileNotFoundException($"Missing the game player ({PlayerPath}). Rebuild BonxieMux so it downloads the player.");
 
-        if (_listener is null)
+        if (_unixListener is null)
         {
-            _listener = new TcpListener(IPAddress.Loopback, 0);
-            _listener.Start();
-            _ = Task.Run(AcceptLoopAsync);
+            Directory.CreateDirectory(ClientFileSources.TabsDIR);
+            _unixSocketPath = Path.Combine(ClientFileSources.TabsDIR, $"bridge_{Environment.ProcessId}.sock");
+            try
+            {
+                if (File.Exists(_unixSocketPath))
+                    File.Delete(_unixSocketPath);
+            }
+            catch { }
+            Socket unixSocket = new(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+            unixSocket.Bind(new UnixDomainSocketEndPoint(_unixSocketPath));
+            try { File.SetUnixFileMode(_unixSocketPath, UnixFileMode.UserRead | UnixFileMode.UserWrite); } catch { }
+            unixSocket.Listen(4);
+            _unixListener = unixSocket;
+            _ = Task.Run(AcceptUnixLoopAsync);
         }
 
         StopPlayer();
@@ -160,11 +244,11 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             StandardErrorEncoding = Encoding.UTF8
         };
         start.ArgumentList.Add("--skua-bridge");
-        start.ArgumentList.Add($"127.0.0.1:{((IPEndPoint)_listener.LocalEndpoint).Port}");
+        start.ArgumentList.Add($"unix://{_unixSocketPath}");
         string? wlDisplay = !string.IsNullOrWhiteSpace(WaylandDisplay)
             ? WaylandDisplay
             : Environment.GetEnvironmentVariable("BONXIE_WL_DISPLAY");
-        string transportMode = "Wayland DMA-BUF";
+        const string transportMode = "Wayland DMA-BUF (AF_UNIX)";
         if (!string.IsNullOrWhiteSpace(wlDisplay))
         {
             start.Environment["WAYLAND_DISPLAY"] = wlDisplay;
@@ -216,24 +300,24 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         TryDeleteMugetsuTelemetryFile();
     }
 
-    private async Task AcceptLoopAsync()
+    private async Task AcceptUnixLoopAsync()
     {
-        while (_listener is { } listener)
+        while (_unixListener is { } listener)
         {
-            TcpClient client;
+            Socket client;
             try
             {
-                client = await listener.AcceptTcpClientAsync();
+                client = await listener.AcceptAsync().ConfigureAwait(false);
             }
             catch
             {
                 return;
             }
-            _ = Task.Run(() => RunBridgeAsync(client));
+            _ = Task.Run(() => RunBridgeUnixAsync(client));
         }
     }
 
-    private bool TryAuthorizeBridgeClient(TcpClient client)
+    private bool TryAuthorizeUnixBridgeClient(Socket client)
     {
         int expectedPid;
         lock (_playerLock)
@@ -243,18 +327,12 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             expectedPid = activePlayer.Id;
         }
 
-        if (client.Client.RemoteEndPoint is not IPEndPoint remoteEp ||
-            client.Client.LocalEndPoint is not IPEndPoint localEp ||
-            !IPAddress.IsLoopback(remoteEp.Address))
-        {
+        uint len = (uint)Marshal.SizeOf<LinuxUcred>();
+        if (getsockopt((int)client.Handle, SOL_SOCKET, SO_PEERCRED, out LinuxUcred cred, ref len) != 0)
             return false;
-        }
 
-        if (File.Exists("/proc/net/tcp"))
-        {
-            if (!VerifyLinuxLoopbackPeer(remoteEp.Port, localEp.Port, expectedPid))
-                return false;
-        }
+        if (cred.Uid != geteuid() || cred.Pid != expectedPid)
+            return false;
 
         lock (_playerLock)
         {
@@ -270,133 +348,119 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         }
     }
 
-    private static bool VerifyLinuxLoopbackPeer(int clientPort, int serverPort, int expectedPid)
-    {
-        try
-        {
-            string expectedLocal = $"0100007F:{clientPort:X4}";
-            string expectedRem = $"0100007F:{serverPort:X4}";
-            uint currentUid = geteuid();
-            string? matchedInode = null;
-
-            foreach (string line in File.ReadLines("/proc/net/tcp").Skip(1))
-            {
-                string[] parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length < 10)
-                    continue;
-
-                if (string.Equals(parts[1], expectedLocal, StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(parts[2], expectedRem, StringComparison.OrdinalIgnoreCase))
-                {
-                    if (!uint.TryParse(parts[7], NumberStyles.Integer, CultureInfo.InvariantCulture, out uint peerUid) ||
-                        peerUid != currentUid)
-                    {
-                        return false;
-                    }
-
-                    matchedInode = parts[9];
-                    break;
-                }
-            }
-
-            if (string.IsNullOrEmpty(matchedInode) || matchedInode == "0")
-                return false;
-
-            string fdDir = $"/proc/{expectedPid}/fd";
-            if (Directory.Exists(fdDir))
-            {
-                string expectedTarget = $"socket:[{matchedInode}]";
-                byte[] buf = new byte[128];
-                try
-                {
-                    foreach (string fdEntry in Directory.EnumerateFileSystemEntries(fdDir))
-                    {
-                        nint len = readlink(fdEntry, buf, (nuint)buf.Length);
-                        if (len > 0 && Encoding.ASCII.GetString(buf, 0, (int)len) == expectedTarget)
-                            return true;
-                    }
-                    return false;
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    return true;
-                }
-            }
-
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private async Task RunBridgeAsync(TcpClient client)
+    private async Task RunBridgeUnixAsync(Socket client)
     {
         using (client)
         {
-            if (!TryAuthorizeBridgeClient(client))
+            if (!TryAuthorizeUnixBridgeClient(client))
             {
-                Trace.WriteLine("Rejected unauthorized connection to Flash bridge.");
+                Trace.WriteLine("Rejected unauthorized AF_UNIX connection to Flash bridge.");
                 return;
             }
 
-            client.NoDelay = true;
-            NetworkStream stream = client.GetStream();
-            StreamWriter writer = new(stream, new UTF8Encoding(false)) { AutoFlush = true, NewLine = "\n" };
-            lock (_sendLock)
-            {
-                Interlocked.Exchange(ref _bridge, writer)?.Dispose();
-                try
-                {
-                    if (_lastResizePayloadJson != null)
-                        writer.WriteLine(_lastResizePayloadJson);
-                    if (_lastVisiblePayloadJson != null)
-                        writer.WriteLine(_lastVisiblePayloadJson);
-                    if (_lastFocusPayloadJson != null)
-                        writer.WriteLine(_lastFocusPayloadJson);
-                    foreach (string settingJson in _lastMugetsuSettings.Values)
-                        writer.WriteLine(settingJson);
-                    if (_pendingFreeMemoryPayloadJson != null)
-                    {
-                        writer.WriteLine(_pendingFreeMemoryPayloadJson);
-                        _pendingFreeMemoryPayloadJson = null;
-                    }
-                }
-                catch { }
-            }
-            FailPending();
-
-            try
-            {
-                using StreamReader reader = new(stream, Encoding.UTF8);
-                while (await reader.ReadLineAsync() is { } line)
-                    Receive(JObject.Parse(line), line.Length);
-            }
-            catch (Exception ex) when (ex is IOException or ObjectDisposedException or JsonException)
-            {
-                Trace.WriteLine($"Game player bridge closed: {ex.Message}");
-            }
-            finally
-            {
-                if (Interlocked.CompareExchange(ref _bridge, null, writer) == writer)
-                    FailPending();
-            }
+            using NetworkStream stream = new(client, ownsSocket: false);
+            await RunBridgeStreamAsync(stream).ConfigureAwait(false);
         }
     }
 
-    private void Receive(JObject msg, int chars)
+    private async Task RunBridgeStreamAsync(NetworkStream stream)
     {
-        if (msg["id"] is { } id)
+        lock (_sendLock)
         {
-            if (_pending.TryRemove((int)id, out TaskCompletionSource<JObject>? tcs))
-                tcs.TrySetResult(msg);
+            Interlocked.Exchange(ref _bridgeStream, stream)?.Dispose();
+            try
+            {
+                if (_lastResizePayloadBytes != null)
+                    stream.Write(_lastResizePayloadBytes);
+                if (_lastVisiblePayloadBytes != null)
+                    stream.Write(_lastVisiblePayloadBytes);
+                if (_lastFocusPayloadBytes != null)
+                    stream.Write(_lastFocusPayloadBytes);
+                foreach (byte[] settingBytes in _lastMugetsuSettings.Values)
+                    stream.Write(settingBytes);
+                if (_pendingFreeMemoryPayloadBytes != null)
+                {
+                    stream.Write(_pendingFreeMemoryPayloadBytes);
+                    _pendingFreeMemoryPayloadBytes = null;
+                }
+            }
+            catch { }
+        }
+        FailPending();
+
+        try
+        {
+            byte[] buffer = new byte[8192];
+            int filled = 0;
+            while (true)
+            {
+                int searchStart = 0;
+                while (true)
+                {
+                    int rel = Array.IndexOf(buffer, (byte)'\n', searchStart, filled - searchStart);
+                    if (rel < 0)
+                        break;
+
+                    int lineEnd = (rel > searchStart && buffer[rel - 1] == (byte)'\r') ? rel - 1 : rel;
+                    int lineLen = lineEnd - searchStart;
+                    if (lineLen > 0)
+                    {
+                        using STJ.JsonDocument doc = STJ.JsonDocument.Parse(buffer.AsMemory(searchStart, lineLen));
+                        Receive(doc.RootElement, lineLen);
+                    }
+                    searchStart = rel + 1;
+                }
+
+                if (searchStart > 0)
+                {
+                    int remaining = filled - searchStart;
+                    if (remaining > 0)
+                        Buffer.BlockCopy(buffer, searchStart, buffer, 0, remaining);
+                    filled = remaining;
+                }
+
+                if (filled == buffer.Length)
+                    Array.Resize(ref buffer, buffer.Length * 2);
+
+                int bytesRead = await stream.ReadAsync(buffer.AsMemory(filled, buffer.Length - filled)).ConfigureAwait(false);
+                if (bytesRead == 0)
+                    break;
+                filled += bytesRead;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or ObjectDisposedException or STJ.JsonException)
+        {
+            Trace.WriteLine($"Game player bridge closed: {ex.Message}");
+        }
+        finally
+        {
+            if (Interlocked.CompareExchange(ref _bridgeStream, null, stream) == stream)
+                FailPending();
+        }
+    }
+
+    private void Receive(STJ.JsonElement msg, int chars)
+    {
+        if (msg.TryGetProperty("id", out STJ.JsonElement idProp) && idProp.TryGetInt32(out int id))
+        {
+            if (_pending.TryRemove(id, out PendingCall? pending))
+            {
+                pending.RawResult = ExtractRawResult(msg);
+                pending.HasResult = true;
+                pending.Ready.Set();
+            }
             return;
         }
 
-        string function = (string)msg["ev"]!;
+        if (!msg.TryGetProperty("ev", out STJ.JsonElement evProp))
+            return;
+
+        InvalidateReadCache();
+        string function = evProp.GetString()!;
         _stats.RecordEvent(function, chars);
-        object[] args = msg["args"] is JArray arr ? arr.Select(FromJson).ToArray() : [];
+        object[] args = msg.TryGetProperty("args", out STJ.JsonElement argsProp) && argsProp.ValueKind == STJ.JsonValueKind.Array
+            ? ConvertArgsArray(argsProp)
+            : [];
         Dispatcher.UIThread.Post(() =>
         {
             FlashCallHandler? subscribers = FlashCall;
@@ -417,44 +481,91 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         });
     }
 
+    private static string? ExtractRawResult(STJ.JsonElement msg)
+    {
+        if (!msg.TryGetProperty("r", out STJ.JsonElement rProp))
+            return null;
+
+        return rProp.ValueKind switch
+        {
+            STJ.JsonValueKind.Null or STJ.JsonValueKind.Undefined => null,
+            STJ.JsonValueKind.True => "true",
+            STJ.JsonValueKind.False => "false",
+            STJ.JsonValueKind.String => rProp.GetString(),
+            _ => rProp.GetRawText()
+        };
+    }
+
+    private static object[] ConvertArgsArray(STJ.JsonElement arr)
+    {
+        int count = arr.GetArrayLength();
+        if (count == 0)
+            return [];
+
+        object[] result = new object[count];
+        int i = 0;
+        foreach (STJ.JsonElement item in arr.EnumerateArray())
+            result[i++] = FromJsonElement(item);
+        return result;
+    }
+
     public void SendInput(object payload)
     {
         try
         {
-            JObject obj = JObject.FromObject(payload);
-            string? input = obj["input"]?.Value<string>();
-            string json = obj.ToString(Formatting.None);
+            byte[] utf8 = STJ.JsonSerializer.SerializeToUtf8Bytes(payload);
+            byte[] lineBytes = new byte[utf8.Length + 1];
+            Buffer.BlockCopy(utf8, 0, lineBytes, 0, utf8.Length);
+            lineBytes[utf8.Length] = (byte)'\n';
+
+            string? input = null;
+            string? settingName = null;
+            using (STJ.JsonDocument doc = STJ.JsonDocument.Parse(utf8))
+            {
+                if (doc.RootElement.ValueKind == STJ.JsonValueKind.Object)
+                {
+                    if (doc.RootElement.TryGetProperty("input", out STJ.JsonElement inpEl) && inpEl.ValueKind == STJ.JsonValueKind.String)
+                        input = inpEl.GetString();
+                    if (input == "mugetsu_setting" && doc.RootElement.TryGetProperty("name", out STJ.JsonElement nameEl) && nameEl.ValueKind == STJ.JsonValueKind.String)
+                        settingName = nameEl.GetString();
+                }
+            }
+
             lock (_sendLock)
             {
                 if (input == "visible")
-                    _lastVisiblePayloadJson = json;
+                    _lastVisiblePayloadBytes = lineBytes;
                 else if (input == "focus")
-                    _lastFocusPayloadJson = json;
+                    _lastFocusPayloadBytes = lineBytes;
                 else if (input == "resize")
-                    _lastResizePayloadJson = json;
-                else if (input == "mugetsu_setting")
-                {
-                    string? settingName = obj["name"]?.Value<string>();
-                    if (!string.IsNullOrEmpty(settingName))
-                        _lastMugetsuSettings[settingName] = json;
-                }
-                else if (input == "free_memory" && _bridge is null)
-                {
-                    _pendingFreeMemoryPayloadJson = json;
-                }
+                    _lastResizePayloadBytes = lineBytes;
+                else if (input == "mugetsu_setting" && !string.IsNullOrEmpty(settingName))
+                    _lastMugetsuSettings[settingName] = lineBytes;
+                else if (input == "free_memory" && _bridgeStream is null)
+                    _pendingFreeMemoryPayloadBytes = lineBytes;
 
-                if (_bridge is { } writer)
-                    writer.WriteLine(json);
+                if (_bridgeStream is { } stream)
+                    stream.Write(lineBytes);
             }
         }
         catch { }
     }
 
+    private void InvalidateReadCache() => Interlocked.Increment(ref _cacheEpoch);
+
     private void FailPending()
     {
+        InvalidateReadCache();
+        _readCache.Clear();
         foreach (int id in _pending.Keys)
-            if (_pending.TryRemove(id, out TaskCompletionSource<JObject>? tcs))
-                tcs.TrySetResult(new JObject());
+        {
+            if (_pending.TryRemove(id, out PendingCall? pending))
+            {
+                pending.HasResult = false;
+                pending.RawResult = null;
+                pending.Ready.Set();
+            }
+        }
     }
 
     public string Call(string function, params object[] args)
@@ -516,6 +627,90 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         }
     }
 
+    private static bool TryGetReadCacheKey(string function, object[] args, out ReadCacheKey key, out long ttlTicks)
+    {
+        ttlTicks = 0;
+        if (StaticReadCacheFunctions.Contains(function))
+            ttlTicks = StaticReadCacheTtlTicks;
+        else if (ShortReadCacheFunctions.Contains(function))
+            ttlTicks = ShortReadCacheTtlTicks;
+        else
+        {
+            key = default;
+            return false;
+        }
+
+        if (args.Length > 2)
+        {
+            key = default;
+            return false;
+        }
+
+        string arg0 = string.Empty;
+        string arg1 = string.Empty;
+        if (args.Length >= 1)
+        {
+            if (!TryFormatCacheArg(args[0], out arg0))
+            {
+                key = default;
+                return false;
+            }
+            for (int i = 0; i < VolatileReadPathMarkers.Length; i++)
+            {
+                if (arg0.Contains(VolatileReadPathMarkers[i], StringComparison.Ordinal))
+                {
+                    key = default;
+                    return false;
+                }
+            }
+        }
+        if (args.Length == 2 && !TryFormatCacheArg(args[1], out arg1))
+        {
+            key = default;
+            return false;
+        }
+
+        key = new ReadCacheKey(function, arg0, arg1);
+        return true;
+    }
+
+    private static bool TryFormatCacheArg(object? arg, out string formatted)
+    {
+        switch (arg)
+        {
+            case string s:
+                formatted = s;
+                return true;
+            case int i:
+                formatted = i.ToString(CultureInfo.InvariantCulture);
+                return true;
+            case bool b:
+                formatted = b ? "1" : "0";
+                return true;
+            default:
+                formatted = string.Empty;
+                return false;
+        }
+    }
+
+    private PendingCall RentPendingCall()
+    {
+        if (_pendingPool.TryTake(out PendingCall? pending))
+        {
+            pending.Reset();
+            return pending;
+        }
+        return new PendingCall();
+    }
+
+    private void ReturnPendingCall(PendingCall pending)
+    {
+        if (_pendingPool.Count < 16)
+            _pendingPool.Add(pending);
+        else
+            pending.Ready.Dispose();
+    }
+
     private bool TryCallInternal(
         string function,
         Type type,
@@ -526,23 +721,79 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         params object[] args)
     {
         value = default;
-        if (cancellationToken.IsCancellationRequested || _bridge is not { } writer)
+        if (cancellationToken.IsCancellationRequested || _bridgeStream is null)
             return false;
 
-        int id = Interlocked.Increment(ref _nextId);
         long startTimestamp = Stopwatch.GetTimestamp();
-        TaskCompletionSource<JObject> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        _pending[id] = tcs;
+        bool cacheable = TryGetReadCacheKey(function, args, out ReadCacheKey cacheKey, out long cacheTtlTicks);
+        if (cacheable)
+        {
+            long curEpoch = Volatile.Read(ref _cacheEpoch);
+            if (_readCache.TryGetValue(cacheKey, out CachedReadValue cached) &&
+                cached.Epoch == curEpoch &&
+                startTimestamp < cached.ExpiresTimestamp)
+            {
+                if (_stats.Enabled)
+                {
+                    string statKey = function.StartsWith("getGameObject", StringComparison.Ordinal) && args.Length > 0 && args[0] is string path
+                        ? $"{function} {path}"
+                        : function;
+                    _stats.RecordCall(statKey, startTimestamp, cached.RawResult?.Length ?? 0);
+                }
+
+                try
+                {
+                    value = cached.RawResult is null ? default : Convert.ChangeType(cached.RawResult, type, CultureInfo.InvariantCulture);
+                    return true;
+                }
+                catch when (!throwOnTimeout)
+                {
+                    value = default;
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            InvalidateReadCache();
+        }
+
+        long callEpoch = cacheable ? Volatile.Read(ref _cacheEpoch) : 0;
+        int id = Interlocked.Increment(ref _nextId);
+        PendingCall pending = RentPendingCall();
+        _pending[id] = pending;
+        bool hasResult = false;
+        string? result = null;
         try
         {
-            string request = JsonConvert.SerializeObject(new { id, name = function, args = args.Select(ToJs) });
             lock (_sendLock)
-                writer.WriteLine(request);
+            {
+                if (_bridgeStream is not { } stream)
+                    return false;
+
+                _sendBuffer.Clear();
+                using (STJ.Utf8JsonWriter writer = new(_sendBuffer))
+                {
+                    writer.WriteStartObject();
+                    writer.WriteNumber("id", id);
+                    writer.WriteString("name", function);
+                    writer.WritePropertyName("args");
+                    writer.WriteStartArray();
+                    for (int i = 0; i < args.Length; i++)
+                        WriteJsArg(writer, args[i]);
+                    writer.WriteEndArray();
+                    writer.WriteEndObject();
+                }
+                Span<byte> nl = _sendBuffer.GetSpan(1);
+                nl[0] = (byte)'\n';
+                _sendBuffer.Advance(1);
+                stream.Write(_sendBuffer.WrittenSpan);
+            }
 
             bool completed;
             try
             {
-                completed = tcs.Task.Wait((int)Math.Max(1, timeout.TotalMilliseconds), cancellationToken);
+                completed = pending.Ready.Wait((int)Math.Max(1, timeout.TotalMilliseconds), cancellationToken);
             }
             catch (OperationCanceledException)
             {
@@ -555,23 +806,30 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
                     throw new TimeoutException($"No answer from the game player within {timeout.TotalSeconds}s.");
                 return false;
             }
+
+            hasResult = pending.HasResult;
+            result = pending.RawResult;
         }
         finally
         {
             _pending.TryRemove(id, out _);
+            ReturnPendingCall(pending);
         }
 
-        JObject response = tcs.Task.Result;
-        if (!response.ContainsKey("id") && !response.ContainsKey("r"))
+        if (!hasResult)
             return false;
 
-        string? result = response["r"] switch
+        if (!cacheable)
         {
-            null or { Type: JTokenType.Null } => null,
-            JValue { Value: bool b } => b ? "true" : "false",
-            JValue v => Convert.ToString(v.Value, CultureInfo.InvariantCulture),
-            JToken t => t.ToString(Formatting.None)
-        };
+            InvalidateReadCache();
+        }
+        else if (Volatile.Read(ref _cacheEpoch) == callEpoch)
+        {
+            if (_readCache.Count > 256)
+                _readCache.Clear();
+            _readCache[cacheKey] = new CachedReadValue(callEpoch, Stopwatch.GetTimestamp() + cacheTtlTicks, result);
+        }
+
         if (_stats.Enabled)
         {
             string key = function.StartsWith("getGameObject", StringComparison.Ordinal) && args.Length > 0 && args[0] is string path
@@ -591,43 +849,80 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         }
     }
 
-    private static object? ToJs(object? o)
+    private static void WriteJsArg(STJ.Utf8JsonWriter writer, object? o)
     {
-        return o switch
+        switch (o)
         {
-            null or bool or double or float or long or int or string => o,
-            ExpandoObject e => e.ToDictionary(kvp => kvp.Key, kvp => ToJs(kvp.Value)),
-            Array a => a.Cast<object?>().Select(ToJs).ToArray(),
-            _ => o.ToString()
-        };
+            case null:
+                writer.WriteNullValue();
+                break;
+            case bool b:
+                writer.WriteBooleanValue(b);
+                break;
+            case int i:
+                writer.WriteNumberValue(i);
+                break;
+            case long l:
+                writer.WriteNumberValue(l);
+                break;
+            case double d:
+                writer.WriteNumberValue(d);
+                break;
+            case float f:
+                writer.WriteNumberValue(f);
+                break;
+            case string s:
+                writer.WriteStringValue(s);
+                break;
+            case IDictionary<string, object?> dict:
+                writer.WriteStartObject();
+                foreach (KeyValuePair<string, object?> kvp in dict)
+                {
+                    writer.WritePropertyName(kvp.Key);
+                    WriteJsArg(writer, kvp.Value);
+                }
+                writer.WriteEndObject();
+                break;
+            case Array a:
+                writer.WriteStartArray();
+                for (int i = 0; i < a.Length; i++)
+                    WriteJsArg(writer, a.GetValue(i));
+                writer.WriteEndArray();
+                break;
+            default:
+                writer.WriteStringValue(o.ToString());
+                break;
+        }
     }
 
-    private static object FromJson(JToken t)
+    private static object FromJsonElement(STJ.JsonElement t)
     {
-        switch (t.Type)
+        switch (t.ValueKind)
         {
-            case JTokenType.Integer:
-            case JTokenType.Float:
-                return int.TryParse(t.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int i) ? i : (float)t;
+            case STJ.JsonValueKind.Number:
+                return t.TryGetInt32(out int i) ? i : (float)t.GetDouble();
 
-            case JTokenType.Boolean:
-                return (bool)t;
+            case STJ.JsonValueKind.True:
+                return true;
 
-            case JTokenType.Null:
-            case JTokenType.Undefined:
+            case STJ.JsonValueKind.False:
+                return false;
+
+            case STJ.JsonValueKind.Null:
+            case STJ.JsonValueKind.Undefined:
                 return null!;
 
-            case JTokenType.Array:
-                return t.Select(FromJson).ToArray();
+            case STJ.JsonValueKind.Array:
+                return ConvertArgsArray(t);
 
-            case JTokenType.Object:
+            case STJ.JsonValueKind.Object:
                 IDictionary<string, object> d = new ExpandoObject();
-                foreach (JProperty p in ((JObject)t).Properties())
-                    d[p.Name] = FromJson(p.Value);
+                foreach (STJ.JsonProperty p in t.EnumerateObject())
+                    d[p.Name] = FromJsonElement(p.Value);
                 return d;
 
             default:
-                return (string)t!;
+                return t.GetString()!;
         }
     }
 
@@ -932,9 +1227,19 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
     public void Dispose()
     {
         StopPlayer();
-        _listener?.Stop();
-        _listener = null;
-        _bridge?.Dispose();
+        try { _unixListener?.Dispose(); } catch { }
+        _unixListener = null;
+        if (!string.IsNullOrEmpty(_unixSocketPath))
+        {
+            try
+            {
+                if (File.Exists(_unixSocketPath))
+                    File.Delete(_unixSocketPath);
+            }
+            catch { }
+            _unixSocketPath = null;
+        }
+        Interlocked.Exchange(ref _bridgeStream, null)?.Dispose();
         FailPending();
     }
 }

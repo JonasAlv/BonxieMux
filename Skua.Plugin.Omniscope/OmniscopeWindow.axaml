@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
         xmlns:shell="clr-namespace:Skua.Shared.Avalonia.Controls.Shell;assembly=Skua.Shared.Avalonia"
         x:Class="Skua.Plugin.Omniscope.OmniscopeWindow"
         Classes="skua"
@@ -17,16 +18,12 @@
             <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
                 <TabItem Header="Telemetry">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                        <Grid Margin="14" MinWidth="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
+                        <Grid Margin="14" MinWidth="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{DynamicResource UiGapBase}">
                             <!-- Status & Refresh Toolbar -->
-                            <Border Grid.Row="0"
-                                    Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                    BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                    BorderThickness="{DynamicResource UiBorderThin}"
-                                    CornerRadius="{DynamicResource UiRadiusCard}"
+                            <Border Classes="card-flat" Grid.Row="0"
                                     Padding="12,8">
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
                                         <Ellipse x:Name="ConnectionIndicator"
                                                  Width="8" Height="8"
                                                  Fill="{DynamicResource SkuaWarningBrush}"
@@ -45,7 +42,7 @@
                                                    Margin="6,0,0,0"
                                                    VerticalAlignment="Center" />
                                     </StackPanel>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
                                         <TextBlock Text="Refresh"
                                                    Foreground="{DynamicResource SkuaMutedTextBrush}"
                                                    FontSize="{DynamicResource UiFontSmall}"
@@ -67,16 +64,12 @@
                             </Border>
 
                             <!-- Compact KPI Cards -->
-                            <Grid Grid.Row="1" MinWidth="0" ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
-                                <Border Grid.Column="0"
+                            <Grid Grid.Row="1" MinWidth="0" ColumnDefinitions="*,*,*,*" ColumnSpacing="{DynamicResource UiGapBase}">
+                                <Border Classes="card-flat" Grid.Column="0"
                                         MinWidth="0"
                                         ClipToBounds="True"
-                                        Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                        BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                        BorderThickness="{DynamicResource UiBorderThin}"
-                                        CornerRadius="{DynamicResource UiRadiusCard}"
-                                        Padding="12,10">
-                                    <StackPanel Spacing="3">
+                                        Padding="{DynamicResource UiCardCompactPadding}">
+                                    <StackPanel Spacing="{DynamicResource UiGapXs}">
                                         <TextBlock Classes="section-label" Text="MAP" />
                                         <TextBlock x:Name="MapMetric"
                                                    Text="Awaiting world"
@@ -92,15 +85,11 @@
                                     </StackPanel>
                                 </Border>
 
-                                <Border Grid.Column="1"
+                                <Border Classes="card-flat" Grid.Column="1"
                                         MinWidth="0"
                                         ClipToBounds="True"
-                                        Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                        BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                        BorderThickness="{DynamicResource UiBorderThin}"
-                                        CornerRadius="{DynamicResource UiRadiusCard}"
-                                        Padding="12,10">
-                                    <StackPanel Spacing="4">
+                                        Padding="{DynamicResource UiCardCompactPadding}">
+                                    <StackPanel Spacing="{DynamicResource UiGapXs}">
                                         <TextBlock Classes="section-label" Text="HP" />
                                         <TextBlock x:Name="VitalsMetric"
                                                    Text="-- / -- HP"
@@ -120,15 +109,11 @@
                                     </StackPanel>
                                 </Border>
 
-                                <Border Grid.Column="2"
+                                <Border Classes="card-flat" Grid.Column="2"
                                         MinWidth="0"
                                         ClipToBounds="True"
-                                        Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                        BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                        BorderThickness="{DynamicResource UiBorderThin}"
-                                        CornerRadius="{DynamicResource UiRadiusCard}"
-                                        Padding="12,10">
-                                    <StackPanel Spacing="3">
+                                        Padding="{DynamicResource UiCardCompactPadding}">
+                                    <StackPanel Spacing="{DynamicResource UiGapXs}">
                                         <TextBlock Classes="section-label" Text="ENTITIES" />
                                         <TextBlock x:Name="EntityMetric"
                                                    Text="0"
@@ -143,15 +128,11 @@
                                     </StackPanel>
                                 </Border>
 
-                                <Border Grid.Column="3"
+                                <Border Classes="card-flat" Grid.Column="3"
                                         MinWidth="0"
                                         ClipToBounds="True"
-                                        Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                        BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                        BorderThickness="{DynamicResource UiBorderThin}"
-                                        CornerRadius="{DynamicResource UiRadiusCard}"
-                                        Padding="12,10">
-                                    <StackPanel Spacing="3">
+                                        Padding="{DynamicResource UiCardCompactPadding}">
+                                    <StackPanel Spacing="{DynamicResource UiGapXs}">
                                         <TextBlock Classes="section-label" Text="POSITION" />
                                         <TextBlock x:Name="PositionMetric"
                                                    Text="X --  /  Y --"
@@ -168,11 +149,11 @@
                             </Grid>
 
                             <!-- Primary 3-Column Telemetry Panels -->
-                            <Grid Grid.Row="2" MinWidth="0" ClipToBounds="True" ColumnDefinitions="1*,1.15*,1.15*" ColumnSpacing="10" MinHeight="390">
+                            <Grid Grid.Row="2" MinWidth="0" ClipToBounds="True" ColumnDefinitions="1*,1.15*,1.15*" ColumnSpacing="{DynamicResource UiGapBase}" MinHeight="390">
                                 <!-- Avatar Panel -->
-                                <Grid Grid.Column="0" RowDefinitions="Auto,*" RowSpacing="6">
+                                <Grid Grid.Column="0" RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapSm}">
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
                                             <TextBlock Classes="section-label" Text="AVATAR" />
                                             <TextBlock x:Name="AvatarFollowStatus"
                                                        Text="Live"
@@ -187,16 +168,12 @@
                                                 Content="Pause"
                                                 Click="AvatarFollowButton_Click" />
                                     </Grid>
-                                    <Border Grid.Row="1"
+                                    <Border Classes="card" Grid.Row="1"
                                             MinWidth="0"
                                             ClipToBounds="True"
-                                            Background="{DynamicResource SkuaSurfaceBrush}"
-                                            BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                            BorderThickness="{DynamicResource UiBorderThin}"
-                                            CornerRadius="{DynamicResource UiRadiusCard}"
-                                            Padding="12">
-                                        <StackPanel Spacing="10">
-                                            <StackPanel Spacing="2">
+                                            Padding="{DynamicResource UiPaddingLg}">
+                                        <StackPanel Spacing="{DynamicResource UiGapBase}">
+                                            <StackPanel Spacing="{DynamicResource UiGap2xs}">
                                                 <TextBlock x:Name="PlayerNameText"
                                                            Text="Waiting for player session"
                                                            Foreground="{DynamicResource SkuaTextBrush}"
@@ -209,7 +186,7 @@
                                                            FontSize="{DynamicResource UiFontSmall}" />
                                             </StackPanel>
 
-                                            <StackPanel Spacing="4">
+                                            <StackPanel Spacing="{DynamicResource UiGapXs}">
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <TextBlock Text="HP" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
                                                     <TextBlock x:Name="HealthText" Grid.Column="1" Text="-- / --" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
@@ -219,7 +196,7 @@
                                                 </Border>
                                             </StackPanel>
 
-                                            <StackPanel Spacing="4">
+                                            <StackPanel Spacing="{DynamicResource UiGapXs}">
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <TextBlock Text="MP" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
                                                     <TextBlock x:Name="ManaText" Grid.Column="1" Text="-- / --" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
@@ -231,7 +208,7 @@
 
                                             <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
 
-                                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="8">
+                                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="{DynamicResource UiGapBase}" ColumnSpacing="{DynamicResource UiGapMd}">
                                                 <StackPanel>
                                                     <TextBlock Text="Level / XP" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
                                                     <TextBlock x:Name="LevelText" Text="--" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontHeading}" FontWeight="SemiBold" />
@@ -264,7 +241,7 @@
 
                                             <Border Height="1" Background="{DynamicResource SkuaBorderBrush}" />
 
-                                            <StackPanel Spacing="3">
+                                            <StackPanel Spacing="{DynamicResource UiGapXs}">
                                                 <TextBlock Text="Session" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
                                                 <TextBlock x:Name="SessionText"
                                                            Text="Telemetry will populate as the game exposes state."
@@ -277,7 +254,7 @@
                                 </Grid>
 
                                 <!-- Entities Panel -->
-                                <Grid Grid.Column="1" MinWidth="0" RowDefinitions="Auto,*" RowSpacing="6">
+                                <Grid Grid.Column="1" MinWidth="0" RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapSm}">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBlock Classes="section-label" Text="ENTITIES" />
                                         <Button x:Name="EntityFollowButton"
@@ -287,14 +264,10 @@
                                                 Content="Pause"
                                                 Click="EntityFollowButton_Click" />
                                     </Grid>
-                                    <Border Grid.Row="1"
+                                    <Border Classes="card" Grid.Row="1"
                                             MinWidth="0"
                                             ClipToBounds="True"
-                                            Background="{DynamicResource SkuaSurfaceBrush}"
-                                            BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                            BorderThickness="{DynamicResource UiBorderThin}"
-                                            CornerRadius="{DynamicResource UiRadiusCard}"
-                                            Padding="10">
+                                            Padding="{DynamicResource UiCardPadding}">
                                         <Grid RowDefinitions="Auto,Auto,*,Auto">
                                             <Grid ColumnDefinitions="*,76,66,58" Margin="4,2,8,6">
                                                 <TextBlock Text="Entity / Cell" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
@@ -302,21 +275,16 @@
                                                 <TextBlock Grid.Column="2" Text="State" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" HorizontalAlignment="Right" />
                                                 <TextBlock Grid.Column="3" Text="ID" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" HorizontalAlignment="Right" />
                                             </Grid>
-                                            <TextBox x:Name="EntitySearchBox"
-                                                     Grid.Row="1"
-                                                     Height="{DynamicResource UiControlHeight}"
-                                                     PlaceholderText="Filter entities by name, ID, or cell..."
-                                                     TextChanged="EntitySearchBox_TextChanged"
-                                                     Margin="2,0,2,6"
-                                                     Background="{DynamicResource SkuaSurfaceSubtleBrush}"
-                                                     Foreground="{DynamicResource SkuaTextBrush}"
-                                                     BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                     FontSize="{DynamicResource UiFontSmall}" />
+                                            <primitives:SearchFilterBar x:Name="EntitySearchBox"
+                                                                        Grid.Row="1"
+                                                                        PlaceholderText="Filter entities by name, ID, or cell..."
+                                                                        SearchTextChanged="EntitySearchBox_TextChanged"
+                                                                        Margin="2,0,2,6" />
                                             <ListBox x:Name="EntityList" Grid.Row="2" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource SkuaTextBrush}">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
                                                         <Grid ColumnDefinitions="*,76,66,58" Margin="3,4">
-                                                            <StackPanel Spacing="1">
+                                                            <StackPanel Spacing="{DynamicResource UiGap2xs}">
                                                                 <TextBlock Text="{Binding Name}" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontSmall}" TextWrapping="Wrap" />
                                                                 <TextBlock Text="{Binding Cell}" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
                                                             </StackPanel>
@@ -329,12 +297,12 @@
                                             </ListBox>
                                             <Border Grid.Row="3"
                                                     Margin="0,6,0,0"
-                                                    Padding="10"
+                                                    Padding="{DynamicResource UiCardPadding}"
                                                     Background="{DynamicResource SkuaSurfaceSubtleBrush}"
                                                     BorderBrush="{DynamicResource SkuaBorderBrush}"
                                                     BorderThickness="{DynamicResource UiBorderThin}"
                                                     CornerRadius="{DynamicResource UiRadiusControl}">
-                                                <StackPanel Spacing="3">
+                                                <StackPanel Spacing="{DynamicResource UiGapXs}">
                                                     <TextBlock Classes="section-label" Text="SELECTED ENTITY" />
                                                     <TextBlock x:Name="SelectedEntityText" Text="Select a monster to inspect its live properties." Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontBody}" FontWeight="SemiBold" TextWrapping="Wrap" />
                                                     <TextBlock x:Name="SelectedEntityDetailsText" Text="Read-only entity inspection" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" TextWrapping="Wrap" />
@@ -345,10 +313,10 @@
                                 </Grid>
 
                                 <!-- Events Panel -->
-                                <Grid Grid.Column="2" MinWidth="0" Height="390" VerticalAlignment="Top" RowDefinitions="Auto,*" RowSpacing="6">
+                                <Grid Grid.Column="2" MinWidth="0" Height="390" VerticalAlignment="Top" RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapSm}">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBlock Classes="section-label" Text="EVENTS" />
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
                                             <TextBlock x:Name="EventCountText"
                                                        Text="0 Events"
                                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
@@ -361,16 +329,12 @@
                                                     Click="EventFollowButton_Click" />
                                         </StackPanel>
                                     </Grid>
-                                    <Border Grid.Row="1"
+                                    <Border Classes="card" Grid.Row="1"
                                             MinWidth="0"
                                             Height="360"
                                             VerticalAlignment="Top"
                                             ClipToBounds="True"
-                                            Background="{DynamicResource SkuaSurfaceBrush}"
-                                            BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                            BorderThickness="{DynamicResource UiBorderThin}"
-                                            CornerRadius="{DynamicResource UiRadiusCard}"
-                                            Padding="10">
+                                            Padding="{DynamicResource UiCardPadding}">
                                         <Grid RowDefinitions="Auto,*">
                                             <TextBlock Text="Signal log (newest first)" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" Margin="2,0,0,6" />
                                             <ListBox x:Name="EventList"
@@ -381,7 +345,7 @@
                                                      BorderThickness="0">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
-                                                        <StackPanel Spacing="2" Margin="2,4">
+                                                        <StackPanel Spacing="{DynamicResource UiGap2xs}" Margin="2,4">
                                                             <Grid ColumnDefinitions="Auto,*">
                                                                 <TextBlock Text="{Binding Time}" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" FontFamily="{DynamicResource UiFontMono}" />
                                                                 <TextBlock Grid.Column="1" Text="{Binding DisplayCategory}" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontMicro}" FontWeight="SemiBold" Margin="8,0,0,0" />
@@ -397,9 +361,9 @@
                             </Grid>
 
                             <!-- Secondary 4-Column Telemetry Panels -->
-                            <Grid Grid.Row="3" MinWidth="0" ClipToBounds="True" ColumnDefinitions="*,*,*,*" ColumnSpacing="10" MinHeight="240">
+                            <Grid Grid.Row="3" MinWidth="0" ClipToBounds="True" ColumnDefinitions="*,*,*,*" ColumnSpacing="{DynamicResource UiGapBase}" MinHeight="240">
                                 <!-- Players -->
-                                <Grid Grid.Column="0" RowDefinitions="Auto,*" RowSpacing="6">
+                                <Grid Grid.Column="0" RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapSm}">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBlock Classes="section-label" Text="PLAYERS" />
                                         <Button x:Name="PlayerFollowButton"
@@ -409,14 +373,10 @@
                                                 Content="Pause"
                                                 Click="PlayerFollowButton_Click" />
                                     </Grid>
-                                    <Border Grid.Row="1"
+                                    <Border Classes="card" Grid.Row="1"
                                             MinWidth="0"
                                             ClipToBounds="True"
-                                            Background="{DynamicResource SkuaSurfaceBrush}"
-                                            BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                            BorderThickness="{DynamicResource UiBorderThin}"
-                                            CornerRadius="{DynamicResource UiRadiusCard}"
-                                            Padding="10">
+                                            Padding="{DynamicResource UiCardPadding}">
                                         <Grid RowDefinitions="Auto,*">
                                             <TextBlock x:Name="RosterMetric" Text="Players in instance: --" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
                                             <ListBox x:Name="PlayerList" Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="0,6,0,0">
@@ -431,22 +391,18 @@
                                 </Grid>
 
                                 <!-- Auras -->
-                                <Grid Grid.Column="1" RowDefinitions="Auto,*" RowSpacing="6">
+                                <Grid Grid.Column="1" RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapSm}">
                                     <Grid MinHeight="{DynamicResource UiSmallControlHeight}">
                                         <TextBlock Classes="section-label" Text="AURAS" VerticalAlignment="Center" />
                                     </Grid>
-                                    <Border Grid.Row="1"
-                                            Background="{DynamicResource SkuaSurfaceBrush}"
-                                            BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                            BorderThickness="{DynamicResource UiBorderThin}"
-                                            CornerRadius="{DynamicResource UiRadiusCard}"
-                                            Padding="10">
+                                    <Border Classes="card" Grid.Row="1"
+                                            Padding="{DynamicResource UiCardPadding}">
                                         <Grid RowDefinitions="Auto,*">
                                             <TextBlock x:Name="AuraMetric" Text="Self effects: 0" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
                                             <ListBox x:Name="AuraList" Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="0,6,0,0">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
-                                                        <StackPanel Spacing="1" Margin="2,4">
+                                                        <StackPanel Spacing="{DynamicResource UiGap2xs}" Margin="2,4">
                                                             <Grid ColumnDefinitions="*,Auto">
                                                                 <TextBlock Text="{Binding Name}" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontMicro}" TextWrapping="Wrap" />
                                                                 <TextBlock Grid.Column="1" Text="{Binding Stacks}" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
@@ -461,22 +417,18 @@
                                 </Grid>
 
                                 <!-- Skills -->
-                                <Grid Grid.Column="2" RowDefinitions="Auto,*" RowSpacing="6">
+                                <Grid Grid.Column="2" RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapSm}">
                                     <Grid MinHeight="{DynamicResource UiSmallControlHeight}">
                                         <TextBlock Classes="section-label" Text="SKILLS" VerticalAlignment="Center" />
                                     </Grid>
-                                    <Border Grid.Row="1"
-                                            Background="{DynamicResource SkuaSurfaceBrush}"
-                                            BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                            BorderThickness="{DynamicResource UiBorderThin}"
-                                            CornerRadius="{DynamicResource UiRadiusCard}"
-                                            Padding="10">
+                                    <Border Classes="card" Grid.Row="1"
+                                            Padding="{DynamicResource UiCardPadding}">
                                         <Grid RowDefinitions="Auto,*">
                                             <TextBlock x:Name="SkillMetric" Text="Combat engine: idle" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
                                             <ListBox x:Name="SkillList" Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="0,6,0,0">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
-                                                        <StackPanel Spacing="1" Margin="2,4">
+                                                        <StackPanel Spacing="{DynamicResource UiGap2xs}" Margin="2,4">
                                                             <Grid ColumnDefinitions="Auto,*,Auto">
                                                                 <TextBlock Text="{Binding Slot}" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" FontWeight="SemiBold" />
                                                                 <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontMicro}" Margin="8,0,0,0" />
@@ -492,19 +444,15 @@
                                 </Grid>
 
                                 <!-- Session -->
-                                <Grid Grid.Column="3" MinWidth="0" RowDefinitions="Auto,*" RowSpacing="6">
+                                <Grid Grid.Column="3" MinWidth="0" RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapSm}">
                                     <Grid MinHeight="{DynamicResource UiSmallControlHeight}">
                                         <TextBlock Classes="section-label" Text="SESSION" VerticalAlignment="Center" />
                                     </Grid>
-                                    <Border Grid.Row="1"
+                                    <Border Classes="card" Grid.Row="1"
                                             MinWidth="0"
                                             ClipToBounds="True"
-                                            Background="{DynamicResource SkuaSurfaceBrush}"
-                                            BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                            BorderThickness="{DynamicResource UiBorderThin}"
-                                            CornerRadius="{DynamicResource UiRadiusCard}"
-                                            Padding="12">
-                                        <StackPanel Spacing="8">
+                                            Padding="{DynamicResource UiPaddingLg}">
+                                        <StackPanel Spacing="{DynamicResource UiGapMd}">
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <TextBlock Text="Session Time" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
                                                 <TextBlock x:Name="SessionTimeMetric" Grid.Column="1" Text="--:--:--" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontBody}" FontWeight="SemiBold" />
@@ -558,24 +506,28 @@
                             </Grid>
 
                             <!-- Footer -->
-                            <Grid Grid.Row="4" ColumnDefinitions="*,Auto">
-                                <TextBlock Text="Read-only game telemetry" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
-                                <TextBlock Grid.Column="1" Text="750 ms poll" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
-                            </Grid>
+                            <primitives:StatusFooterBar Grid.Row="4">
+                                <primitives:StatusFooterBar.LeftContent>
+                                    <TextBlock Text="Read-only game telemetry" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" VerticalAlignment="Center" />
+                                </primitives:StatusFooterBar.LeftContent>
+                                <primitives:StatusFooterBar.RightContent>
+                                    <TextBlock Text="750 ms poll" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" VerticalAlignment="Center" />
+                                </primitives:StatusFooterBar.RightContent>
+                            </primitives:StatusFooterBar>
                         </Grid>
                     </ScrollViewer>
                 </TabItem>
 
                 <TabItem Header="Client Data">
-                    <Grid Margin="14" MinWidth="0" RowDefinitions="Auto,*,Auto" RowSpacing="10">
+                    <Grid Margin="14" MinWidth="0" RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapBase}">
                         <!-- Compact Header -->
-                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapLg}">
                             <TextBlock Text="Client Data"
                                        FontSize="{DynamicResource UiFontHeading}"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource SkuaTextBrush}"
                                        VerticalAlignment="Center" />
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
                                 <Button Classes="skua-button" Content="Refresh" Height="{DynamicResource UiControlHeight}" Click="RefreshDataCatalog_Click" />
                                 <Button Classes="skua-button" Content="Export JSON" Height="{DynamicResource UiControlHeight}" Click="ExportData_Click" />
                             </StackPanel>
@@ -583,39 +535,27 @@
 
                         <TabControl Grid.Row="1" Background="{DynamicResource SkuaPageBrush}" BorderBrush="{DynamicResource SkuaBorderBrush}" BorderThickness="{DynamicResource UiBorderThin}">
                             <TabItem Header="Game SWF">
-                                <Grid Margin="10" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="10">
+                                <Grid Margin="10" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="{DynamicResource UiGapBase}">
                                     <!-- Stats -->
-                                    <Grid Grid.Row="0" ColumnDefinitions="*,*,*" ColumnSpacing="10">
-                                        <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                BorderThickness="{DynamicResource UiBorderThin}"
-                                                CornerRadius="{DynamicResource UiRadiusCard}"
-                                                Padding="12,10">
-                                            <StackPanel Spacing="2">
+                                    <Grid Grid.Row="0" ColumnDefinitions="*,*,*" ColumnSpacing="{DynamicResource UiGapBase}">
+                                        <Border Classes="card-flat" Padding="{DynamicResource UiCardCompactPadding}">
+                                            <StackPanel Spacing="{DynamicResource UiGap2xs}">
                                                 <TextBlock Classes="section-label" Text="SOURCE FILES" />
                                                 <TextBlock x:Name="SourceFileCountText" Text="0" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontHeading}" FontWeight="SemiBold" />
                                                 <TextBlock Text="Decompiled ActionScript files" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
                                             </StackPanel>
                                         </Border>
-                                        <Border Grid.Column="1"
-                                                Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                BorderThickness="{DynamicResource UiBorderThin}"
-                                                CornerRadius="{DynamicResource UiRadiusCard}"
-                                                Padding="12,10">
-                                            <StackPanel Spacing="2">
+                                        <Border Classes="card-flat" Grid.Column="1"
+                                                Padding="{DynamicResource UiCardCompactPadding}">
+                                            <StackPanel Spacing="{DynamicResource UiGap2xs}">
                                                 <TextBlock Classes="section-label" Text="CLIENT SYSTEMS" />
                                                 <TextBlock x:Name="ClientSystemCountText" Text="0" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontHeading}" FontWeight="SemiBold" />
                                                 <TextBlock Text="Distinct client code categories" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
                                             </StackPanel>
                                         </Border>
-                                        <Border Grid.Column="2"
-                                                Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                BorderThickness="{DynamicResource UiBorderThin}"
-                                                CornerRadius="{DynamicResource UiRadiusCard}"
-                                                Padding="12,10">
-                                            <StackPanel Spacing="2">
+                                        <Border Classes="card-flat" Grid.Column="2"
+                                                Padding="{DynamicResource UiCardCompactPadding}">
+                                            <StackPanel Spacing="{DynamicResource UiGap2xs}">
                                                 <TextBlock Classes="section-label" Text="FUNCTIONS" />
                                                 <TextBlock x:Name="ClientFunctionCountText" Text="0" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontHeading}" FontWeight="SemiBold" />
                                                 <TextBlock Text="Indexed across client source" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
@@ -624,17 +564,11 @@
                                     </Grid>
 
                                     <!-- Search & Filters -->
-                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,190,Auto,170" ColumnSpacing="8">
-                                        <TextBox x:Name="DataSearchBox"
-                                                 Grid.Column="0"
-                                                 Height="{DynamicResource UiControlHeight}"
-                                                 VerticalContentAlignment="Center"
-                                                 PlaceholderText="Search classes, functions, packets, UI, maps, or IDs..."
-                                                 TextChanged="DataSearchBox_TextChanged"
-                                                 Background="{DynamicResource SkuaSurfaceBrush}"
-                                                 Foreground="{DynamicResource SkuaTextBrush}"
-                                                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                 FontSize="{DynamicResource UiFontBody}" />
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,190,Auto,170" ColumnSpacing="{DynamicResource UiGapMd}">
+                                        <primitives:SearchFilterBar x:Name="DataSearchBox"
+                                                                    Grid.Column="0"
+                                                                    PlaceholderText="Search classes, functions, packets, UI, maps, or IDs..."
+                                                                    SearchTextChanged="DataSearchBox_TextChanged" />
                                         <TextBlock Grid.Column="1" Text="Show" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontSmall}" VerticalAlignment="Center" />
                                         <ComboBox x:Name="DataCategoryBox" Grid.Column="2" Height="{DynamicResource UiControlHeight}" SelectedIndex="0" SelectionChanged="DataCategoryBox_SelectionChanged">
                                             <ComboBoxItem Content="All Client Code" />
@@ -659,8 +593,8 @@
                                     </Grid>
 
                                     <!-- Action Bar -->
-                                    <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapBase}">
+                                        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}">
                                             <Button x:Name="DecompileSwfButton" Classes="skua-button skua-primary" Height="{DynamicResource UiControlHeight}" Content="Index Game SWF" Click="DecompileSwf_Click" />
                                             <TextBlock Text="Downloads and decompiles the latest AQW client, then indexes its ActionScript source."
                                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
@@ -677,13 +611,9 @@
                                     </Grid>
 
                                     <!-- Results & Source Split View -->
-                                    <Grid Grid.Row="3" ColumnDefinitions="0.92*,1.08*" ColumnSpacing="10" MinHeight="0">
-                                        <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                BorderThickness="{DynamicResource UiBorderThin}"
-                                                CornerRadius="{DynamicResource UiRadiusCard}"
-                                                ClipToBounds="True"
-                                                Padding="10">
+                                    <Grid Grid.Row="3" ColumnDefinitions="0.92*,1.08*" ColumnSpacing="{DynamicResource UiGapBase}" MinHeight="0">
+                                        <Border Classes="card-flat"                                                ClipToBounds="True"
+                                                Padding="{DynamicResource UiCardPadding}">
                                             <Grid RowDefinitions="Auto,*">
                                                 <Grid ColumnDefinitions="*,Auto" Margin="2,0,2,8">
                                                     <TextBlock Classes="section-label" Text="RESULTS" />
@@ -704,8 +634,8 @@
                                                                     CornerRadius="{DynamicResource UiRadiusControl}"
                                                                     Padding="8"
                                                                     Margin="1,2">
-                                                                <StackPanel Spacing="3">
-                                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                                                <StackPanel Spacing="{DynamicResource UiGapXs}">
+                                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
                                                                         <TextBlock Text="{Binding Name}" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontBody}" FontWeight="SemiBold" TextWrapping="Wrap" />
                                                                         <TextBlock Grid.Column="1" Text="{Binding DisplayCategory}" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" VerticalAlignment="Top" TextWrapping="Wrap" MaxWidth="104" TextAlignment="Right" />
                                                                     </Grid>
@@ -718,15 +648,11 @@
                                             </Grid>
                                         </Border>
 
-                                        <Border Grid.Column="1"
-                                                Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                BorderThickness="{DynamicResource UiBorderThin}"
-                                                CornerRadius="{DynamicResource UiRadiusCard}"
+                                        <Border Classes="card-flat" Grid.Column="1"
                                                 ClipToBounds="True"
-                                                Padding="12">
+                                                Padding="{DynamicResource UiPaddingLg}">
                                             <Grid RowDefinitions="Auto,Auto,Auto,*">
-                                                <StackPanel Spacing="3">
+                                                <StackPanel Spacing="{DynamicResource UiGapXs}">
                                                     <TextBlock Classes="section-label" Text="SELECTED FILE" />
                                                     <TextBlock x:Name="DataDetailTitle" Text="Choose a result on the left" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontHeading}" FontWeight="SemiBold" TextWrapping="Wrap" />
                                                     <TextBlock x:Name="DataDetailMeta" Text="Details and source information will appear here." Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" TextWrapping="Wrap" />
@@ -745,9 +671,9 @@
                             </TabItem>
 
                             <TabItem Header="Map SWF">
-                                <Grid Margin="10" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="10">
+                                <Grid Margin="10" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="{DynamicResource UiGapBase}">
                                     <!-- Action Bar -->
-                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapBase}">
                                         <TextBlock Classes="section-label" Text="MAP INDEX" />
                                         <WrapPanel Grid.Column="1" VerticalAlignment="Center">
                                             <Button x:Name="AnalyzeMapButton" Classes="skua-button" Height="{DynamicResource UiControlHeight}" Content="Load Saved Map Index" Click="AnalyzeMap_Click" Margin="0,0,6,0" />
@@ -757,37 +683,25 @@
                                     </Grid>
 
                                     <!-- Stats -->
-                                    <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="10">
-                                        <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                BorderThickness="{DynamicResource UiBorderThin}"
-                                                CornerRadius="{DynamicResource UiRadiusCard}"
-                                                Padding="12,10">
-                                            <StackPanel Spacing="2">
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="{DynamicResource UiGapBase}">
+                                        <Border Classes="card-flat" Padding="{DynamicResource UiCardCompactPadding}">
+                                            <StackPanel Spacing="{DynamicResource UiGap2xs}">
                                                 <TextBlock Classes="section-label" Text="SAVED MAPS" />
                                                 <TextBlock x:Name="MapSwfMapCountText" Text="0" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontHeading}" FontWeight="SemiBold" />
                                                 <TextBlock Text="Maps in local cache" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
                                             </StackPanel>
                                         </Border>
-                                        <Border Grid.Column="1"
-                                                Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                BorderThickness="{DynamicResource UiBorderThin}"
-                                                CornerRadius="{DynamicResource UiRadiusCard}"
-                                                Padding="12,10">
-                                            <StackPanel Spacing="2">
+                                        <Border Classes="card-flat" Grid.Column="1"
+                                                Padding="{DynamicResource UiCardCompactPadding}">
+                                            <StackPanel Spacing="{DynamicResource UiGap2xs}">
                                                 <TextBlock Classes="section-label" Text="MAP SHOPS" />
                                                 <TextBlock x:Name="MapShopRecordCountText" Text="0" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontHeading}" FontWeight="SemiBold" />
                                                 <TextBlock Text="IDs extracted from map SWFs" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
                                             </StackPanel>
                                         </Border>
-                                        <Border Grid.Column="2"
-                                                Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                BorderThickness="{DynamicResource UiBorderThin}"
-                                                CornerRadius="{DynamicResource UiRadiusCard}"
-                                                Padding="12,10">
-                                            <StackPanel Spacing="2">
+                                        <Border Classes="card-flat" Grid.Column="2"
+                                                Padding="{DynamicResource UiCardCompactPadding}">
+                                            <StackPanel Spacing="{DynamicResource UiGap2xs}">
                                                 <TextBlock Classes="section-label" Text="MAP ITEMS" />
                                                 <TextBlock x:Name="MapItemRecordCountText" Text="0" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontHeading}" FontWeight="SemiBold" />
                                                 <TextBlock Text="Quest-linked map item references" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" />
@@ -796,17 +710,11 @@
                                     </Grid>
 
                                     <!-- Search & Filters -->
-                                    <Grid Grid.Row="2" ColumnDefinitions="*,Auto,160,Auto,190" ColumnSpacing="8">
-                                        <TextBox x:Name="MapSearchBox"
-                                                 Grid.Column="0"
-                                                 Height="{DynamicResource UiControlHeight}"
-                                                 VerticalContentAlignment="Center"
-                                                 PlaceholderText="Search maps, shop IDs, map items, quest IDs, or files..."
-                                                 TextChanged="MapSearchBox_TextChanged"
-                                                 Background="{DynamicResource SkuaSurfaceBrush}"
-                                                 Foreground="{DynamicResource SkuaTextBrush}"
-                                                 BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                 FontSize="{DynamicResource UiFontBody}" />
+                                    <Grid Grid.Row="2" ColumnDefinitions="*,Auto,160,Auto,190" ColumnSpacing="{DynamicResource UiGapMd}">
+                                        <primitives:SearchFilterBar x:Name="MapSearchBox"
+                                                                    Grid.Column="0"
+                                                                    PlaceholderText="Search maps, shop IDs, map items, quest IDs, or files..."
+                                                                    SearchTextChanged="MapSearchBox_TextChanged" />
                                         <TextBlock Grid.Column="1" Text="Maps" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontSmall}" VerticalAlignment="Center" />
                                         <ComboBox x:Name="MapCategoryBox" Grid.Column="2" Height="{DynamicResource UiControlHeight}" SelectedIndex="0" SelectionChanged="MapCategoryBox_SelectionChanged">
                                             <ComboBoxItem Content="All maps" />
@@ -826,13 +734,9 @@
                                     </Grid>
 
                                     <!-- Results & Detail Split View -->
-                                    <Grid Grid.Row="3" ColumnDefinitions="0.92*,1.08*" ColumnSpacing="10" MinHeight="0">
-                                        <Border Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                BorderThickness="{DynamicResource UiBorderThin}"
-                                                CornerRadius="{DynamicResource UiRadiusCard}"
-                                                ClipToBounds="True"
-                                                Padding="10">
+                                    <Grid Grid.Row="3" ColumnDefinitions="0.92*,1.08*" ColumnSpacing="{DynamicResource UiGapBase}" MinHeight="0">
+                                        <Border Classes="card-flat"                                                ClipToBounds="True"
+                                                Padding="{DynamicResource UiCardPadding}">
                                             <Grid RowDefinitions="Auto,*">
                                                 <Grid ColumnDefinitions="*,Auto" Margin="2,0,2,8">
                                                     <TextBlock Classes="section-label" Text="MAP RESULTS" />
@@ -853,8 +757,8 @@
                                                                     CornerRadius="{DynamicResource UiRadiusControl}"
                                                                     Padding="8"
                                                                     Margin="1,2">
-                                                                <StackPanel Spacing="3">
-                                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                                                <StackPanel Spacing="{DynamicResource UiGapXs}">
+                                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
                                                                         <TextBlock Text="{Binding Name}" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontBody}" FontWeight="SemiBold" TextWrapping="Wrap" />
                                                                         <TextBlock Grid.Column="1" Text="{Binding DisplayCategory}" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" VerticalAlignment="Top" />
                                                                     </Grid>
@@ -868,15 +772,11 @@
                                             </Grid>
                                         </Border>
 
-                                        <Border Grid.Column="1"
-                                                Background="{DynamicResource SkuaSurfaceAltBrush}"
-                                                BorderBrush="{DynamicResource SkuaBorderBrush}"
-                                                BorderThickness="{DynamicResource UiBorderThin}"
-                                                CornerRadius="{DynamicResource UiRadiusCard}"
+                                        <Border Classes="card-flat" Grid.Column="1"
                                                 ClipToBounds="True"
-                                                Padding="12">
+                                                Padding="{DynamicResource UiPaddingLg}">
                                             <Grid RowDefinitions="Auto,Auto,Auto,*">
-                                                <StackPanel Spacing="3">
+                                                <StackPanel Spacing="{DynamicResource UiGapXs}">
                                                     <TextBlock Classes="section-label" Text="DETAILS" />
                                                     <TextBlock x:Name="MapDetailTitle" Text="Choose a map link on the left" Foreground="{DynamicResource SkuaTextBrush}" FontSize="{DynamicResource UiFontHeading}" FontWeight="SemiBold" TextWrapping="Wrap" />
                                                     <TextBlock x:Name="MapDetailMeta" Text="Map file and linked quest information will appear here." Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" TextWrapping="Wrap" />
@@ -898,7 +798,7 @@
                                                          Foreground="{DynamicResource SkuaTextBrush}"
                                                          BorderBrush="{DynamicResource SkuaBorderBrush}"
                                                          FontSize="{DynamicResource UiFontSmall}"
-                                                         Padding="10"
+                                                         Padding="{DynamicResource UiCardPadding}"
                                                          Text="Load the saved map index for map items, or scan the currently joined map SWF to find its shop IDs." />
                                             </Grid>
                                         </Border>
@@ -908,10 +808,14 @@
                         </TabControl>
 
                         <!-- Footer -->
-                        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="12" Margin="2,0">
-                            <TextBlock x:Name="DataStatusText" Text="Ready. Refresh game data or load the saved map index to begin." Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" TextWrapping="Wrap" />
-                            <TextBlock Grid.Column="1" Text="Read-only until action selected" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" VerticalAlignment="Center" />
-                        </Grid>
+                        <primitives:StatusFooterBar Grid.Row="2" Margin="2,0">
+                            <primitives:StatusFooterBar.LeftContent>
+                                <TextBlock x:Name="DataStatusText" Text="Ready. Refresh game data or load the saved map index to begin." Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                            </primitives:StatusFooterBar.LeftContent>
+                            <primitives:StatusFooterBar.RightContent>
+                                <TextBlock Text="Read-only until action selected" Foreground="{DynamicResource SkuaMutedTextBrush}" FontSize="{DynamicResource UiFontMicro}" VerticalAlignment="Center" />
+                            </primitives:StatusFooterBar.RightContent>
+                        </primitives:StatusFooterBar>
                     </Grid>
                 </TabItem>
             </TabControl>

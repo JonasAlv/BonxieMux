@@ -9,13 +9,9 @@
              x:DataType="vms:OptionContainerViewModel"
              mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="520">
   <Grid RowDefinitions="Auto,*,Auto" Margin="12">
-    <Border Grid.Row="0"
+    <Border Classes="card-flat" Grid.Row="0"
             Margin="0,0,0,8"
             Padding="10,8"
-            CornerRadius="{DynamicResource UiRadiusCard}"
-            Background="{DynamicResource SkuaSurfaceAltBrush}"
-            BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="{DynamicResource UiBorderThin}"
             IsVisible="{Binding ResetNotice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
       <TextBlock Text="{Binding ResetNotice}"
                  FontSize="{DynamicResource UiFontBody}"
@@ -23,11 +19,7 @@
                  TextWrapping="Wrap" />
     </Border>
 
-    <Border Grid.Row="1"
-            Background="{DynamicResource SkuaSurfaceBrush}"
-            BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="{DynamicResource UiBorderThin}"
-            CornerRadius="{DynamicResource UiRadiusCard}"
+    <Border Classes="card" Grid.Row="1"
             Padding="8">
       <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                     VerticalScrollBarVisibility="Auto"
@@ -54,12 +46,8 @@
                 <ItemsControl ItemsSource="{Binding Items}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="vms:OptionContainerItemViewModel">
-                      <Border Margin="0,2"
+                      <Border Classes="card" Margin="0,2"
                               Padding="8,6"
-                              CornerRadius="{DynamicResource UiRadiusCard}"
-                              Background="{DynamicResource SkuaSurfaceBrush}"
-                              BorderBrush="{DynamicResource SkuaBorderBrush}"
-                              BorderThickness="{DynamicResource UiBorderThin}"
                               PointerPressed="OnOptionPointerPressed">
                         <Grid ColumnDefinitions="*,Auto">
                           <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
@@ -88,12 +76,8 @@
       </ScrollViewer>
     </Border>
 
-    <Border Grid.Row="2"
+    <Border Classes="card-flat" Grid.Row="2"
             Margin="0,10,0,0"
-            Background="{DynamicResource SkuaSurfaceAltBrush}"
-            BorderBrush="{DynamicResource SkuaBorderBrush}"
-            BorderThickness="{DynamicResource UiBorderThin}"
-            CornerRadius="{DynamicResource UiRadiusCard}"
             Padding="{DynamicResource UiCardCompactPadding}">
       <StackPanel Spacing="{DynamicResource UiGapXs}">
         <Grid ColumnDefinitions="*,Auto">

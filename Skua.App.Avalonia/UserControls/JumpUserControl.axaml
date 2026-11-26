@@ -4,11 +4,7 @@
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels"
              x:Class="Skua.App.Avalonia.UserControls.JumpUserControl"
              x:DataType="vms:JumpViewModel">
-  <Border Background="{DynamicResource SkuaSurfaceBrush}"
-          BorderBrush="{DynamicResource SkuaBorderBrush}"
-          BorderThickness="{DynamicResource UiBorderThin}"
-          Padding="{DynamicResource UiPaddingLg}"
-          CornerRadius="{DynamicResource UiRadiusCard}"
+  <Border Classes="card"          Padding="{DynamicResource UiPaddingLg}"
           MinWidth="320"
           Width="320">
     <StackPanel Spacing="{DynamicResource UiGapBase}">

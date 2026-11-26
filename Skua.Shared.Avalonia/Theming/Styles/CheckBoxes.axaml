@@ -38,90 +38,6 @@
         <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
     </Style>
 
-    <Style Selector="CheckBox.compare">
-        <Setter Property="MinWidth" Value="32" />
-        <Setter Property="Height" Value="32" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="FontSize" Value="24" />
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
-        <Setter Property="Template">
-            <ControlTemplate>
-                <Border Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}">
-                    <ContentPresenter Name="PART_ContentPresenter"
-                                      Content="≤"
-                                      ContentTemplate="{TemplateBinding ContentTemplate}"
-                                      Padding="{TemplateBinding Padding}"
-                                      RecognizesAccessKey="True"
-                                      HorizontalContentAlignment="Center"
-                                      VerticalContentAlignment="Center" />
-                </Border>
-            </ControlTemplate>
-        </Setter>
-    </Style>
-
-    <Style Selector="CheckBox.compare:checked">
-        <Setter Property="Template">
-            <ControlTemplate>
-                <Border Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}">
-                    <ContentPresenter Name="PART_ContentPresenter"
-                                      Content="≥"
-                                      ContentTemplate="{TemplateBinding ContentTemplate}"
-                                      Padding="{TemplateBinding Padding}"
-                                      RecognizesAccessKey="True"
-                                      HorizontalContentAlignment="Center"
-                                      VerticalContentAlignment="Center" />
-                </Border>
-            </ControlTemplate>
-        </Setter>
-    </Style>
-
-    <Style Selector="CheckBox.value-type">
-        <Setter Property="MinWidth" Value="32" />
-        <Setter Property="Height" Value="32" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="FontSize" Value="24" />
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="{DynamicResource SkuaAccentBrush}" />
-        <Setter Property="Template">
-            <ControlTemplate>
-                <Border Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}">
-                    <ContentPresenter Name="PART_ContentPresenter"
-                                      Content="#"
-                                      ContentTemplate="{TemplateBinding ContentTemplate}"
-                                      Padding="{TemplateBinding Padding}"
-                                      RecognizesAccessKey="True"
-                                      HorizontalContentAlignment="Center"
-                                      VerticalContentAlignment="Center" />
-                </Border>
-            </ControlTemplate>
-        </Setter>
-    </Style>
-
-    <Style Selector="CheckBox.value-type:checked">
-        <Setter Property="Template">
-            <ControlTemplate>
-                <Border Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}">
-                    <ContentPresenter Name="PART_ContentPresenter"
-                                      Content="%"
-                                      ContentTemplate="{TemplateBinding ContentTemplate}"
-                                      Padding="{TemplateBinding Padding}"
-                                      RecognizesAccessKey="True"
-                                      HorizontalContentAlignment="Center"
-                                      VerticalContentAlignment="Center" />
-                </Border>
-            </ControlTemplate>
-        </Setter>
-    </Style>
-
     <Style Selector="CheckBox:not(:skua-never) /template/ Border#NormalRectangle">
         <Setter Property="Width" Value="18" />
         <Setter Property="Height" Value="18" />
@@ -143,6 +59,16 @@
     </Style>
     <Style Selector="ToggleSwitch:not(:skua-never) /template/ Border#OuterBorder">
         <Setter Property="BorderThickness" Value="1.5" />
+    </Style>
+
+    <Style Selector="CheckBox:focus-visible /template/ Border#NormalRectangle">
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
+    </Style>
+    <Style Selector="RadioButton:focus-visible /template/ Ellipse#OuterEllipse, RadioButton:focus-visible /template/ Ellipse#CheckOuterEllipse">
+        <Setter Property="Stroke" Value="{DynamicResource SkuaAccentBrush}" />
+    </Style>
+    <Style Selector="ToggleSwitch:focus-visible /template/ Border#OuterBorder">
+        <Setter Property="BorderBrush" Value="{DynamicResource SkuaAccentBrush}" />
     </Style>
 </Styles>
 

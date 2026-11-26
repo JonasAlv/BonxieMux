@@ -28,7 +28,7 @@
                      DoubleTapped="ItemsList_DoubleTapped">
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="local:QuickPickItem">
-                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource UiGapSm}">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{DynamicResource UiGapSm}">
                             <TextBlock Grid.Column="0"
                                        Text="{Binding Category, StringFormat='{}{0}:'}"
                                        IsVisible="{Binding Category, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
@@ -46,6 +46,20 @@
                                        FontSize="{DynamicResource UiFontSmall}"
                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
                                        VerticalAlignment="Center" />
+                            <Border Grid.Column="3"
+                                    IsVisible="{Binding Shortcut, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                    Background="{DynamicResource SkuaSurfaceAltBrush}"
+                                    BorderBrush="{DynamicResource SkuaBorderBrush}"
+                                    BorderThickness="{DynamicResource UiBorderThin}"
+                                    CornerRadius="{DynamicResource UiRadiusControl}"
+                                    Padding="5,1"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Shortcut}"
+                                           FontSize="{DynamicResource UiFontMicro}"
+                                           FontFamily="{DynamicResource UiFontMono}"
+                                           Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                           VerticalAlignment="Center" />
+                            </Border>
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

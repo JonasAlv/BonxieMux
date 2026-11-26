@@ -7,10 +7,6 @@
           BorderThickness="0,0,0,1"
           Background="{DynamicResource SkuaSurfaceBrush}">
   <Grid Height="{DynamicResource UiTitleBarHeight}">
-    <Border Grid.ColumnSpan="3"
-            Background="{DynamicResource SkuaAccentBrush}"
-            IsVisible="{Binding UseAccentBackground, ElementName=Root}"
-            IsHitTestVisible="False" />
     <Image x:Name="ArtworkImage" Grid.ColumnSpan="3" Stretch="UniformToFill" Opacity="{DynamicResource UiSubtleOpacity}" IsHitTestVisible="False" />
     <Border Grid.ColumnSpan="3" Background="{DynamicResource SkuaTitleBarOverlayBrush}" IsHitTestVisible="False" />
     <Grid.ColumnDefinitions>

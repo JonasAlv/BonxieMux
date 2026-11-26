@@ -120,10 +120,11 @@ internal sealed class DmabufSkiaRenderer
 {
     private const uint GL_TEXTURE_2D = 0x0DE1u;
     private const uint GL_RGBA8 = 0x8058u;
-    private const int MaxCachedBuffers = 8;
+    private const int MaxCachedBuffers = 4;
     private static readonly SKSamplingOptions LinearSampling = new(SKFilterMode.Linear);
     private static readonly SKSamplingOptions NearestSampling = new(SKFilterMode.Nearest);
     private static readonly ConcurrentQueue<DmabufSkiaRenderer> s_retiredRenderers = new();
+    private static readonly ConcurrentQueue<DmabufSkiaRenderer> s_purgeQueue = new();
 
     private sealed class CachedDmabufImage
     {
@@ -169,8 +170,18 @@ internal sealed class DmabufSkiaRenderer
     private long _lastSeq;
     private ulong _lastNotifiedPresentedSeq;
     private bool _disposed;
+    private volatile bool _isHidden;
+    private int _purgeQueued;
 
     public bool StretchToFill { get; set; }
+    public bool ForceScaleToBounds { get; set; }
+
+    public void SetHidden(bool hidden)
+    {
+        _isHidden = hidden;
+        if (hidden && Interlocked.Exchange(ref _purgeQueued, 1) == 0)
+            s_purgeQueue.Enqueue(this);
+    }
 
     public DmabufSkiaRenderer(
         IntPtr waylandHost,
@@ -228,6 +239,8 @@ internal sealed class DmabufSkiaRenderer
 
         while (s_retiredRenderers.TryDequeue(out DmabufSkiaRenderer? retired))
             retired.CleanupOnRenderThread(grContext.Handle);
+        while (s_purgeQueue.TryDequeue(out DmabufSkiaRenderer? toPurge))
+            toPurge.PurgeIfHiddenOnRenderThread(grContext.Handle);
 
         bool hasMore = false;
         lock (_hostLock)
@@ -278,7 +291,7 @@ internal sealed class DmabufSkiaRenderer
                 if (scaleY < 0.01f) scaleY = 1f;
                 SKRect srcRect;
                 SKSamplingOptions sampling;
-                if (StretchToFill)
+                if (StretchToFill || ForceScaleToBounds)
                 {
                     srcRect = new(0f, 0f, _activeEntry.Width, _activeEntry.Height);
                     sampling = LinearSampling;
@@ -432,6 +445,18 @@ internal sealed class DmabufSkiaRenderer
         Volatile.Write(ref _lastSeq, 0);
     }
 
+    private void PurgeIfHiddenOnRenderThread(IntPtr currentGrContextHandle)
+    {
+        Interlocked.Exchange(ref _purgeQueued, 0);
+        lock (_hostLock)
+        {
+            if (!_isHidden || _disposed)
+                return;
+            bool sameContext = _lastGrContextHandle == IntPtr.Zero || _lastGrContextHandle == currentGrContextHandle;
+            ClearCache(sameContext);
+        }
+    }
+
     private void CleanupOnRenderThread(IntPtr currentGrContextHandle)
     {
         lock (_hostLock)
@@ -508,6 +533,19 @@ internal sealed unsafe class WaylandDmabufViewport : Control
             if (_renderer.StretchToFill != value)
             {
                 _renderer.StretchToFill = value;
+                InvalidateVisual();
+            }
+        }
+    }
+
+    public bool ForceScaleToBounds
+    {
+        get => _renderer.ForceScaleToBounds;
+        set
+        {
+            if (_renderer.ForceScaleToBounds != value)
+            {
+                _renderer.ForceScaleToBounds = value;
                 InvalidateVisual();
             }
         }
@@ -651,6 +689,7 @@ internal sealed unsafe class WaylandDmabufViewport : Control
         _isVisibleCached = IsVisible && this.IsEffectivelyVisible;
         _topLevelVisibleCached = _topLevel is { IsVisible: true } &&
             (_topLevel is not Window w || w.WindowState != WindowState.Minimized);
+        _renderer.SetHidden(!(_attached && _isVisibleCached && _topLevelVisibleCached));
     }
 
     private void RequestRenderIfNeeded()
@@ -675,6 +714,7 @@ internal sealed unsafe class WaylandDmabufViewport : Control
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         _attached = false;
+        _renderer.SetHidden(true);
         Interlocked.Exchange(ref _wakeQueued, 0);
         DetachCallback();
         DetachTopLevelHandlers();

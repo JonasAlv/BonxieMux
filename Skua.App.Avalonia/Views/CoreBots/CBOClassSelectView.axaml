@@ -1,0 +1,182 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.CoreBotsOptions"
+             x:DataType="vms:CBOClassSelectViewModel"
+             x:Class="Skua.App.Avalonia.Views.CBOClassSelectView">
+  <Grid RowDefinitions="Auto,*" RowSpacing="{DynamicResource UiGapLg}" Margin="0">
+    
+    <Border Classes="card-flat" Grid.Row="0"
+            Padding="12,8">
+      <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapMd}" VerticalAlignment="Center">
+  <TextBlock Text="Combat Class &amp; Skill Configurations"
+                     FontWeight="Bold"
+                     FontSize="{DynamicResource UiFontBody}"
+                     Foreground="{DynamicResource SkuaTextBrush}"
+                     VerticalAlignment="Center" />
+</StackPanel>
+
+        <Button Grid.Column="1"
+                Classes="skua-button"
+                Height="{DynamicResource UiControlHeight}"
+                Padding="{DynamicResource UiControlPadding}"
+                Command="{Binding ReloadClassesCommand}"
+                ToolTip.Tip="Refresh player classes from current inventory">
+  <TextBlock Text="Reload Classes" FontSize="{DynamicResource UiFontSmall}" FontWeight="SemiBold" VerticalAlignment="Center" />
+</Button>
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1"
+          RowDefinitions="*,*"
+          ColumnDefinitions="*,*"
+          RowSpacing="{DynamicResource UiGapBase}"
+          ColumnSpacing="{DynamicResource UiGapBase}">
+      
+      <Border Classes="card" Grid.Row="0"
+              Grid.Column="0"
+              Padding="{DynamicResource UiCardCompactPadding}">
+        <StackPanel Spacing="{DynamicResource UiGapMd}">
+          <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+  <TextBlock Text="Solo Class" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
+            <Border Grid.Column="2" Classes="chip success">
+              <TextBlock Text="SINGLE TARGET" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" />
+            </Border>
+          </Grid>
+
+          <StackPanel Spacing="{DynamicResource UiGapXs}">
+            <TextBlock Text="Selected Class" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <ComboBox ItemsSource="{Binding PlayerClasses}"
+                      SelectedItem="{Binding SelectedSoloClass}"
+                      HorizontalAlignment="Stretch"
+                      Height="{DynamicResource UiControlHeight}" />
+          </StackPanel>
+
+          <StackPanel Spacing="{DynamicResource UiGapXs}">
+            <TextBlock Text="Skill Rule / Preset" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <ComboBox ItemsSource="{Binding SoloModeStrings}"
+                      SelectedItem="{Binding SelectedSoloModeString}"
+                      HorizontalAlignment="Stretch"
+                      Height="{DynamicResource UiControlHeight}" />
+          </StackPanel>
+
+          <CheckBox Content="Use Dedicated Equipment Loadout"
+                    IsChecked="{Binding UseSoloEquipment}"
+                    FontSize="{DynamicResource UiFontSmall}"
+                    Margin="0,2,0,0" />
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card" Grid.Row="0"
+              Grid.Column="1"
+              Padding="{DynamicResource UiCardCompactPadding}">
+        <StackPanel Spacing="{DynamicResource UiGapMd}">
+          <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+  <TextBlock Text="Farm Class" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
+            <Border Grid.Column="2" Classes="chip warning">
+              <TextBlock Text="AOE FARMING" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" />
+            </Border>
+          </Grid>
+
+          <StackPanel Spacing="{DynamicResource UiGapXs}">
+            <TextBlock Text="Selected Class" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <ComboBox ItemsSource="{Binding PlayerClasses}"
+                      SelectedItem="{Binding SelectedFarmClass}"
+                      HorizontalAlignment="Stretch"
+                      Height="{DynamicResource UiControlHeight}" />
+          </StackPanel>
+
+          <StackPanel Spacing="{DynamicResource UiGapXs}">
+            <TextBlock Text="Skill Rule / Preset" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <ComboBox ItemsSource="{Binding FarmModeStrings}"
+                      SelectedItem="{Binding SelectedFarmModeString}"
+                      HorizontalAlignment="Stretch"
+                      Height="{DynamicResource UiControlHeight}" />
+          </StackPanel>
+
+          <CheckBox Content="Use Dedicated Equipment Loadout"
+                    IsChecked="{Binding UseFarmEquipment}"
+                    FontSize="{DynamicResource UiFontSmall}"
+                    Margin="0,2,0,0" />
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card" Grid.Row="1"
+              Grid.Column="0"
+              Padding="{DynamicResource UiCardCompactPadding}">
+        <StackPanel Spacing="{DynamicResource UiGapMd}">
+          <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+  <TextBlock Text="Dodge Class" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
+            <Border Grid.Column="2" Classes="chip accent">
+              <TextBlock Text="SURVIVABILITY" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" />
+            </Border>
+          </Grid>
+
+          <StackPanel Spacing="{DynamicResource UiGapXs}">
+            <TextBlock Text="Selected Class" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <ComboBox ItemsSource="{Binding PlayerClasses}"
+                      SelectedItem="{Binding SelectedDodgeClass}"
+                      HorizontalAlignment="Stretch"
+                      Height="{DynamicResource UiControlHeight}" />
+          </StackPanel>
+
+          <StackPanel Spacing="{DynamicResource UiGapXs}">
+            <TextBlock Text="Skill Rule / Preset" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <ComboBox ItemsSource="{Binding DodgeModeStrings}"
+                      SelectedItem="{Binding SelectedDodgeModeString}"
+                      HorizontalAlignment="Stretch"
+                      Height="{DynamicResource UiControlHeight}" />
+          </StackPanel>
+
+          <CheckBox Content="Use Dedicated Equipment Loadout"
+                    IsChecked="{Binding UseDodgeEquipment}"
+                    FontSize="{DynamicResource UiFontSmall}"
+                    Margin="0,2,0,0" />
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card" Grid.Row="1"
+              Grid.Column="1"
+              Padding="{DynamicResource UiCardCompactPadding}">
+        <StackPanel Spacing="{DynamicResource UiGapMd}">
+          <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
+  <TextBlock Text="Boss Class" FontWeight="Bold" FontSize="{DynamicResource UiFontHeading}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+</StackPanel>
+            <Border Grid.Column="2" Classes="chip warning">
+              <TextBlock Text="HEAVY BOSS" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" />
+            </Border>
+          </Grid>
+
+          <StackPanel Spacing="{DynamicResource UiGapXs}">
+            <TextBlock Text="Selected Class" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <ComboBox ItemsSource="{Binding PlayerClasses}"
+                      SelectedItem="{Binding SelectedBossClass}"
+                      HorizontalAlignment="Stretch"
+                      Height="{DynamicResource UiControlHeight}" />
+          </StackPanel>
+
+          <StackPanel Spacing="{DynamicResource UiGapXs}">
+            <TextBlock Text="Skill Rule / Preset" FontSize="{DynamicResource UiFontMicro}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+            <ComboBox ItemsSource="{Binding BossModeStrings}"
+                      SelectedItem="{Binding SelectedBossModeString}"
+                      HorizontalAlignment="Stretch"
+                      Height="{DynamicResource UiControlHeight}" />
+          </StackPanel>
+
+          <CheckBox Content="Use Dedicated Equipment Loadout"
+                    IsChecked="{Binding UseBossEquipment}"
+                    FontSize="{DynamicResource UiFontSmall}"
+                    Margin="0,2,0,0" />
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>

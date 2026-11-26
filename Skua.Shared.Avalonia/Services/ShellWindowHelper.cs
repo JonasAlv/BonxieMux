@@ -45,9 +45,7 @@ public static class ShellWindowHelper
         {
             Child = root
         };
-        UiTokens.Bind(rootBorder, Border.BorderThicknessProperty, UiTokens.UiBorderThin);
-        UiTokens.Bind(rootBorder, Border.BorderBrushProperty, UiTokens.SkuaBorderBrush);
-        UiTokens.Bind(rootBorder, Border.BackgroundProperty, UiTokens.SkuaPageBrush);
+        rootBorder.Classes.Add("window-frame");
 
         return rootBorder;
     }

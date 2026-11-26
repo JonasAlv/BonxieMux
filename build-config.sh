@@ -79,7 +79,7 @@ assemble_payload() {
     if command -v cargo &>/dev/null; then
         if [[ ! -s "$wayland_host_so" || ! -x "$wayland_launcher" ]] || [[ -n "$(find "$SCRIPT_DIR/Skua.WaylandHost/src" "$SCRIPT_DIR/Skua.WaylandHost/Cargo.toml" -type f \( -newer "$wayland_host_so" -o -newer "$wayland_launcher" \) -print -quit 2>/dev/null)" ]]; then
             echo "--- Building embedded Wayland DMA-BUF host & Rust launcher ---"
-            cargo build --release --manifest-path "$SCRIPT_DIR/Skua.WaylandHost/Cargo.toml"
+            cargo build --release --locked --manifest-path "$SCRIPT_DIR/Skua.WaylandHost/Cargo.toml"
         else
             echo "--- Embedded Wayland DMA-BUF host & Rust launcher are up-to-date ---"
         fi
@@ -155,6 +155,7 @@ assemble_payload() {
         "$SCRIPT_DIR/Skua.Plugin.ButlerV5/bin/Release/net10.0/ButlerV5.dll"
         "$SCRIPT_DIR/Skua.Plugin.Cosmetics/bin/Release/net10.0/Skua.Plugin.Cosmetics.dll"
         "$SCRIPT_DIR/Skua.Plugin.PerfRecorder/bin/Release/net10.0/Skua.Plugin.PerfRecorder.dll"
+        "$SCRIPT_DIR/Skua.Plugin.Omniscope/bin/Release/net10.0/Skua.Plugin.Omniscope.dll"
     )
     for req in "${required_outputs[@]}"; do
         if [[ ! -s "$req" ]]; then

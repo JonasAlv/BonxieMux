@@ -57,9 +57,17 @@ public sealed class OmniscopePlugin : ISkuaPlugin
                     _window = new OmniscopeWindow(bot);
                     _window.Closed += (_, _) => _window = null;
                 }
+                else
+                {
+                    if (_window.WindowState == WindowState.Minimized)
+                        _window.WindowState = WindowState.Normal;
+                    if (OperatingSystem.IsLinux() && !_window.IsActive)
+                        _window.Hide();
+                }
 
                 _window.Show();
                 _window.Activate();
+                _window.Focus();
             }
             catch (Exception ex)
             {
