@@ -5,12 +5,10 @@ using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Avalonia.Threading;
-using Skua.App.Avalonia.Views;
 using Skua.Core.AppStartup;
 using Skua.Core.Models;
 
-namespace Skua.App.Avalonia.Services;
+namespace Skua.Backend.Ipc;
 
 public static class SkuaIpcMessages
 {
@@ -178,7 +176,13 @@ public static class TabIpc
         }
     }
 
-    public static void StartListener(MainWindow window, int pid, CancellationToken ct)
+    public static void StartListener(
+        int pid,
+        Action<string> onInputJson,
+        Action<string> onHostCommand,
+        Action<uint, IntPtr, IntPtr> onIpcMessage,
+        Action<Action> postToUi,
+        CancellationToken ct)
     {
         string pipeName = GetChildPipeName(pid);
         Task.Run(async () =>
@@ -213,14 +217,14 @@ public static class TabIpc
 
                                 if (line.StartsWith("INPUT|", StringComparison.Ordinal))
                                 {
-                                    window.ForwardFlashInputJson(line["INPUT|".Length..]);
+                                    onInputJson(line["INPUT|".Length..]);
                                     continue;
                                 }
 
                                 if (line.StartsWith("CMD|", StringComparison.Ordinal))
                                 {
                                     string cmd = line["CMD|".Length..];
-                                    Dispatcher.UIThread.Post(() => window.HandleHostCommand(cmd));
+                                    postToUi(() => onHostCommand(cmd));
                                     continue;
                                 }
 
@@ -230,10 +234,7 @@ public static class TabIpc
                                     long.TryParse(parts[1], out long wParam) &&
                                     long.TryParse(parts[2], out long lParam))
                                 {
-                                    Dispatcher.UIThread.Post(() =>
-                                    {
-                                        window.HandleIpcMessage(msg, (IntPtr)wParam, (IntPtr)lParam);
-                                    });
+                                    postToUi(() => onIpcMessage(msg, (IntPtr)wParam, (IntPtr)lParam));
                                 }
                             }
                         }

@@ -4,9 +4,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 
-namespace Skua.App.Avalonia.Services;
+namespace Skua.Backend.Army;
 
-internal sealed class ArmyJumpDestination
+public sealed class ArmyJumpDestination
 {
     public string Name { get; set; } = "";
     public string Map { get; set; } = "";
@@ -17,7 +17,7 @@ internal sealed class ArmyJumpDestination
     public string DisplayName => $"{Map}{(string.IsNullOrWhiteSpace(Room) ? "" : $"-{Room}")} - {Cell}, {Pad}";
 }
 
-internal sealed class ArmyClientLocation
+public sealed class ArmyClientLocation
 {
     public string Map { get; set; } = "";
     public string Room { get; set; } = "";
@@ -30,7 +30,7 @@ internal sealed class ArmyClientLocation
 /// <summary>
 /// Persists Army Control jump history, presets, last jump fields, and per-tab client locations.
 /// </summary>
-internal sealed class HostArmyJumpStore
+public sealed class HostArmyJumpStore
 {
     private sealed class ArmyJumpSettings
     {

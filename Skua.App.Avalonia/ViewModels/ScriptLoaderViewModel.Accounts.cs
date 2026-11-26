@@ -172,7 +172,7 @@ public partial class ScriptLoaderViewModel
             _dialogService.ShowMessageBox($"No script is loaded on {_selectedAccount.Name}. Load one first.", "Scripts");
             return;
         }
-        Skua.App.Avalonia.Services.TabIpc.SendMessage(_selectedAccount.ProcessId, Skua.App.Avalonia.Services.SkuaIpcMessages.SetOption, new IntPtr(99), new IntPtr(_remoteRunning ? 0 : 1));
+        Skua.Backend.Ipc.TabIpc.SendMessage(_selectedAccount.ProcessId, Skua.Backend.Ipc.SkuaIpcMessages.SetOption, new IntPtr(99), new IntPtr(_remoteRunning ? 0 : 1));
         _remoteRunning = !_remoteRunning;
         RaiseShown();
     }
@@ -180,7 +180,7 @@ public partial class ScriptLoaderViewModel
     private void SendLoadToAccount(string path)
     {
         File.WriteAllText(Path.Combine(Skua.Core.Models.ClientFileSources.TabsDIR, "skua_global_script.txt"), path);
-        Skua.App.Avalonia.Services.TabIpc.SendMessage(_selectedAccount.ProcessId, Skua.App.Avalonia.Services.SkuaIpcMessages.LoadScript, IntPtr.Zero, IntPtr.Zero);
+        Skua.Backend.Ipc.TabIpc.SendMessage(_selectedAccount.ProcessId, Skua.Backend.Ipc.SkuaIpcMessages.LoadScript, IntPtr.Zero, IntPtr.Zero);
         _remoteScriptPath = path;
         RaiseShown();
     }

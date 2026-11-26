@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skua.Plugin.PerfRecorder", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skua.Plugin.Omniscope", "Skua.Plugin.Omniscope\Skua.Plugin.Omniscope.csproj", "{3EF5434F-9BEF-4162-B6E5-6211D94ED85E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skua.Backend", "Skua.Backend\Skua.Backend.csproj", "{338EF7D8-60CB-4501-9F89-D4A29CB94465}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -198,6 +200,18 @@ Global
 		{3EF5434F-9BEF-4162-B6E5-6211D94ED85E}.Release|x64.Build.0 = Release|Any CPU
 		{3EF5434F-9BEF-4162-B6E5-6211D94ED85E}.Release|x86.ActiveCfg = Release|Any CPU
 		{3EF5434F-9BEF-4162-B6E5-6211D94ED85E}.Release|x86.Build.0 = Release|Any CPU
+		{338EF7D8-60CB-4501-9F89-D4A29CB94465}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{338EF7D8-60CB-4501-9F89-D4A29CB94465}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{338EF7D8-60CB-4501-9F89-D4A29CB94465}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{338EF7D8-60CB-4501-9F89-D4A29CB94465}.Debug|x64.Build.0 = Debug|Any CPU
+		{338EF7D8-60CB-4501-9F89-D4A29CB94465}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{338EF7D8-60CB-4501-9F89-D4A29CB94465}.Debug|x86.Build.0 = Debug|Any CPU
+		{338EF7D8-60CB-4501-9F89-D4A29CB94465}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{338EF7D8-60CB-4501-9F89-D4A29CB94465}.Release|Any CPU.Build.0 = Release|Any CPU
+		{338EF7D8-60CB-4501-9F89-D4A29CB94465}.Release|x64.ActiveCfg = Release|Any CPU
+		{338EF7D8-60CB-4501-9F89-D4A29CB94465}.Release|x64.Build.0 = Release|Any CPU
+		{338EF7D8-60CB-4501-9F89-D4A29CB94465}.Release|x86.ActiveCfg = Release|Any CPU
+		{338EF7D8-60CB-4501-9F89-D4A29CB94465}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

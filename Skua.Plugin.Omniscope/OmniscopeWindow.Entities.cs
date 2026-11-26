@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Skua.Core.Models.Auras;
 using Skua.Core.Models.Monsters;
 using Skua.Core.Models.Skills;
+using Skua.Plugin.Omniscope.Services;
 using Skua.Shared.Avalonia.Theming;
 
 namespace Skua.Plugin.Omniscope;
@@ -368,16 +369,6 @@ public partial class OmniscopeWindow
 
         public bool HasSameDisplay(InventoryRow other) => Name == other.Name && Quantity == other.Quantity;
     }
-
-    private sealed record DropObservation(
-        DateTimeOffset Timestamp,
-        int ItemId,
-        string Name,
-        int ItemQuantity,
-        bool AddedToInventory,
-        int QuantityNow,
-        int? PrecedingMonsterMapId,
-        double? SecondsAfterKill);
 
     private sealed record MonsterKillObservation(DateTimeOffset Timestamp, int MapId);
 

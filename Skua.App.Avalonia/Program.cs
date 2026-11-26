@@ -25,7 +25,7 @@ internal static class Program
         try
         {
             ClientFileSources.EnsureInitialized();
-            Task.Run(() => Flash.FlashUtil.PreloadSwf());
+            Task.Run(() => Skua.Backend.Flash.FlashUtil.PreloadSwf());
             Environment.CurrentDirectory = AppContext.BaseDirectory;
             BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }

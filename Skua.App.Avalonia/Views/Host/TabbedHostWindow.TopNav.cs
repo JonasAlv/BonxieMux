@@ -9,6 +9,7 @@ using Material.Icons;
 using Material.Icons.Avalonia;
 using Newtonsoft.Json.Linq;
 using Skua.App.Avalonia.Services;
+using Skua.Backend.Ipc;
 using Skua.App.Avalonia.Views.Popups;
 using Skua.Core.Interfaces;
 using Skua.Core.Interfaces.ViewModels;
@@ -283,7 +284,7 @@ public partial class TabbedHostWindow
                 extra.Click += (_, _) =>
                 {
                     if (targetPid > 0)
-                        Skua.App.Avalonia.Services.TabIpc.SendCommand(targetPid, "MENU|" + targetHeader);
+                        TabIpc.SendCommand(targetPid, "MENU|" + targetHeader);
                     else
                         SendActiveChildCommand("MENU|" + targetHeader);
                 };
@@ -309,7 +310,7 @@ public partial class TabbedHostWindow
             sub.Click += (_, _) =>
             {
                 if (targetPid > 0)
-                    Skua.App.Avalonia.Services.TabIpc.SendCommand(targetPid, "MENU|" + label);
+                    TabIpc.SendCommand(targetPid, "MENU|" + label);
                 else
                     SendActiveChildCommand("MENU|" + label);
             };

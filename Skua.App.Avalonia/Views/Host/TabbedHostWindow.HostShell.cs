@@ -10,6 +10,7 @@ using Avalonia.Threading;
 using Material.Icons;
 using Material.Icons.Avalonia;
 using Newtonsoft.Json.Linq;
+using Skua.Backend.Ipc;
 using Skua.Shared.Avalonia.Controls.Shell;
 using Skua.Shared.Avalonia.Services;
 using Skua.Shared.Avalonia.Theming;

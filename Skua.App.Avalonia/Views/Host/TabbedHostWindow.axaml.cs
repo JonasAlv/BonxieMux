@@ -11,6 +11,8 @@ using CommunityToolkit.Mvvm.Messaging;
 using Material.Icons;
 using Material.Icons.Avalonia;
 using Skua.App.Avalonia.Services;
+using Skua.Backend.Army;
+using Skua.Backend.Ipc;
 using Skua.Core.Interfaces;
 using Skua.Core.Messaging;
 using Skua.Core.Models;

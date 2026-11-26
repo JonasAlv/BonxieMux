@@ -1,4 +1,3 @@
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -25,10 +24,15 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using STJ = System.Text.Json;
 
-namespace Skua.App.Avalonia.Flash;
+namespace Skua.Backend.Flash;
 
 public class FlashUtil : IFlashUtil, IRestartableGamePlayer
 {
+    /// <summary>
+    /// Optional UI-thread dispatcher hook wired by the presentation layer so FlashCall events
+    /// preserve UI-thread affinity without coupling Skua.Backend to any UI framework.
+    /// </summary>
+    public static Action<Action> UiPost { get; set; } = static action => action();
     private static readonly TimeSpan CallTimeout = TimeSpan.FromSeconds(10);
     private static readonly long ShortReadCacheTtlTicks = (long)(Stopwatch.Frequency * 0.025);
     private static readonly long StaticReadCacheTtlTicks = (long)(Stopwatch.Frequency * 0.250);
@@ -461,7 +465,7 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         object[] args = msg.TryGetProperty("args", out STJ.JsonElement argsProp) && argsProp.ValueKind == STJ.JsonValueKind.Array
             ? ConvertArgsArray(argsProp)
             : [];
-        Dispatcher.UIThread.Post(() =>
+        UiPost(() =>
         {
             FlashCallHandler? subscribers = FlashCall;
             if (subscribers is null)

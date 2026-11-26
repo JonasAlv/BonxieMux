@@ -6,6 +6,8 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Messaging;
 using Skua.App.Avalonia.Services;
+using Skua.Backend.Flash;
+using Skua.Backend.Ipc;
 using Skua.App.Avalonia.ViewModels;
 using Skua.Core.AppStartup;
 using Skua.Core.Interfaces;
@@ -350,7 +352,7 @@ public partial class MainWindow : Window
 
     public void ForwardFlashInputJson(string json)
     {
-        if (_flash is Skua.App.Avalonia.Flash.FlashUtil flashUtil)
+        if (_flash is FlashUtil flashUtil)
         {
             try
             {
@@ -1002,7 +1004,7 @@ public partial class MainWindow : Window
         {
             SendPipeToHost($"MUGETSU_SETTING|{name}|{value}");
         }
-        else if (Ioc.Default.GetService<IFlashUtil>() is Flash.FlashUtil player)
+        else if (Ioc.Default.GetService<IFlashUtil>() is FlashUtil player)
         {
             player.SendInput(new { input = "mugetsu_setting", name, value });
         }

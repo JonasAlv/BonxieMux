@@ -2,6 +2,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Skua.App.Avalonia.Services;
+using Skua.Backend.Ipc;
 using Skua.Core.Interfaces;
 using System;
 using System.Diagnostics;

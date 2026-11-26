@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Media;
-using Skua.App.Avalonia.Services;
+using Skua.Backend.Army;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -81,7 +81,7 @@ public partial class TabbedHostWindow
                 ToolTip.SetTip(info.HeaderPanel, null);
                 continue;
             }
-            Color color = FollowGroups.ColorFor(group.Master);
+            Color color = Color.Parse(FollowGroups.ColorHexFor(group.Master));
             tabs[i].Resources["FollowGroupBrush"] = new SolidColorBrush(color, 0.30);
             tabs[i].Resources["FollowGroupHoverBrush"] = new SolidColorBrush(color, 0.42);
             tabs[i].Resources["FollowGroupSelectedBrush"] = new SolidColorBrush(color, 0.36);

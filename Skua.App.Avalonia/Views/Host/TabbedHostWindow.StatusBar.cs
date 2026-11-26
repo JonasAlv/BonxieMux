@@ -7,6 +7,8 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using Material.Icons;
 using Material.Icons.Avalonia;
 using Skua.App.Avalonia.Services;
+using Skua.Backend.Army;
+using Skua.Backend.Ipc;
 using Skua.Core.AppStartup;
 using Skua.Core.Interfaces;
 using Skua.Core.Models;

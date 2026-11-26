@@ -6,7 +6,8 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Rendering;
 using Avalonia.Threading;
-using Skua.App.Avalonia.Flash;
+using Skua.Backend.Flash;
+using Skua.Backend.Ipc;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -344,7 +345,7 @@ public class GameHost : Control, ICustomHitTest
         }
         else if (_remoteChildPid > 0)
         {
-            Skua.App.Avalonia.Services.TabIpc.SendInput(_remoteChildPid, payload);
+            TabIpc.SendInput(_remoteChildPid, payload);
         }
     }
 

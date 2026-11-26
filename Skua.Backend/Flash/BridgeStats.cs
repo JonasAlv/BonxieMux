@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
-namespace Skua.App.Avalonia.Flash;
+namespace Skua.Backend.Flash;
 
 internal sealed class BridgeStats : IDisposable
 {

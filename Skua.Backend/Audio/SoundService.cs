@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace Skua.App.Avalonia.Services;
+namespace Skua.Backend.Audio;
 
 public class SoundService : ISoundService
 {

@@ -57,5 +57,18 @@
         <Error
             Condition="'$(MSBuildProjectName)' == 'Skua.Shared.Avalonia' and '@(_ForbiddenSharedRefs)' != ''"
             Text="Architecture violation: Skua.Shared.Avalonia must not reference app/manager projects. Found: @(_ForbiddenSharedRefs->'%(Filename)', ', ')." />
+
+        <ItemGroup Condition="'$(MSBuildProjectName)' == 'Skua.Backend'">
+            <_ForbiddenBackendProjectRefs
+                Include="@(ProjectReference)"
+                Condition="$([System.String]::Copy('%(ProjectReference.Filename)').Contains('Avalonia'))" />
+            <_ForbiddenBackendPackageRefs
+                Include="@(PackageReference)"
+                Condition="$([System.String]::Copy('%(PackageReference.Identity)').StartsWith('Avalonia')) Or $([System.String]::Copy('%(PackageReference.Identity)').Contains('Avalonia'))" />
+        </ItemGroup>
+
+        <Error
+            Condition="'$(MSBuildProjectName)' == 'Skua.Backend' and ('@(_ForbiddenBackendProjectRefs)' != '' or '@(_ForbiddenBackendPackageRefs)' != '')"
+            Text="Architecture violation: Skua.Backend must remain UI-free and must not reference Avalonia packages or projects." />
     </Target>
 </Project>

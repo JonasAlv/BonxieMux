@@ -4,13 +4,13 @@ using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Skua.App.Avalonia.Services;
+namespace Skua.Backend.Ipc;
 
 /// <summary>
-/// Owns the named-pipe IPC listener loop for <c>TabbedHostWindow</c>,
-/// forwarding each received line to the host window's message dispatcher.
+/// Owns the named-pipe IPC listener loop for a host window,
+/// forwarding each received line to the host's message dispatcher.
 /// </summary>
-internal sealed class HostIpcServer : IDisposable
+public sealed class HostIpcServer : IDisposable
 {
     private readonly string _pipeName;
     private readonly Action<string> _onMessage;

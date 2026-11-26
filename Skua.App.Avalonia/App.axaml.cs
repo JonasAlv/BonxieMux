@@ -9,7 +9,8 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
-using Skua.App.Avalonia.Flash;
+using Skua.Backend.Audio;
+using Skua.Backend.Flash;
 using Skua.App.Avalonia.AppStartup;
 using Skua.App.Avalonia.Services;
 using Skua.Shared.Avalonia.Services;
@@ -220,8 +221,9 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            FlashUtil.UiPost = static action => Dispatcher.UIThread.Post(action);
             desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
-            Task.Run(() => Skua.App.Avalonia.Flash.FlashUtil.PreloadSwf());
+            Task.Run(() => FlashUtil.PreloadSwf());
 
             if (hasEmbedFlag)
             {

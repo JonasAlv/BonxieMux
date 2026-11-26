@@ -7,6 +7,8 @@ using CommunityToolkit.Mvvm.Messaging;
 using Material.Icons;
 using Material.Icons.Avalonia;
 using Skua.App.Avalonia.Services;
+using Skua.Backend.Flash;
+using Skua.Backend.Ipc;
 using Skua.App.Avalonia.ViewModels;
 using Skua.App.Avalonia.ViewModels.MainMenu;
 using Skua.Core.Interfaces;
@@ -358,7 +360,7 @@ public partial class MainWindow : Window
             if (!isHeadless)
                 FlashHost.Focus();
         }
-        if (_flash is Flash.FlashUtil player)
+        if (_flash is FlashUtil player)
         {
             FlashHost?.AttachFlash(player);
             if (!player.IsPlayerRunning)
@@ -368,7 +370,13 @@ public partial class MainWindow : Window
         {
             _flash.InitializeFlash();
         }
-        TabIpc.StartListener(this, Environment.ProcessId, _ipcCancelCts.Token);
+        TabIpc.StartListener(
+            Environment.ProcessId,
+            ForwardFlashInputJson,
+            HandleHostCommand,
+            (msg, wp, lp) => HandleIpcMessage(msg, wp, lp),
+            action => Dispatcher.UIThread.Post(action),
+            _ipcCancelCts.Token);
 
         _ = Task.Run(() => RunBackgroundTabSyncLoopAsync(_ipcCancelCts.Token));
         _ = Task.Run(() => RunOptionCommandLoopAsync(_ipcCancelCts.Token));

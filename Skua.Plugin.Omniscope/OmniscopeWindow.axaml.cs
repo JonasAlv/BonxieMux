@@ -15,6 +15,7 @@ using Skua.Core.Models.Skills;
 using Skua.Core.Models.Items;
 using Skua.Core.Models.Quests;
 using Skua.Core.Models.Shops;
+using Skua.Plugin.Omniscope.Services;
 using Skua.Shared.Avalonia.Theming;
 
 namespace Skua.Plugin.Omniscope;

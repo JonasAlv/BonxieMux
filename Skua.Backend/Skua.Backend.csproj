@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Skua.Core\Skua.Core.csproj" />
+        <ProjectReference Include="..\Skua.Core.Interfaces\Skua.Core.Interfaces.csproj" />
+        <ProjectReference Include="..\Skua.Core.Models\Skua.Core.Models.csproj" />
+        <ProjectReference Include="..\Skua.Core.Utils\Skua.Core.Utils.csproj" />
+    </ItemGroup>
+
+</Project>

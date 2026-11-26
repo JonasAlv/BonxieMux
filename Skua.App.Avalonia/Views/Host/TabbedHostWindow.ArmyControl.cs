@@ -5,6 +5,8 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Skua.App.Avalonia.Services;
+using Skua.Backend.Army;
+using Skua.Backend.Ipc;
 using Skua.App.Avalonia.Views.Dialogs;
 using Skua.Core.Interfaces;
 using Skua.Core.Models;

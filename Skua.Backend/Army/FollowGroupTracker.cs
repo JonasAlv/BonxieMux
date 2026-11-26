@@ -1,20 +1,19 @@
-using Avalonia.Media;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace Skua.App.Avalonia.Services;
+namespace Skua.Backend.Army;
 
-internal static class FollowGroups
+public static class FollowGroups
 {
-    internal sealed record Group(string Master, int? MasterTab, List<int> Tabs)
+    public sealed record Group(string Master, int? MasterTab, List<int> Tabs)
     {
         public int Followers => Tabs.Count - (MasterTab.HasValue ? 1 : 0);
     }
 
-    internal static Dictionary<string, string> ReadFollowMap(string directory)
+    public static Dictionary<string, string> ReadFollowMap(string directory)
     {
         var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         try
@@ -62,7 +61,7 @@ internal static class FollowGroups
         catch { return false; }
     }
 
-    internal static List<Group> Build(IReadOnlyList<string> names, IReadOnlyDictionary<string, string> follows)
+    public static List<Group> Build(IReadOnlyList<string> names, IReadOnlyDictionary<string, string> follows)
     {
         var found = new List<(string Master, List<int> Tabs)>();
         var indexOf = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -95,7 +94,7 @@ internal static class FollowGroups
         return groups;
     }
 
-    internal static List<int> GroupedOrder(int count, IReadOnlyList<Group> groups)
+    public static List<int> GroupedOrder(int count, IReadOnlyList<Group> groups)
     {
         var placed = new bool[count];
         var order = new List<int>(count);
@@ -125,16 +124,16 @@ internal static class FollowGroups
         return order;
     }
 
-    internal static string Signature(IReadOnlyList<string> names, IReadOnlyList<Group> groups) =>
+    public static string Signature(IReadOnlyList<string> names, IReadOnlyList<Group> groups) =>
         string.Join("|", groups.Select(g => $"{g.Master.ToLowerInvariant()}:{string.Join(",", g.Tabs.Select(t => names[t].ToLowerInvariant()))}"));
 
-    private static readonly Color[] Palette =
+    private static readonly string[] Palette =
     {
-        Color.Parse("#60A5FA"), Color.Parse("#34D399"), Color.Parse("#FBBF24"), Color.Parse("#F472B6"),
-        Color.Parse("#A78BFA"), Color.Parse("#FB923C"), Color.Parse("#2DD4BF"), Color.Parse("#F87171"),
+        "#60A5FA", "#34D399", "#FBBF24", "#F472B6",
+        "#A78BFA", "#FB923C", "#2DD4BF", "#F87171",
     };
 
-    internal static Color ColorFor(string master)
+    public static string ColorHexFor(string master)
     {
         uint hash = 7;
         foreach (char c in master.Trim().ToLowerInvariant())
