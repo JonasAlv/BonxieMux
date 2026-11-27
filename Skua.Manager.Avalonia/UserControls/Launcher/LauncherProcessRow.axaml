@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              xmlns:sharedControls="clr-namespace:Skua.Shared.Avalonia.Controls.Buttons;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.Manager.Avalonia.UserControls.LauncherProcessRow"
              x:Name="Root">
@@ -26,7 +26,7 @@
                     Command="{Binding StopCommand, ElementName=Root}"
                     CommandParameter="{Binding}"
                     ToolTip.Tip="Kill Process">
-                <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                <icons:Codicon Kind="Close" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
             </Button>
         </Grid>
     </Border>

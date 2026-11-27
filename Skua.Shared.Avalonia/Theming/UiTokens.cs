@@ -17,6 +17,8 @@ public static class UiTokens
     public const string UiTabBarHeight = nameof(UiTabBarHeight);
     public const string UiStatusBarHeight = nameof(UiStatusBarHeight);
     public const string UiActivityBarWidth = nameof(UiActivityBarWidth);
+    public const string UiActivityItemSize = nameof(UiActivityItemSize);
+    public const string UiActivityIconSize = nameof(UiActivityIconSize);
     public const string UiSidebarWidth = nameof(UiSidebarWidth);
     public const string UiChipHeight = nameof(UiChipHeight);
     public const string UiMenuItemHeight = nameof(UiMenuItemHeight);

@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Skua.Manager.Avalonia.ViewModels"
              xmlns:models="clr-namespace:Skua.Core.Models;assembly=Skua.Core.Models"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.Manager.Avalonia.UserControls.JobEditorDialog"
              x:DataType="vm:JobEditorDialogViewModel"
              mc:Ignorable="d">
@@ -239,22 +239,22 @@
                                                 <Button Classes="skua-button" Height="{DynamicResource UiSmallControlHeight}" Padding="6,0" ToolTip.Tip="Configure options for this script"
                                                         Command="{Binding $parent[UserControl].((vm:JobEditorDialogViewModel)DataContext).EditScriptOptionsCommand}"
                                                         CommandParameter="{Binding}">
-                                                    <materialIcons:MaterialIcon Kind="TuneVariant" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                    <icons:Codicon Kind="Settings" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                                 </Button>
                                                 <Button Classes="skua-button" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Move Up"
                                                         Command="{Binding $parent[UserControl].((vm:JobEditorDialogViewModel)DataContext).MoveStepUpCommand}"
                                                         CommandParameter="{Binding}">
-                                                    <materialIcons:MaterialIcon Kind="ChevronUp" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                                                    <icons:Codicon Kind="ChevronUp" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                                                 </Button>
                                                 <Button Classes="skua-button" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Move Down"
                                                         Command="{Binding $parent[UserControl].((vm:JobEditorDialogViewModel)DataContext).MoveStepDownCommand}"
                                                         CommandParameter="{Binding}">
-                                                    <materialIcons:MaterialIcon Kind="ChevronDown" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                                                    <icons:Codicon Kind="ChevronDown" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                                                 </Button>
                                                 <Button Classes="skua-button" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Remove"
                                                         Command="{Binding $parent[UserControl].((vm:JobEditorDialogViewModel)DataContext).RemoveScriptStepCommand}"
                                                         CommandParameter="{Binding}">
-                                                    <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaDangerBrush}" />
+                                                    <icons:Codicon Kind="Close" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaDangerBrush}" />
                                                 </Button>
                                             </StackPanel>
                                         </Grid>

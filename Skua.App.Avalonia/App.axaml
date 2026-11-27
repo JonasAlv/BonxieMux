@@ -1,6 +1,5 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels"
              xmlns:views="clr-namespace:Skua.App.Avalonia.Views"
              xmlns:uc="clr-namespace:Skua.App.Avalonia.UserControls"
@@ -32,7 +31,6 @@
 
     <Application.Styles>
         <FluentTheme />
-        <materialIcons:MaterialIconStyles />
 
         <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>

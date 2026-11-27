@@ -8,7 +8,6 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Material.Icons;
 using Skua.Plugin.PerfRecorder.Models;
 using Skua.Plugin.PerfRecorder.Services;
 using Skua.Shared.Avalonia.Theming;

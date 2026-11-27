@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:uc="clr-namespace:Skua.Manager.Avalonia.UserControls"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              xmlns:sharedControls="clr-namespace:Skua.Shared.Avalonia.Controls.Buttons;assembly=Skua.Shared.Avalonia"
              xmlns:sharedSettings="clr-namespace:Skua.Shared.Avalonia.Controls.Settings;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.Manager.Avalonia.UserControls.AccountManagerUserControl"
@@ -35,8 +35,8 @@
                             Margin="0,0,2,0"
                             Click="TogglePasswordVisibility_Click"
                             ToolTip.Tip="Show/Hide Password">
-                        <materialIcons:MaterialIcon x:Name="PswVisibilityIcon"
-                                                    Kind="EyeOutline"
+                        <icons:Codicon x:Name="PswVisibilityIcon"
+                                                    Kind="Eye"
                                                     Width="{DynamicResource UiIconMd}"
                                                     Height="{DynamicResource UiIconMd}" />
                     </Button>
@@ -48,7 +48,7 @@
                         Classes="icon icon-28"
                         Command="{Binding AddAccountCommand}"
                         ToolTip.Tip="Add account">
-                    <materialIcons:MaterialIcon Kind="Check"
+                    <icons:Codicon Kind="Check"
                                                 Width="{DynamicResource UiIconSm}"
                                                 Height="{DynamicResource UiIconSm}"
                                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
@@ -57,7 +57,7 @@
                         Classes="icon icon-28"
                         Click="HideAddAccountButton_Click"
                         ToolTip.Tip="Cancel">
-                    <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                    <icons:Codicon Kind="Close" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                 </Button>
             </Grid>
         </Border>
@@ -120,7 +120,7 @@
                                 Command="{Binding MoveSelectedUpCommand}"
                                 ToolTip.Tip="Move Selected Up"
                                 IsVisible="{Binding SelectedAccountQuant, Converter={StaticResource IntGreaterThanZeroConverter}}">
-                            <materialIcons:MaterialIcon Kind="ArrowUp" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                            <icons:Codicon Kind="ArrowUp" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                         </Button>
 
                         <Button Grid.Column="5"
@@ -132,7 +132,7 @@
                                 Command="{Binding MoveSelectedDownCommand}"
                                 ToolTip.Tip="Move Selected Down"
                                 IsVisible="{Binding SelectedAccountQuant, Converter={StaticResource IntGreaterThanZeroConverter}}">
-                            <materialIcons:MaterialIcon Kind="ArrowDown" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                            <icons:Codicon Kind="ArrowDown" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                         </Button>
 
                         <Button Grid.Column="6"
@@ -144,7 +144,7 @@
                                 VerticalAlignment="Center"
                                 Command="{Binding ReloadAccountsCommand}"
                                 ToolTip.Tip="Refresh Accounts &amp; Groups (F5)">
-                            <materialIcons:MaterialIcon Kind="Refresh" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                            <icons:Codicon Kind="Refresh" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                         </Button>
 
                         <Button x:Name="ShowAddAccountButton"
@@ -185,7 +185,7 @@
                                       VerticalAlignment="Center"
                                       IsChecked="{Binding IsFilterPopupOpen}"
                                       ToolTip.Tip="Filter by tags">
-                            <materialIcons:MaterialIcon Kind="FilterOutline" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            <icons:Codicon Kind="Filter" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" VerticalAlignment="Center" HorizontalAlignment="Center" />
                         </ToggleButton>
 
                         <ToggleButton Grid.Column="10"
@@ -196,7 +196,7 @@
                                       VerticalAlignment="Center"
                                       IsChecked="{Binding ShowTags}"
                                       ToolTip.Tip="Toggle Tag Visibility">
-                            <materialIcons:MaterialIcon Kind="Tag" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            <icons:Codicon Kind="Tag" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" VerticalAlignment="Center" HorizontalAlignment="Center" />
                         </ToggleButton>
 
                         <ToggleButton Grid.Column="11"
@@ -206,7 +206,7 @@
                                       VerticalAlignment="Center"
                                       IsChecked="{Binding ShowGridView}"
                                       ToolTip.Tip="Toggle Grid/List View">
-                            <materialIcons:MaterialIcon Kind="ViewGrid" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            <icons:Codicon Kind="Layout" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" VerticalAlignment="Center" HorizontalAlignment="Center" />
                         </ToggleButton>
 
                         <uc:AccountTagFilterPopup IsOpen="{Binding IsFilterPopupOpen}"
@@ -285,7 +285,7 @@
                                 VerticalContentAlignment="Center"
                                 Click="AddGroup_Click"
                                 ToolTip.Tip="Create New Group">
-                            <materialIcons:MaterialIcon Kind="AccountMultiplePlus"
+                            <icons:Codicon Kind="PersonAdd"
                                                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                                         Width="{DynamicResource UiIconSm}"
                                                         Height="{DynamicResource UiIconSm}" />
@@ -336,7 +336,7 @@
   <TextBlock Text="Start Selected" FontWeight="Bold" VerticalAlignment="Center" />
 </Button>
                 <Button Grid.Column="2" Height="{DynamicResource UiControlHeight}" VerticalAlignment="Center" Classes="icon" Command="{Binding StartAccountsInNewWindowCommand}" ToolTip.Tip="Start selected accounts in a separate window">
-                    <materialIcons:MaterialIcon Kind="OpenInNew" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                    <icons:Codicon Kind="LinkExternal" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                 </Button>
                 <Button Grid.Column="3"
                         Height="{DynamicResource UiControlHeight}"
@@ -347,12 +347,12 @@
   <TextBlock Text="Start All" FontWeight="SemiBold" VerticalAlignment="Center" />
 </Button>
                 <Button Grid.Column="4" Height="{DynamicResource UiControlHeight}" VerticalAlignment="Center" Classes="icon" Command="{Binding StartAllAccountsInNewWindowCommand}" ToolTip.Tip="Start all accounts in a separate window">
-                    <materialIcons:MaterialIcon Kind="OpenInNew" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                    <icons:Codicon Kind="LinkExternal" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                 </Button>
                 <CheckBox Grid.Column="5" VerticalAlignment="Center" IsChecked="{Binding StartInGridView}" Content="Grid" ToolTip.Tip="Open Grid View automatically when launching two or more accounts" />
                 <NumericUpDown Grid.Column="6" Width="78" Height="{DynamicResource UiControlHeight}" VerticalAlignment="Center" Minimum="0" Maximum="60" Increment="1" FormatString="0" Value="{Binding LaunchDelaySeconds}" ToolTip.Tip="Seconds between launching accounts" />
                 <Button Grid.Column="7" Height="{DynamicResource UiControlHeight}" VerticalAlignment="Center" Classes="icon" Command="{Binding CancelLaunchCommand}" ToolTip.Tip="Cancel account launch batch">
-                    <materialIcons:MaterialIcon Kind="StopCircleOutline" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                    <icons:Codicon Kind="StopCircle" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                 </Button>
             </Grid>
         </Border>
@@ -370,7 +370,7 @@
                             ToolTip.Tip="Browse and download scripts"
                             Padding="{DynamicResource UiButtonPadding}"
                             Margin="4,0,0,0">
-                        <materialIcons:MaterialIcon Kind="Magnify" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                        <icons:Codicon Kind="Search" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                     </Button>
                     <Button Height="{DynamicResource UiControlHeight}"
                             VerticalAlignment="Center"
@@ -380,7 +380,7 @@
                             ToolTip.Tip="Select script file from folder (Right click: Open folder)"
                             Padding="{DynamicResource UiButtonPadding}"
                             Margin="4,0,0,0">
-                        <materialIcons:MaterialIcon Kind="Folder" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                        <icons:Codicon Kind="Folder" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                         <Button.ContextMenu>
                             <ContextMenu>
                                 <MenuItem Header="Select script file..." Command="{Binding ChangeScriptPathCommand}" />

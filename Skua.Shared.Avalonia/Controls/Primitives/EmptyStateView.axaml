@@ -1,16 +1,16 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons"
              xmlns:local="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives"
              x:Class="Skua.Shared.Avalonia.Controls.Primitives.EmptyStateView">
     <StackPanel Spacing="{DynamicResource UiGapBase}"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
-        <materialIcons:MaterialIcon Kind="{Binding IconKind, RelativeSource={RelativeSource AncestorType=local:EmptyStateView}}"
-                                    Width="40"
-                                    Height="40"
-                                    HorizontalAlignment="Center"
-                                    Foreground="{DynamicResource SkuaMutedTextBrush}" />
+        <icons:Codicon Kind="{Binding IconKind, RelativeSource={RelativeSource AncestorType=local:EmptyStateView}}"
+                       Width="40"
+                       Height="40"
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource SkuaMutedTextBrush}" />
         <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=local:EmptyStateView}}"
                    FontSize="{DynamicResource UiFontHeading}"
                    FontWeight="Bold"

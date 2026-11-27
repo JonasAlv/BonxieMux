@@ -50,7 +50,7 @@ public partial class AccountManagerUserControl : UserControl
         recipient.PswBox.Clear();
         recipient._isPasswordVisible = false;
         recipient.PswBox.PasswordChar = '*';
-        recipient.PswVisibilityIcon.Kind = Material.Icons.MaterialIconKind.EyeOutline;
+        recipient.PswVisibilityIcon.Kind = Skua.Shared.Avalonia.Controls.Icons.CodiconKind.Eye;
     }
 
     private void PasswordBox_PasswordChanged(object? sender, TextChangedEventArgs e)
@@ -63,7 +63,7 @@ public partial class AccountManagerUserControl : UserControl
     {
         _isPasswordVisible = !_isPasswordVisible;
         PswBox.PasswordChar = _isPasswordVisible ? '\0' : '*';
-        PswVisibilityIcon.Kind = _isPasswordVisible ? Material.Icons.MaterialIconKind.EyeOffOutline : Material.Icons.MaterialIconKind.EyeOutline;
+        PswVisibilityIcon.Kind = _isPasswordVisible ? Skua.Shared.Avalonia.Controls.Icons.CodiconKind.EyeClosed : Skua.Shared.Avalonia.Controls.Icons.CodiconKind.Eye;
     }
 
     private void ShowAddAccountButton_Click(object? sender, RoutedEventArgs e)
@@ -79,7 +79,7 @@ public partial class AccountManagerUserControl : UserControl
         PswBox.Clear();
         _isPasswordVisible = false;
         PswBox.PasswordChar = '*';
-        PswVisibilityIcon.Kind = Material.Icons.MaterialIconKind.EyeOutline;
+        PswVisibilityIcon.Kind = Skua.Shared.Avalonia.Controls.Icons.CodiconKind.Eye;
     }
 
     private void AddGroup_Click(object? sender, RoutedEventArgs e)

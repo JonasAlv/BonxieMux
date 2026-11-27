@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels"
              xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.App.Avalonia.Views.LoaderView"
              x:DataType="vms:LoaderViewModel"
              mc:Ignorable="d" d:DesignHeight="520" d:DesignWidth="720">
@@ -19,7 +19,7 @@
                PlaceholderText="IDs, e.g. 2566 or 101, 102"
                Text="{Binding InputIDs, Mode=TwoWay}">
         <TextBox.InnerLeftContent>
-          <materialIcons:MaterialIcon Kind="Pound" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+          <icons:Codicon Kind="SymbolNumeric" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
         </TextBox.InnerLeftContent>
       </TextBox>
       <Button Grid.Column="2" Classes="skua-button skua-primary w84" Command="{Binding LoadCommand}">
@@ -84,9 +84,9 @@
       <TextBlock Grid.Column="0" x:Name="SelectedCountText" Text="None selected" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" VerticalAlignment="Center" />
       <Button Grid.Column="1" Classes="skua-button w84" ToolTip.Tip="Copy the selected quests">
         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}">
-          <materialIcons:MaterialIcon Kind="ContentCopy" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+          <icons:Codicon Kind="Copy" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
           <TextBlock Text="Copy" VerticalAlignment="Center" />
-          <materialIcons:MaterialIcon Kind="ChevronDown" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+          <icons:Codicon Kind="ChevronDown" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
         </StackPanel>
         <Button.Flyout>
           <MenuFlyout Placement="TopEdgeAlignedRight">

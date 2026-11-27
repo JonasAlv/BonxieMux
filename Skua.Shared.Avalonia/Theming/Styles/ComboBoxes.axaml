@@ -1,6 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia">
+        xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons">
     
     <Style Selector="ComboBox.header-gap">
         <Setter Property="Margin" Value="0,0,4,0" />
@@ -45,13 +45,13 @@
                                               TextElement.Foreground="{DynamicResource SkuaTextBrush}"
                                               IsVisible="{TemplateBinding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
-                            <materialIcons:MaterialIcon Grid.Column="1"
-                                      Kind="ChevronDown"
-                                      Width="{DynamicResource UiIconMd}"
-                                      Height="{DynamicResource UiIconMd}"
-                                      Margin="6,0,-2,0"
-                                      Foreground="{DynamicResource SkuaMutedTextBrush}"
-                                      VerticalAlignment="Center" />
+                            <icons:Codicon Grid.Column="1"
+                                           Kind="ChevronDown"
+                                           Width="{DynamicResource UiIconMd}"
+                                           Height="{DynamicResource UiIconMd}"
+                                           Margin="6,0,-2,0"
+                                           Foreground="{DynamicResource SkuaMutedTextBrush}"
+                                           VerticalAlignment="Center" />
                         </Grid>
                     </Border>
 

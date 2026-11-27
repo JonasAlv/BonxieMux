@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels"
              xmlns:uc="clr-namespace:Skua.App.Avalonia.UserControls"
              x:DataType="vms:ScriptLoaderViewModel"
@@ -134,11 +134,11 @@
                     Command="{Binding ToggleScriptForAccountCommand}"
                     IsEnabled="{Binding ToggleScriptEnabled}">
                 <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" HorizontalAlignment="Center">
-                    <materialIcons:MaterialIcon Kind="Play"
+                    <icons:Codicon Kind="Play"
                                                 Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}"
                                                 VerticalAlignment="Center"
                                                 IsVisible="{Binding !ShownRunning}" />
-                    <materialIcons:MaterialIcon Kind="Stop"
+                    <icons:Codicon Kind="DebugStop"
                                                 Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}"
                                                 VerticalAlignment="Center"
                                                 IsVisible="{Binding ShownRunning}" />
@@ -166,19 +166,19 @@
                 </Border>
                 <Button Grid.Column="3" Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
                         ToolTip.Tip="Copy the selected lines, or the whole log" Click="CopyLog_Click">
-                    <materialIcons:MaterialIcon Kind="ContentCopy" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                    <icons:Codicon Kind="Copy" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                 </Button>
                 <Button Grid.Column="4" Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
                         ToolTip.Tip="Clear the selected lines" Click="DeselectLog_Click">
-                    <materialIcons:MaterialIcon Kind="SelectionRemove" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                    <icons:Codicon Kind="ClearAll" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                 </Button>
                 <Button Grid.Column="5" Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
                         ToolTip.Tip="Save the log to a file" Command="{Binding ScriptLogs.SaveLogCommand}">
-                    <materialIcons:MaterialIcon Kind="ContentSave" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                    <icons:Codicon Kind="Save" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                 </Button>
                 <Button Grid.Column="6" Classes="skua-button small skua-danger-soft" Width="26" Padding="0" HorizontalContentAlignment="Center"
                         ToolTip.Tip="Clear the log" Command="{Binding ScriptLogs.ClearLogCommand}">
-                    <materialIcons:MaterialIcon Kind="TrashCanOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                    <icons:Codicon Kind="Trash" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                 </Button>
             </Grid>
             <uc:LogTabUserControl Grid.Row="1" x:Name="ScriptLog" DataContext="{Binding ScriptLogs}" WrapLines="True" ShowCopyHint="False" />

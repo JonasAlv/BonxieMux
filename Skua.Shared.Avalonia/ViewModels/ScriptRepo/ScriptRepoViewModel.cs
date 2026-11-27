@@ -163,9 +163,11 @@ public partial class ScriptRepoViewModel : BotControlViewModelBase
     public string SortDirectionText => IsSortedByDate
         ? (SortDescending ? "Newest first" : "Oldest first")
         : (SortDescending ? "Name Z to A" : "Name A to Z");
-    public string SortDirectionIcon => IsSortedByDate
-        ? "ClockOutline"
-        : (SortDescending ? "SortDescending" : "SortAscending");
+    public Skua.Shared.Avalonia.Controls.Icons.CodiconKind SortDirectionIcon => IsSortedByDate
+        ? Skua.Shared.Avalonia.Controls.Icons.CodiconKind.Clockface
+        : (SortDescending
+            ? Skua.Shared.Avalonia.Controls.Icons.CodiconKind.ArrowDown
+            : Skua.Shared.Avalonia.Controls.Icons.CodiconKind.ArrowUp);
 
     public bool IsSortReversed => IsSortedByDate ? !SortDescending : SortDescending;
 

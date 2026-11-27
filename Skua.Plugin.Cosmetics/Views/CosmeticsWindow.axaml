@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
         xmlns:shell="clr-namespace:Skua.Shared.Avalonia.Controls.Shell;assembly=Skua.Shared.Avalonia"
         xmlns:models="clr-namespace:Skua.Plugin.Cosmetics.Models"
         xmlns:localViews="clr-namespace:Skua.Plugin.Cosmetics.Views"
@@ -120,7 +120,7 @@
                                 Padding="0"
                                 ToolTip.Tip="Copy look from selected room player"
                                 Click="BtnCopyRoomPlayer_Click">
-                            <materialIcons:MaterialIcon Kind="AccountArrowRight" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                            <icons:Codicon Kind="Account" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                         </Button>
                     </StackPanel>
 
@@ -153,13 +153,13 @@
                             Padding="2">
                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGap2xs}">
                             <Button Classes="skua-button small" Height="{DynamicResource UiSmallControlHeight}" Width="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Morph Male" Click="GenderMale_Click">
-                                <materialIcons:MaterialIcon Kind="GenderMale" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                <icons:Codicon Kind="Person" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                             </Button>
                             <Button Classes="skua-button small" Height="{DynamicResource UiSmallControlHeight}" Width="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Morph Female" Click="GenderFemale_Click">
-                                <materialIcons:MaterialIcon Kind="GenderFemale" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                <icons:Codicon Kind="Sparkle" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                             </Button>
                             <Button Classes="skua-button small" Height="{DynamicResource UiSmallControlHeight}" Width="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Swap Gender" Click="GenderSwap_Click">
-                                <materialIcons:MaterialIcon Kind="GenderTransgender" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                <icons:Codicon Kind="ArrowSwap" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                             </Button>
                         </StackPanel>
                     </Border>
@@ -196,7 +196,7 @@
                                     Padding="0"
                                     ToolTip.Tip="Clear Search"
                                     Click="ClearSearch_Click">
-                                <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                <icons:Codicon Kind="Close" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                             </Button>
 
                             <!-- Sorting Dropdown -->
@@ -318,7 +318,7 @@
                                                                    FontSize="{DynamicResource UiFontSmall}"
                                                                    Foreground="{DynamicResource SkuaMutedTextBrush}"
                                                                    VerticalAlignment="Center" />
-                                                        <materialIcons:MaterialIcon Kind="Heart"
+                                                        <icons:Codicon Kind="Heart"
                                                                                   Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
                                                                                   Foreground="{DynamicResource SkuaDangerBrush}"
                                                                                   IsVisible="{Binding IsFavorite}"
@@ -334,10 +334,10 @@
                                 <DockPanel Grid.Row="1" Margin="0,8,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" DockPanel.Dock="Left">
                                         <Button Classes="skua-button small" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="First Page" Click="PageFirst_Click">
-                                            <materialIcons:MaterialIcon Kind="ChevronDoubleLeft" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                            <icons:Codicon Kind="ArrowLeft" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                         </Button>
                                         <Button Classes="skua-button small" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Previous Page" Click="PagePrev_Click">
-                                            <materialIcons:MaterialIcon Kind="ChevronLeft" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                            <icons:Codicon Kind="ChevronLeft" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                         </Button>
                                         <TextBlock x:Name="PaginationInfoText"
                                                    Text="Page 1 of 1"
@@ -346,10 +346,10 @@
                                                    Margin="8,0"
                                                    Foreground="{DynamicResource SkuaTextBrush}" />
                                         <Button Classes="skua-button small" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Next Page" Click="PageNext_Click">
-                                            <materialIcons:MaterialIcon Kind="ChevronRight" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                            <icons:Codicon Kind="ChevronRight" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                         </Button>
                                         <Button Classes="skua-button small" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}" Padding="0" ToolTip.Tip="Last Page" Click="PageLast_Click">
-                                            <materialIcons:MaterialIcon Kind="ChevronDoubleRight" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                            <icons:Codicon Kind="ArrowRight" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                         </Button>
                                     </StackPanel>
 
@@ -538,7 +538,7 @@
                                         <!-- Armor Slot -->
                                         <Border Classes="slot-card">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="ShieldAccount" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <icons:Codicon Grid.Column="0" Kind="Shield" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <TextBlock Text="Armor / Class" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                                     <TextBlock x:Name="InspectArmorName" Text="None" FontSize="{DynamicResource UiFontSmall}" TextTrimming="CharacterEllipsis" />
@@ -550,7 +550,7 @@
                                         <!-- Helm Slot -->
                                         <Border Classes="slot-card">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="HardHat" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <icons:Codicon Grid.Column="0" Kind="MortarBoard" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <TextBlock Text="Helm" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                                     <TextBlock x:Name="InspectHelmName" Text="None" FontSize="{DynamicResource UiFontSmall}" TextTrimming="CharacterEllipsis" />
@@ -562,7 +562,7 @@
                                         <!-- Cape Slot -->
                                         <Border Classes="slot-card">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="FlagVariant" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <icons:Codicon Grid.Column="0" Kind="Milestone" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <TextBlock Text="Cape" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                                     <TextBlock x:Name="InspectCapeName" Text="None" FontSize="{DynamicResource UiFontSmall}" TextTrimming="CharacterEllipsis" />
@@ -574,7 +574,7 @@
                                         <!-- Weapon Slot -->
                                         <Border Classes="slot-card">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="Sword" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <icons:Codicon Grid.Column="0" Kind="Wand" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <TextBlock Text="Weapon" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                                     <TextBlock x:Name="InspectWeaponName" Text="None" FontSize="{DynamicResource UiFontSmall}" TextTrimming="CharacterEllipsis" />
@@ -586,7 +586,7 @@
                                         <!-- Pet Slot -->
                                         <Border Classes="slot-card">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="Paw" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <icons:Codicon Grid.Column="0" Kind="Squirrel" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <TextBlock Text="Pet" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                                     <TextBlock x:Name="InspectPetName" Text="None" FontSize="{DynamicResource UiFontSmall}" TextTrimming="CharacterEllipsis" />
@@ -598,7 +598,7 @@
                                         <!-- Rune Slot -->
                                         <Border Classes="slot-card">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <materialIcons:MaterialIcon Grid.Column="0" Kind="CircleDouble" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <icons:Codicon Grid.Column="0" Kind="Target" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <TextBlock Text="Ground Rune" FontSize="{DynamicResource UiFontMicro}" FontWeight="Bold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                                     <TextBlock x:Name="InspectRuneName" Text="None" FontSize="{DynamicResource UiFontSmall}" TextTrimming="CharacterEllipsis" />

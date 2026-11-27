@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:Skua.Manager.Avalonia.UserControls"
              xmlns:models="clr-namespace:Skua.Core.Models;assembly=Skua.Core.Models"
              xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.Manager.Avalonia.UserControls.SchedulerUserControl"
              x:DataType="vm:SchedulerViewModel"
              d:DesignWidth="900"
@@ -126,7 +126,7 @@
                         Padding="36"
                         Margin="0,20,0,0"
                         HorizontalAlignment="Center">
-                    <primitives:EmptyStateView IconKind="CalendarClockOutline"
+                    <primitives:EmptyStateView IconKind="Calendar"
                                                Title="No Scheduled Tasks Yet"
                                                Description="Click '+ New Task' above to schedule automated script playlists or army presets."
                                                ActionText="+ Create Your First Task"
@@ -166,33 +166,33 @@
                                         <!-- Quick Action Toolbar -->
                                         <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
                                             <Button Classes="skua-button" Width="28" Height="{DynamicResource UiControlHeight}" Padding="0" ToolTip.Tip="Run Now" Command="{Binding RunNowCommand}">
-                                                <materialIcons:MaterialIcon Kind="Play" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaSuccessBrush}" />
+                                                <icons:Codicon Kind="Play" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaSuccessBrush}" />
                                             </Button>
 
                                             <Button Classes="skua-button" Width="28" Height="{DynamicResource UiControlHeight}" Padding="0" ToolTip.Tip="Stop Execution" IsVisible="{Binding IsRunning}" Command="{Binding StopJobCommand}">
-                                                <materialIcons:MaterialIcon Kind="Stop" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaDangerBrush}" />
+                                                <icons:Codicon Kind="DebugStop" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaDangerBrush}" />
                                             </Button>
 
                                             <Button Classes="skua-button" Width="28" Height="{DynamicResource UiControlHeight}" Padding="0" ToolTip.Tip="Edit Task"
                                                     Command="{Binding $parent[UserControl].((vm:SchedulerViewModel)DataContext).EditJobCommand}"
                                                     CommandParameter="{Binding}">
-                                                <materialIcons:MaterialIcon Kind="Pencil" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                                                <icons:Codicon Kind="Edit" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                                             </Button>
 
                                             <Button Classes="skua-button" Width="28" Height="{DynamicResource UiControlHeight}" Padding="0" ToolTip.Tip="Duplicate Task"
                                                     Command="{Binding $parent[UserControl].((vm:SchedulerViewModel)DataContext).DuplicateJobCommand}"
                                                     CommandParameter="{Binding}">
-                                                <materialIcons:MaterialIcon Kind="ContentCopy" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                                                <icons:Codicon Kind="Copy" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                                             </Button>
 
                                             <Button Classes="skua-button" Width="28" Height="{DynamicResource UiControlHeight}" Padding="0" ToolTip.Tip="Delete Task"
                                                     Command="{Binding $parent[UserControl].((vm:SchedulerViewModel)DataContext).DeleteJobCommand}"
                                                     CommandParameter="{Binding}">
-                                                <materialIcons:MaterialIcon Kind="DeleteOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaDangerBrush}" />
+                                                <icons:Codicon Kind="Trash" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaDangerBrush}" />
                                             </Button>
 
                                             <Button Classes="skua-button" Width="28" Height="{DynamicResource UiControlHeight}" Padding="0" ToolTip.Tip="History &amp; Logs" Command="{Binding ToggleExpandedCommand}">
-                                                <materialIcons:MaterialIcon Kind="{Binding ExpandIconKind}" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                                <icons:Codicon Kind="{Binding ExpandIconKind}" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                             </Button>
                                         </StackPanel>
                                     </Grid>

@@ -181,7 +181,7 @@ def main() -> int:
             continue
         for m in btn_re.finditer(text):
             attrs, body = m.group(1), m.group(2)
-            if "MaterialIcon" in body and "TextBlock" not in body and 'Content="' not in attrs:
+            if ("Codicon" in body or "MaterialIcon" in body) and "TextBlock" not in body and 'Content="' not in attrs:
                 if "ToolTip.Tip=" not in attrs and "<ToolTip.Tip>" not in body:
                     line_no = text[: m.start()].count("\n") + 1
                     icon_btn_no_tip.append(f"{rel(p)}:{line_no}: icon-only <Button> missing ToolTip.Tip")
@@ -255,16 +255,16 @@ def main() -> int:
                 view_metrics.append(f"{r}:{i}: hardcoded token-matching Padding (use Ui*Padding token)")
     results.append(("No hardcoded CornerRadius/Height/Spacing/Padding in view AXAML", view_metrics))
 
-    # 15. No hardcoded MaterialIcon Width/Height in view AXAML
+    # 15. No hardcoded Codicon/MaterialIcon Width/Height in view AXAML
     icon_sizes: list[str] = []
     for p, text in axaml_cache.items():
         if p in {TOKENS_FILE, COLORS_FILE} or STYLES_DIR in p.parents:
             continue
         r = rel(p)
         for i, line in enumerate(text.splitlines(), 1):
-            if "MaterialIcon" in line and re.search(r'(?:Width|Height)="(?:10|12|14|16|18|20|22|24)"', line):
-                icon_sizes.append(f"{r}:{i}: hardcoded MaterialIcon size (use UiIcon* token)")
-    results.append(("No hardcoded MaterialIcon Width/Height in view AXAML", icon_sizes))
+            if ("Codicon" in line or "MaterialIcon" in line) and re.search(r'(?:Width|Height)="(?:10|12|14|16|18|20|22|24)"', line):
+                icon_sizes.append(f"{r}:{i}: hardcoded Codicon size (use UiIcon* / UiActivityIconSize token)")
+    results.append(("No hardcoded Codicon Width/Height in view AXAML", icon_sizes))
 
     # 16. No non-fallback new CornerRadius(4|6|8) in C# UI files
     cs_cr: list[str] = []

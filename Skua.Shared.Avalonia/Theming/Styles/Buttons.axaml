@@ -1,6 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia">
+        xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons">
     <Design.PreviewWith>
         <Border Padding="20">
         </Border>
@@ -189,7 +189,7 @@
     <Style Selector="Button.skua-primary /template/ ContentPresenter#PART_ContentPresenter, Button.skua-button.skua-primary /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Foreground" Value="{DynamicResource SkuaAccentForegroundBrush}" />
     </Style>
-    <Style Selector="Button.skua-primary materialIcons|MaterialIcon, Button.skua-button.skua-primary materialIcons|MaterialIcon">
+    <Style Selector="Button.skua-primary icons|Codicon, Button.skua-button.skua-primary icons|Codicon">
         <Setter Property="Foreground" Value="{DynamicResource SkuaAccentForegroundBrush}" />
     </Style>
     <Style Selector="Button.skua-primary TextBlock, Button.skua-button.skua-primary TextBlock">
@@ -316,8 +316,8 @@
     </Style>
 
     <Style Selector="Border.activity-item">
-        <Setter Property="Width" Value="{DynamicResource UiControlHeight}" />
-        <Setter Property="Height" Value="{DynamicResource UiControlHeight}" />
+        <Setter Property="Width" Value="{DynamicResource UiActivityItemSize}" />
+        <Setter Property="Height" Value="{DynamicResource UiActivityItemSize}" />
         <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="Background" Value="Transparent" />
@@ -327,8 +327,8 @@
         <Setter Property="Background" Value="{DynamicResource SkuaNavHoverBrush}" />
     </Style>
     <Style Selector="Button.activity-item, ToggleButton.activity-item">
-        <Setter Property="Width" Value="{DynamicResource UiControlHeight}" />
-        <Setter Property="Height" Value="{DynamicResource UiControlHeight}" />
+        <Setter Property="Width" Value="{DynamicResource UiActivityItemSize}" />
+        <Setter Property="Height" Value="{DynamicResource UiActivityItemSize}" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         <Setter Property="HorizontalAlignment" Value="Center" />

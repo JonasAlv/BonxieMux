@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
         xmlns:sharedShell="clr-namespace:Skua.Shared.Avalonia.Controls.Shell;assembly=Skua.Shared.Avalonia"
         x:Class="Skua.Manager.Avalonia.Views.MainWindow"
         Classes="skua"
@@ -73,7 +73,7 @@
                             Click="StatusQueueButton_Click"
                             ToolTip.Tip="Army Queue (click to open)">
                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon x:Name="StatusQueueIcon" Kind="PlaylistPlay" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                            <icons:Codicon x:Name="StatusQueueIcon" Kind="ListOrdered" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                             <TextBlock x:Name="StatusQueueText" Text="Queue" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
@@ -82,7 +82,7 @@
                             Click="StatusUpdatesButton_Click"
                             ToolTip.Tip="Updater (click to open)">
                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon x:Name="StatusUpdatesIcon" Kind="Update" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                            <icons:Codicon x:Name="StatusUpdatesIcon" Kind="Sync" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                             <TextBlock x:Name="StatusUpdatesText" Text="Updates" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="200" />
                         </StackPanel>
                     </Button>
@@ -91,7 +91,7 @@
                             Click="StatusScriptsButton_Click"
                             ToolTip.Tip="Scripts (click to open)">
                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon x:Name="StatusScriptsIcon" Kind="ScriptTextOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                            <icons:Codicon x:Name="StatusScriptsIcon" Kind="FileCode" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                             <TextBlock x:Name="StatusScriptsText" Text="Scripts" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="200" />
                         </StackPanel>
                     </Button>

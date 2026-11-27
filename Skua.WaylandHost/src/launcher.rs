@@ -59,6 +59,9 @@ fn main() {
     if env::var_os("RUST_LOG").is_none() {
         cmd.env("RUST_LOG", "warn,ruffle_frontend_utils::backends::audio=off");
     }
+    if env::var_os("DOTNET_EnableDiagnostics").is_none() {
+        cmd.env("DOTNET_EnableDiagnostics", "0");
+    }
     let err = cmd.exec();
 
     eprintln!("bonxie-launcher: exec({}) failed: {err}", target.display());

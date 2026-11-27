@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons"
              xmlns:local="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives"
              x:Class="Skua.Shared.Avalonia.Controls.Primitives.SearchFilterBar">
     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource UiGapMd}">
@@ -9,11 +9,11 @@
                  PlaceholderText="{Binding PlaceholderText, RelativeSource={RelativeSource AncestorType=local:SearchFilterBar}}"
                  Text="{Binding SearchText, RelativeSource={RelativeSource AncestorType=local:SearchFilterBar}, Mode=TwoWay}">
             <TextBox.InnerLeftContent>
-                <materialIcons:MaterialIcon Kind="Magnify"
-                                            Width="{DynamicResource UiIconMd}"
-                                            Height="{DynamicResource UiIconMd}"
-                                            Margin="10,0,0,0"
-                                            Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                <icons:Codicon Kind="Search"
+                               Width="{DynamicResource UiIconMd}"
+                               Height="{DynamicResource UiIconMd}"
+                               Margin="10,0,0,0"
+                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
             </TextBox.InnerLeftContent>
             <TextBox.InnerRightContent>
                 <Button x:Name="ClearBtn"
@@ -24,9 +24,9 @@
                         Click="ClearBtn_Click"
                         IsVisible="{Binding SearchText.Length, RelativeSource={RelativeSource AncestorType=local:SearchFilterBar}}"
                         ToolTip.Tip="Clear search">
-                    <materialIcons:MaterialIcon Kind="CloseCircle"
-                                                Width="{DynamicResource UiIconSm}"
-                                                Height="{DynamicResource UiIconSm}" />
+                    <icons:Codicon Kind="Close"
+                                   Width="{DynamicResource UiIconSm}"
+                                   Height="{DynamicResource UiIconSm}" />
                 </Button>
             </TextBox.InnerRightContent>
         </TextBox>

@@ -8,8 +8,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Messaging;
-using Material.Icons;
-using Material.Icons.Avalonia;
+using Skua.Shared.Avalonia.Controls.Icons;
 using Skua.App.Avalonia.Services;
 using Skua.Backend.Army;
 using Skua.Backend.Ipc;
@@ -68,11 +67,11 @@ public partial class TabbedHostWindow : Window
         public bool WasDetachedBeforeGrid { get; set; } = false;
         public int DetachedScreenX { get; set; } = 0;
         public int DetachedScreenY { get; set; } = 0;
-        public MaterialIcon? DetachedIcon { get; set; }
+        public Codicon? DetachedIcon { get; set; }
         public TabItem? TabItem { get; set; }
         public string AccountOrderKey { get; set; } = "";
         public StackPanel? HeaderPanel { get; set; }
-        public MaterialIcon? Crown { get; set; }
+        public Codicon? Crown { get; set; }
         public Border? FocusDot { get; set; }
         public Border? ScriptDot { get; set; }
     }
@@ -353,12 +352,12 @@ public partial class TabbedHostWindow : Window
                 {
                     Stretch = Stretch.Uniform,
                     Opacity = 0.3,
-                    Child = new MaterialIcon
+                    Child = new Codicon
                     {
-                        Kind = MaterialIconKind.DockWindow,
+                        Kind = CodiconKind.OpenInWindow,
                         Width = 96,
                         Height = 96,
-                        [!MaterialIcon.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(Skua.Shared.Avalonia.Theming.UiTokens.SkuaAccentBrush)
+                        [!Codicon.ForegroundProperty] = new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(Skua.Shared.Avalonia.Theming.UiTokens.SkuaAccentBrush)
                     }
                 }
             };

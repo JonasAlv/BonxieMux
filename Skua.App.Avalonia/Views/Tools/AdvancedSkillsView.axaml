@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vmas="clr-namespace:Skua.App.Avalonia.ViewModels.AdvancedSkills"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              x:DataType="vmas:AdvancedSkillsViewModel"
              x:Class="Skua.App.Avalonia.Views.AdvancedSkillsView">
     
@@ -54,12 +54,12 @@
                                     <Button Classes="icon"
                                             Command="{Binding MoveSkillUpCommand}"
                                             ToolTip.Tip="Move Skill Up">
-                                        <materialIcons:MaterialIcon Kind="ArrowUp" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                        <icons:Codicon Kind="ArrowUp" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                     </Button>
                                     <Button Classes="icon"
                                             Command="{Binding MoveSkillDownCommand}"
                                             ToolTip.Tip="Move Skill Down">
-                                        <materialIcons:MaterialIcon Kind="ArrowDown" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                        <icons:Codicon Kind="ArrowDown" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                     </Button>
                                 </StackPanel>
 
@@ -67,12 +67,12 @@
                                     <Button Classes="icon"
                                             Command="{Binding EditSkillCommand}"
                                             ToolTip.Tip="Edit Selected Skill">
-                                        <materialIcons:MaterialIcon Kind="Pencil" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                        <icons:Codicon Kind="Edit" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                     </Button>
                                     <Button Classes="icon"
                                             Command="{Binding RemoveSkillCommand}"
                                             ToolTip.Tip="Remove Selected Skill">
-                                        <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                        <icons:Codicon Kind="Close" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                     </Button>
                                 </StackPanel>
                             </Grid>
@@ -252,7 +252,7 @@
                                                         VerticalAlignment="Bottom"
                                                         Command="{Binding $parent[ItemsControl].((vmas:AdvancedSkillEditorViewModel)DataContext).UseRules.RemoveAuraCheckCommand}" 
                                                         CommandParameter="{Binding}">
-                                                    <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                                                    <icons:Codicon Kind="Close" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                                                 </Button>
                                             </Grid>
                                         </DataTemplate>

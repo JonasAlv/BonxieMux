@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Skua.Manager.Avalonia.ViewModels"
              xmlns:local="clr-namespace:Skua.Manager.Avalonia.UserControls"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.Manager.Avalonia.UserControls.ArmyQueueUserControl"
              x:DataType="vm:ArmyQueueViewModel"
              d:DesignWidth="850"
@@ -83,7 +83,7 @@
   <TextBlock Text="Quick Guide: How Army Queue Works" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" Foreground="{DynamicResource SkuaTextBrush}" />
 </StackPanel>
                             <Button Grid.Column="1" Classes="icon" Height="{DynamicResource UiSmallControlHeight}" Width="{DynamicResource UiSmallControlHeight}" Command="{Binding DismissHelpGuideCommand}" ToolTip.Tip="Dismiss guide">
-                                <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" />
+                                <icons:Codicon Kind="Close" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" />
                             </Button>
                         </Grid>
 
@@ -137,7 +137,7 @@
                                                         DragDrop.DragOver="OnSquadTabDragOver"
                                                         DragDrop.Drop="OnSquadTabDrop">
                                                     <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}" VerticalAlignment="Center">
-                                                        <materialIcons:MaterialIcon Kind="DragHorizontalVariant" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                        <icons:Codicon Kind="Gripper" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                                         <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="{DynamicResource UiFontBody}" VerticalAlignment="Center" />
                                                         <Border CornerRadius="{DynamicResource UiRadiusCard}" Background="{DynamicResource SkuaSurfaceSubtleBrush}" Padding="6,1" VerticalAlignment="Center">
                                                             <TextBlock Text="{Binding Members.Count}" FontSize="{DynamicResource UiFontMicro}" FontWeight="SemiBold" Foreground="{DynamicResource SkuaMutedTextBrush}" />
@@ -151,7 +151,7 @@
                                                                 ToolTip.Tip="Close Squad"
                                                                 Command="{Binding $parent[UserControl].((vm:ArmyQueueViewModel)DataContext).RemoveStepSpecificCommand}"
                                                                 CommandParameter="{Binding}">
-                                                            <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                            <icons:Codicon Kind="Close" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                         </Button>
                                                     </StackPanel>
                                                 </Border>
@@ -167,7 +167,7 @@
                                             VerticalAlignment="Center"
                                             ToolTip.Tip="Add Squad"
                                             Command="{Binding AddStepCommand}">
-                                        <materialIcons:MaterialIcon Kind="Plus" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <icons:Codicon Kind="Add" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                     </Button>
                                 </StackPanel>
                             </ScrollViewer>
@@ -234,7 +234,7 @@
                                                 VerticalAlignment="Center"
                                                 ToolTip.Tip="Select script file from folder (Right click: Open folder)"
                                                 Command="{Binding SelectedStep.BrowseStepScriptCommand}">
-                                            <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <icons:Codicon Kind="FolderOpened" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                             <Button.ContextMenu>
                                                 <ContextMenu>
                                                     <MenuItem Header="Select script file..." Command="{Binding SelectedStep.BrowseStepScriptCommand}" />
@@ -265,7 +265,7 @@
                                                 ToolTip.Tip="Clear default script"
                                                 IsVisible="{Binding SelectedStep.HasStepScript}"
                                                 Command="{Binding SelectedStep.ClearStepScriptCommand}">
-                                            <materialIcons:MaterialIcon Kind="Close" Width="11" Height="11" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <icons:Codicon Kind="Close" Width="11" Height="11" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Button>
                                     </Grid>
                                 </Border>
@@ -334,7 +334,7 @@
                                                             Padding="0"
                                                             ToolTip.Tip="Select a script for this account from disk (Right click: Open folder)"
                                                             Command="{Binding BrowseScriptCommand}">
-                                                        <materialIcons:MaterialIcon Kind="FolderOpenOutline" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        <icons:Codicon Kind="FolderOpened" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                         <Button.ContextMenu>
                                                             <ContextMenu>
                                                                 <MenuItem Header="Select script file..." Command="{Binding BrowseScriptCommand}" />
@@ -351,7 +351,7 @@
                                                             IsVisible="{Binding HasCustomScript}"
                                                             Command="{Binding $parent[UserControl].((vm:ArmyQueueViewModel)DataContext).EditMemberScriptConfigCommand}"
                                                             CommandParameter="{Binding}">
-                                                        <materialIcons:MaterialIcon Kind="TuneVertical" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        <icons:Codicon Kind="Settings" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                     </Button>
 
                                                     <Button Classes="skua-button"
@@ -362,7 +362,7 @@
                                                             IsVisible="{Binding HasCustomScript}"
                                                             ToolTip.Tip="Revert to squad default script"
                                                             Command="{Binding ClearScriptCommand}">
-                                                        <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        <icons:Codicon Kind="Close" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                     </Button>
                                                 </StackPanel>
 
@@ -372,7 +372,7 @@
                                                         ToolTip.Tip="Remove account from squad"
                                                         Command="{Binding $parent[UserControl].((vm:ArmyQueueViewModel)DataContext).RemoveMemberCommand}"
                                                         CommandParameter="{Binding}">
-                                                    <materialIcons:MaterialIcon Kind="DeleteOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                                                    <icons:Codicon Kind="Trash" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                                                 </Button>
                                             </Grid>
                                         </Border>

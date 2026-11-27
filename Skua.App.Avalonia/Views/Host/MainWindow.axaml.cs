@@ -4,8 +4,6 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Messaging;
-using Material.Icons;
-using Material.Icons.Avalonia;
 using Skua.App.Avalonia.Services;
 using Skua.Backend.Flash;
 using Skua.Backend.Ipc;

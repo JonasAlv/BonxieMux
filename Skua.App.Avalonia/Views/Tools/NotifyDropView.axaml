@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.Runtime"
              x:Class="Skua.App.Avalonia.Views.NotifyDropView"
              x:DataType="vms:NotifyDropViewModel">
@@ -20,7 +20,7 @@
                Text="{Binding AddDropInput}"
                ToolTip.Tip="Use the exact in-game item names">
         <TextBox.InnerLeftContent>
-          <materialIcons:MaterialIcon Kind="BellPlusOutline" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+          <icons:Codicon Kind="BellDot" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
         </TextBox.InnerLeftContent>
       </TextBox>
       <Button Grid.Column="1" Classes="skua-button skua-primary w84" Command="{Binding AddDropCommand}">
@@ -45,8 +45,8 @@
       <ListBox.ItemTemplate>
         <DataTemplate>
           <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource UiGapMd}" MinHeight="22">
-            <materialIcons:MaterialIcon Grid.Column="0"
-                                        Kind="BellOutline"
+            <icons:Codicon Grid.Column="0"
+                                        Kind="Bell"
                                         Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}"
                                         Foreground="{DynamicResource SkuaMutedTextBrush}"
                                         VerticalAlignment="Center" />
@@ -57,7 +57,7 @@
                     Command="{Binding $parent[ListBox].((vms:NotifyDropViewModel)DataContext).RemoveDropCommand}"
                     CommandParameter="{Binding}"
                     ToolTip.Tip="Stop watching this item">
-              <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+              <icons:Codicon Kind="Close" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
             </Button>
           </Grid>
         </DataTemplate>

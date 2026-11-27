@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              xmlns:managerUc="clr-namespace:Skua.Manager.Avalonia.UserControls"
              x:Class="Skua.Manager.Avalonia.UserControls.GroupAccountRow"
              mc:Ignorable="d"
@@ -54,7 +54,7 @@
                     VerticalAlignment="Center"
                     Click="ReplaceButton_Click"
                     ToolTip.Tip="Replace account in group">
-                <materialIcons:MaterialIcon Kind="Refresh"
+                <icons:Codicon Kind="Refresh"
                                             Width="{DynamicResource UiIconSm}"
                                             Height="{DynamicResource UiIconSm}"
                                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
@@ -66,7 +66,7 @@
                     VerticalAlignment="Center"
                     Click="RemoveButton_Click"
                     ToolTip.Tip="Remove from group">
-                <materialIcons:MaterialIcon Kind="Close"
+                <icons:Codicon Kind="Close"
                                             Width="{DynamicResource UiIconSm}"
                                             Height="{DynamicResource UiIconSm}"
                                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />

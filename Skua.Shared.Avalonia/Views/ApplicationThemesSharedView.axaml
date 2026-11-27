@@ -1,6 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:sharedTheming="clr-namespace:Skua.Shared.Avalonia.Controls.Theming"
              xmlns:sharedViews="clr-namespace:Skua.Shared.Avalonia.ViewModels"
              x:Class="Skua.Shared.Avalonia.Views.ApplicationThemesSharedView"

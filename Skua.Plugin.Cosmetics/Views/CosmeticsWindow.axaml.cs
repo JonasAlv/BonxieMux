@@ -11,7 +11,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Material.Icons;
 using Skua.Core.Interfaces;
 using Skua.Core.Models.Items;
 using Skua.Plugin.Cosmetics.Models;

@@ -1,11 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using CommunityToolkit.Mvvm.DependencyInjection;
-using Material.Icons;
-using Material.Icons.Avalonia;
+using Skua.Shared.Avalonia.Controls.Icons;
 using Skua.App.Avalonia.Services;
 using Skua.Backend.Army;
 using Skua.Backend.Ipc;
@@ -127,20 +125,20 @@ public partial class TabbedHostWindow
 
     private Border BuildDetachedStatusBar(DetachedWindowContext ctx)
     {
-        static (Button Btn, MaterialIcon Icon, TextBlock Text) CreateItem(
-            MaterialIconKind kind,
+        static (Button Btn, Codicon Icon, TextBlock Text) CreateItem(
+            CodiconKind kind,
             string initialText,
             string tooltip,
             double maxTextWidth = double.PositiveInfinity)
         {
-            MaterialIcon icon = new()
+            Codicon icon = new()
             {
                 Kind = kind,
                 VerticalAlignment = VerticalAlignment.Center
             };
-            UiTokens.Bind(icon, MaterialIcon.WidthProperty, UiTokens.UiIconSm);
-            UiTokens.Bind(icon, MaterialIcon.HeightProperty, UiTokens.UiIconSm);
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
+            UiTokens.Bind(icon, Codicon.WidthProperty, UiTokens.UiIconSm);
+            UiTokens.Bind(icon, Codicon.HeightProperty, UiTokens.UiIconSm);
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
 
             TextBlock text = new()
             {
@@ -166,13 +164,13 @@ public partial class TabbedHostWindow
             return (btn, icon, text);
         }
 
-        var (butlerBtn, butlerIcon, butlerText) = CreateItem(MaterialIconKind.AccountGroupOutline, "Butler", "ButlerV5 (click to open)", 140);
+        var (butlerBtn, butlerIcon, butlerText) = CreateItem(CodiconKind.Organization, "Butler", "ButlerV5 (click to open)", 140);
         butlerBtn.Click += (_, _) => TabIpc.SendCommand(ctx.ChildPid, "MENU|ButlerV5 Avalonia");
         ctx.ButlerButton = butlerBtn;
         ctx.ButlerIcon = butlerIcon;
         ctx.ButlerText = butlerText;
 
-        var (watchdogBtn, watchdogIcon, watchdogText) = CreateItem(MaterialIconKind.ShieldCheckOutline, "Watchdog", "Watch Dog (click to open)", 130);
+        var (watchdogBtn, watchdogIcon, watchdogText) = CreateItem(CodiconKind.Shield, "Watchdog", "Watch Dog (click to open)", 130);
         watchdogBtn.Click += (_, _) => TabIpc.SendCommand(ctx.ChildPid, "MENU|Watch Dog");
         ctx.WatchdogButton = watchdogBtn;
         ctx.WatchdogIcon = watchdogIcon;
@@ -187,29 +185,31 @@ public partial class TabbedHostWindow
         leftPanel.Children.Add(butlerBtn);
         leftPanel.Children.Add(watchdogBtn);
 
-        var (locBtn, locIcon, locText) = CreateItem(MaterialIconKind.MapMarkerOutline, "Client", "Active tab session (click to open Omniscope)", 200);
+        var (locBtn, locIcon, locText) = CreateItem(CodiconKind.Location, "Client", "Active tab session (click to open Omniscope)", 200);
         locBtn.Click += (_, _) => TabIpc.SendCommand(ctx.ChildPid, "MENU|OMNISCOPE");
         ctx.LocationButton = locBtn;
         ctx.LocationIcon = locIcon;
         ctx.LocationText = locText;
 
-        var (scriptBtn, scriptIcon, scriptText) = CreateItem(MaterialIconKind.ScriptTextOutline, "No script", "Script Loader (click to open)", 160);
+        var (scriptBtn, scriptIcon, scriptText) = CreateItem(CodiconKind.FileCode, "No script", "Script Loader (click to open)", 160);
         scriptBtn.Click += (_, _) => TabIpc.SendCommand(ctx.ChildPid, "OPEN_SCRIPT_LOADER");
         ctx.ScriptButton = scriptBtn;
         ctx.ScriptIcon = scriptIcon;
         ctx.ScriptText = scriptText;
 
-        Ellipse autoDot = new()
+        Codicon autoIcon = new()
         {
-            Width = 6,
-            Height = 6,
+            Kind = CodiconKind.Flame,
             VerticalAlignment = VerticalAlignment.Center
         };
-        UiTokens.Bind(autoDot, Shape.FillProperty, UiTokens.SkuaSuccessBrush);
+        UiTokens.Bind(autoIcon, Codicon.WidthProperty, UiTokens.UiIconSm);
+        UiTokens.Bind(autoIcon, Codicon.HeightProperty, UiTokens.UiIconSm);
+        UiTokens.Bind(autoIcon, Codicon.ForegroundProperty, UiTokens.SkuaTextBrush);
         TextBlock autoLabel = new() { Text = "Auto", VerticalAlignment = VerticalAlignment.Center };
+        UiTokens.Bind(autoLabel, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
         StackPanel autoRow = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         UiTokens.Bind(autoRow, StackPanel.SpacingProperty, UiTokens.UiGapXs);
-        autoRow.Children.Add(autoDot);
+        autoRow.Children.Add(autoIcon);
         autoRow.Children.Add(autoLabel);
         Button autoBtn = new() { Content = autoRow, IsVisible = false };
         autoBtn.Classes.Add("status-item");
@@ -221,13 +221,13 @@ public partial class TabbedHostWindow
         };
         ctx.AutoButton = autoBtn;
 
-        var (headlessBtn, headlessIcon, headlessText) = CreateItem(MaterialIconKind.MonitorOff, "Auto Headless", "Toggle Auto Headless");
+        var (headlessBtn, headlessIcon, headlessText) = CreateItem(CodiconKind.EyeClosed, "Auto Headless", "Toggle Auto Headless");
         headlessBtn.Click += (_, _) => ToggleAutoHeadless();
         ctx.HeadlessButton = headlessBtn;
         ctx.HeadlessIcon = headlessIcon;
         ctx.HeadlessText = headlessText;
 
-        var (sizeBtn, _, sizeText) = CreateItem(MaterialIconKind.AspectRatio, ctx.StretchGame ? "Stretch" : "Fit", "Viewport: Stretch (fills window) — click for Fit");
+        var (sizeBtn, _, sizeText) = CreateItem(CodiconKind.ScreenFull, ctx.StretchGame ? "Stretch" : "Fit", "Viewport: Stretch (fills window) — click for Fit");
         sizeBtn.Click += (_, _) =>
         {
             ctx.StretchGame = !ctx.StretchGame;
@@ -311,27 +311,27 @@ public partial class TabbedHostWindow
         bool autoHeadless,
         bool isHeadless,
         Button btn,
-        MaterialIcon icon,
+        Codicon icon,
         TextBlock text)
     {
         btn.IsVisible = isVisible;
         if (autoHeadless)
         {
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaWarningBrush);
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaTextBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
             text.Text = "Auto Headless";
             ToolTip.SetTip(btn, "Auto Headless enabled (follows AutoHeadless rules) — click to disable");
         }
         else if (isHeadless)
         {
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaWarningBrush);
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaTextBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
             text.Text = "Headless";
             ToolTip.SetTip(btn, "Headless active on current tab — click to enable Auto Headless");
         }
         else
         {
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             text.Text = "Auto Headless";
             ToolTip.SetTip(btn, "Auto Headless off — click to enable");
@@ -341,11 +341,11 @@ public partial class TabbedHostWindow
     private void UpdateLocationStatusItem(TabInfo? activeInfo)
         => UpdateLocationStatusItemCore(activeInfo, StatusLocationButton, StatusLocationIcon, StatusLocationText);
 
-    private void UpdateLocationStatusItemCore(TabInfo? activeInfo, Button btn, MaterialIcon icon, TextBlock text)
+    private void UpdateLocationStatusItemCore(TabInfo? activeInfo, Button btn, Codicon icon, TextBlock text)
     {
         if (activeInfo == null)
         {
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             text.Text = "No tab";
             ToolTip.SetTip(btn, "No active tab");
@@ -376,8 +376,8 @@ public partial class TabbedHostWindow
         bool isStarting = !activeInfo.IsLoaded && string.IsNullOrWhiteSpace(activeInfo.LastCharacterName);
         UiTokens.Bind(
             icon,
-            MaterialIcon.ForegroundProperty,
-            isStarting ? UiTokens.SkuaWarningBrush : UiTokens.SkuaMutedTextBrush);
+            Codicon.ForegroundProperty,
+            isStarting ? UiTokens.SkuaMutedTextBrush : UiTokens.SkuaTextBrush);
         UiTokens.Bind(
             text,
             TextBlock.ForegroundProperty,
@@ -387,7 +387,7 @@ public partial class TabbedHostWindow
     private void UpdateScriptStatusItem(TabInfo? activeInfo)
         => UpdateScriptStatusItemCore(activeInfo, StatusScriptButton, StatusScriptIcon, StatusScriptText);
 
-    private void UpdateScriptStatusItemCore(TabInfo? activeInfo, Button btn, MaterialIcon icon, TextBlock text)
+    private void UpdateScriptStatusItemCore(TabInfo? activeInfo, Button btn, Codicon icon, TextBlock text)
     {
         btn.IsVisible = activeInfo != null;
         int activePid = activeInfo?.Process?.Id ?? 0;
@@ -397,24 +397,24 @@ public partial class TabbedHostWindow
         {
             if (script.IsPaused)
             {
-                icon.Kind = MaterialIconKind.PauseCircleOutline;
-                UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaWarningBrush);
+                icon.Kind = CodiconKind.DebugPause;
+                UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaTextBrush);
                 UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
                 text.Text = script.ScriptName;
                 ToolTip.SetTip(btn, $"Paused: {script.ScriptName} (click to open Script Loader)");
             }
             else if (script.IsRunning)
             {
-                icon.Kind = MaterialIconKind.PlayCircleOutline;
-                UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaSuccessBrush);
+                icon.Kind = CodiconKind.PlayCircle;
+                UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaTextBrush);
                 UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
                 text.Text = script.ScriptName;
                 ToolTip.SetTip(btn, $"Running: {script.ScriptName} (click to open Script Loader)");
             }
             else
             {
-                icon.Kind = MaterialIconKind.ScriptTextOutline;
-                UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
+                icon.Kind = CodiconKind.FileCode;
+                UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
                 UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
                 text.Text = script.ScriptName;
                 ToolTip.SetTip(btn, $"Loaded: {script.ScriptName} (click to open Script Loader)");
@@ -422,8 +422,8 @@ public partial class TabbedHostWindow
         }
         else
         {
-            icon.Kind = MaterialIconKind.ScriptTextOutline;
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
+            icon.Kind = CodiconKind.FileCode;
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             text.Text = "No script";
             ToolTip.SetTip(btn, "No script loaded (click to open Script Loader)");
@@ -433,7 +433,7 @@ public partial class TabbedHostWindow
     private void UpdateButlerStatusItem(TabInfo? activeInfo, string charKey)
         => UpdateButlerStatusItemCore(activeInfo, charKey, StatusButlerButton, StatusButlerIcon, StatusButlerText);
 
-    private void UpdateButlerStatusItemCore(TabInfo? activeInfo, string charKey, Button btn, MaterialIcon icon, TextBlock text)
+    private void UpdateButlerStatusItemCore(TabInfo? activeInfo, string charKey, Button btn, Codicon icon, TextBlock text)
     {
         btn.IsVisible = activeInfo != null;
         if (activeInfo == null)
@@ -452,40 +452,40 @@ public partial class TabbedHostWindow
 
         if (!string.IsNullOrWhiteSpace(master) && followers.Count > 0)
         {
-            icon.Kind = MaterialIconKind.AccountArrowRightOutline;
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaTextBrush);
+            icon.Kind = CodiconKind.ArrowRight;
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaTextBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
             text.Text = $"Following {master} (+{followers.Count})";
             ToolTip.SetTip(btn, $"ButlerV5: Following {master} and leading {followers.Count} follower(s) — click to open");
         }
         else if (!string.IsNullOrWhiteSpace(master))
         {
-            icon.Kind = MaterialIconKind.AccountArrowRightOutline;
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaTextBrush);
+            icon.Kind = CodiconKind.ArrowRight;
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaTextBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
             text.Text = $"Following {master}";
             ToolTip.SetTip(btn, $"ButlerV5: Following {master} — click to open");
         }
         else if (followers.Count > 0)
         {
-            icon.Kind = MaterialIconKind.CrownOutline;
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaTextBrush);
+            icon.Kind = CodiconKind.StarFull;
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaTextBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
             text.Text = followers.Count == 1 ? "1 Follower" : $"{followers.Count} Followers";
             ToolTip.SetTip(btn, $"ButlerV5: Leading {followers.Count} follower(s): {string.Join(", ", followers)} — click to open");
         }
         else if (_follows.Count > 0)
         {
-            icon.Kind = MaterialIconKind.AccountGroupOutline;
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
+            icon.Kind = CodiconKind.Organization;
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             text.Text = $"{_follows.Count} Following";
             ToolTip.SetTip(btn, $"ButlerV5: {_follows.Count} active follow(s) across {_activeFollowGroupCount} group(s) — click to open");
         }
         else
         {
-            icon.Kind = MaterialIconKind.AccountGroupOutline;
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
+            icon.Kind = CodiconKind.Organization;
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             text.Text = "Butler";
             ToolTip.SetTip(btn, "ButlerV5: No active follows — click to open");
@@ -495,7 +495,7 @@ public partial class TabbedHostWindow
     private void UpdateWatchdogStatusItem(TabInfo? activeInfo, string charKey)
         => UpdateWatchdogStatusItemCore(activeInfo, charKey, StatusWatchdogButton, StatusWatchdogIcon, StatusWatchdogText);
 
-    private void UpdateWatchdogStatusItemCore(TabInfo? activeInfo, string charKey, Button btn, MaterialIcon icon, TextBlock text)
+    private void UpdateWatchdogStatusItemCore(TabInfo? activeInfo, string charKey, Button btn, Codicon icon, TextBlock text)
     {
         btn.IsVisible = activeInfo != null;
         if (activeInfo == null)
@@ -510,8 +510,8 @@ public partial class TabbedHostWindow
 
         if (callingAccount != null)
         {
-            icon.Kind = MaterialIconKind.ShieldAlertOutline;
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaDangerBrush);
+            icon.Kind = CodiconKind.Warning;
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaDangerBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
             text.Text = "Help!";
             ToolTip.SetTip(btn, $"Watch Dog: {callingAccount.Account} requested help in {callingAccount.Map} — click to open");
@@ -523,16 +523,16 @@ public partial class TabbedHostWindow
                  !activeDog.Status.Equals("Waiting", StringComparison.OrdinalIgnoreCase) &&
                  !activeDog.Status.StartsWith("Ready", StringComparison.OrdinalIgnoreCase))
         {
-            icon.Kind = MaterialIconKind.ShieldAlertOutline;
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaWarningBrush);
+            icon.Kind = CodiconKind.Warning;
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaWarningBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
             text.Text = activeDog.Status;
             ToolTip.SetTip(btn, $"Watch Dog ({activeDog.Account}): {activeDog.Status} — click to open");
         }
         else if (_watchdogEnabled)
         {
-            icon.Kind = MaterialIconKind.ShieldCheckOutline;
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
+            icon.Kind = CodiconKind.Shield;
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             text.Text = "Watchdog";
             ToolTip.SetTip(btn, activeDog != null
@@ -541,8 +541,8 @@ public partial class TabbedHostWindow
         }
         else
         {
-            icon.Kind = MaterialIconKind.ShieldOffOutline;
-            UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
+            icon.Kind = CodiconKind.CircleSlash;
+            UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             UiTokens.Bind(text, TextBlock.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             text.Text = "Watchdog";
             ToolTip.SetTip(btn, "Watch Dog: Rescue Allies is off — click to open");

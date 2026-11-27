@@ -54,8 +54,8 @@ internal static class Program
             .UseHarfBuzz();
 
 #if DEBUG
-        builder = builder.WithDeveloperTools();
+        builder = builder.WithDeveloperTools().LogToTrace();
 #endif
-        return builder.LogToTrace();
+        return builder;
     }
 }

@@ -5,8 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.DependencyInjection;
-using Material.Icons;
-using Material.Icons.Avalonia;
+using Skua.Shared.Avalonia.Controls.Icons;
 using Newtonsoft.Json.Linq;
 using Skua.App.Avalonia.Services;
 using Skua.Backend.Ipc;
@@ -85,7 +84,7 @@ public partial class TabbedHostWindow
 
         _overflowMenuItem = new MenuItem
         {
-            Header = CreateNavIcon(MaterialIconKind.DotsHorizontal, UiTokens.UiIconMd, UiTokens.SkuaTextBrush),
+            Header = CreateNavIcon(CodiconKind.Ellipsis, UiTokens.UiIconMd, UiTokens.SkuaTextBrush),
             Padding = new Thickness(7, 0),
             IsVisible = false
         };
@@ -175,7 +174,7 @@ public partial class TabbedHostWindow
 
         bool compactHamburger = numShown == 0;
         _overflowMenuItem.Header = CreateNavIcon(
-            compactHamburger ? MaterialIconKind.Menu : MaterialIconKind.DotsHorizontal,
+            compactHamburger ? CodiconKind.Menu : CodiconKind.Ellipsis,
             UiTokens.UiIconMd,
             UiTokens.SkuaTextBrush);
         ToolTip.SetTip(_overflowMenuItem, compactHamburger ? "Application Menu" : "More");
@@ -201,7 +200,7 @@ public partial class TabbedHostWindow
 
         Button botWinBtn = new()
         {
-            Content = CreateNavIcon(MaterialIconKind.Apps, UiTokens.UiIconMd, UiTokens.SkuaMutedTextBrush)
+            Content = CreateNavIcon(CodiconKind.Extensions, UiTokens.UiActivityIconSize, UiTokens.SkuaMutedTextBrush)
         };
         botWinBtn.Classes.Add("activity-item");
         ToolTip.SetTip(botWinBtn, "Show All Bot Windows & Tools");
@@ -210,7 +209,7 @@ public partial class TabbedHostWindow
 
         Button searchScriptsBtn = new()
         {
-            Content = CreateNavIcon(MaterialIconKind.SourceBranch, UiTokens.UiIconMd, UiTokens.SkuaMutedTextBrush)
+            Content = CreateNavIcon(CodiconKind.SourceControl, UiTokens.UiActivityIconSize, UiTokens.SkuaMutedTextBrush)
         };
         searchScriptsBtn.Classes.Add("activity-item");
         ToolTip.SetTip(searchScriptsBtn, "Search Scripts");
@@ -219,7 +218,7 @@ public partial class TabbedHostWindow
 
         Button settingsBtn = new()
         {
-            Content = CreateNavIcon(MaterialIconKind.CogOutline, UiTokens.UiIconMd, UiTokens.SkuaMutedTextBrush)
+            Content = CreateNavIcon(CodiconKind.SettingsGear, UiTokens.UiActivityIconSize, UiTokens.SkuaMutedTextBrush)
         };
         settingsBtn.Classes.Add("activity-item");
         ToolTip.SetTip(settingsBtn, "Application Themes & Appearance");
@@ -227,16 +226,16 @@ public partial class TabbedHostWindow
         ActivitySettingsHost.Content = settingsBtn;
     }
 
-    private static MaterialIcon CreateNavIcon(MaterialIconKind kind, string sizeToken, string brushKey)
+    private static Codicon CreateNavIcon(CodiconKind kind, string sizeToken, string brushKey)
     {
-        MaterialIcon icon = new()
+        Codicon icon = new()
         {
             Kind = kind,
             VerticalAlignment = VerticalAlignment.Center
         };
-        UiTokens.Bind(icon, MaterialIcon.WidthProperty, sizeToken);
-        UiTokens.Bind(icon, MaterialIcon.HeightProperty, sizeToken);
-        UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, brushKey);
+        UiTokens.Bind(icon, Codicon.WidthProperty, sizeToken);
+        UiTokens.Bind(icon, Codicon.HeightProperty, sizeToken);
+        UiTokens.Bind(icon, Codicon.ForegroundProperty, brushKey);
         return icon;
     }
 
@@ -372,12 +371,13 @@ public partial class TabbedHostWindow
         {
             Children =
             {
-                CreateNavIcon(MaterialIconKind.RobotOutline, UiTokens.UiIconMd, UiTokens.SkuaMutedTextBrush),
+                CreateNavIcon(CodiconKind.Robot, targetPid == 0 ? UiTokens.UiActivityIconSize : UiTokens.UiIconMd, UiTokens.SkuaMutedTextBrush),
                 target.AutoActiveDot
             }
         };
-        UiTokens.Bind(autoContent, Layoutable.WidthProperty, UiTokens.UiControlHeight);
-        UiTokens.Bind(autoContent, Layoutable.HeightProperty, UiTokens.UiControlHeight);
+        string slotToken = targetPid == 0 ? UiTokens.UiActivityItemSize : UiTokens.UiControlHeight;
+        UiTokens.Bind(autoContent, Layoutable.WidthProperty, slotToken);
+        UiTokens.Bind(autoContent, Layoutable.HeightProperty, slotToken);
         ToggleButton toggle = new()
         {
             Content = autoContent
@@ -419,7 +419,7 @@ public partial class TabbedHostWindow
 
         ToggleButton toggle = new()
         {
-            Content = CreateNavIcon(MaterialIconKind.RunFast, UiTokens.UiIconMd, UiTokens.SkuaMutedTextBrush)
+            Content = CreateNavIcon(CodiconKind.Rocket, targetPid == 0 ? UiTokens.UiActivityIconSize : UiTokens.UiIconMd, UiTokens.SkuaMutedTextBrush)
         };
         toggle.Classes.Add("activity-item");
         ToolTip.SetTip(toggle, "Map & Cell Fast Jump Controls");

@@ -1,6 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia">
+        xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons">
 
     <Style Selector="Menu.top-toolbar">
         <Setter Property="Background" Value="Transparent" />
@@ -141,11 +141,11 @@
                                    Width="16"
                                    Margin="0,0,6,0"
                                    IsVisible="False">
-                                <materialIcons:MaterialIcon x:Name="PART_ToggleCheck"
-                                                            Kind="Check"
-                                                            Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
-                                                            Opacity="0"
-                                                            Foreground="{DynamicResource SkuaAccentBrush}" />
+                                <icons:Codicon x:Name="PART_ToggleCheck"
+                                               Kind="Check"
+                                               Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
+                                               Opacity="0"
+                                               Foreground="{DynamicResource SkuaAccentBrush}" />
                             </Panel>
 
                             <ContentPresenter x:Name="PART_HeaderPresenter"
@@ -165,13 +165,13 @@
                                        Foreground="{DynamicResource SkuaMutedTextBrush}"
                                        IsVisible="{TemplateBinding InputGesture, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
-                            <materialIcons:MaterialIcon x:Name="PART_Chevron"
-                                                        Grid.Column="3"
-                                                        Kind="ChevronRight"
-                                                        Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
-                                                        Margin="8,0,0,0"
-                                                        VerticalAlignment="Center"
-                                                        Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                            <icons:Codicon x:Name="PART_Chevron"
+                                           Grid.Column="3"
+                                           Kind="ChevronRight"
+                                           Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
+                                           Margin="8,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource SkuaMutedTextBrush}" />
                         </Grid>
                     </Border>
 
@@ -199,7 +199,7 @@
         </Setter>
     </Style>
 
-    <Style Selector="MenuItem:empty /template/ materialIcons|MaterialIcon#PART_Chevron">
+    <Style Selector="MenuItem:empty /template/ icons|Codicon#PART_Chevron">
         <Setter Property="IsVisible" Value="False" />
     </Style>
 
@@ -216,7 +216,7 @@
     <Style Selector="MenuItem:toggle /template/ Panel#PART_ToggleHost, MenuItem:radio /template/ Panel#PART_ToggleHost">
         <Setter Property="IsVisible" Value="True" />
     </Style>
-    <Style Selector="MenuItem:checked /template/ materialIcons|MaterialIcon#PART_ToggleCheck">
+    <Style Selector="MenuItem:checked /template/ icons|Codicon#PART_ToggleCheck">
         <Setter Property="Opacity" Value="1" />
     </Style>
 

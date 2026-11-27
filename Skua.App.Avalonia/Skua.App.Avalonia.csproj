@@ -9,8 +9,13 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <AssemblyName>BonxieMux</AssemblyName>
         <AssemblyTitle>BonxieMux</AssemblyTitle>
-        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+        <ServerGarbageCollection>false</ServerGarbageCollection>
+        <RetainVMGarbageCollection>false</RetainVMGarbageCollection>
     </PropertyGroup>
+
+    <ItemGroup>
+        <RuntimeHostConfigurationOption Include="System.GC.ConserveMemory" Value="5" />
+    </ItemGroup>
 
     <ItemGroup>
         <AssemblyMetadata Include="Skua.ClientId" Value="BonxieMuxAvalonia" />
@@ -18,15 +23,12 @@
 
     <ItemGroup>
         <PackageReference Include="Avalonia" />
-        <PackageReference Include="Avalonia.Desktop" />
+        <PackageReference Include="Avalonia.HarfBuzz" />
         <PackageReference Include="Avalonia.Skia" />
         <PackageReference Include="Avalonia.Wayland" />
         <PackageReference Include="Avalonia.Controls.ColorPicker" />
         <PackageReference Include="Avalonia.Themes.Fluent" />
-        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" />
 
-        <PackageReference Include="Material.Icons" />
-        <PackageReference Include="Material.Icons.Avalonia" />
     </ItemGroup>
 
     <ItemGroup>

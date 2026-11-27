@@ -7,8 +7,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.DependencyInjection;
-using Material.Icons;
-using Material.Icons.Avalonia;
+using Skua.Shared.Avalonia.Controls.Icons;
 using Skua.App.Avalonia.Services;
 using Skua.Backend.Ipc;
 using Skua.Core.AppStartup;
@@ -469,9 +468,9 @@ public partial class TabbedHostWindow
         UiTokens.Bind(closeTxt, TextBlock.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
         closeBtn.Child = closeTxt;
 
-        MaterialIcon crown = new MaterialIcon
+        Codicon crown = new()
         {
-            Kind = MaterialIconKind.Crown,
+            Kind = CodiconKind.StarFull,
             Width = 10,
             Height = 10,
             IsVisible = false,
@@ -480,18 +479,18 @@ public partial class TabbedHostWindow
             VerticalAlignment = VerticalAlignment.Top,
             Margin = new Thickness(0, -8, 6, 0)
         };
-        UiTokens.Bind(crown, MaterialIcon.ForegroundProperty, UiTokens.SkuaWarningBrush);
+        UiTokens.Bind(crown, Codicon.ForegroundProperty, UiTokens.SkuaWarningBrush);
 
-        MaterialIcon detachedIcon = new MaterialIcon
+        Codicon detachedIcon = new()
         {
-            Kind = MaterialIconKind.DockWindow,
+            Kind = CodiconKind.OpenInWindow,
             Width = 12,
             Height = 12,
             IsVisible = false,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 5, 0)
         };
-        UiTokens.Bind(detachedIcon, MaterialIcon.ForegroundProperty, UiTokens.SkuaAccentBrush);
+        UiTokens.Bind(detachedIcon, Codicon.ForegroundProperty, UiTokens.SkuaAccentBrush);
         ToolTip.SetTip(detachedIcon, "Window Mode: click to focus, double-click to dock into tabs");
 
         Border scriptDot = new Border

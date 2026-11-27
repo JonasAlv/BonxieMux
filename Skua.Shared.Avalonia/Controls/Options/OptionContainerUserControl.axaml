@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vms="clr-namespace:Skua.Shared.Avalonia.ViewModels.Options"
              xmlns:controls="clr-namespace:Skua.Shared.Avalonia.Controls.Options"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Skua.Shared.Avalonia.Controls.Options.OptionContainerUserControl"
              x:DataType="vms:OptionContainerViewModel"
              mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="520">

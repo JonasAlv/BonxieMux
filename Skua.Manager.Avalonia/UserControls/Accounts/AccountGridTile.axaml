@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              xmlns:managerUc="clr-namespace:Skua.Manager.Avalonia.UserControls"
              xmlns:uc="clr-namespace:Skua.Manager.Avalonia.UserControls"
              x:Class="Skua.Manager.Avalonia.UserControls.AccountGridTile"
@@ -53,7 +53,7 @@
                         Classes="icon"
                         VerticalAlignment="Center"
                         ToolTip.Tip="Edit Account">
-                    <materialIcons:MaterialIcon Kind="PencilOutline"
+                    <icons:Codicon Kind="Edit"
                                                 Width="{DynamicResource UiIconSm}"
                                                 Height="{DynamicResource UiIconSm}"
                                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
@@ -62,7 +62,7 @@
                         Classes="icon"
                         VerticalAlignment="Center"
                         ToolTip.Tip="Remove Account">
-                    <materialIcons:MaterialIcon Kind="DeleteOutline"
+                    <icons:Codicon Kind="Trash"
                                                 Width="{DynamicResource UiIconSm}"
                                                 Height="{DynamicResource UiIconSm}"
                                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />

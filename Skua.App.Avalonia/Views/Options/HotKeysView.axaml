@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.HotKeys"
              x:Class="Skua.App.Avalonia.Views.HotKeysView"
@@ -55,7 +55,7 @@
             </DataTemplate>
           </AutoCompleteBox.ItemTemplate>
         </AutoCompleteBox>
-        <materialIcons:MaterialIcon Kind="Magnify"
+        <icons:Codicon Kind="Search"
                                     Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}"
                                     Margin="10,0,0,0"
                                     HorizontalAlignment="Left"
@@ -117,7 +117,7 @@
                           Classes="icon danger-icon"
                           Command="{Binding RemoveHotKeyCommand}"
                           ToolTip.Tip="Remove this hotkey">
-                    <materialIcons:MaterialIcon Kind="TrashCanOutline" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                    <icons:Codicon Kind="Trash" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                   </Button>
                 </Grid>
               </Border>

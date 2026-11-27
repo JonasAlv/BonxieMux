@@ -36,7 +36,7 @@ Install these tools using your distribution's package manager or official instal
 
 1. **Build the native Wayland DMA-BUF host & launcher (`libbonxie_wayland.so` & `bonxie-launcher`):**
    ```bash
-   cargo build --release --manifest-path Skua.WaylandHost/Cargo.toml
+   cargo build --release --locked --manifest-path Skua.WaylandHost/Cargo.toml
    ```
 
 2. **Build the .NET solution:**
@@ -66,3 +66,10 @@ Install these tools using your distribution's package manager or official instal
 Both packaging scripts automatically build `Skua.WaylandHost` and the .NET solution if needed, and accept `--local-mugetsu /path/to/mugetsu-folder` (and `--local-mugetsu-v2 /path/to/mugetsu-v2-folder`) to bundle a locally built player.
 
 For quick local testing, you can also copy your `Mugetsu` binary into `Skua.App.Avalonia/bin/Release/net10.0/player/` (create the `player` folder if it does not exist).
+
+---
+
+## Contributing & AI Assistants
+
+The markdown files under [`.agent/rules/`](.agent/rules/) ([`project-rules.md`](.agent/rules/project-rules.md) and [`ui-ux.md`](.agent/rules/ui-ux.md)) define the project's replicability, architecture, and VS Code UI/UX guidelines for contributors and AI coding assistants to follow.
+

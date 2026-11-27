@@ -153,20 +153,20 @@ public partial class MainWindow : Window
         {
             if (q.IsPaused)
             {
-                UiTokens.Bind(StatusQueueIcon, Material.Icons.Avalonia.MaterialIcon.ForegroundProperty, UiTokens.SkuaWarningBrush);
+                UiTokens.Bind(StatusQueueIcon, Skua.Shared.Avalonia.Controls.Icons.Codicon.ForegroundProperty, UiTokens.SkuaTextBrush);
                 UiTokens.Bind(StatusQueueText, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
                 StatusQueueText.Text = "Queue: Paused";
             }
             else
             {
-                UiTokens.Bind(StatusQueueIcon, Material.Icons.Avalonia.MaterialIcon.ForegroundProperty, UiTokens.SkuaSuccessBrush);
+                UiTokens.Bind(StatusQueueIcon, Skua.Shared.Avalonia.Controls.Icons.Codicon.ForegroundProperty, UiTokens.SkuaTextBrush);
                 UiTokens.Bind(StatusQueueText, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
                 StatusQueueText.Text = "Queue: Running";
             }
         }
         else
         {
-            UiTokens.Bind(StatusQueueIcon, Material.Icons.Avalonia.MaterialIcon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
+            UiTokens.Bind(StatusQueueIcon, Skua.Shared.Avalonia.Controls.Icons.Codicon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             UiTokens.Bind(StatusQueueText, TextBlock.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             StatusQueueText.Text = "Queue";
         }
@@ -181,12 +181,12 @@ public partial class MainWindow : Window
 
             UiTokens.Bind(
                 StatusUpdatesIcon,
-                Material.Icons.Avalonia.MaterialIcon.ForegroundProperty,
-                updateAvailable || checkFailed ? UiTokens.SkuaWarningBrush : UiTokens.SkuaMutedTextBrush);
+                Skua.Shared.Avalonia.Controls.Icons.Codicon.ForegroundProperty,
+                checkFailed ? UiTokens.SkuaWarningBrush : (updateAvailable ? UiTokens.SkuaTextBrush : UiTokens.SkuaMutedTextBrush));
             UiTokens.Bind(
                 StatusUpdatesText,
                 TextBlock.ForegroundProperty,
-                updateAvailable ? UiTokens.SkuaTextBrush : UiTokens.SkuaMutedTextBrush);
+                updateAvailable || checkFailed ? UiTokens.SkuaTextBrush : UiTokens.SkuaMutedTextBrush);
             StatusUpdatesText.Text = _appUpdaterViewModel.IsChecking
                 ? "Checking updates..."
                 : updateAvailable
@@ -201,7 +201,7 @@ public partial class MainWindow : Window
 
         if (_scriptUpdaterViewModel is { IsBusy: true })
         {
-            UiTokens.Bind(StatusScriptsIcon, Material.Icons.Avalonia.MaterialIcon.ForegroundProperty, UiTokens.SkuaAccentBrush);
+            UiTokens.Bind(StatusScriptsIcon, Skua.Shared.Avalonia.Controls.Icons.Codicon.ForegroundProperty, UiTokens.SkuaTextBrush);
             UiTokens.Bind(StatusScriptsText, TextBlock.ForegroundProperty, UiTokens.SkuaTextBrush);
             StatusScriptsText.Text = "Updating scripts...";
             ToolTip.SetTip(StatusScriptsButton, _scriptUpdaterViewModel.ProgressStatus ?? _scriptUpdaterViewModel.Status);
@@ -211,8 +211,8 @@ public partial class MainWindow : Window
             int pending = _getScriptsService.Outdated + _getScriptsService.Missing;
             UiTokens.Bind(
                 StatusScriptsIcon,
-                Material.Icons.Avalonia.MaterialIcon.ForegroundProperty,
-                pending > 0 ? UiTokens.SkuaWarningBrush : UiTokens.SkuaMutedTextBrush);
+                Skua.Shared.Avalonia.Controls.Icons.Codicon.ForegroundProperty,
+                pending > 0 ? UiTokens.SkuaTextBrush : UiTokens.SkuaMutedTextBrush);
             UiTokens.Bind(
                 StatusScriptsText,
                 TextBlock.ForegroundProperty,
@@ -226,7 +226,7 @@ public partial class MainWindow : Window
         }
         else
         {
-            UiTokens.Bind(StatusScriptsIcon, Material.Icons.Avalonia.MaterialIcon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
+            UiTokens.Bind(StatusScriptsIcon, Skua.Shared.Avalonia.Controls.Icons.Codicon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             UiTokens.Bind(StatusScriptsText, TextBlock.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
             StatusScriptsText.Text = "Scripts";
             ToolTip.SetTip(StatusScriptsButton, "Scripts — click to open");

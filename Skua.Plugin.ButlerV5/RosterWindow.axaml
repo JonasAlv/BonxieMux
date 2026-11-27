@@ -73,7 +73,7 @@
                 <Border Grid.Row="2" Classes="card-flat" Padding="6,4">
                     <Grid>
                         <primitives:EmptyStateView x:Name="EmptyState"
-                                                   IconKind="AccountGroupOutline"
+                                                   IconKind="Organization"
                                                    Title="No other ButlerV5 accounts online"
                                                    Description="Accounts appear after they log in with the plugin installed."
                                                    IsVisible="False" />

@@ -2,44 +2,13 @@
 # ==============================================================================
 # build-binaries.sh
 # Builds BonxieMux Linux Portable Binaries + .zip + .tar.gz
-# Usage: ./build-binaries.sh [--local-mugetsu /path/to/mugetsu] [--local-mugetsu-v2 /path]
+# Usage: ./build-binaries.sh [--local-mugetsu /path/to/mugetsu] [--local-mugetsu-v2 /path] [--reuse-payload]
 # ==============================================================================
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 source "$SCRIPT_DIR/build-config.sh"
-
-LOCAL_MUGETSU="${SKUA_PLAYER_LOCAL:-}"
-LOCAL_MUGETSU_V2="${SKUA_PLAYER_V2_LOCAL:-}"
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --local-mugetsu)
-            [[ $# -ge 2 ]] || { echo "Error: --local-mugetsu requires a path." >&2; exit 1; }
-            LOCAL_MUGETSU="$2"
-            shift 2
-            ;;
-        --local-mugetsu-v2)
-            [[ $# -ge 2 ]] || { echo "Error: --local-mugetsu-v2 requires a path." >&2; exit 1; }
-            LOCAL_MUGETSU_V2="$2"
-            shift 2
-            ;;
-        --help|-h)
-            echo "Usage: $0 [--local-mugetsu PATH] [--local-mugetsu-v2 PATH]"
-            echo "  --local-mugetsu PATH     Use a local standard Mugetsu binary or its folder."
-            echo "  --local-mugetsu-v2 PATH  Use a local x86-64-v2 Mugetsu binary or its folder."
-            exit 0
-            ;;
-        *)
-            echo "Unknown argument: $1" >&2
-            echo "Use $0 --help for options." >&2
-            exit 1
-            ;;
-    esac
-done
-
-if [[ -n "$LOCAL_MUGETSU" ]]; then export SKUA_PLAYER_LOCAL="$LOCAL_MUGETSU"; fi
-if [[ -n "$LOCAL_MUGETSU_V2" ]]; then export SKUA_PLAYER_V2_LOCAL="$LOCAL_MUGETSU_V2"; fi
+parse_common_args "$0" "$@"
 
 echo "=== Building Portable Binary Distribution ==="
 
@@ -70,6 +39,7 @@ cd "$CURRENT_DIR"
 export LD_LIBRARY_PATH="$CURRENT_DIR:$CURRENT_DIR/runtimes/linux-x64/native:${LD_LIBRARY_PATH:-}"
 export PATH="$CURRENT_DIR:$PATH"
 export DOTNET_ROOT="$CURRENT_DIR"
+export DOTNET_EnableDiagnostics="${DOTNET_EnableDiagnostics:-0}"
 exec "$CURRENT_DIR/BonxieMux" "$@"
 EOF
 chmod +x "$BINARY_DIR/BonxieMux.sh"
@@ -82,6 +52,7 @@ cd "$CURRENT_DIR"
 export LD_LIBRARY_PATH="$CURRENT_DIR:$CURRENT_DIR/runtimes/linux-x64/native:${LD_LIBRARY_PATH:-}"
 export PATH="$CURRENT_DIR:$PATH"
 export DOTNET_ROOT="$CURRENT_DIR"
+export DOTNET_EnableDiagnostics="${DOTNET_EnableDiagnostics:-0}"
 exec "$CURRENT_DIR/BonxieMux.Manager" "$@"
 EOF
 chmod +x "$BINARY_DIR/BonxieMux.Manager.sh"
@@ -95,15 +66,6 @@ if [[ -f "$MANAGER_ICON" ]]; then
 fi
 
 echo "Compressing binary release archives..."
-(
-    cd "$BUILD_DIR"
-    rm -f "BonxieMux-${APP_VERSION}-x86_64.zip" "BonxieMux-${APP_VERSION}-x86_64.tar.gz"
-    if command -v zip &>/dev/null; then
-        zip -q -r "BonxieMux-${APP_VERSION}-x86_64.zip" "BonxieMux-${APP_VERSION}-x86_64"
-    elif command -v bsdtar &>/dev/null; then
-        bsdtar -a -cf "BonxieMux-${APP_VERSION}-x86_64.zip" "BonxieMux-${APP_VERSION}-x86_64"
-    fi
-    tar -czf "BonxieMux-${APP_VERSION}-x86_64.tar.gz" "BonxieMux-${APP_VERSION}-x86_64"
-)
+compress_release_dir "BonxieMux-${APP_VERSION}-x86_64"
 
 echo "=== Binary Packaging Complete! ==="

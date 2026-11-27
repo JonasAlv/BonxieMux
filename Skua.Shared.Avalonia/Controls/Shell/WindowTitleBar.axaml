@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons"
              x:Name="Root"
              x:Class="Skua.Shared.Avalonia.Controls.Shell.WindowTitleBar">
   <Border BorderBrush="{DynamicResource SkuaBorderBrush}"
@@ -57,17 +57,24 @@
       <Button x:Name="DockButton"
               Classes="titlebar"
               IsVisible="False"
-              ToolTip.Tip="Dock into BonxieMux"
-              Content="{materialIcons:MaterialIconExt Kind=DockWindow, IconSize=12}" />
+              ToolTip.Tip="Dock into BonxieMux">
+        <icons:Codicon Kind="OpenInWindow" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" />
+      </Button>
       <Button x:Name="MinimizeButton"
               Classes="titlebar"
-              Content="{materialIcons:MaterialIconExt Kind=WindowMinimize, IconSize=12}" />
+              ToolTip.Tip="Minimize">
+        <icons:Codicon Kind="ChromeMinimize" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" />
+      </Button>
       <Button x:Name="MaximizeButton"
               Classes="titlebar"
-              Content="{materialIcons:MaterialIconExt Kind=WindowMaximize, IconSize=12}" />
+              ToolTip.Tip="Maximize">
+        <icons:Codicon Kind="ChromeMaximize" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" />
+      </Button>
       <Button x:Name="CloseButton"
               Classes="titlebar titlebar-close"
-              Content="{materialIcons:MaterialIconExt Kind=WindowClose, IconSize=12}" />
+              ToolTip.Tip="Close">
+        <icons:Codicon Kind="ChromeClose" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" />
+      </Button>
     </StackPanel>
   </Grid>
   </Border>

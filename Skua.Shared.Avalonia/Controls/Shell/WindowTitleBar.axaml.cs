@@ -8,8 +8,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
-using Material.Icons;
-using Material.Icons.Avalonia;
+using Skua.Shared.Avalonia.Controls.Icons;
 using Skua.Shared.Avalonia.Theming;
 using System;
 
@@ -163,9 +162,9 @@ public partial class WindowTitleBar : UserControl
     private void UpdateMaximizeGlyph(WindowState state)
     {
         bool maximized = state == WindowState.Maximized;
-        MaximizeButton.Content = new MaterialIcon
+        MaximizeButton.Content = new Codicon
         {
-            Kind = maximized ? MaterialIconKind.WindowRestore : MaterialIconKind.WindowMaximize,
+            Kind = maximized ? CodiconKind.ChromeRestore : CodiconKind.ChromeMaximize,
             Width = 12,
             Height = 12
         };

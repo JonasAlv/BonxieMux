@@ -83,7 +83,9 @@ public partial class ScheduledJobViewModel : ObservableObject
         OnPropertyChanged(nameof(ExpandIconKind));
     }
 
-    public string ExpandIconKind => IsExpanded ? "ChevronUp" : "ChevronDown";
+    public Skua.Shared.Avalonia.Controls.Icons.CodiconKind ExpandIconKind => IsExpanded
+        ? Skua.Shared.Avalonia.Controls.Icons.CodiconKind.ChevronUp
+        : Skua.Shared.Avalonia.Controls.Icons.CodiconKind.ChevronDown;
 
     [ObservableProperty]
     private string _statusText = "Idle";
@@ -759,13 +761,13 @@ public partial class ScheduleExecutionItemViewModel : ObservableObject
         _ => "#20FFFFFF"
     };
 
-    public string StatusIcon => Status.ToLowerInvariant() switch
+    public Skua.Shared.Avalonia.Controls.Icons.CodiconKind StatusIcon => Status.ToLowerInvariant() switch
     {
-        "completed" or "success" => "CheckCircleOutline",
-        "failed" or "error" => "AlertCircleOutline",
-        "stopped" or "cancelled" or "aborted" => "StopCircleOutline",
-        "running" => "ClockOutline",
-        _ => "InformationOutline"
+        "completed" or "success" => Skua.Shared.Avalonia.Controls.Icons.CodiconKind.Pass,
+        "failed" or "error" => Skua.Shared.Avalonia.Controls.Icons.CodiconKind.Error,
+        "stopped" or "cancelled" or "aborted" => Skua.Shared.Avalonia.Controls.Icons.CodiconKind.StopCircle,
+        "running" => Skua.Shared.Avalonia.Controls.Icons.CodiconKind.Clockface,
+        _ => Skua.Shared.Avalonia.Controls.Icons.CodiconKind.Info
     };
 
     public string FormattedDuration => Record.Duration.TotalHours >= 1

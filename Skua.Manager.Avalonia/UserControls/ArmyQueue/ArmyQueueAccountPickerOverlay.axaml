@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:vm="clr-namespace:Skua.Manager.Avalonia.ViewModels"
              x:Class="Skua.Manager.Avalonia.UserControls.ArmyQueueAccountPickerOverlay"
@@ -18,7 +18,7 @@
                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                     <TextBlock Text="Pick Accounts for Squad" FontSize="{DynamicResource UiFontHeading}" FontWeight="Bold" Foreground="{DynamicResource SkuaTextBrush}" />
                     <Button Grid.Column="1" Classes="icon" Height="{DynamicResource UiSmallControlHeight}" Width="{DynamicResource UiSmallControlHeight}" Command="{Binding CancelAccountPickerCommand}" ToolTip.Tip="Close">
-                        <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" />
+                        <icons:Codicon Kind="Close" Width="{DynamicResource UiIconXs}" Height="{DynamicResource UiIconXs}" />
                     </Button>
                 </Grid>
 

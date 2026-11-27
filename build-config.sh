@@ -48,14 +48,129 @@ SKUA_PLAYER_URL="https://github.com/JonasAlv/skua-mugetsu/releases/download/v${S
 SKUA_PLAYER_V2_CACHE="$SCRIPT_DIR/player/${SKUA_PLAYER_VERSION}-${SKUA_PLAYER_OS}-x86-64-v2"
 SKUA_PLAYER_V2_URL="https://github.com/JonasAlv/skua-mugetsu/releases/download/v${SKUA_PLAYER_VERSION}/linux-x86-64-v2.tar.gz"
 
+# Resilient curl download helper
+curl_download() {
+    curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 15 "$@"
+}
+
+# Shared CLI argument parser for build-binaries.sh and build-appimages.sh
+parse_common_args() {
+    local prog="$1"
+    shift
+    local local_mugetsu="${SKUA_PLAYER_LOCAL:-}"
+    local local_mugetsu_v2="${SKUA_PLAYER_V2_LOCAL:-}"
+    REUSE_PAYLOAD="${REUSE_PAYLOAD:-0}"
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --local-mugetsu)
+                [[ $# -ge 2 ]] || { echo "Error: --local-mugetsu requires a path." >&2; exit 1; }
+                local_mugetsu="$2"
+                shift 2
+                ;;
+            --local-mugetsu-v2)
+                [[ $# -ge 2 ]] || { echo "Error: --local-mugetsu-v2 requires a path." >&2; exit 1; }
+                local_mugetsu_v2="$2"
+                shift 2
+                ;;
+            --reuse-payload|--skip-build)
+                REUSE_PAYLOAD=1
+                shift
+                ;;
+            --help|-h)
+                echo "Usage: $prog [--local-mugetsu PATH] [--local-mugetsu-v2 PATH] [--reuse-payload]"
+                echo "  --local-mugetsu PATH     Use a local standard Mugetsu binary or its folder."
+                echo "  --local-mugetsu-v2 PATH  Use a local x86-64-v2 Mugetsu binary or its folder."
+                echo "  --reuse-payload          Reuse existing Build/payload/current instead of rebuilding."
+                exit 0
+                ;;
+            *)
+                echo "Unknown argument: $1" >&2
+                echo "Use $prog --help for options." >&2
+                exit 1
+                ;;
+        esac
+    done
+
+    if [[ -n "$local_mugetsu" ]]; then export SKUA_PLAYER_LOCAL="$local_mugetsu"; fi
+    if [[ -n "$local_mugetsu_v2" ]]; then export SKUA_PLAYER_V2_LOCAL="$local_mugetsu_v2"; fi
+    export REUSE_PAYLOAD
+}
+
+# Download and cache a skua-mugetsu tarball into <cache_dir>/Mugetsu
+fetch_mugetsu_to_cache() {
+    local url="$1"
+    local cache_dir="$2"
+    local tmp_dir="$cache_dir/.extract.$$"
+    local tmp_archive="$tmp_dir/archive.tar.gz"
+
+    rm -rf "$tmp_dir"
+    mkdir -p "$tmp_dir"
+    if ! curl_download "$url" -o "$tmp_archive"; then
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    tar -xzf "$tmp_archive" -C "$tmp_dir"
+    rm -f "$tmp_archive"
+
+    rm -rf "$cache_dir/Mugetsu"
+    if [[ -d "$tmp_dir/Mugetsu" ]]; then
+        mv "$tmp_dir/Mugetsu" "$cache_dir/Mugetsu"
+    else
+        mv "$tmp_dir" "$cache_dir/Mugetsu"
+    fi
+    rm -rf "$tmp_dir"
+    return 0
+}
+
+# Compress a release directory inside $BUILD_DIR into .zip and .tar.gz in parallel
+compress_release_dir() {
+    local dir_name="$1"
+    (
+        cd "$BUILD_DIR"
+        rm -f "${dir_name}.zip" "${dir_name}.tar.gz"
+
+        local pids=()
+        if command -v zip &>/dev/null; then
+            zip -q -r "${dir_name}.zip" "$dir_name" &
+            pids+=($!)
+        elif command -v bsdtar &>/dev/null; then
+            bsdtar -a -cf "${dir_name}.zip" "$dir_name" &
+            pids+=($!)
+        fi
+
+        if command -v pigz &>/dev/null; then
+            tar -I pigz -cf "${dir_name}.tar.gz" "$dir_name" &
+            pids+=($!)
+        else
+            tar -czf "${dir_name}.tar.gz" "$dir_name" &
+            pids+=($!)
+        fi
+
+        local failed=0
+        for pid in "${pids[@]}"; do
+            if ! wait "$pid"; then
+                failed=1
+            fi
+        done
+        return "$failed"
+    )
+}
+
 # Shared function to assemble application payload into $CURRENT_DIR
 assemble_payload() {
     local local_player="${SKUA_PLAYER_LOCAL:-}"
     local local_player_v2="${SKUA_PLAYER_V2_LOCAL:-}"
 
-    echo "--- Cleaning Build directory ($BUILD_DIR) ---"
-    rm -rf "$BUILD_DIR"
+    if [[ "${REUSE_PAYLOAD:-0}" == "1" && -x "$CURRENT_DIR/BonxieMux" && -x "$CURRENT_DIR/BonxieMux.Manager" && -s "$CURRENT_DIR/libcoreclr.so" ]]; then
+        echo "--- Reusing existing payload in $CURRENT_DIR ---"
+        return 0
+    fi
+
+    echo "--- Preparing Build directory ($BUILD_DIR) ---"
     mkdir -p "$BUILD_DIR"
+    rm -rf "$CURRENT_DIR" "$BUILD_DIR/.publish_app" "$BUILD_DIR/.publish_mgr"
 
     # Compile AS3 game client if Apache Flex SDK is available and sources changed
     if command -v mxmlc &>/dev/null || [[ -n "${FLEX_HOME:-}" ]] || [[ -d "/opt/apache-flex-sdk" ]]; then
@@ -77,7 +192,7 @@ assemble_payload() {
     local wayland_host_so="$SCRIPT_DIR/Skua.WaylandHost/target/release/libbonxie_wayland.so"
     local wayland_launcher="$SCRIPT_DIR/Skua.WaylandHost/target/release/bonxie-launcher"
     if command -v cargo &>/dev/null; then
-        if [[ ! -s "$wayland_host_so" || ! -x "$wayland_launcher" ]] || [[ -n "$(find "$SCRIPT_DIR/Skua.WaylandHost/src" "$SCRIPT_DIR/Skua.WaylandHost/Cargo.toml" -type f \( -newer "$wayland_host_so" -o -newer "$wayland_launcher" \) -print -quit 2>/dev/null)" ]]; then
+        if [[ ! -s "$wayland_host_so" || ! -x "$wayland_launcher" ]] || [[ -n "$(find "$SCRIPT_DIR/Skua.WaylandHost/src" "$SCRIPT_DIR/Skua.WaylandHost/Cargo.toml" "$SCRIPT_DIR/Skua.WaylandHost/Cargo.lock" -type f \( -newer "$wayland_host_so" -o -newer "$wayland_launcher" \) -print -quit 2>/dev/null)" ]]; then
             echo "--- Building embedded Wayland DMA-BUF host & Rust launcher ---"
             cargo build --release --locked --manifest-path "$SCRIPT_DIR/Skua.WaylandHost/Cargo.toml"
         else
@@ -90,9 +205,9 @@ assemble_payload() {
         exit 1
     fi
 
-    echo "--- Building .NET solution (Release) ---"
+    echo "--- Restoring & building .NET solution (Release) ---"
     rm -rf "$APP_BIN/player" "$APP_BIN/player-x86-64-v2"
-    local dotnet_args=("$SCRIPT_DIR/Skua.sln" -c Release)
+    local dotnet_args=("$SCRIPT_DIR/Skua.sln" -c Release --no-restore)
     local publish_args=()
     if [[ -n "$local_player" ]]; then
         if [[ -f "$local_player" ]]; then
@@ -119,6 +234,7 @@ assemble_payload() {
         dotnet_args+=("-p:SkuaPlayerAvxDir=$local_player_v2")
         echo "Using local x86-64-v2 Mugetsu from $local_player_v2"
     fi
+    dotnet restore "$SCRIPT_DIR/Skua.sln" -r linux-x64 -p:PublishReadyToRun=true
     dotnet build "${dotnet_args[@]}"
 
     echo "--- Publishing self-contained .NET runtime (linux-x64) ---"
@@ -127,20 +243,28 @@ assemble_payload() {
     rm -rf "$pub_app" "$pub_mgr"
     mkdir -p "$pub_app" "$pub_mgr"
 
-    dotnet publish "$SCRIPT_DIR/Skua.App.Avalonia/Skua.App.Avalonia.csproj" -c Release -r linux-x64 --self-contained -o "$pub_app" "${publish_args[@]}"
-    dotnet publish "$SCRIPT_DIR/Skua.Manager.Avalonia/Skua.Manager.Avalonia.csproj" -c Release -r linux-x64 --self-contained -o "$pub_mgr" "${publish_args[@]}"
+    local common_publish_flags=(
+        -c Release
+        -r linux-x64
+        --self-contained
+        --no-restore
+        -p:PublishReadyToRun=true
+        -p:PublishReadyToRunComposite=false
+        -p:CopyOutputSymbolsToPublishDirectory=false
+    )
+    dotnet publish "$SCRIPT_DIR/Skua.App.Avalonia/Skua.App.Avalonia.csproj" "${common_publish_flags[@]}" -o "$pub_app" "${publish_args[@]}"
+    dotnet publish "$SCRIPT_DIR/Skua.Manager.Avalonia/Skua.Manager.Avalonia.csproj" "${common_publish_flags[@]}" -o "$pub_mgr" "${publish_args[@]}"
 
     echo "--- Assembling application payload in $CURRENT_DIR ---"
     rm -rf "$CURRENT_DIR"
     mkdir -p "$CURRENT_DIR"
-    mkdir -p "$CURRENT_DIR/Assemblies/Skills"
-    mkdir -p "$CURRENT_DIR/Assemblies/runtimes/linux-x64/native"
     mkdir -p "$CURRENT_DIR/plugins"
     mkdir -p "$CURRENT_DIR/FFDec"
 
     # Copy self-contained application and manager outputs
     cp -a "$pub_app/." "$CURRENT_DIR/"
     cp -a "$pub_mgr/." "$CURRENT_DIR/"
+    rm -f "$CURRENT_DIR"/*.pdb
     rm -rf "$pub_app" "$pub_mgr"
 
     local required_outputs=(
@@ -168,15 +292,6 @@ assemble_payload() {
     [ -f "$APP_BIN/QuestData.json" ] && cp -f "$APP_BIN/QuestData.json" "$CURRENT_DIR/"
     [ -f "$APP_BIN/AdvancedSkills.json" ] && cp -f "$APP_BIN/AdvancedSkills.json" "$CURRENT_DIR/"
     [ -f "$SCRIPT_DIR/Skua.Core/ScriptDates.json" ] && cp -f "$SCRIPT_DIR/Skua.Core/ScriptDates.json" "$CURRENT_DIR/"
-
-    # Copy all dependent DLLs to Assemblies/
-    cp -f "$CURRENT_DIR"/*.dll "$CURRENT_DIR/Assemblies/"
-    rm -f "$CURRENT_DIR/Assemblies/BonxieMux.dll" "$CURRENT_DIR/Assemblies/BonxieMux.Manager.dll"
-
-    # Copy runtimes native libraries
-    if [ -d "$CURRENT_DIR/runtimes" ]; then
-        cp -rf "$CURRENT_DIR/runtimes" "$CURRENT_DIR/Assemblies/"
-    fi
 
     # Copy plugins
     cp -f "$SCRIPT_DIR/Skua.Plugin.DailyTracker/bin/Release/net10.0"/Skua.Plugin.*.dll "$CURRENT_DIR/plugins/"
@@ -211,22 +326,15 @@ assemble_payload() {
         cp -a "$SKUA_PLAYER_CACHE/Mugetsu/." "$CURRENT_DIR/player/"
     else
         echo "Mugetsu binary not found locally. Fetching official skua-mugetsu v${SKUA_PLAYER_VERSION} from GitHub Releases..."
-        local tmp_archive="$CURRENT_DIR/skua-mugetsu.tar.gz"
-        curl -sSL --fail "$SKUA_PLAYER_URL" -o "$tmp_archive"
-        tar -xzf "$tmp_archive" -C "$CURRENT_DIR/player/"
-        if [[ -d "$CURRENT_DIR/player/Mugetsu" ]]; then
-            cp -a "$CURRENT_DIR/player/Mugetsu/." "$CURRENT_DIR/player/"
-            rm -rf "$CURRENT_DIR/player/Mugetsu"
-        fi
-        rm -f "$tmp_archive"
+        fetch_mugetsu_to_cache "$SKUA_PLAYER_URL" "$SKUA_PLAYER_CACHE"
+        cp -a "$SKUA_PLAYER_CACHE/Mugetsu/." "$CURRENT_DIR/player/"
     fi
 
     if [[ ! -s "$CURRENT_DIR/player/Mugetsu" ]]; then
         echo "Error: Mugetsu executable not found in $CURRENT_DIR/player." >&2
         exit 1
     fi
-    cp -f "$CURRENT_DIR/player/Mugetsu" "$CURRENT_DIR/Mugetsu"
-    chmod +x "$CURRENT_DIR/player/Mugetsu" "$CURRENT_DIR/Mugetsu"
+    chmod +x "$CURRENT_DIR/player/Mugetsu"
 
     # Bundle x86-64-v2 player when available
     if [[ -n "$local_player_v2" && -x "$local_player_v2/Mugetsu" ]]; then
@@ -236,13 +344,8 @@ assemble_payload() {
         cp -a "$APP_BIN/player-x86-64-v2/." "$CURRENT_DIR/player-x86-64-v2/"
     elif [[ -s "$SKUA_PLAYER_V2_CACHE/Mugetsu/Mugetsu" ]]; then
         cp -a "$SKUA_PLAYER_V2_CACHE/Mugetsu/." "$CURRENT_DIR/player-x86-64-v2/"
-    elif curl -sSL --fail "$SKUA_PLAYER_V2_URL" -o "$CURRENT_DIR/skua-mugetsu-v2.tar.gz" 2>/dev/null; then
-        tar -xzf "$CURRENT_DIR/skua-mugetsu-v2.tar.gz" -C "$CURRENT_DIR/player-x86-64-v2/"
-        if [[ -d "$CURRENT_DIR/player-x86-64-v2/Mugetsu" ]]; then
-            cp -a "$CURRENT_DIR/player-x86-64-v2/Mugetsu/." "$CURRENT_DIR/player-x86-64-v2/"
-            rm -rf "$CURRENT_DIR/player-x86-64-v2/Mugetsu"
-        fi
-        rm -f "$CURRENT_DIR/skua-mugetsu-v2.tar.gz"
+    elif fetch_mugetsu_to_cache "$SKUA_PLAYER_V2_URL" "$SKUA_PLAYER_V2_CACHE" 2>/dev/null; then
+        cp -a "$SKUA_PLAYER_V2_CACHE/Mugetsu/." "$CURRENT_DIR/player-x86-64-v2/"
     fi
 
     if [[ -s "$CURRENT_DIR/player-x86-64-v2/Mugetsu" ]]; then

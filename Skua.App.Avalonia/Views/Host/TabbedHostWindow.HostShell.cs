@@ -7,8 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Material.Icons;
-using Material.Icons.Avalonia;
+using Skua.Shared.Avalonia.Controls.Icons;
 using Newtonsoft.Json.Linq;
 using Skua.Backend.Ipc;
 using Skua.Shared.Avalonia.Controls.Shell;
@@ -227,14 +226,14 @@ public partial class TabbedHostWindow : Window
 
     private static Border CreateHeadlessOverlay()
     {
-        var icon = new MaterialIcon
+        var icon = new Codicon
         {
-            Kind = MaterialIconKind.MonitorOff,
+            Kind = CodiconKind.EyeClosed,
             Width = 36,
             Height = 36,
             HorizontalAlignment = HorizontalAlignment.Center
         };
-        UiTokens.Bind(icon, MaterialIcon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
+        UiTokens.Bind(icon, Codicon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
 
         var title = new TextBlock
         {
@@ -392,20 +391,20 @@ public partial class TabbedHostWindow : Window
         public required Border HeadlessOverlay { get; init; }
         public required QuickBarControls QuickBar { get; init; }
         public Border? StatusBarBorder { get; set; }
-        public MaterialIcon? ButlerIcon { get; set; }
+        public Codicon? ButlerIcon { get; set; }
         public TextBlock? ButlerText { get; set; }
         public Button? ButlerButton { get; set; }
-        public MaterialIcon? WatchdogIcon { get; set; }
+        public Codicon? WatchdogIcon { get; set; }
         public TextBlock? WatchdogText { get; set; }
         public Button? WatchdogButton { get; set; }
-        public MaterialIcon? LocationIcon { get; set; }
+        public Codicon? LocationIcon { get; set; }
         public TextBlock? LocationText { get; set; }
         public Button? LocationButton { get; set; }
-        public MaterialIcon? ScriptIcon { get; set; }
+        public Codicon? ScriptIcon { get; set; }
         public TextBlock? ScriptText { get; set; }
         public Button? ScriptButton { get; set; }
         public Button? AutoButton { get; set; }
-        public MaterialIcon? HeadlessIcon { get; set; }
+        public Codicon? HeadlessIcon { get; set; }
         public TextBlock? HeadlessText { get; set; }
         public Button? HeadlessButton { get; set; }
         public TextBlock? GameSizeText { get; set; }
@@ -488,7 +487,7 @@ public partial class TabbedHostWindow : Window
         detachedMenu.Classes.Add("top-toolbar");
         MenuItem rootMenuItem = new()
         {
-            Header = CreateNavIcon(MaterialIconKind.Menu, UiTokens.UiIconMd, UiTokens.SkuaTextBrush)
+            Header = CreateNavIcon(CodiconKind.Menu, UiTokens.UiIconMd, UiTokens.SkuaTextBrush)
         };
         rootMenuItem.Classes.Add("top-nav-item");
         ToolTip.SetTip(rootMenuItem, "Application Menu");
@@ -522,7 +521,7 @@ public partial class TabbedHostWindow : Window
         var (jumpToggle, jumpPopup) = BuildJumpControls(detachedQuickBar, PlacementMode.BottomEdgeAlignedRight, childPid);
         Panel jumpHost = WrapTitleQuickToggle(jumpToggle, jumpPopup);
 
-        Button botWinBtn = CreateDetachedTitleButton(MaterialIconKind.Apps, "Show All Bot Windows & Tools", () =>
+        Button botWinBtn = CreateDetachedTitleButton(CodiconKind.Extensions, "Show All Bot Windows & Tools", () =>
             TabIpc.SendCommand(childPid, "BOT_WINDOW"));
 
         StackPanel rightButtons = new()
@@ -770,7 +769,7 @@ public partial class TabbedHostWindow : Window
         }
     }
 
-    private static Button CreateDetachedTitleButton(Material.Icons.MaterialIconKind kind, string tooltip, Action onClick)
+    private static Button CreateDetachedTitleButton(CodiconKind kind, string tooltip, Action onClick)
     {
         Button btn = new()
         {

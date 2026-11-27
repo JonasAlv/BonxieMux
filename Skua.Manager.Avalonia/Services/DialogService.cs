@@ -86,9 +86,9 @@ public class DialogService : DialogServiceBase
             Padding = new Thickness(8, 6, 34, 6)
         };
 
-        Material.Icons.Avalonia.MaterialIcon eyeIcon = new()
+        Skua.Shared.Avalonia.Controls.Icons.Codicon eyeIcon = new()
         {
-            Kind = Material.Icons.MaterialIconKind.EyeOutline,
+            Kind = Skua.Shared.Avalonia.Controls.Icons.CodiconKind.Eye,
             Width = iconMd,
             Height = iconMd
         };
@@ -110,7 +110,7 @@ public class DialogService : DialogServiceBase
         {
             isPswVisible = !isPswVisible;
             passwordBox.PasswordChar = isPswVisible ? '\0' : '*';
-            eyeIcon.Kind = isPswVisible ? Material.Icons.MaterialIconKind.EyeOffOutline : Material.Icons.MaterialIconKind.EyeOutline;
+            eyeIcon.Kind = isPswVisible ? Skua.Shared.Avalonia.Controls.Icons.CodiconKind.EyeClosed : Skua.Shared.Avalonia.Controls.Icons.CodiconKind.Eye;
         };
 
         Grid passwordContainer = new()

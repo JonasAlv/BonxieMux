@@ -313,6 +313,8 @@ public static class ThemeResourceApplicator
         res["UiTitleBarHeight"] = titleBarHeight;
         res["UiTabBarHeight"] = comfortable ? 35.0 : 25.0;
         res["UiActivityBarWidth"] = comfortable ? 48.0 : 36.0;
+        res["UiActivityItemSize"] = comfortable ? 40.0 : 30.0;
+        res["UiActivityIconSize"] = comfortable ? 24.0 : 18.0;
         res["UiControlHeight"] = comfortable ? 32.0 : 28.0;
         res["UiSmallControlHeight"] = comfortable ? 28.0 : 24.0;
         res["UiChipHeight"] = comfortable ? 24.0 : 20.0;

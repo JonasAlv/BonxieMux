@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.FastTravel"
              x:Class="Skua.App.Avalonia.Views.FastTravelView"
@@ -56,7 +56,7 @@
           <TextBlock Text="Private room" VerticalAlignment="Center" />
           <TextBox Width="96" PlaceholderText="Room" Text="{Binding MapService.PrivateRoomNumber, Mode=TwoWay}">
             <TextBox.InnerLeftContent>
-              <materialIcons:MaterialIcon Kind="Pound" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+              <icons:Codicon Kind="SymbolNumeric" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" Margin="10,0,0,0" Foreground="{DynamicResource SkuaMutedTextBrush}" />
             </TextBox.InnerLeftContent>
           </TextBox>
         </StackPanel>
@@ -108,11 +108,11 @@
                 </Button>
                 <Button Grid.Column="1" Classes="icon card-action" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}"
                         Command="{Binding EditCommand}" ToolTip.Tip="Edit">
-                  <materialIcons:MaterialIcon Kind="PencilOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                  <icons:Codicon Kind="Edit" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                 </Button>
                 <Button Grid.Column="2" Classes="icon danger-icon card-action" Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}"
                         Command="{Binding RemoveCommand}" ToolTip.Tip="Remove">
-                  <materialIcons:MaterialIcon Kind="Close" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                  <icons:Codicon Kind="Close" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                 </Button>
               </Grid>
             </Border>

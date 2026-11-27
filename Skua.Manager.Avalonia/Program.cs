@@ -27,7 +27,6 @@ internal static class Program
     public static void Main(string[] args)
     {
         AvaloniaAppBootstrap.IgnoreSighup();
-        AvaloniaAppBootstrap.InitializeAssemblyResolvers();
         ClientFileSources.EnsureInitialized();
 
         string socketPath = Path.Combine(ClientFileSources.TabsDIR, "manager.sock");
@@ -133,8 +132,8 @@ internal static class Program
             .UseHarfBuzz();
 
 #if DEBUG
-        builder = builder.WithDeveloperTools();
+        builder = builder.WithDeveloperTools().LogToTrace();
 #endif
-        return builder.LogToTrace();
+        return builder;
     }
 }

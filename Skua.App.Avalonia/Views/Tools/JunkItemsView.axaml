@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels.Runtime"
              xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.App.Avalonia.Views.JunkItemsView"
              x:DataType="vms:JunkItemsViewModel"
              mc:Ignorable="d" d:DesignHeight="500" d:DesignWidth="700">
@@ -39,7 +39,7 @@
                 Padding="0"
                 Command="{Binding RefreshCommand}"
                 ToolTip.Tip="Refresh inventory and bank">
-          <materialIcons:MaterialIcon Kind="Refresh" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+          <icons:Codicon Kind="Refresh" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
         </Button>
       </primitives:SearchFilterBar.RightContent>
     </primitives:SearchFilterBar>

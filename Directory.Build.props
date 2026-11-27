@@ -14,6 +14,11 @@
         <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
         <DisableFody>false</DisableFody>
         <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+        <TieredCompilation>true</TieredCompilation>
+        <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
+        <TieredCompilationQuickJitForLoops>true</TieredCompilationQuickJitForLoops>
+        <TieredPGO>true</TieredPGO>
     </PropertyGroup>
 
     <Target Name="SetLinuxSupportedOSPlatform" BeforeTargets="GetAssemblyAttributes" Condition="'$(TargetFramework)' == 'net10.0'">

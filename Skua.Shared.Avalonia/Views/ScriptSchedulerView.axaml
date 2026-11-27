@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vms="clr-namespace:Skua.Shared.Avalonia.ViewModels;assembly=Skua.Shared.Avalonia"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons"
              x:DataType="vms:ScriptSchedulerViewModel"
              x:Name="Root"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
@@ -111,7 +111,7 @@
                                            Classes.done="{Binding IsDone}" />
 
                                 <Button Grid.Column="4" Classes="icon icon-muted" HorizontalAlignment="Center" ToolTip.Tip="Move, options, remove">
-                                    <materialIcons:MaterialIcon Kind="DotsVertical" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                    <icons:Codicon Kind="KebabVertical" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                     <Button.Flyout>
                                         <MenuFlyout Placement="BottomEdgeAlignedRight">
                                             <MenuItem Header="Move up" Command="{Binding #Root.((vms:ScriptSchedulerViewModel)DataContext).MoveScriptUpCommand}" CommandParameter="{Binding}" />

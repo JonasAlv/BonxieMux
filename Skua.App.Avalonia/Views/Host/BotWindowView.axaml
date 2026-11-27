@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              xmlns:vms="clr-namespace:Skua.App.Avalonia.ViewModels"
              xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:viewModels="clr-namespace:Skua.Shared.Avalonia.ViewModels;assembly=Skua.Shared.Avalonia"
@@ -14,25 +14,25 @@
           <ToggleButton Classes="top-nav-item"
                         IsChecked="{Binding IsSidebarOpen, Mode=TwoWay}"
                         ToolTip.Tip="Toggle Tools Sidebar">
-            <materialIcons:MaterialIcon Kind="Menu" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+            <icons:Codicon Kind="Menu" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
           </ToggleButton>
 
           <Button Classes="top-nav-item"
                   Command="{Binding MovePrevCommand}"
                   ToolTip.Tip="Previous Tool">
-            <materialIcons:MaterialIcon Kind="ArrowLeft" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+            <icons:Codicon Kind="ArrowLeft" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
           </Button>
 
           <Button Classes="top-nav-item"
                   Command="{Binding MoveNextCommand}"
                   ToolTip.Tip="Next Tool">
-            <materialIcons:MaterialIcon Kind="ArrowRight" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+            <icons:Codicon Kind="ArrowRight" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
           </Button>
 
           <Button Classes="top-nav-item"
                   Command="{Binding HomeCommand}"
                   ToolTip.Tip="First Tool">
-            <materialIcons:MaterialIcon Kind="Home" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+            <icons:Codicon Kind="Home" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
           </Button>
 
           <Border Width="1" Height="16" Margin="4,0" Background="{DynamicResource SkuaBorderBrush}" VerticalAlignment="Center" />

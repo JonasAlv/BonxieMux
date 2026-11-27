@@ -3,7 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:Skua.App.Avalonia.Controls"
-        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
         xmlns:uc="clr-namespace:Skua.App.Avalonia.UserControls"
         xmlns:sharedShell="clr-namespace:Skua.Shared.Avalonia.Controls.Shell;assembly=Skua.Shared.Avalonia"
         xmlns:core="clr-namespace:Skua.Core.Interfaces.ViewModels;assembly=Skua.Core.Interfaces"
@@ -57,7 +57,7 @@
                         Padding="0"
                         ToolTip.Tip="Automated Combat &amp; Hunting Controls">
             <Panel>
-              <materialIcons:MaterialIcon Kind="RobotOutline"
+              <icons:Codicon Kind="Robot"
                                           Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
                                           Foreground="{DynamicResource SkuaMutedTextBrush}"
                                           HorizontalAlignment="Center"
@@ -85,7 +85,7 @@
                         Width="{DynamicResource UiSmallControlHeight}" Height="{DynamicResource UiSmallControlHeight}"
                         Padding="0"
                         ToolTip.Tip="Map &amp; Cell Fast Jump Controls">
-            <materialIcons:MaterialIcon Kind="RunFast"
+            <icons:Codicon Kind="Rocket"
                                         Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
                                         Foreground="{DynamicResource SkuaMutedTextBrush}"
                                         HorizontalAlignment="Center"
@@ -105,7 +105,7 @@
                   Padding="0"
                   Command="{Binding ShowBotWindowCommand}"
                   ToolTip.Tip="Show All Bot Windows &amp; Tools">
-            <materialIcons:MaterialIcon Kind="Apps"
+            <icons:Codicon Kind="Extensions"
                                         Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}"
                                         Foreground="{DynamicResource SkuaMutedTextBrush}"
                                         HorizontalAlignment="Center"
@@ -126,7 +126,7 @@
                      VerticalAlignment="Center"/>
         <Grid x:Name="HeadlessOverlay" Background="{DynamicResource SkuaPageBrush}" IsVisible="False">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="{DynamicResource UiGapMd}">
-                <materialIcons:MaterialIcon Kind="MonitorOff" Width="36" Height="36" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" />
+                <icons:Codicon Kind="EyeClosed" Width="36" Height="36" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" />
                 <TextBlock Foreground="{DynamicResource SkuaTextBrush}" HorizontalAlignment="Center" FontSize="{DynamicResource UiFontDisplay}" FontWeight="SemiBold" Text="Headless Mode Active" />
                 <TextBlock Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" FontSize="{DynamicResource UiFontBody}" Text="Viewport suspended to minimize CPU and GPU usage" />
             </StackPanel>

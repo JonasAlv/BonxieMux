@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
         xmlns:sharedShell="clr-namespace:Skua.Shared.Avalonia.Controls.Shell;assembly=Skua.Shared.Avalonia"
         xmlns:controls="clr-namespace:Skua.App.Avalonia.Controls"
         x:Class="Skua.App.Avalonia.Views.TabbedHostWindow"
@@ -33,7 +33,7 @@
                                 Classes="activity-item"
                                 ToolTip.Tip="Army Control (synchronize actions across all open tabs)"
                                 PointerPressed="GlobeBorder_PointerPressed">
-                            <materialIcons:MaterialIcon Kind="Earth" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <icons:Codicon Kind="Globe" Width="{DynamicResource UiActivityIconSize}" Height="{DynamicResource UiActivityIconSize}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             <FlyoutBase.AttachedFlyout>
                                 <MenuFlyout Placement="RightEdgeAlignedTop">
                                     <MenuItem x:Name="MenuStartScripts" Header="Start All Scripts" Click="MenuItem_StartAllScripts_Click" />
@@ -80,17 +80,17 @@
                                         Margin="0,5"
                                         Background="{DynamicResource SkuaAccentBrush}"
                                         IsVisible="False" />
-                                <materialIcons:MaterialIcon x:Name="GridViewIcon" Kind="ViewGridOutline" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <icons:Codicon x:Name="GridViewIcon" Kind="Layout" Width="{DynamicResource UiActivityIconSize}" Height="{DynamicResource UiActivityIconSize}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Grid>
                         </Border>
 
-                        <ContentControl x:Name="ActivityAutoHost" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiControlHeight}" />
-                        <ContentControl x:Name="ActivityJumpHost" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiControlHeight}" />
-                        <ContentControl x:Name="ActivityBotWinHost" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiControlHeight}" />
-                        <ContentControl x:Name="ActivitySearchScriptsHost" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiControlHeight}" />
+                        <ContentControl x:Name="ActivityAutoHost" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiActivityItemSize}" />
+                        <ContentControl x:Name="ActivityJumpHost" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiActivityItemSize}" />
+                        <ContentControl x:Name="ActivityBotWinHost" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiActivityItemSize}" />
+                        <ContentControl x:Name="ActivitySearchScriptsHost" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiActivityItemSize}" />
                     </StackPanel>
 
-                    <ContentControl x:Name="ActivitySettingsHost" DockPanel.Dock="Bottom" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiControlHeight}" Margin="0,0,0,4" />
+                    <ContentControl x:Name="ActivitySettingsHost" DockPanel.Dock="Bottom" Width="{DynamicResource UiActivityBarWidth}" Height="{DynamicResource UiActivityItemSize}" Margin="0,0,0,4" />
                 </DockPanel>
             </Border>
 
@@ -115,7 +115,7 @@
                                     Cursor="Hand"
                                     IsVisible="False"
                                     ToolTip.Tip="Scroll tabs left (more tabs hidden)">
-                                <materialIcons:MaterialIcon Kind="ChevronLeft" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaTextBrush}" />
+                                <icons:Codicon Kind="ChevronLeft" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaTextBrush}" />
                             </Button>
 
                             <ScrollViewer x:Name="TabScrollViewer"
@@ -234,7 +234,7 @@
                                     Cursor="Hand"
                                     IsVisible="False"
                                     ToolTip.Tip="Scroll tabs right (more tabs hidden)">
-                                <materialIcons:MaterialIcon Kind="ChevronRight" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaTextBrush}" />
+                                <icons:Codicon Kind="ChevronRight" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaTextBrush}" />
                             </Button>
                         </Grid>
 
@@ -263,7 +263,7 @@
                                     CornerRadius="{DynamicResource UiRadiusControl}"
                                     Cursor="Hand"
                                     ToolTip.Tip="Open New Client Tab">
-                                <materialIcons:MaterialIcon Kind="Plus" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <icons:Codicon Kind="Add" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Button>
                             <ToggleButton x:Name="AccountLaunchToggle"
                                           Classes="tab-strip-action"
@@ -277,7 +277,7 @@
                                           Cursor="Hand"
                                           Click="AccountLaunchToggle_Click"
                                           ToolTip.Tip="Quick Account Launch (Ctrl+Shift+L)">
-                                <materialIcons:MaterialIcon Kind="ChevronDown" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <icons:Codicon Kind="ChevronDown" Width="{DynamicResource UiIconLg}" Height="{DynamicResource UiIconLg}" Foreground="{DynamicResource SkuaMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </ToggleButton>
                             <Popup x:Name="AccountQuickLaunchPopup"
                                    Placement="Bottom"
@@ -304,10 +304,10 @@
                                                         <TextBlock Text="Ctrl+Shift+L open · Space select · Enter launch · Esc close" />
                                                     </StackPanel>
                                                 </ToolTip.Tip>
-                                                <materialIcons:MaterialIcon Kind="InformationOutline"
-                                                                            Width="{DynamicResource UiIconSm}"
-                                                                            Height="{DynamicResource UiIconSm}"
-                                                                            Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                                                <icons:Codicon Kind="Info"
+                                                               Width="{DynamicResource UiIconSm}"
+                                                               Height="{DynamicResource UiIconSm}"
+                                                               Foreground="{DynamicResource SkuaMutedTextBrush}" />
                                             </Border>
                                         </StackPanel>
                                         <TextBox x:Name="AccountQuickLaunchSearch"
@@ -474,7 +474,7 @@
                             Click="StatusButlerButton_Click"
                             ToolTip.Tip="ButlerV5 (click to open)">
                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon x:Name="StatusButlerIcon" Kind="AccountGroupOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                            <icons:Codicon x:Name="StatusButlerIcon" Kind="Organization" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                             <TextBlock x:Name="StatusButlerText" Text="Butler" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="140" />
                         </StackPanel>
                     </Button>
@@ -483,7 +483,7 @@
                             Click="StatusWatchdogButton_Click"
                             ToolTip.Tip="Watch Dog (click to open)">
                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon x:Name="StatusWatchdogIcon" Kind="ShieldCheckOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                            <icons:Codicon x:Name="StatusWatchdogIcon" Kind="Shield" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                             <TextBlock x:Name="StatusWatchdogText" Text="Watchdog" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="130" />
                         </StackPanel>
                     </Button>
@@ -495,7 +495,7 @@
                             Click="StatusLocationButton_Click"
                             ToolTip.Tip="Active tab session (click to open Omniscope)">
                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon x:Name="StatusLocationIcon" Kind="MapMarkerOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                            <icons:Codicon x:Name="StatusLocationIcon" Kind="Location" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                             <TextBlock x:Name="StatusLocationText" Text="No tab" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="200" />
                         </StackPanel>
                     </Button>
@@ -504,7 +504,7 @@
                             Click="StatusScriptButton_Click"
                             ToolTip.Tip="Script Loader (click to open)">
                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon x:Name="StatusScriptIcon" Kind="ScriptTextOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                            <icons:Codicon x:Name="StatusScriptIcon" Kind="FileCode" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                             <TextBlock x:Name="StatusScriptText" Text="No script" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="160" />
                         </StackPanel>
                     </Button>
@@ -514,8 +514,8 @@
                             IsVisible="False"
                             ToolTip.Tip="Auto combat active (click to open Auto controls)">
                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
-                            <Ellipse Width="6" Height="6" Fill="{DynamicResource SkuaSuccessBrush}" VerticalAlignment="Center" />
-                            <TextBlock Text="Auto" VerticalAlignment="Center" />
+                            <icons:Codicon Kind="Flame" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="Auto" Foreground="{DynamicResource SkuaTextBrush}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="StatusHeadlessButton"
@@ -524,7 +524,7 @@
                             IsVisible="False"
                             ToolTip.Tip="Toggle Auto Headless">
                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon x:Name="StatusHeadlessIcon" Kind="MonitorOff" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
+                            <icons:Codicon x:Name="StatusHeadlessIcon" Kind="EyeClosed" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
                             <TextBlock x:Name="StatusHeadlessText" Text="Auto Headless" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
@@ -534,7 +534,7 @@
                             IsVisible="False"
                             ToolTip.Tip="Grid View layout (click to cycle)">
                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon Kind="ViewGridOutline" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                            <icons:Codicon Kind="Layout" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                             <TextBlock x:Name="StatusGridLayoutText" Text="Grid: Auto" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
@@ -543,7 +543,7 @@
                             Click="StatusGameSizeButton_Click"
                             ToolTip.Tip="Viewport: Stretch (fills window) — click for Fit">
                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapXs}" VerticalAlignment="Center">
-                            <materialIcons:MaterialIcon Kind="AspectRatio" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                            <icons:Codicon Kind="ScreenFull" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                             <TextBlock x:Name="StatusGameSizeText" Text="Stretch" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>

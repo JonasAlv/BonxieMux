@@ -1,6 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
-using Material.Icons;
+using Skua.Shared.Avalonia.Controls.Icons;
 using System.Windows.Input;
 
 namespace Skua.Shared.Avalonia.Controls.Primitives;
@@ -10,8 +10,8 @@ namespace Skua.Shared.Avalonia.Controls.Primitives;
 /// </summary>
 public partial class EmptyStateView : UserControl
 {
-    public static readonly StyledProperty<MaterialIconKind> IconKindProperty =
-        AvaloniaProperty.Register<EmptyStateView, MaterialIconKind>(nameof(IconKind), MaterialIconKind.FolderSearchOutline);
+    public static readonly StyledProperty<CodiconKind> IconKindProperty =
+        AvaloniaProperty.Register<EmptyStateView, CodiconKind>(nameof(IconKind), CodiconKind.Search);
 
     public static readonly StyledProperty<string> TitleProperty =
         AvaloniaProperty.Register<EmptyStateView, string>(nameof(Title), string.Empty);
@@ -28,7 +28,7 @@ public partial class EmptyStateView : UserControl
     public static readonly StyledProperty<bool> IsLoadingProperty =
         AvaloniaProperty.Register<EmptyStateView, bool>(nameof(IsLoading));
 
-    public MaterialIconKind IconKind
+    public CodiconKind IconKind
     {
         get => GetValue(IconKindProperty);
         set => SetValue(IconKindProperty, value);

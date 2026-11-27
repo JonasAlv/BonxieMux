@@ -7,7 +7,7 @@
              xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives;assembly=Skua.Shared.Avalonia"
              xmlns:converters="clr-namespace:Skua.App.Avalonia.Converters"
              xmlns:sharedConverters="clr-namespace:Skua.Shared.Avalonia.Converters;assembly=Skua.Shared.Avalonia"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.App.Avalonia.Views.GrabberListView"
              x:DataType="vms:GrabberListViewModel"
              mc:Ignorable="d" d:DesignHeight="520" d:DesignWidth="620">
@@ -62,13 +62,13 @@
                      IsVisible="{Binding !ShowMessage}" />
           <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGap2xs}" IsEnabled="{Binding !IsBusy}">
             <Button Classes="icon icon-muted" Click="UnselectAll_Click" ToolTip.Tip="Unselect all">
-              <materialIcons:MaterialIcon Kind="SelectionRemove" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+              <icons:Codicon Kind="ClearAll" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
             </Button>
             <Button Classes="icon icon-muted" Click="CopyButton_Click" ToolTip.Tip="Copy the selected items (or all) to the clipboard">
-              <materialIcons:MaterialIcon Kind="ContentCopy" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+              <icons:Codicon Kind="Copy" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
             </Button>
             <Button Classes="icon icon-muted" Click="ExportButton_Click" ToolTip.Tip="Export everything grabbed for the selected items (or all) to a .txt file">
-              <materialIcons:MaterialIcon Kind="FileExportOutline" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+              <icons:Codicon Kind="Export" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
             </Button>
           </StackPanel>
         </StackPanel>

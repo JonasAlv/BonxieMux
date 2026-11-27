@@ -7,8 +7,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.DependencyInjection;
-using Material.Icons;
-using Material.Icons.Avalonia;
+using Skua.Shared.Avalonia.Controls.Icons;
 using Skua.App.Avalonia.Services;
 using Skua.Backend.Ipc;
 using Skua.Core.AppStartup;
@@ -407,13 +406,13 @@ public partial class TabbedHostWindow
         {
             UiTokens.Bind(GridViewBorder, Border.BackgroundProperty, UiTokens.SkuaNavHoverBrush);
             if (GridViewActiveBar != null) GridViewActiveBar.IsVisible = true;
-            if (GridViewIcon != null) UiTokens.Bind(GridViewIcon, MaterialIcon.ForegroundProperty, UiTokens.SkuaAccentBrush);
+            if (GridViewIcon != null) UiTokens.Bind(GridViewIcon, Codicon.ForegroundProperty, UiTokens.SkuaAccentBrush);
         }
         else
         {
             GridViewBorder.Background = Brushes.Transparent;
             if (GridViewActiveBar != null) GridViewActiveBar.IsVisible = false;
-            if (GridViewIcon != null) UiTokens.Bind(GridViewIcon, MaterialIcon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
+            if (GridViewIcon != null) UiTokens.Bind(GridViewIcon, Codicon.ForegroundProperty, UiTokens.SkuaMutedTextBrush);
         }
         UpdateStatusBar();
     }

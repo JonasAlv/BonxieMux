@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Material.Icons;
+using Skua.Shared.Avalonia.Controls.Icons;
 
 namespace Skua.App.Avalonia.ViewModels;
 
@@ -68,7 +68,7 @@ public partial class ScriptLoaderViewModel : BotControlViewModelBase
 
     public string ToggleScriptText => ScriptManager.ScriptRunning ? "Stop Script" : "Start Script";
     public string TogglePauseScriptText => ScriptManager.ScriptPaused ? "Resume Script" : "Pause Script";
-    public MaterialIconKind TogglePauseScriptIcon => ScriptManager.ScriptPaused ? MaterialIconKind.Play : MaterialIconKind.Pause;
+    public CodiconKind TogglePauseScriptIcon => ScriptManager.ScriptPaused ? CodiconKind.Play : CodiconKind.DebugPause;
 
     private readonly IWindowService _windowService;
     private readonly IProcessService _processService;

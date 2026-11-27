@@ -188,10 +188,6 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             if (File.Exists(playerSubdir))
                 return playerSubdir;
 
-            string localBin = Path.Combine(AppContext.BaseDirectory, playerExe);
-            if (File.Exists(localBin))
-                return localBin;
-
             DirectoryInfo? dir = new(AppContext.BaseDirectory);
             while (dir is not null)
             {

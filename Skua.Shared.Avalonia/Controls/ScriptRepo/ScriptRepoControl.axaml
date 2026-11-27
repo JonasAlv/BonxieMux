@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons"
              xmlns:primitives="clr-namespace:Skua.Shared.Avalonia.Controls.Primitives"
              xmlns:scriptRepo="clr-namespace:Skua.Shared.Avalonia.ViewModels.ScriptRepo;assembly=Skua.Shared.Avalonia"
              x:DataType="scriptRepo:ScriptRepoViewModel"
@@ -25,7 +25,7 @@
                                   IsChecked="{Binding IsSortReversed, Mode=OneWay}"
                                   Command="{Binding CycleSortCommand}"
                                   ToolTip.Tip="{Binding SortDirectionText, StringFormat='Order: {0}'}">
-                        <materialIcons:MaterialIcon Kind="{Binding SortDirectionIcon}" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                        <icons:Codicon Kind="{Binding SortDirectionIcon}" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                     </ToggleButton>
                 </StackPanel>
             </primitives:SearchFilterBar.RightContent>
@@ -98,7 +98,7 @@
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="{DynamicResource UiGap2xs}">
                                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource UiGapSm}">
                                             <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" VerticalAlignment="Center" />
-                                            <materialIcons:MaterialIcon Kind="Pin" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaWarningBrush}"
+                                            <icons:Codicon Kind="Pin" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" Foreground="{DynamicResource SkuaWarningBrush}"
                                                                         IsVisible="{Binding IsPinned}" VerticalAlignment="Center" />
                                             <Border Classes="chip warning" IsVisible="{Binding Outdated}">
                                                 <TextBlock Text="Update" />
@@ -149,7 +149,7 @@
 </Button>
                                         <Button Classes="skua-button" Width="{DynamicResource UiControlHeight}" Height="{DynamicResource UiControlHeight}" MinHeight="{DynamicResource UiControlHeight}" Padding="0" HorizontalContentAlignment="Center"
                                                 ToolTip.Tip="Pin, download, update, VS Code, delete">
-                                            <materialIcons:MaterialIcon Kind="DotsHorizontal" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                                            <icons:Codicon Kind="Ellipsis" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                                             <Button.Flyout>
                                                 <MenuFlyout Placement="BottomEdgeAlignedRight">
                                                     <MenuItem Header="{Binding PinToolTip}"
@@ -179,7 +179,7 @@
                     </ListBox>
 
                     <Panel IsVisible="{Binding IsLoadingScripts}">
-                        <primitives:EmptyStateView IconKind="CloudDownloadOutline"
+                        <primitives:EmptyStateView IconKind="CloudDownload"
                                                    Title="Loading scripts..."
                                                    Description="Getting the script list, this can take a few seconds."
                                                    IsLoading="True"
@@ -187,7 +187,7 @@
                     </Panel>
 
                     <Panel IsVisible="{Binding !IsLoadingScripts}">
-                        <primitives:EmptyStateView IconKind="FolderSearchOutline"
+                        <primitives:EmptyStateView IconKind="Search"
                                                    Title="No scripts found"
                                                    Description="Nothing matches the search or category."
                                                    ActionText="Clear search"
@@ -243,11 +243,11 @@
                     </Button>
                     <Button Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
                             Command="{Binding RefreshScriptsCommand}" ToolTip.Tip="Fetch the latest script list from the repo">
-                        <materialIcons:MaterialIcon Kind="Refresh" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                        <icons:Codicon Kind="Refresh" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                     </Button>
                     <Button Classes="skua-button small" Width="26" Padding="0" HorizontalContentAlignment="Center"
                             ToolTip.Tip="More">
-                        <materialIcons:MaterialIcon Kind="DotsHorizontal" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+                        <icons:Codicon Kind="Ellipsis" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
                         <Button.Flyout>
                             <MenuFlyout Placement="TopEdgeAlignedRight">
                                 <MenuItem Header="Update dates from Git" Command="{Binding UpdateDatesCommand}" />

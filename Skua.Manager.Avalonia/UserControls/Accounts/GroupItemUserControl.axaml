@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:uc="clr-namespace:Skua.Manager.Avalonia.UserControls"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.Manager.Avalonia.UserControls.GroupItemUserControl"
              mc:Ignorable="d"
              d:DesignWidth="700"
@@ -28,7 +28,7 @@
                         Classes="icon icon-28"
                         Command="{Binding StartCommand}"
                         ToolTip.Tip="Start Group">
-                    <materialIcons:MaterialIcon Kind="PlayCircleOutline"
+                    <icons:Codicon Kind="PlayCircle"
                                                 Width="{DynamicResource UiIconMd}"
                                                 Height="{DynamicResource UiIconMd}" />
                 </Button>
@@ -38,23 +38,23 @@
                         Classes="icon icon-28"
                         Command="{Binding StartWithScriptCommand}"
                         ToolTip.Tip="Start Group With Script">
-                    <materialIcons:MaterialIcon Kind="ScriptTextPlayOutline"
+                    <icons:Codicon Kind="RunAll"
                                                 Width="{DynamicResource UiIconMd}"
                                                 Height="{DynamicResource UiIconMd}" />
                 </Button>
 
                 <Button Grid.Column="3" Margin="0,0,4,0" Classes="icon icon-28" Command="{Binding StartInNewWindowCommand}" ToolTip.Tip="Start Group in New Window">
-                    <materialIcons:MaterialIcon Kind="OpenInNew" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                    <icons:Codicon Kind="LinkExternal" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                 </Button>
                 <Button Grid.Column="4" Margin="0,0,4,0" Classes="icon icon-28" Command="{Binding StartWithScriptInNewWindowCommand}" ToolTip.Tip="Start Group With Script in New Window">
-                    <materialIcons:MaterialIcon Kind="ScriptTextPlayOutline" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
+                    <icons:Codicon Kind="RunAll" Width="{DynamicResource UiIconMd}" Height="{DynamicResource UiIconMd}" />
                 </Button>
                 <Button Grid.Column="5"
                         Margin="0,0,4,0"
                         Classes="icon icon-28 icon-muted"
                         Command="{Binding RenameCommand}"
                         ToolTip.Tip="Rename Group">
-                    <materialIcons:MaterialIcon Kind="PencilOutline"
+                    <icons:Codicon Kind="Edit"
                                                 Width="{DynamicResource UiIconMd}"
                                                 Height="{DynamicResource UiIconMd}" />
                 </Button>
@@ -63,7 +63,7 @@
                         Classes="icon icon-28 icon-muted"
                         Command="{Binding RemoveCommand}"
                         ToolTip.Tip="Remove Group">
-                    <materialIcons:MaterialIcon Kind="DeleteOutline"
+                    <icons:Codicon Kind="Trash"
                                                 Width="{DynamicResource UiIconMd}"
                                                 Height="{DynamicResource UiIconMd}" />
                 </Button>
