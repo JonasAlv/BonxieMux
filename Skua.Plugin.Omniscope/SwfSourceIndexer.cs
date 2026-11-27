@@ -77,7 +77,7 @@ internal static class SwfSourceIndexer
     /// <returns>The Java executable path.</returns>
     private static string ResolveJavaExecutable(string ffdecDirectory)
     {
-        string javaExe = OperatingSystem.IsWindows() ? "java.exe" : "java";
+        const string javaExe = "java";
         string bundledJava = Path.Combine(ffdecDirectory, "Runtime", "bin", javaExe);
         if (File.Exists(bundledJava))
             return bundledJava;

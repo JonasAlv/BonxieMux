@@ -124,6 +124,15 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
     [ObservableProperty]
     private bool _autoAntiLagExcludeGridView = true;
 
+    [ObservableProperty]
+    private bool _autoMute = true;
+
+    [ObservableProperty]
+    private bool _autoMuteExcludeFocused = true;
+
+    [ObservableProperty]
+    private bool _autoMuteExcludeGridView = false;
+
     partial void OnAutoAntiLagChanged(bool value) => EvaluateAntiLagState();
     partial void OnAutoAntiLagExcludeFocusedChanged(bool value) => EvaluateAntiLagState();
     partial void OnAutoAntiLagExcludeGridViewChanged(bool value) => EvaluateAntiLagState();
@@ -811,6 +820,9 @@ public partial class ScriptOption : ObservableRecipient, IScriptOption, IOptionD
         nameof(AutoAntiLag),
         nameof(AutoAntiLagExcludeFocused),
         nameof(AutoAntiLagExcludeGridView),
+        nameof(AutoMute),
+        nameof(AutoMuteExcludeFocused),
+        nameof(AutoMuteExcludeGridView),
         nameof(DamageNumbers),
         nameof(CompactNumbers),
         nameof(UnitFrameHealth),

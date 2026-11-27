@@ -4,33 +4,11 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform;
 using System;
 using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace Skua.Shared.Avalonia.Services;
 
 public static class WindowPlacementHelper
 {
-    [StructLayout(LayoutKind.Sequential)]
-    private struct POINT { public int X; public int Y; }
-
-    [DllImport("user32.dll")]
-    private static extern bool GetCursorPos(out POINT lpPoint);
-
-    public static PixelPoint? GetGlobalCursorPosition()
-    {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            try
-            {
-                if (GetCursorPos(out POINT pt))
-                    return new PixelPoint(pt.X, pt.Y);
-            }
-            catch { }
-        }
-
-        return null;
-    }
-
     public static Screen? GetFocusedScreen(Window window)
     {
         var screens = window.Screens;
@@ -59,18 +37,6 @@ public static class WindowPlacementHelper
                     if (activeScreen != null)
                         return activeScreen;
                 }
-            }
-            catch { }
-        }
-
-        var cursor = GetGlobalCursorPosition();
-        if (cursor.HasValue)
-        {
-            try
-            {
-                var mouseScreen = screens.ScreenFromPoint(cursor.Value);
-                if (mouseScreen != null)
-                    return mouseScreen;
             }
             catch { }
         }

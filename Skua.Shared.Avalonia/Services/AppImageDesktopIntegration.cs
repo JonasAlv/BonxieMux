@@ -28,7 +28,6 @@ public static class AppImageDesktopIntegration
 
             appImagePath = Path.GetFullPath(appImagePath);
 
-            string legacyDesktopFileName;
             string name;
             string genericName;
             string comment;
@@ -39,7 +38,6 @@ public static class AppImageDesktopIntegration
             switch (identity)
             {
                 case AppIdentity.Manager:
-                    legacyDesktopFileName = "bonxiemux-manager.desktop";
                     name = "BonxieMux Manager";
                     genericName = "BonxieMux Account & Script Manager";
                     comment = "Account manager, script updater, and launcher for BonxieMux";
@@ -50,7 +48,6 @@ public static class AppImageDesktopIntegration
 
                 case AppIdentity.BonxieMux:
                 default:
-                    legacyDesktopFileName = "bonxiemux.desktop";
                     name = "BonxieMux";
                     genericName = "AQW Bot & Game Client";
                     comment = "Linux AQW client with advanced scripting and multi-account tabs";
@@ -64,20 +61,7 @@ public static class AppImageDesktopIntegration
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share");
             string appsDir = Path.Combine(xdgDataHome, "applications");
             string desktopFilePath = Path.Combine(appsDir, $"{wmClass}.desktop");
-            string legacyDesktopFilePath = Path.Combine(appsDir, legacyDesktopFileName);
             string iconsBase = Path.Combine(xdgDataHome, "icons", "hicolor");
-
-            bool removedLegacy = false;
-            if (!string.Equals(desktopFilePath, legacyDesktopFilePath, StringComparison.Ordinal) &&
-                File.Exists(legacyDesktopFilePath))
-            {
-                try
-                {
-                    File.Delete(legacyDesktopFilePath);
-                    removedLegacy = true;
-                }
-                catch { }
-            }
 
             string currentVersion = ClientFileSources.AssemblyVersion;
             bool needsUpdate = false;
@@ -126,11 +110,7 @@ public static class AppImageDesktopIntegration
             }
 
             if (!needsUpdate)
-            {
-                if (removedLegacy)
-                    NotifyDesktopDatabase(appsDir, iconsBase);
                 return;
-            }
 
             bool copiedAnyIcon = false;
             string? appDir = Environment.GetEnvironmentVariable("APPDIR");

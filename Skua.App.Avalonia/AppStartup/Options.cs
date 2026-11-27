@@ -29,7 +29,10 @@ internal class Options
         [nameof(IScriptOption.AntiLag)] = ("Anti-Lag", "Manual. Applies the full Anti-Lag bundle (Lag Killer, disabled animations, hidden monsters, Crowd Mode) across all tabs until you turn it off."),
         [nameof(IScriptOption.AutoAntiLag)] = ("Auto Anti-Lag", "Master switch. Applies Anti-Lag to all tabs automatically based on focus, using the exclusions below."),
         [nameof(IScriptOption.AutoAntiLagExcludeFocused)] = ("Exclude focused tab", "Needs Auto Anti-Lag. Focusing a tab disables Auto Anti-Lag for that tab."),
-        [nameof(IScriptOption.AutoAntiLagExcludeGridView)] = ("Exclude Grid View", "Needs Auto Anti-Lag. Keeps Grid View tiles out of Auto Anti-Lag while the window is focused.")
+        [nameof(IScriptOption.AutoAntiLagExcludeGridView)] = ("Exclude Grid View", "Needs Auto Anti-Lag. Keeps Grid View tiles out of Auto Anti-Lag while the window is focused."),
+        [nameof(IScriptOption.AutoMute)] = ("Auto Mute", "Master switch. Mutes Mugetsu game audio in all tabs automatically based on focus (pauses audio stream and skips sound decoding), using the exclusions below."),
+        [nameof(IScriptOption.AutoMuteExcludeFocused)] = ("Exclude focused tab", "Needs Auto Mute. Focusing a tab unmutes game audio for that tab."),
+        [nameof(IScriptOption.AutoMuteExcludeGridView)] = ("Exclude Grid View", "Needs Auto Mute. Keeps Grid View tiles unmuted while the window is focused.")
     };
 
     internal static GameOptionsViewModel CreateGameOptions(IServiceProvider s)
@@ -118,9 +121,8 @@ internal class Options
             }))
         };
 
-        string ruffleDir = OperatingSystem.IsLinux()
-            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ruffle")
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ruffle");
+        string ruffleDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ruffle");
+        bool syncingMugetsu = false;
 
         string ReadMugetsuFile(string fileName)
         {
@@ -149,43 +151,7 @@ internal class Options
             catch { }
         }
 
-        if (OperatingSystem.IsLinux())
-        {
-            string currentVal = ReadMugetsuFile("mugetsu-graphics.txt").ToLowerInvariant();
-            if (string.IsNullOrEmpty(currentVal))
-                currentVal = "gl";
-            int initialIndex = currentVal switch
-            {
-                "vulkan" => 1,
-                "auto" => 2,
-                _ => 0
-            };
-
-            var graphicsChoice = new CBOChoiceOptionItemViewModel(
-                "* Graphics API",
-                "Graphics backend for Mugetsu. Takes effect on next launch or tab restart",
-                "GraphicsApi",
-                new List<string> { "OpenGL", "Vulkan", "Auto" },
-                initialIndex);
-
-            graphicsChoice.PropertyChanged += (_, e) =>
-            {
-                if (e.PropertyName == nameof(DisplayOptionItemViewModelBase.Value))
-                {
-                    string toWrite = graphicsChoice.Value switch
-                    {
-                        1 => "vulkan",
-                        2 => "auto",
-                        _ => "gl"
-                    };
-                    WriteMugetsuFile("mugetsu-graphics.txt", toWrite);
-                }
-            };
-            appOptions.Add(graphicsChoice);
-        }
-
-        string perfVal = ReadMugetsuFile("mugetsu-performance.txt").ToLowerInvariant();
-        int perfIdx = perfVal switch
+        int ReadPerfIdx() => ReadMugetsuFile("mugetsu-performance.txt").ToLowerInvariant() switch
         {
             "balanced" => 1,
             "fast" => 2,
@@ -193,53 +159,79 @@ internal class Options
         };
         var perfChoice = new CBOChoiceOptionItemViewModel(
             "Performance Mode",
-            "Fewer pixels: faster on weak graphics (Off, Balanced 75%, Fast 50%)",
+            "Fewer pixels: faster on weak graphics (Off, Balanced 75%, Fast 50%). Applies immediately to all tabs.",
             "MugetsuPerformanceMode",
             new List<string> { "Off", "Balanced", "Fast" },
-            perfIdx);
+            ReadPerfIdx());
         perfChoice.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(DisplayOptionItemViewModelBase.Value))
-            {
-                string val = perfChoice.Value switch { 1 => "balanced", 2 => "fast", _ => "off" };
-                WriteMugetsuFile("mugetsu-performance.txt", val == "off" ? null : val + "\n");
-                Views.MainWindow.BroadcastMugetsuSetting("performance", val);
-            }
+            if (syncingMugetsu || e.PropertyName != nameof(DisplayOptionItemViewModelBase.Value))
+                return;
+            string val = perfChoice.Value switch { 1 => "balanced", 2 => "fast", _ => "off" };
+            WriteMugetsuFile("mugetsu-performance.txt", val == "off" ? null : val + "\n");
+            Views.MainWindow.BroadcastMugetsuSetting("performance", val);
         };
         appOptions.Add(perfChoice);
 
-        bool interpOn = File.Exists(Path.Combine(ruffleDir, "mugetsu-interpolation.txt"));
-        appOptions.Add(new CommandOptionItemViewModel<bool>(
+        int ReadGraphicsIdx() => ReadMugetsuFile("mugetsu-graphics.txt").ToLowerInvariant() switch
+        {
+            "vulkan" => 1,
+            "gl" => 2,
+            _ => 0
+        };
+        var graphicsChoice = new CBOChoiceOptionItemViewModel(
+            "* Graphics API",
+            "Graphics backend for Mugetsu (Auto, Vulkan, OpenGL). Requires tab restart to take effect.",
+            "GraphicsApi",
+            new List<string> { "Auto", "Vulkan", "OpenGL" },
+            ReadGraphicsIdx());
+        graphicsChoice.PropertyChanged += (_, e) =>
+        {
+            if (syncingMugetsu || e.PropertyName != nameof(DisplayOptionItemViewModelBase.Value))
+                return;
+            string? toWrite = graphicsChoice.Value switch
+            {
+                1 => "vulkan\n",
+                2 => "gl\n",
+                _ => null
+            };
+            WriteMugetsuFile("mugetsu-graphics.txt", toWrite);
+        };
+        appOptions.Add(graphicsChoice);
+
+        bool ReadInterpOn() => File.Exists(Path.Combine(ruffleDir, "mugetsu-interpolation.txt"));
+        var interpOption = new CommandOptionItemViewModel<bool>(
             "* Frame Interpolation",
-            "Smoother motion, best on strong PCs (enabling requires tab restart if render thread started without it)",
+            "Smoother motion, best on strong PCs. Applies to all tabs; enabling requires tab restart if Mugetsu started without it.",
             "MugetsuFrameInterpolation",
             (IRelayCommand)new RelayCommand<bool>(on =>
             {
+                if (syncingMugetsu)
+                    return;
                 WriteMugetsuFile("mugetsu-interpolation.txt", on ? "on\n" : null);
                 Views.MainWindow.BroadcastMugetsuSetting("interpolation", on ? "true" : "false");
             }),
-            interpOn));
+            ReadInterpOn());
+        appOptions.Add(interpOption);
 
-        bool uncappedOn = File.Exists(Path.Combine(ruffleDir, "mugetsu-uncapped.txt"));
+        int ReadPacingIdx() => File.Exists(Path.Combine(ruffleDir, "mugetsu-uncapped.txt")) ? 1 : 0;
         var pacingChoice = new CBOChoiceOptionItemViewModel(
             "Frame Pacing",
-            "V-sync or Uncapped (for G-Sync / FreeSync when Frame Interpolation is on)",
+            "V-sync or Uncapped (for G-Sync / FreeSync when Frame Interpolation is on). Applies immediately to all tabs.",
             "MugetsuFramePacing",
             new List<string> { "V-sync", "Uncapped" },
-            uncappedOn ? 1 : 0);
+            ReadPacingIdx());
         pacingChoice.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(DisplayOptionItemViewModelBase.Value))
-            {
-                bool on = pacingChoice.Value is 1;
-                WriteMugetsuFile("mugetsu-uncapped.txt", on ? "on\n" : null);
-                Views.MainWindow.BroadcastMugetsuSetting("uncapped", on ? "true" : "false");
-            }
+            if (syncingMugetsu || e.PropertyName != nameof(DisplayOptionItemViewModelBase.Value))
+                return;
+            bool on = pacingChoice.Value is 1;
+            WriteMugetsuFile("mugetsu-uncapped.txt", on ? "on\n" : null);
+            Views.MainWindow.BroadcastMugetsuSetting("uncapped", on ? "true" : "false");
         };
         appOptions.Add(pacingChoice);
 
-        string fpsLimitRaw = ReadMugetsuFile("mugetsu-fps-limit.txt").ToLowerInvariant();
-        int fpsLimitIdx = fpsLimitRaw switch
+        int ReadFpsLimitIdx() => ReadMugetsuFile("mugetsu-fps-limit.txt").ToLowerInvariant() switch
         {
             "screen" => 1,
             "60" => 2,
@@ -251,34 +243,32 @@ internal class Options
             _ => 0
         };
         var fpsLimitChoice = new CBOChoiceOptionItemViewModel(
-            "FPS Limit (Uncapped)",
-            "Caps uncapped interpolated frames (Off, Screen refresh rate, or fixed FPS)",
+            "FPS Limit",
+            "Caps uncapped interpolated frames (Off, Screen refresh rate, or fixed FPS). Applies immediately to all tabs.",
             "MugetsuFpsLimit",
             new List<string> { "Off", "Screen", "60", "120", "144", "165", "240", "360" },
-            fpsLimitIdx);
+            ReadFpsLimitIdx());
         fpsLimitChoice.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(DisplayOptionItemViewModelBase.Value))
+            if (syncingMugetsu || e.PropertyName != nameof(DisplayOptionItemViewModelBase.Value))
+                return;
+            string val = fpsLimitChoice.Value switch
             {
-                string val = fpsLimitChoice.Value switch
-                {
-                    1 => "screen",
-                    2 => "60",
-                    3 => "120",
-                    4 => "144",
-                    5 => "165",
-                    6 => "240",
-                    7 => "360",
-                    _ => "off"
-                };
-                WriteMugetsuFile("mugetsu-fps-limit.txt", val == "off" ? null : val);
-                Views.MainWindow.BroadcastMugetsuSetting("fps_limit", val);
-            }
+                1 => "screen",
+                2 => "60",
+                3 => "120",
+                4 => "144",
+                5 => "165",
+                6 => "240",
+                7 => "360",
+                _ => "off"
+            };
+            WriteMugetsuFile("mugetsu-fps-limit.txt", val == "off" ? null : val);
+            Views.MainWindow.BroadcastMugetsuSetting("fps_limit", val);
         };
         appOptions.Add(fpsLimitChoice);
 
-        string memLimitRaw = ReadMugetsuFile("mugetsu-memory-limit.txt");
-        int memLimitIdx = memLimitRaw switch
+        int ReadMemLimitIdx() => ReadMugetsuFile("mugetsu-memory-limit.txt") switch
         {
             "1024" => 1,
             "2048" => 2,
@@ -288,46 +278,68 @@ internal class Options
         };
         var memLimitChoice = new CBOChoiceOptionItemViewModel(
             "Memory Limit",
-            "Mugetsu trims unused shapes, textures, and heap pages when exceeding this limit",
+            "Mugetsu tries to stay under this limit by trimming unused shapes, textures, and heap pages. Applies immediately to all tabs.",
             "MugetsuMemoryLimitMb",
-            new List<string> { "Off", "1 GB (1024 MB)", "2 GB (2048 MB)", "3 GB (3072 MB)", "4 GB (4096 MB)" },
-            memLimitIdx);
+            new List<string> { "Off", "1 GB", "2 GB", "3 GB", "4 GB" },
+            ReadMemLimitIdx());
         memLimitChoice.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(DisplayOptionItemViewModelBase.Value))
+            if (syncingMugetsu || e.PropertyName != nameof(DisplayOptionItemViewModelBase.Value))
+                return;
+            string mb = memLimitChoice.Value switch
             {
-                string mb = memLimitChoice.Value switch
-                {
-                    1 => "1024",
-                    2 => "2048",
-                    3 => "3072",
-                    4 => "4096",
-                    _ => "0"
-                };
-                WriteMugetsuFile("mugetsu-memory-limit.txt", mb == "0" ? null : mb);
-                Views.MainWindow.BroadcastMugetsuSetting("memory_limit", mb);
-            }
+                1 => "1024",
+                2 => "2048",
+                3 => "3072",
+                4 => "4096",
+                _ => "0"
+            };
+            WriteMugetsuFile("mugetsu-memory-limit.txt", mb == "0" ? null : mb);
+            Views.MainWindow.BroadcastMugetsuSetting("memory_limit", mb);
         };
         appOptions.Add(memLimitChoice);
 
         appOptions.Add(new CommandOptionItemViewModel<IRelayCommand>(
             "Free Memory Now",
+            "Lets go of what the game is not using across all tabs.",
             "MugetsuFreeMemoryNow",
             new RelayCommand(() => Views.MainWindow.BroadcastMugetsuSetting("free_memory", "1"))));
 
-        bool showFpsOn = File.Exists(Path.Combine(ruffleDir, "mugetsu-show-fps.txt"));
-        appOptions.Add(new CommandOptionItemViewModel<bool>(
+        bool ReadShowFpsOn() => File.Exists(Path.Combine(ruffleDir, "mugetsu-show-fps.txt"));
+        var showFpsOption = new CommandOptionItemViewModel<bool>(
             "Show FPS",
-            "Show Mugetsu's corner FPS counter overlay",
+            "Show Mugetsu's corner FPS counter overlay. Applies immediately to all tabs.",
             "MugetsuShowFps",
             (IRelayCommand)new RelayCommand<bool>(on =>
             {
+                if (syncingMugetsu)
+                    return;
                 WriteMugetsuFile("mugetsu-show-fps.txt", on ? "on\n" : null);
                 Views.MainWindow.BroadcastMugetsuSetting("show_fps", on ? "true" : "false");
             }),
-            showFpsOn));
+            ReadShowFpsOn());
+        appOptions.Add(showFpsOption);
 
-        return new ApplicationOptionsViewModel(appOptions);
+        void RefreshMugetsuFromDisk()
+        {
+            syncingMugetsu = true;
+            try
+            {
+                perfChoice.Value = ReadPerfIdx();
+                graphicsChoice.Value = ReadGraphicsIdx();
+                interpOption.Value = ReadInterpOn();
+                pacingChoice.Value = ReadPacingIdx();
+                fpsLimitChoice.Value = ReadFpsLimitIdx();
+                memLimitChoice.Value = ReadMemLimitIdx();
+                showFpsOption.Value = ReadShowFpsOn();
+            }
+            finally
+            {
+                syncingMugetsu = false;
+            }
+        }
+
+        return new ApplicationOptionsViewModel(appOptions, RefreshMugetsuFromDisk);
 
         static RelayCommand<T> CreateSettingCommand<T>(string key) => new(b =>
         {

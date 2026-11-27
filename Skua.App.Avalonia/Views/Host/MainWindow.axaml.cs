@@ -224,7 +224,10 @@ public partial class MainWindow : Window
             {
                 if (e.PropertyName is nameof(IScriptOption.AutoHeadless)
                     or nameof(IScriptOption.AutoHeadlessExcludeFocused)
-                    or nameof(IScriptOption.AutoHeadlessExcludeGridView))
+                    or nameof(IScriptOption.AutoHeadlessExcludeGridView)
+                    or nameof(IScriptOption.AutoMute)
+                    or nameof(IScriptOption.AutoMuteExcludeFocused)
+                    or nameof(IScriptOption.AutoMuteExcludeGridView))
                 {
                     Dispatcher.UIThread.Post(() =>
                     {

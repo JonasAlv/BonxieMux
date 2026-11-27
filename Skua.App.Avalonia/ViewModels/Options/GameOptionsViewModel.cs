@@ -25,7 +25,7 @@ public class GameOptionsViewModel : BotControlViewModelBase
     };
 
     private static readonly string[] VisualsOptions = { "LagKiller", "HidePlayers", "OptimizePlayers", "DisableFX", "DisableCollisions", "ShowFPS", "SetFPS" };
-    private static readonly string[] TweaksOptions = { "AntiLag", "AutoAntiLag", "AutoAntiLagExcludeFocused", "AutoAntiLagExcludeGridView", "DamageNumbers", "CompactNumbers", "UnitFrameHealth", "MovableTargetFrame" };
+    private static readonly string[] TweaksOptions = { "AntiLag", "AutoAntiLag", "AutoAntiLagExcludeFocused", "AutoAntiLagExcludeGridView", "AutoMute", "AutoMuteExcludeFocused", "AutoMuteExcludeGridView", "DamageNumbers", "CompactNumbers", "UnitFrameHealth", "MovableTargetFrame" };
     private static readonly string[] HeadlessOptions =
     {
         "HeadlessMode", "AutoHeadless", "AutoHeadlessExcludeFocused", "AutoHeadlessExcludeGridView"

@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     private bool _isInGridView = false;
     private int _tabVisibility;
     private bool _isWindowFocused = true;
+    private bool? _lastSentMuted;
 
     private void UpdateQualityFocusState()
     {
@@ -42,8 +43,27 @@ public partial class MainWindow : Window
 
             options.SetAutoAntiLagContext(isFocusedTab, isFocusedGridTile);
             options.SetForegroundFocus(isShown && _isWindowFocused);
+            EvaluateAutoMute(options, isFocusedTab, isFocusedGridTile);
         }
         catch { }
+    }
+
+    private void EvaluateAutoMute(IScriptOption options, bool isFocusedTab, bool isFocusedGridTile)
+    {
+        bool wantMuted = false;
+        if (options.AutoMute)
+        {
+            bool excluded = (options.AutoMuteExcludeFocused && isFocusedTab)
+                || (options.AutoMuteExcludeGridView && isFocusedGridTile);
+            wantMuted = !excluded;
+        }
+
+        if (_lastSentMuted == wantMuted)
+            return;
+
+        _lastSentMuted = wantMuted;
+        if (Ioc.Default.GetService<IFlashUtil>() is FlashUtil player)
+            player.SendInput(new { input = "muted", muted = wantMuted });
     }
 
     private readonly HashSet<Key> _pressedKeys = new();
@@ -356,8 +376,8 @@ public partial class MainWindow : Window
         {
             try
             {
-                var obj = Newtonsoft.Json.Linq.JObject.Parse(json);
-                flashUtil.SendInput(obj);
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                flashUtil.SendInput(doc.RootElement.Clone());
             }
             catch { }
         }

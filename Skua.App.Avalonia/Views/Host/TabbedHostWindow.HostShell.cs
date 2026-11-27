@@ -920,17 +920,11 @@ public partial class TabbedHostWindow : Window
         }
 
         bool isHeadless = PredictEffectiveHeadless(childHwnd, _isGridViewEnabled, true);
-        double gridScale = 1.0;
-        if (_isGridViewEnabled)
-        {
-            int attachedCount = _tabs.Values.Count(t => !t.IsDetached);
-            gridScale = attachedCount >= 4 ? 0.65 : 0.85;
-        }
 
         Canvas.SetLeft(viewport, left);
         Canvas.SetTop(viewport, top);
         viewport.StretchToFill = stretch;
-        viewport.RenderResolutionScale = gridScale;
+        viewport.RenderResolutionScale = 1.0;
         viewport.Width = targetW;
         viewport.Height = targetH;
         viewport.IsVisible = !isHeadless;

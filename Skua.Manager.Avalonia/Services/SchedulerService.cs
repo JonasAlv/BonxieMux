@@ -984,18 +984,12 @@ public sealed class SchedulerService : ISchedulerService, IDisposable
             if (action == SystemPowerAction.SleepPC)
             {
                 jobVm.AddLog("Post-run action: Putting PC to sleep...");
-                if (OperatingSystem.IsWindows())
-                    Process.Start("rundll32.exe", "powrprof.dll,SetSuspendState 0,1,0");
-                else if (OperatingSystem.IsLinux())
-                    Process.Start("systemctl", "suspend");
+                Process.Start("systemctl", "suspend");
             }
             else if (action == SystemPowerAction.ShutdownPC)
             {
                 jobVm.AddLog("Post-run action: Initiating PC shutdown...");
-                if (OperatingSystem.IsWindows())
-                    Process.Start("shutdown.exe", "/s /t 30 /c \"BonxieMux: Scheduled task finished. Shutting down in 30 seconds.\"");
-                else if (OperatingSystem.IsLinux())
-                    Process.Start("systemctl", "poweroff");
+                Process.Start("systemctl", "poweroff");
             }
         }
         catch (Exception ex)

@@ -58,7 +58,7 @@ A Linux-native, tabbed multi-client derivative of Skua, engineered for advanced 
 ### Key Features
 * **Headless Mode:** Reduced framerate and quality viewport for minimal CPU/GPU usage per instance.
 * **Autonomous Scheduling:** Built-in queue to schedule scripts at specific dates and times.
-* **Unified Tabbed UI:** Embedded X11 interface with tabbed, multi-client management and Army controls.
+* **Unified Tabbed UI:** Native Linux Wayland DMA-BUF interface with tabbed, multi-client management and Army controls.
 * **Engine Optimizations:** Powered by Mugetsu (custom Ruffle build) with background connection stability.
 
 ### Disclaimer

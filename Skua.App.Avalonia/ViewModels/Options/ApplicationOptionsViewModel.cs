@@ -49,8 +49,8 @@ public partial class ApplicationOptionsViewModel : BotControlViewModelBase
     private static readonly string[] GeneralKeys = { "ShowCharNameOnTabs", "ShowCharNameInDetachedTitle", "SaveLogsToFile", "ClientAnim", "ReloginTryDelay", "ReloginWatchdog", "ClearFlashCache" };
     private static readonly string[] MugetsuKeys =
     {
-        "GraphicsApi",
         "MugetsuPerformanceMode",
+        "GraphicsApi",
         "MugetsuFrameInterpolation",
         "MugetsuFramePacing",
         "MugetsuFpsLimit",
@@ -64,16 +64,24 @@ public partial class ApplicationOptionsViewModel : BotControlViewModelBase
         "CheckJunkItemsUpdates", "AutoUpdateJunkItems"
     };
 
+    private readonly Action? _refreshMugetsu;
     private string _searchText = string.Empty;
     private OptionGroupViewModel _selectedSection;
 
-    public ApplicationOptionsViewModel(List<DisplayOptionItemViewModelBase> appOptions)
+    public ApplicationOptionsViewModel(List<DisplayOptionItemViewModelBase> appOptions, Action? refreshMugetsu = null)
         : base("Application Options", 580, 650)
     {
+        _refreshMugetsu = refreshMugetsu;
         ApplicationOptions = appOptions;
         BuildGroups();
         Sections = new List<OptionGroupViewModel> { OptionGroupViewModel.CreateAll(OptionGroups) }.Concat(OptionGroups).ToList();
         _selectedSection = Sections[0];
+    }
+
+    protected override void OnActivated()
+    {
+        base.OnActivated();
+        _refreshMugetsu?.Invoke();
     }
 
     public List<DisplayOptionItemViewModelBase> ApplicationOptions { get; }

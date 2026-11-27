@@ -212,6 +212,21 @@ public interface IScriptOption : INotifyPropertyChanged
     void SetAutoAntiLagContext(bool isFocusedTab, bool isGridTile);
 
     /// <summary>
+    /// Master switch for focus-based automatic audio mute across all tabs (pauses Mugetsu's audio backend).
+    /// </summary>
+    bool AutoMute { get; set; }
+
+    /// <summary>
+    /// When enabled, focusing a tab unmutes Mugetsu game audio for that tab.
+    /// </summary>
+    bool AutoMuteExcludeFocused { get; set; }
+
+    /// <summary>
+    /// When enabled, Grid View tiles are excluded from automatic audio mute while the window is focused.
+    /// </summary>
+    bool AutoMuteExcludeGridView { get; set; }
+
+    /// <summary>
     /// When enabled, automatically turns in-game Crowd Mode on when a script runs, and restores it when the script stops.
     /// </summary>
     bool AutoCrowdMode { get; set; }

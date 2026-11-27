@@ -107,6 +107,7 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
     private MugetsuPerfSnapshot? _telemetry;
     private NetworkStream? _bridgeStream;
     private byte[]? _lastVisiblePayloadBytes;
+    private byte[]? _lastMutedPayloadBytes;
     private byte[]? _lastFocusPayloadBytes;
     private byte[]? _lastResizePayloadBytes;
     private byte[]? _pendingFreeMemoryPayloadBytes;
@@ -374,6 +375,8 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
                     stream.Write(_lastResizePayloadBytes);
                 if (_lastVisiblePayloadBytes != null)
                     stream.Write(_lastVisiblePayloadBytes);
+                if (_lastMutedPayloadBytes != null)
+                    stream.Write(_lastMutedPayloadBytes);
                 if (_lastFocusPayloadBytes != null)
                     stream.Write(_lastFocusPayloadBytes);
                 foreach (byte[] settingBytes in _lastMugetsuSettings.Values)
@@ -535,6 +538,8 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             {
                 if (input == "visible")
                     _lastVisiblePayloadBytes = lineBytes;
+                else if (input == "muted")
+                    _lastMutedPayloadBytes = lineBytes;
                 else if (input == "focus")
                     _lastFocusPayloadBytes = lineBytes;
                 else if (input == "resize")

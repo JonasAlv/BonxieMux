@@ -30,33 +30,6 @@ cp -f "$LAUNCHER_BIN" "$BINARY_DIR/BonxieMux"
 cp -f "$LAUNCHER_BIN" "$BINARY_DIR/BonxieMux.Manager"
 chmod +x "$BINARY_DIR/BonxieMux" "$BINARY_DIR/BonxieMux.Manager"
 
-# Shell script launcher fallbacks
-cat << 'EOF' > "$BINARY_DIR/BonxieMux.sh"
-#!/usr/bin/env bash
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CURRENT_DIR="$SCRIPT_DIR/current"
-cd "$CURRENT_DIR"
-export LD_LIBRARY_PATH="$CURRENT_DIR:$CURRENT_DIR/runtimes/linux-x64/native:${LD_LIBRARY_PATH:-}"
-export PATH="$CURRENT_DIR:$PATH"
-export DOTNET_ROOT="$CURRENT_DIR"
-export DOTNET_EnableDiagnostics="${DOTNET_EnableDiagnostics:-0}"
-exec "$CURRENT_DIR/BonxieMux" "$@"
-EOF
-chmod +x "$BINARY_DIR/BonxieMux.sh"
-
-cat << 'EOF' > "$BINARY_DIR/BonxieMux.Manager.sh"
-#!/usr/bin/env bash
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CURRENT_DIR="$SCRIPT_DIR/current"
-cd "$CURRENT_DIR"
-export LD_LIBRARY_PATH="$CURRENT_DIR:$CURRENT_DIR/runtimes/linux-x64/native:${LD_LIBRARY_PATH:-}"
-export PATH="$CURRENT_DIR:$PATH"
-export DOTNET_ROOT="$CURRENT_DIR"
-export DOTNET_EnableDiagnostics="${DOTNET_EnableDiagnostics:-0}"
-exec "$CURRENT_DIR/BonxieMux.Manager" "$@"
-EOF
-chmod +x "$BINARY_DIR/BonxieMux.Manager.sh"
-
 # Create root icons if available
 if [[ -f "$APP_ICON" ]]; then
     cp -f "$APP_ICON" "$BINARY_DIR/bonxiemux.png"
