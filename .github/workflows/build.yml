@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Lint UI tokens and conventions
         run: python3 ./scripts/lint-ui.py
@@ -45,12 +45,12 @@ jobs:
         run: cargo test --locked --manifest-path Skua.WaylandHost/Cargo.toml
 
       - name: Install .NET 10 SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
@@ -58,7 +58,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Cache skua-mugetsu player
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: player
           key: ${{ runner.os }}-mugetsu-${{ hashFiles('Directory.Build.props') }}
@@ -74,7 +74,7 @@ jobs:
           ./build-binaries.sh
 
       - name: Upload build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: BonxieMux-${{ steps.build_bin.outputs.version }}-x86_64
           retention-days: 14
