@@ -57,14 +57,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Cache skua-mugetsu player
-        uses: actions/cache@v6
-        with:
-          path: player
-          key: ${{ runner.os }}-mugetsu-${{ hashFiles('Directory.Build.props') }}
-          restore-keys: |
-            ${{ runner.os }}-mugetsu-
-
       - name: Build portable Linux binaries
         id: build_bin
         run: |

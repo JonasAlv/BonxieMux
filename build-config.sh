@@ -41,11 +41,8 @@ if [[ -z "$APP_VERSION" || -z "$SKUA_PLAYER_VERSION" || -z "$SKUA_PLAYER_OS" ]];
     exit 1
 fi
 
-# Remote URLs & Cache Paths based strictly on property values
-SKUA_PLAYER_CACHE="$SCRIPT_DIR/player/${SKUA_PLAYER_VERSION}-${SKUA_PLAYER_OS}"
+# Remote URLs based strictly on property values (always fetched fresh unless --local-mugetsu is passed)
 SKUA_PLAYER_URL="https://github.com/JonasAlv/skua-mugetsu/releases/download/v${SKUA_PLAYER_VERSION}/linux-x86-64-v3.tar.gz"
-
-SKUA_PLAYER_V2_CACHE="$SCRIPT_DIR/player/${SKUA_PLAYER_VERSION}-${SKUA_PLAYER_OS}-x86-64-v2"
 SKUA_PLAYER_V2_URL="https://github.com/JonasAlv/skua-mugetsu/releases/download/v${SKUA_PLAYER_VERSION}/linux-x86-64-v2.tar.gz"
 
 # Resilient curl download helper
@@ -97,15 +94,15 @@ parse_common_args() {
     export REUSE_PAYLOAD
 }
 
-# Download and cache a skua-mugetsu tarball into <cache_dir>/Mugetsu
-fetch_mugetsu_to_cache() {
+# Download and extract a skua-mugetsu tarball directly into <dest_dir>
+fetch_mugetsu_to_dir() {
     local url="$1"
-    local cache_dir="$2"
-    local tmp_dir="$cache_dir/.extract.$$"
+    local dest_dir="$2"
+    local tmp_dir="$BUILD_DIR/.mugetsu_extract.$$"
     local tmp_archive="$tmp_dir/archive.tar.gz"
 
     rm -rf "$tmp_dir"
-    mkdir -p "$tmp_dir"
+    mkdir -p "$tmp_dir" "$dest_dir"
     if ! curl_download "$url" -o "$tmp_archive"; then
         rm -rf "$tmp_dir"
         return 1
@@ -114,11 +111,10 @@ fetch_mugetsu_to_cache() {
     tar -xzf "$tmp_archive" -C "$tmp_dir"
     rm -f "$tmp_archive"
 
-    rm -rf "$cache_dir/Mugetsu"
     if [[ -d "$tmp_dir/Mugetsu" ]]; then
-        mv "$tmp_dir/Mugetsu" "$cache_dir/Mugetsu"
+        cp -a "$tmp_dir/Mugetsu/." "$dest_dir/"
     else
-        mv "$tmp_dir" "$cache_dir/Mugetsu"
+        cp -a "$tmp_dir/." "$dest_dir/"
     fi
     rm -rf "$tmp_dir"
     return 0
@@ -313,21 +309,14 @@ assemble_payload() {
     fi
     cp -a "$SCRIPT_DIR/FFDec/." "$CURRENT_DIR/FFDec/"
 
-    # Copy or download official Skua Mugetsu Flash runner
+    # Copy local or fetch fresh official Skua Mugetsu Flash runner
     mkdir -p "$CURRENT_DIR/player" "$CURRENT_DIR/player-x86-64-v2"
     if [[ -n "$local_player" && -x "$local_player/Mugetsu" ]]; then
         echo "Using local Mugetsu from $local_player..."
         cp -a "$local_player/." "$CURRENT_DIR/player/"
-    elif [[ -s "$APP_BIN/player/Mugetsu" ]]; then
-        echo "Using bundled skua-mugetsu from $APP_BIN/player..."
-        cp -a "$APP_BIN/player/." "$CURRENT_DIR/player/"
-    elif [[ -s "$SKUA_PLAYER_CACHE/Mugetsu/Mugetsu" ]]; then
-        echo "Using cached skua-mugetsu from player/..."
-        cp -a "$SKUA_PLAYER_CACHE/Mugetsu/." "$CURRENT_DIR/player/"
     else
-        echo "Mugetsu binary not found locally. Fetching official skua-mugetsu v${SKUA_PLAYER_VERSION} from GitHub Releases..."
-        fetch_mugetsu_to_cache "$SKUA_PLAYER_URL" "$SKUA_PLAYER_CACHE"
-        cp -a "$SKUA_PLAYER_CACHE/Mugetsu/." "$CURRENT_DIR/player/"
+        echo "Fetching official skua-mugetsu v${SKUA_PLAYER_VERSION} from GitHub Releases..."
+        fetch_mugetsu_to_dir "$SKUA_PLAYER_URL" "$CURRENT_DIR/player"
     fi
 
     if [[ ! -s "$CURRENT_DIR/player/Mugetsu" ]]; then
@@ -340,12 +329,8 @@ assemble_payload() {
     if [[ -n "$local_player_v2" && -x "$local_player_v2/Mugetsu" ]]; then
         echo "Using local x86-64-v2 Mugetsu from $local_player_v2..."
         cp -a "$local_player_v2/." "$CURRENT_DIR/player-x86-64-v2/"
-    elif [[ -s "$APP_BIN/player-x86-64-v2/Mugetsu" ]]; then
-        cp -a "$APP_BIN/player-x86-64-v2/." "$CURRENT_DIR/player-x86-64-v2/"
-    elif [[ -s "$SKUA_PLAYER_V2_CACHE/Mugetsu/Mugetsu" ]]; then
-        cp -a "$SKUA_PLAYER_V2_CACHE/Mugetsu/." "$CURRENT_DIR/player-x86-64-v2/"
-    elif fetch_mugetsu_to_cache "$SKUA_PLAYER_V2_URL" "$SKUA_PLAYER_V2_CACHE" 2>/dev/null; then
-        cp -a "$SKUA_PLAYER_V2_CACHE/Mugetsu/." "$CURRENT_DIR/player-x86-64-v2/"
+    elif fetch_mugetsu_to_dir "$SKUA_PLAYER_V2_URL" "$CURRENT_DIR/player-x86-64-v2" 2>/dev/null; then
+        :
     fi
 
     if [[ -s "$CURRENT_DIR/player-x86-64-v2/Mugetsu" ]]; then
