@@ -149,12 +149,10 @@ ln -sf "../current/BonxieMux.Manager" "$mgr_appdir/usr/bin/BonxieMux-Manager"
 chmod -R a+rX "$skua_appdir" "$mgr_appdir"
 
 export APPIMAGE_EXTRACT_AND_RUN=1
-ARCH=x86_64 "$appimagetool_cmd" --comp zstd -n "$skua_appdir" "$BUILD_DIR/BonxieMux-${APP_VERSION}-x86_64.AppImage" &
-pid_app=$!
-ARCH=x86_64 "$appimagetool_cmd" --comp zstd -n "$mgr_appdir" "$BUILD_DIR/BonxieMux-Manager-${APP_VERSION}-x86_64.AppImage" &
-pid_mgr=$!
-wait "$pid_app"
-wait "$pid_mgr"
+# Run sequentially: APPIMAGE_EXTRACT_AND_RUN extracts to a deterministic /tmp/appimage_extracted_<hash>
+# path (running two in parallel races with ETXTBSY), and mksquashfs already saturates all CPU cores.
+ARCH=x86_64 "$appimagetool_cmd" --comp zstd -n "$skua_appdir" "$BUILD_DIR/BonxieMux-${APP_VERSION}-x86_64.AppImage"
+ARCH=x86_64 "$appimagetool_cmd" --comp zstd -n "$mgr_appdir" "$BUILD_DIR/BonxieMux-Manager-${APP_VERSION}-x86_64.AppImage"
 chmod +x "$BUILD_DIR/BonxieMux-${APP_VERSION}-x86_64.AppImage" "$BUILD_DIR/BonxieMux-Manager-${APP_VERSION}-x86_64.AppImage"
 
 rm -rf "$skua_appdir" "$mgr_appdir"
