@@ -25,6 +25,10 @@ use wayland_server::{
         wl_buffer::{self, WlBuffer},
         wl_callback::{self, WlCallback},
         wl_compositor::{self, WlCompositor},
+        wl_data_device::{self, WlDataDevice},
+        wl_data_device_manager::{self, WlDataDeviceManager},
+        wl_data_offer::{self, WlDataOffer},
+        wl_data_source::{self, WlDataSource},
         wl_keyboard::{self, KeyState, KeymapFormat, WlKeyboard},
         wl_output::{self, Mode, Subpixel, WlOutput},
         wl_pointer::{self, Axis, AxisSource, ButtonState, WlPointer},
@@ -438,6 +442,7 @@ fn run_dmabuf_loop(
     dh.create_global::<DmabufState, XdgWmBase, _>(2, ());
     dh.create_global::<DmabufState, WlSeat, _>(5, ());
     dh.create_global::<DmabufState, WlOutput, _>(3, ());
+    dh.create_global::<DmabufState, WlDataDeviceManager, _>(3, ());
 
     let ruffle_config_dir = std::env::var_os("XDG_CONFIG_HOME")
         .filter(|v| !v.is_empty())
@@ -1478,6 +1483,80 @@ impl Dispatch<WlPointer, ()> for DmabufState {
         _client: &Client,
         _resource: &WlPointer,
         _request: wl_pointer::Request,
+        _data: &(),
+        _dh: &DisplayHandle,
+        _data_init: &mut DataInit<'_, Self>,
+    ) {
+    }
+}
+
+impl GlobalDispatch<WlDataDeviceManager, ()> for DmabufState {
+    fn bind(
+        _state: &mut Self,
+        _dh: &DisplayHandle,
+        _client: &Client,
+        resource: New<WlDataDeviceManager>,
+        _global_data: &(),
+        data_init: &mut DataInit<'_, Self>,
+    ) {
+        data_init.init(resource, ());
+    }
+}
+
+impl Dispatch<WlDataDeviceManager, ()> for DmabufState {
+    fn request(
+        _state: &mut Self,
+        _client: &Client,
+        _resource: &WlDataDeviceManager,
+        request: wl_data_device_manager::Request,
+        _data: &(),
+        _dh: &DisplayHandle,
+        data_init: &mut DataInit<'_, Self>,
+    ) {
+        match request {
+            wl_data_device_manager::Request::CreateDataSource { id } => {
+                data_init.init(id, ());
+            }
+            wl_data_device_manager::Request::GetDataDevice { id, .. } => {
+                data_init.init(id, ());
+            }
+            _ => {}
+        }
+    }
+}
+
+impl Dispatch<WlDataDevice, ()> for DmabufState {
+    fn request(
+        _state: &mut Self,
+        _client: &Client,
+        _resource: &WlDataDevice,
+        _request: wl_data_device::Request,
+        _data: &(),
+        _dh: &DisplayHandle,
+        _data_init: &mut DataInit<'_, Self>,
+    ) {
+    }
+}
+
+impl Dispatch<WlDataSource, ()> for DmabufState {
+    fn request(
+        _state: &mut Self,
+        _client: &Client,
+        _resource: &WlDataSource,
+        _request: wl_data_source::Request,
+        _data: &(),
+        _dh: &DisplayHandle,
+        _data_init: &mut DataInit<'_, Self>,
+    ) {
+    }
+}
+
+impl Dispatch<WlDataOffer, ()> for DmabufState {
+    fn request(
+        _state: &mut Self,
+        _client: &Client,
+        _resource: &WlDataOffer,
+        _request: wl_data_offer::Request,
         _data: &(),
         _dh: &DisplayHandle,
         _data_init: &mut DataInit<'_, Self>,

@@ -93,7 +93,7 @@ public class LogService : ObservableRecipient, ILogService, IDisposable
         if (string.IsNullOrWhiteSpace(message))
             return;
         string clean = AnsiEscapeRegex.Replace(message, string.Empty).TrimEnd();
-        if (string.IsNullOrWhiteSpace(clean))
+        if (string.IsNullOrWhiteSpace(clean) || IsHarmlessMugetsuStartupNoise(clean))
             return;
         lock (_mugetsuLock)
         {
@@ -106,6 +106,11 @@ public class LogService : ObservableRecipient, ILogService, IDisposable
         if (ShouldPersistMugetsuLine(clean))
             _fileWriter.Add(LogType.Mugetsu, clean);
     }
+
+    private static bool IsHarmlessMugetsuStartupNoise(string line) =>
+        line.Contains("Failed to register [SansSerif] as Proportional", StringComparison.Ordinal)
+        || line.Contains("ruffle_desktop::backends::ui::fontconfig: Skipping font", StringComparison.Ordinal)
+        || line.Contains("ruffle_core::library: Failed to load device font from file", StringComparison.Ordinal);
 
     private static bool ShouldPersistMugetsuLine(string line)
     {

@@ -249,6 +249,8 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
         };
         start.ArgumentList.Add("--skua-bridge");
         start.ArgumentList.Add($"unix://{_unixSocketPath}");
+        start.ArgumentList.Add("--gamemode");
+        start.ArgumentList.Add("off");
         string? wlDisplay = !string.IsNullOrWhiteSpace(WaylandDisplay)
             ? WaylandDisplay
             : Environment.GetEnvironmentVariable("BONXIE_WL_DISPLAY");
