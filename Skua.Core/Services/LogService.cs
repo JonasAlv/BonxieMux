@@ -110,7 +110,10 @@ public class LogService : ObservableRecipient, ILogService, IDisposable
     private static bool IsHarmlessMugetsuStartupNoise(string line) =>
         line.Contains("Failed to register [SansSerif] as Proportional", StringComparison.Ordinal)
         || line.Contains("ruffle_desktop::backends::ui::fontconfig: Skipping font", StringComparison.Ordinal)
-        || line.Contains("ruffle_core::library: Failed to load device font from file", StringComparison.Ordinal);
+        || line.Contains("ruffle_core::library: Failed to load device font from file", StringComparison.Ordinal)
+        || line.Contains("ruffle_core::library: Unknown device font", StringComparison.Ordinal)
+        || line.Contains("Failed to initialize arboard clipboard", StringComparison.Ordinal)
+        || line.Contains("Subcompositor protocol not available, ignoring CSD", StringComparison.Ordinal);
 
     private static bool ShouldPersistMugetsuLine(string line)
     {

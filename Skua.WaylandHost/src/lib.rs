@@ -93,6 +93,54 @@ pub unsafe extern "C" fn bonxie_wl_set_frame_callback(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn bonxie_wl_set_clipboard_callback(
+    host: *mut BonxieWlHost,
+    cb: Option<extern "C" fn(usize, *const u8, usize)>,
+    user_data: usize,
+) {
+    if host.is_null() {
+        return;
+    }
+    (&*host)
+        .inner
+        .set_clipboard_callback(cb.map(|f| (f, user_data)));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn bonxie_wl_set_cursor_shape_callback(
+    host: *mut BonxieWlHost,
+    cb: Option<extern "C" fn(usize, u32)>,
+    user_data: usize,
+) {
+    if host.is_null() {
+        return;
+    }
+    (&*host)
+        .inner
+        .set_cursor_shape_callback(cb.map(|f| (f, user_data)));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn bonxie_wl_set_clipboard(
+    host: *mut BonxieWlHost,
+    utf8_ptr: *const u8,
+    len: usize,
+) {
+    if host.is_null() {
+        return;
+    }
+    let text = if utf8_ptr.is_null() || len == 0 {
+        String::new()
+    } else {
+        let slice = std::slice::from_raw_parts(utf8_ptr, len);
+        String::from_utf8_lossy(slice).into_owned()
+    };
+    (&*host)
+        .inner
+        .send_input(DmabufInput::SetClipboard { text });
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn bonxie_wl_poll_dmabuf(
     host: *mut BonxieWlHost,
     last_seq: u64,

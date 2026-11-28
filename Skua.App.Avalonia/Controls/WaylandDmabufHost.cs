@@ -41,6 +41,31 @@ internal static unsafe partial class BonxieWaylandNative
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_set_frame_callback")]
     public static partial void SetFrameCallback(IntPtr host, delegate* unmanaged[Cdecl]<nuint, void> cb, nuint userData);
 
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_set_clipboard_callback")]
+    public static partial void SetClipboardCallback(IntPtr host, delegate* unmanaged[Cdecl]<nuint, byte*, nuint, void> cb, nuint userData);
+
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_set_cursor_shape_callback")]
+    public static partial void SetCursorShapeCallback(IntPtr host, delegate* unmanaged[Cdecl]<nuint, uint, void> cb, nuint userData);
+
+    [LibraryImport(Lib, EntryPoint = "bonxie_wl_set_clipboard")]
+    public static partial void SetClipboardRaw(IntPtr host, byte* utf8Ptr, nuint len);
+
+    public static void SetClipboard(IntPtr host, string text)
+    {
+        if (host == IntPtr.Zero)
+            return;
+        if (string.IsNullOrEmpty(text))
+        {
+            SetClipboardRaw(host, null, 0);
+            return;
+        }
+        byte[] bytes = Encoding.UTF8.GetBytes(text);
+        fixed (byte* ptr = bytes)
+        {
+            SetClipboardRaw(host, ptr, (nuint)bytes.Length);
+        }
+    }
+
     [LibraryImport(Lib, EntryPoint = "bonxie_wl_import_dmabuf_texture")]
     public static partial int ImportDmabufTexture(
         IntPtr host,

@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -16,6 +17,7 @@ using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -265,6 +267,7 @@ public class GameHost : Control, ICustomHitTest
 
         if (_waylandHost != IntPtr.Zero)
         {
+            AttachClipboardCallback();
             var dmaVp = new WaylandDmabufViewport(
                 _waylandHost,
                 static () => { },
@@ -325,6 +328,7 @@ public class GameHost : Control, ICustomHitTest
         _flash = null;
         if (_waylandHost != IntPtr.Zero)
         {
+            DetachClipboardCallback();
             IntPtr h = _waylandHost;
             _waylandHost = IntPtr.Zero;
             _liveWaylandHosts.TryRemove(h, out _);
@@ -357,6 +361,148 @@ public class GameHost : Control, ICustomHitTest
         SendResizeIfNeeded();
     }
 
+    private static readonly Cursor s_cursorHidden = new(StandardCursorType.None);
+    private static readonly Cursor s_cursorHand = new(StandardCursorType.Hand);
+    private static readonly Cursor s_cursorIBeam = new(StandardCursorType.Ibeam);
+    private static readonly Cursor s_cursorGrab = new(StandardCursorType.DragMove);
+    private static readonly Cursor s_cursorCross = new(StandardCursorType.Cross);
+    private static readonly Cursor s_cursorWait = new(StandardCursorType.Wait);
+    private static readonly Cursor s_cursorNo = new(StandardCursorType.No);
+    private static readonly Cursor s_cursorHelp = new(StandardCursorType.Help);
+
+    private GCHandle _clipboardCallbackHandle;
+    private bool _pasteInFlight;
+    private bool _pasteReleasePending;
+
+    private static Cursor MapCursorShape(uint shape) => shape switch
+    {
+        0 => s_cursorHidden,
+        2 => s_cursorHand,
+        3 => s_cursorIBeam,
+        4 => s_cursorGrab,
+        5 => s_cursorCross,
+        6 => s_cursorWait,
+        7 => s_cursorNo,
+        8 => s_cursorHelp,
+        _ => Cursor.Default
+    };
+
+    private unsafe void AttachClipboardCallback()
+    {
+        if (_waylandHost == IntPtr.Zero || _clipboardCallbackHandle.IsAllocated)
+            return;
+        _clipboardCallbackHandle = GCHandle.Alloc(this);
+        nuint userData = (nuint)GCHandle.ToIntPtr(_clipboardCallbackHandle);
+        BonxieWaylandNative.SetClipboardCallback(_waylandHost, &OnNativeClipboardCopy, userData);
+        BonxieWaylandNative.SetCursorShapeCallback(_waylandHost, &OnNativeCursorShape, userData);
+    }
+
+    private unsafe void DetachClipboardCallback()
+    {
+        if (_waylandHost != IntPtr.Zero)
+        {
+            BonxieWaylandNative.SetClipboardCallback(_waylandHost, null, 0);
+            BonxieWaylandNative.SetCursorShapeCallback(_waylandHost, null, 0);
+        }
+        if (_clipboardCallbackHandle.IsAllocated)
+        {
+            _clipboardCallbackHandle.Free();
+            _clipboardCallbackHandle = default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static void OnNativeCursorShape(nuint userData, uint shape)
+    {
+        try
+        {
+            if (userData == 0)
+                return;
+            GCHandle handle = GCHandle.FromIntPtr((IntPtr)userData);
+            if (handle.Target is not GameHost host)
+                return;
+            Cursor cursor = MapCursorShape(shape);
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (!ReferenceEquals(host.Cursor, cursor))
+                    host.Cursor = cursor;
+            });
+        }
+        catch { }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static unsafe void OnNativeClipboardCopy(nuint userData, byte* utf8Ptr, nuint len)
+    {
+        try
+        {
+            if (userData == 0)
+                return;
+            GCHandle handle = GCHandle.FromIntPtr((IntPtr)userData);
+            if (handle.Target is not GameHost host)
+                return;
+            string text = (utf8Ptr != null && len > 0)
+                ? Encoding.UTF8.GetString(utf8Ptr, (int)Math.Min(len, 4 * 1024 * 1024))
+                : string.Empty;
+            Dispatcher.UIThread.Post(() =>
+            {
+                try
+                {
+                    _ = TopLevel.GetTopLevel(host)?.Clipboard?.SetTextAsync(text);
+                    if (host._waylandHost != IntPtr.Zero)
+                        BonxieWaylandNative.SetClipboard(host._waylandHost, text);
+                }
+                catch { }
+            });
+        }
+        catch { }
+    }
+
+    private async void SyncHostClipboardToWaylandAsync()
+    {
+        IntPtr wlHost = _waylandHost;
+        if (wlHost == IntPtr.Zero)
+            return;
+        try
+        {
+            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+            if (clipboard == null)
+                return;
+            string? text = await clipboard.TryGetTextAsync();
+            if (_waylandHost == wlHost && wlHost != IntPtr.Zero)
+                BonxieWaylandNative.SetClipboard(wlHost, text ?? string.Empty);
+        }
+        catch { }
+    }
+
+    private async void SyncClipboardAndForwardPasteAsync(IntPtr wlHost)
+    {
+        _pasteInFlight = true;
+        _pasteReleasePending = false;
+        try
+        {
+            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+            string? text = clipboard != null ? await clipboard.TryGetTextAsync() : null;
+            if (_waylandHost == wlHost && wlHost != IntPtr.Zero)
+                BonxieWaylandNative.SetClipboard(wlHost, text ?? string.Empty);
+        }
+        catch { }
+        finally
+        {
+            _pasteInFlight = false;
+            if (_waylandHost == wlHost && wlHost != IntPtr.Zero)
+            {
+                BonxieWaylandNative.Key(wlHost, 47, 1);
+                if (_pasteReleasePending)
+                {
+                    _pasteReleasePending = false;
+                    _pressedEvdevKeys.Remove(47);
+                    BonxieWaylandNative.Key(wlHost, 47, 0);
+                }
+            }
+        }
+    }
+
     public static void ForwardKey(bool down, string physical, string logical, bool ctrl, bool shift, bool alt)
     {
         if (_activeInstance is { _waylandHost: nint wlHost } && wlHost != IntPtr.Zero)
@@ -364,6 +510,17 @@ public class GameHost : Control, ICustomHitTest
             uint evdev = MapKeyToEvdev(physical, logical);
             if (evdev != 0)
             {
+                if (evdev == 47 && down && ctrl && !alt && !_activeInstance._pasteInFlight)
+                {
+                    _activeInstance._pressedEvdevKeys.Add(evdev);
+                    _activeInstance.SyncClipboardAndForwardPasteAsync(wlHost);
+                    return;
+                }
+                if (evdev == 47 && !down && _activeInstance._pasteInFlight)
+                {
+                    _activeInstance._pasteReleasePending = true;
+                    return;
+                }
                 if (down)
                     _activeInstance._pressedEvdevKeys.Add(evdev);
                 else
@@ -585,6 +742,7 @@ public class GameHost : Control, ICustomHitTest
     private void OnTrackedTopLevelActivated(object? sender, EventArgs e)
     {
         UpdateRefreshRateForWindow();
+        SyncHostClipboardToWaylandAsync();
     }
 
     private void OnTrackedTopLevelPositionChanged(object? sender, PixelPointEventArgs e)
@@ -752,6 +910,7 @@ public class GameHost : Control, ICustomHitTest
     {
         base.OnGotFocus(e);
         _activeInstance = this;
+        SyncHostClipboardToWaylandAsync();
     }
 
     protected override void OnLostFocus(FocusChangedEventArgs e)

@@ -1,5 +1,5 @@
-use std::io::{Seek, Write};
-use std::os::fd::{AsFd, AsRawFd, OwnedFd, RawFd};
+use std::io::{Read, Seek, Write};
+use std::os::fd::{AsFd, AsRawFd, FromRawFd, OwnedFd, RawFd};
 use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 use std::process::Command;
@@ -9,6 +9,10 @@ use std::sync::{Arc, Mutex, OnceLock};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
+use wayland_protocols::wp::cursor_shape::v1::server::{
+    wp_cursor_shape_device_v1::{self, Shape as CursorShape, WpCursorShapeDeviceV1},
+    wp_cursor_shape_manager_v1::{self, WpCursorShapeManagerV1},
+};
 use wayland_protocols::wp::linux_dmabuf::zv1::server::{
     zwp_linux_buffer_params_v1::{self, ZwpLinuxBufferParamsV1},
     zwp_linux_dmabuf_feedback_v1::{self, TrancheFlags, ZwpLinuxDmabufFeedbackV1},
@@ -39,7 +43,7 @@ use wayland_server::{
         wl_surface::{self, WlSurface},
     },
     Client, DataInit, Dispatch, Display, DisplayHandle, GlobalDispatch, ListeningSocket, New,
-    Resource,
+    Resource, WEnum,
 };
 
 macro_rules! warn { ($($t:tt)*) => { eprintln!($($t)*); }; }
@@ -80,9 +84,12 @@ pub enum DmabufInput {
     SetUncapped { uncapped: bool },
     SetInterpolation { enabled: bool },
     SetVisible { visible: bool },
+    SetClipboard { text: String },
 }
 
 pub type DmabufNotifyFn = extern "C" fn(usize);
+pub type ClipboardCopyFn = extern "C" fn(usize, *const u8, usize);
+pub type CursorShapeFn = extern "C" fn(usize, u32);
 
 pub struct DmabufHost {
     pub socket_name: String,
@@ -90,6 +97,8 @@ pub struct DmabufHost {
     pub frame: Arc<Mutex<Option<PublishedDmabuf>>>,
     pub frame_seq: Arc<AtomicU64>,
     on_frame: Arc<Mutex<Option<(DmabufNotifyFn, usize)>>>,
+    on_clipboard: Arc<Mutex<Option<(ClipboardCopyFn, usize)>>>,
+    on_cursor_shape: Arc<Mutex<Option<(CursorShapeFn, usize)>>>,
     input_tx: Sender<DmabufInput>,
     acquired_serial: Arc<AtomicU64>,
     presented_serial: Arc<AtomicU64>,
@@ -116,6 +125,10 @@ impl DmabufHost {
         let frame_seq_clone = Arc::clone(&frame_seq);
         let on_frame = Arc::new(Mutex::new(None));
         let on_frame_clone = Arc::clone(&on_frame);
+        let on_clipboard = Arc::new(Mutex::new(None));
+        let on_clipboard_clone = Arc::clone(&on_clipboard);
+        let on_cursor_shape = Arc::new(Mutex::new(None));
+        let on_cursor_shape_clone = Arc::clone(&on_cursor_shape);
         let (input_tx, input_rx) = mpsc::channel();
         let acquired_serial = Arc::new(AtomicU64::new(0));
         let acquired_clone = Arc::clone(&acquired_serial);
@@ -133,6 +146,8 @@ impl DmabufHost {
                     frame_clone,
                     frame_seq_clone,
                     on_frame_clone,
+                    on_clipboard_clone,
+                    on_cursor_shape_clone,
                     input_rx,
                     acquired_clone,
                     presented_clone,
@@ -149,6 +164,8 @@ impl DmabufHost {
             frame,
             frame_seq,
             on_frame,
+            on_clipboard,
+            on_cursor_shape,
             input_tx,
             acquired_serial,
             presented_serial,
@@ -160,6 +177,18 @@ impl DmabufHost {
 
     pub fn set_frame_callback(&self, cb: Option<(DmabufNotifyFn, usize)>) {
         if let Ok(mut guard) = self.on_frame.lock() {
+            *guard = cb;
+        }
+    }
+
+    pub fn set_clipboard_callback(&self, cb: Option<(ClipboardCopyFn, usize)>) {
+        if let Ok(mut guard) = self.on_clipboard.lock() {
+            *guard = cb;
+        }
+    }
+
+    pub fn set_cursor_shape_callback(&self, cb: Option<(CursorShapeFn, usize)>) {
+        if let Ok(mut guard) = self.on_cursor_shape.lock() {
             *guard = cb;
         }
     }
@@ -247,11 +276,19 @@ struct SurfaceData {
     pending_callbacks: Vec<WlCallback>,
 }
 
+#[derive(Default)]
+struct DataSourceData {
+    mime_types: Mutex<Vec<String>>,
+}
+
 struct DmabufState {
     frame: Arc<Mutex<Option<PublishedDmabuf>>>,
     frame_seq: Arc<AtomicU64>,
     frame_serial: u64,
     on_frame: Arc<Mutex<Option<(DmabufNotifyFn, usize)>>>,
+    on_clipboard: Arc<Mutex<Option<(ClipboardCopyFn, usize)>>>,
+    on_cursor_shape: Arc<Mutex<Option<(CursorShapeFn, usize)>>>,
+    last_cursor_shape: u32,
     start_time: Instant,
     desired_width: i32,
     desired_height: i32,
@@ -262,6 +299,8 @@ struct DmabufState {
     xdg_surface: Option<XdgSurface>,
     pointers: Vec<WlPointer>,
     keyboards: Vec<WlKeyboard>,
+    data_devices: Vec<WlDataDevice>,
+    clipboard_text: Option<String>,
     outputs: Vec<WlOutput>,
     serial_counter: u32,
     pointer_entered: bool,
@@ -295,6 +334,35 @@ impl DmabufState {
 
     fn time_ms(&self) -> u32 {
         self.start_time.elapsed().as_millis() as u32
+    }
+
+    fn notify_cursor_shape(&mut self, shape: u32) {
+        if self.last_cursor_shape == shape {
+            return;
+        }
+        self.last_cursor_shape = shape;
+        if let Ok(cb_opt) = self.on_cursor_shape.lock() {
+            if let Some((cb, user_data)) = *cb_opt {
+                cb(user_data, shape);
+            }
+        }
+    }
+
+    fn send_clipboard_offer_to(&self, dd: &WlDataDevice, dh: &DisplayHandle, text: &str) {
+        let Ok(client) = dh.get_client(dd.id()) else {
+            return;
+        };
+        if let Ok(offer) = client.create_resource::<WlDataOffer, String, DmabufState>(
+            dh,
+            dd.version(),
+            text.to_string(),
+        ) {
+            dd.data_offer(&offer);
+            offer.offer("text/plain;charset=utf-8".to_string());
+            offer.offer("text/plain".to_string());
+            offer.offer("UTF8_STRING".to_string());
+            dd.selection(Some(&offer));
+        }
     }
 
     fn send_configure_size(&mut self, w: i32, h: i32) {
@@ -423,6 +491,8 @@ fn run_dmabuf_loop(
     frame: Arc<Mutex<Option<PublishedDmabuf>>>,
     frame_seq: Arc<AtomicU64>,
     on_frame: Arc<Mutex<Option<(DmabufNotifyFn, usize)>>>,
+    on_clipboard: Arc<Mutex<Option<(ClipboardCopyFn, usize)>>>,
+    on_cursor_shape: Arc<Mutex<Option<(CursorShapeFn, usize)>>>,
     input_rx: Receiver<DmabufInput>,
     acquired_serial: Arc<AtomicU64>,
     presented_serial: Arc<AtomicU64>,
@@ -443,6 +513,7 @@ fn run_dmabuf_loop(
     dh.create_global::<DmabufState, WlSeat, _>(5, ());
     dh.create_global::<DmabufState, WlOutput, _>(3, ());
     dh.create_global::<DmabufState, WlDataDeviceManager, _>(3, ());
+    dh.create_global::<DmabufState, WpCursorShapeManagerV1, _>(1, ());
 
     let ruffle_config_dir = std::env::var_os("XDG_CONFIG_HOME")
         .filter(|v| !v.is_empty())
@@ -463,6 +534,9 @@ fn run_dmabuf_loop(
         frame_seq,
         frame_serial: 0,
         on_frame,
+        on_clipboard,
+        on_cursor_shape,
+        last_cursor_shape: 1,
         start_time: Instant::now(),
         desired_width: width as i32,
         desired_height: height as i32,
@@ -473,6 +547,8 @@ fn run_dmabuf_loop(
         xdg_surface: None,
         pointers: Vec::new(),
         keyboards: Vec::new(),
+        data_devices: Vec::new(),
+        clipboard_text: None,
         outputs: Vec::new(),
         serial_counter: 1,
         pointer_entered: false,
@@ -502,7 +578,7 @@ fn run_dmabuf_loop(
         }
 
         while let Ok(ev) = input_rx.try_recv() {
-            handle_input(&mut state, ev);
+            handle_input(&mut state, &dh, ev);
         }
 
         let _ = display.dispatch_clients(&mut state);
@@ -593,7 +669,7 @@ fn run_dmabuf_loop(
     }
 }
 
-fn handle_input(state: &mut DmabufState, ev: DmabufInput) {
+fn handle_input(state: &mut DmabufState, dh: &DisplayHandle, ev: DmabufInput) {
     let time = state.time_ms();
     match ev {
         DmabufInput::PointerMotion { x, y } => {
@@ -766,6 +842,14 @@ fn handle_input(state: &mut DmabufState, ev: DmabufInput) {
                     state.send_configure_size(w, h);
                 }
                 state.flush_frame_callbacks();
+            }
+        }
+        DmabufInput::SetClipboard { text } => {
+            state.clipboard_text = Some(text.clone());
+            state.data_devices.retain(|dd| dd.is_alive());
+            let devices = state.data_devices.clone();
+            for dd in &devices {
+                state.send_clipboard_offer_to(dd, dh, &text);
             }
         }
     }
@@ -1479,14 +1563,90 @@ impl Dispatch<WlSeat, ()> for DmabufState {
 
 impl Dispatch<WlPointer, ()> for DmabufState {
     fn request(
-        _state: &mut Self,
+        state: &mut Self,
         _client: &Client,
         _resource: &WlPointer,
-        _request: wl_pointer::Request,
+        request: wl_pointer::Request,
         _data: &(),
         _dh: &DisplayHandle,
         _data_init: &mut DataInit<'_, Self>,
     ) {
+        if let wl_pointer::Request::SetCursor { surface: None, .. } = request {
+            state.notify_cursor_shape(0);
+        }
+    }
+}
+
+impl GlobalDispatch<WpCursorShapeManagerV1, ()> for DmabufState {
+    fn bind(
+        _state: &mut Self,
+        _dh: &DisplayHandle,
+        _client: &Client,
+        resource: New<WpCursorShapeManagerV1>,
+        _global_data: &(),
+        data_init: &mut DataInit<'_, Self>,
+    ) {
+        data_init.init(resource, ());
+    }
+}
+
+impl Dispatch<WpCursorShapeManagerV1, ()> for DmabufState {
+    fn request(
+        _state: &mut Self,
+        _client: &Client,
+        _resource: &WpCursorShapeManagerV1,
+        request: wp_cursor_shape_manager_v1::Request,
+        _data: &(),
+        _dh: &DisplayHandle,
+        data_init: &mut DataInit<'_, Self>,
+    ) {
+        match request {
+            wp_cursor_shape_manager_v1::Request::GetPointer {
+                cursor_shape_device,
+                ..
+            }
+            | wp_cursor_shape_manager_v1::Request::GetTabletToolV2 {
+                cursor_shape_device,
+                ..
+            } => {
+                data_init.init(cursor_shape_device, ());
+            }
+            _ => {}
+        }
+    }
+}
+
+impl Dispatch<WpCursorShapeDeviceV1, ()> for DmabufState {
+    fn request(
+        state: &mut Self,
+        _client: &Client,
+        _resource: &WpCursorShapeDeviceV1,
+        request: wp_cursor_shape_device_v1::Request,
+        _data: &(),
+        _dh: &DisplayHandle,
+        _data_init: &mut DataInit<'_, Self>,
+    ) {
+        if let wp_cursor_shape_device_v1::Request::SetShape {
+            shape: WEnum::Value(shape),
+            ..
+        } = request
+        {
+            let code = match shape {
+                CursorShape::Default | CursorShape::ContextMenu => 1,
+                CursorShape::Pointer => 2,
+                CursorShape::Text | CursorShape::VerticalText => 3,
+                CursorShape::Grab
+                | CursorShape::Grabbing
+                | CursorShape::Move
+                | CursorShape::AllScroll => 4,
+                CursorShape::Crosshair => 5,
+                CursorShape::Wait | CursorShape::Progress => 6,
+                CursorShape::NotAllowed | CursorShape::NoDrop => 7,
+                CursorShape::Help => 8,
+                _ => 1,
+            };
+            state.notify_cursor_shape(code);
+        }
     }
 }
 
@@ -1505,20 +1665,25 @@ impl GlobalDispatch<WlDataDeviceManager, ()> for DmabufState {
 
 impl Dispatch<WlDataDeviceManager, ()> for DmabufState {
     fn request(
-        _state: &mut Self,
+        state: &mut Self,
         _client: &Client,
         _resource: &WlDataDeviceManager,
         request: wl_data_device_manager::Request,
         _data: &(),
-        _dh: &DisplayHandle,
+        dh: &DisplayHandle,
         data_init: &mut DataInit<'_, Self>,
     ) {
         match request {
             wl_data_device_manager::Request::CreateDataSource { id } => {
-                data_init.init(id, ());
+                data_init.init(id, DataSourceData::default());
             }
             wl_data_device_manager::Request::GetDataDevice { id, .. } => {
-                data_init.init(id, ());
+                let dd = data_init.init(id, ());
+                state.data_devices.retain(|d| d.is_alive());
+                state.data_devices.push(dd.clone());
+                if let Some(text) = state.clipboard_text.clone() {
+                    state.send_clipboard_offer_to(&dd, dh, &text);
+                }
             }
             _ => {}
         }
@@ -1527,40 +1692,90 @@ impl Dispatch<WlDataDeviceManager, ()> for DmabufState {
 
 impl Dispatch<WlDataDevice, ()> for DmabufState {
     fn request(
-        _state: &mut Self,
+        state: &mut Self,
         _client: &Client,
         _resource: &WlDataDevice,
-        _request: wl_data_device::Request,
+        request: wl_data_device::Request,
         _data: &(),
         _dh: &DisplayHandle,
         _data_init: &mut DataInit<'_, Self>,
     ) {
+        if let wl_data_device::Request::SetSelection {
+            source: Some(src), ..
+        } = request
+        {
+            let mime = src
+                .data::<DataSourceData>()
+                .and_then(|d| d.mime_types.lock().ok())
+                .and_then(|mimes| {
+                    for preferred in ["text/plain;charset=utf-8", "text/plain", "UTF8_STRING"] {
+                        if mimes.iter().any(|m| m == preferred) {
+                            return Some(preferred.to_string());
+                        }
+                    }
+                    mimes.iter().find(|m| m.starts_with("text/")).cloned()
+                });
+            let Some(mime) = mime else {
+                return;
+            };
+            let mut fds = [-1i32; 2];
+            if unsafe { libc::pipe2(fds.as_mut_ptr(), libc::O_CLOEXEC) } != 0 {
+                return;
+            }
+            let read_fd = unsafe { OwnedFd::from_raw_fd(fds[0]) };
+            let write_fd = unsafe { OwnedFd::from_raw_fd(fds[1]) };
+            src.send(mime, write_fd.as_fd());
+            drop(write_fd);
+
+            let on_clipboard = Arc::clone(&state.on_clipboard);
+            let _ = std::thread::Builder::new()
+                .name("bonxie-clip-rx".to_string())
+                .spawn(move || {
+                    let file = std::fs::File::from(read_fd);
+                    let mut buf = Vec::new();
+                    let _ = file.take(4 * 1024 * 1024).read_to_end(&mut buf);
+                    if let Ok(cb_opt) = on_clipboard.lock() {
+                        if let Some((cb, user_data)) = *cb_opt {
+                            cb(user_data, buf.as_ptr(), buf.len());
+                        }
+                    }
+                });
+        }
     }
 }
 
-impl Dispatch<WlDataSource, ()> for DmabufState {
+impl Dispatch<WlDataSource, DataSourceData> for DmabufState {
     fn request(
         _state: &mut Self,
         _client: &Client,
         _resource: &WlDataSource,
-        _request: wl_data_source::Request,
-        _data: &(),
+        request: wl_data_source::Request,
+        data: &DataSourceData,
         _dh: &DisplayHandle,
         _data_init: &mut DataInit<'_, Self>,
     ) {
+        if let wl_data_source::Request::Offer { mime_type } = request {
+            if let Ok(mut mimes) = data.mime_types.lock() {
+                mimes.push(mime_type);
+            }
+        }
     }
 }
 
-impl Dispatch<WlDataOffer, ()> for DmabufState {
+impl Dispatch<WlDataOffer, String> for DmabufState {
     fn request(
         _state: &mut Self,
         _client: &Client,
         _resource: &WlDataOffer,
-        _request: wl_data_offer::Request,
-        _data: &(),
+        request: wl_data_offer::Request,
+        data: &String,
         _dh: &DisplayHandle,
         _data_init: &mut DataInit<'_, Self>,
     ) {
+        if let wl_data_offer::Request::Receive { fd, .. } = request {
+            let mut file = std::fs::File::from(fd);
+            let _ = file.write_all(data.as_bytes());
+        }
     }
 }
 
