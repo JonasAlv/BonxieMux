@@ -15,8 +15,9 @@ internal static class LogTabs
         IDispatcherService dispatcherService = s.GetRequiredService<IDispatcherService>();
         return new[]
         {
-            Create("Debug", LogType.Debug),
             Create("Script", LogType.Script),
+            Create("Mugetsu", LogType.Mugetsu),
+            Create("Debug", LogType.Debug),
             Create("Flash", LogType.Flash)
         };
 

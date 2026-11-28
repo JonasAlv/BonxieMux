@@ -1395,6 +1395,14 @@ impl Dispatch<XdgSurface, ()> for DmabufState {
     ) {
         if let xdg_surface::Request::GetToplevel { id } = request {
             let tl = data_init.init(id, ());
+            // Clear any stale state from a previous killed/restarted Mugetsu client.
+            state.displayed_buffer = None;
+            state.staged_buffer = None;
+            state.pending_frame_callbacks.clear();
+            state.pending_cb_since = None;
+            state.hidden_shrunk = false;
+            state.configured_width = state.desired_width;
+            state.configured_height = state.desired_height;
             let serial = state.next_serial();
             tl.configure(state.desired_width, state.desired_height, vec![4, 0, 0, 0]);
             resource.configure(serial);

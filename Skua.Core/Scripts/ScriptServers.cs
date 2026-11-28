@@ -385,12 +385,13 @@ public partial class ScriptServers : ObservableRecipient, IScriptServers
 
         if (!ReloginFallbackEnabled)
         {
-            // Without the Relogin Fallback option there is no hop to whichever server is free: the preferred and
-            // Relogin Server picks are retried even after a failed attempt, and null makes the caller wait and retry
-            Server? preferredServer = FindByName(candidates, preferredName, true);
+            // Without the Relogin Fallback option there is no hop to whichever server is free:
+            // avoid servers that just stalled/restarted during their cooldown so the caller waits instead of hammering them.
+            HashSet<string> stalled = new(RecentlyStalledServers(), StringComparer.OrdinalIgnoreCase);
+            Server? preferredServer = FindByName(candidates, preferredName, true, stalled);
             if (preferredServer is null && Options.AutoReloginAny)
-                preferredServer = candidates.Find(x => x.IP != LastIP && !triedServers.Contains(x.Name ?? string.Empty));
-            return preferredServer ?? FindByName(candidates, Options.ReloginServer, true);
+                preferredServer = candidates.Find(x => x.IP != LastIP && !triedServers.Contains(x.Name ?? string.Empty) && !stalled.Contains(x.Name ?? string.Empty));
+            return preferredServer ?? FindByName(candidates, Options.ReloginServer, true, stalled);
         }
 
         // Servers where a login just got stuck count as tried, as long as some other server is left.

@@ -28,6 +28,11 @@ public interface ILogService
     void FlashLog(string message);
 
     /// <summary>
+    /// Writes a Mugetsu / Ruffle engine terminal log line.
+    /// </summary>
+    void MugetsuLog(string message);
+
+    /// <summary>
     /// Clears all log entries of the specified log type.
     /// </summary>
     /// <param name="logType">The type of log to clear. Specifies which category of log entries will be removed.</param>

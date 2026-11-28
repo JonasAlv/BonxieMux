@@ -400,9 +400,7 @@ public class GameHost : Control, ICustomHitTest
 
     public static void ForwardFocus(bool focused)
     {
-        if (_activeInstance is { _waylandHost: nint wlHost } && wlHost != IntPtr.Zero)
-            return;
-        _activeInstance?.DispatchInput(new { input = "focus", focused });
+        // Wayland handles window/keyboard focus natively via wl_keyboard.enter/leave.
     }
 
     public static void ForwardClearKeys()
@@ -412,9 +410,7 @@ public class GameHost : Control, ICustomHitTest
             foreach (uint code in _activeInstance._pressedEvdevKeys)
                 BonxieWaylandNative.Key(wlHost, code, 0);
             _activeInstance._pressedEvdevKeys.Clear();
-            return;
         }
-        _activeInstance?.DispatchInput(new { input = "clear_keys" });
     }
 
     private static readonly Dictionary<string, uint> EvdevKeyMap = new(StringComparer.OrdinalIgnoreCase)
@@ -756,13 +752,11 @@ public class GameHost : Control, ICustomHitTest
     {
         base.OnGotFocus(e);
         _activeInstance = this;
-        DispatchInput(new { input = "focus", focused = true });
     }
 
     protected override void OnLostFocus(FocusChangedEventArgs e)
     {
         base.OnLostFocus(e);
-        DispatchInput(new { input = "focus", focused = false });
     }
 
     protected override Size ArrangeOverride(Size finalSize)

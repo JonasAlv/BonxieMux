@@ -4,16 +4,19 @@ using Skua.Core.Interfaces;
 using Skua.Core.Messaging;
 using Skua.Core.Models;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace Skua.Core.Services;
 
 public class LogService : ObservableRecipient, ILogService, IDisposable
 {
+    private static readonly Regex AnsiEscapeRegex = new(@"\x1B\[[0-9;]*[A-Za-z]", RegexOptions.Compiled);
     private readonly DebugListener _debugListener;
-    private const int MaxLogEntries = 10000;
+    private const int MaxLogEntries = 5000;
     private readonly object _debugLock = new();
     private readonly object _scriptLock = new();
     private readonly object _flashLock = new();
+    private readonly object _mugetsuLock = new();
     private readonly LogFileWriter _fileWriter;
 
     public LogService(ISettingsService settingsService)
@@ -38,6 +41,7 @@ public class LogService : ObservableRecipient, ILogService, IDisposable
     private readonly List<string> _debugLogs = new();
     private readonly List<string> _scriptLogs = new();
     private readonly List<string> _flashLogs = new();
+    private readonly List<string> _mugetsuLogs = new();
 
     public void DebugLog(string message)
     {
@@ -84,6 +88,43 @@ public class LogService : ObservableRecipient, ILogService, IDisposable
         _fileWriter.Add(LogType.Script, message);
     }
 
+    public void MugetsuLog(string? message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return;
+        string clean = AnsiEscapeRegex.Replace(message, string.Empty).TrimEnd();
+        if (string.IsNullOrWhiteSpace(clean))
+            return;
+        lock (_mugetsuLock)
+        {
+            if (_mugetsuLogs.Count >= MaxLogEntries)
+                _mugetsuLogs.RemoveAt(0);
+            _mugetsuLogs.Add(clean);
+        }
+        Messenger.Send(new LogsChangedMessage(LogType.Mugetsu));
+        Messenger.Send(new AddLogMessage(LogType.Mugetsu, clean));
+        if (ShouldPersistMugetsuLine(clean))
+            _fileWriter.Add(LogType.Mugetsu, clean);
+    }
+
+    private static bool ShouldPersistMugetsuLine(string line)
+    {
+        // Skip repetitive 5-second perf telemetry lines on disk (still parsed in memory for PerfRecorder).
+        if (line.Contains("ruffle_aqw_perf:", StringComparison.Ordinal))
+            return false;
+
+        // Always persist warnings, errors, panics, bridge lifecycle, and startup/graphics info.
+        return line.Contains(" WARN ", StringComparison.Ordinal)
+            || line.Contains(" ERROR ", StringComparison.Ordinal)
+            || line.Contains("panic", StringComparison.OrdinalIgnoreCase)
+            || line.Contains("fatal", StringComparison.OrdinalIgnoreCase)
+            || line.Contains("Skua bridge", StringComparison.OrdinalIgnoreCase)
+            || line.Contains("Using graphics API", StringComparison.OrdinalIgnoreCase)
+            || line.Contains("Using preferred backend", StringComparison.OrdinalIgnoreCase)
+            || line.Contains("Using fallback backend", StringComparison.OrdinalIgnoreCase)
+            || line.Contains("Mugetsu ", StringComparison.Ordinal);
+    }
+
     public void ClearLog(LogType logType)
     {
         switch (logType)
@@ -102,19 +143,30 @@ public class LogService : ObservableRecipient, ILogService, IDisposable
                 lock (_flashLock)
                     _flashLogs.Clear();
                 break;
+
+            case LogType.Mugetsu:
+                lock (_mugetsuLock)
+                    _mugetsuLogs.Clear();
+                break;
         }
         Messenger.Send(new LogsChangedMessage(logType));
     }
 
     public List<string> GetLogs(LogType logType)
     {
-        return logType switch
+        switch (logType)
         {
-            LogType.Debug => new List<string>(_debugLogs),
-            LogType.Script => new List<string>(_scriptLogs),
-            LogType.Flash => new List<string>(_flashLogs),
-            _ => new()
-        };
+            case LogType.Debug:
+                lock (_debugLock) return new List<string>(_debugLogs);
+            case LogType.Script:
+                lock (_scriptLock) return new List<string>(_scriptLogs);
+            case LogType.Flash:
+                lock (_flashLock) return new List<string>(_flashLogs);
+            case LogType.Mugetsu:
+                lock (_mugetsuLock) return new List<string>(_mugetsuLogs);
+            default:
+                return new();
+        }
     }
 
     private bool _disposed = false;
@@ -149,6 +201,7 @@ public class LogService : ObservableRecipient, ILogService, IDisposable
             _debugLogs.Clear();
             _scriptLogs.Clear();
             _flashLogs.Clear();
+            _mugetsuLogs.Clear();
         }
 
         _disposed = true;

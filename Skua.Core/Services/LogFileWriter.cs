@@ -21,11 +21,15 @@ internal sealed partial class LogFileWriter : IDisposable
     private readonly string _directory;
     private readonly object _lock = new();
     private readonly StringBuilder _pending = new();
+    private readonly StringBuilder _pendingMugetsu = new();
     private readonly Timer _timer;
     private string _account = "unknown";
     private string? _lastLine;
     private string? _lastLineTime;
     private int _repeats;
+    private string? _lastMugetsuLine;
+    private string? _lastMugetsuTime;
+    private int _mugetsuRepeats;
     private bool? _enabled;
     private DateTime _enabledReadAt;
     private bool _cleanedUp;
@@ -50,10 +54,13 @@ internal sealed partial class LogFileWriter : IDisposable
                 return;
 
             AppendRepeatSummary();
+            AppendMugetsuRepeatSummary();
             FlushLocked();
             _account = account;
             _lastLine = null;
             _lastLineTime = null;
+            _lastMugetsuLine = null;
+            _lastMugetsuTime = null;
         }
     }
 
@@ -70,6 +77,24 @@ internal sealed partial class LogFileWriter : IDisposable
             {
                 if (_enabled == false || _pending.Length > 1_000_000)
                     _pending.Clear();
+                if (_enabled == false || _pendingMugetsu.Length > 1_000_000)
+                    _pendingMugetsu.Clear();
+                return;
+            }
+
+            if (type == LogType.Mugetsu)
+            {
+                if (text == _lastMugetsuLine)
+                {
+                    _lastMugetsuTime = time;
+                    if (++_mugetsuRepeats >= RepeatSummaryEvery)
+                        AppendMugetsuRepeatSummary();
+                    return;
+                }
+
+                AppendMugetsuRepeatSummary();
+                _lastMugetsuLine = text;
+                _pendingMugetsu.Append(StartsWithTime().IsMatch(text) ? text : $"[{time}] {text}").Append('\n');
                 return;
             }
 
@@ -106,6 +131,7 @@ internal sealed partial class LogFileWriter : IDisposable
                 return;
 
             AppendRepeatSummary();
+            AppendMugetsuRepeatSummary();
             _disposed = true;
             FlushLocked();
         }
@@ -120,20 +146,33 @@ internal sealed partial class LogFileWriter : IDisposable
         _repeats = 0;
     }
 
+    private void AppendMugetsuRepeatSummary()
+    {
+        if (_mugetsuRepeats == 0)
+            return;
+
+        _pendingMugetsu.Append($"[{_lastMugetsuTime}] (previous line repeated {_mugetsuRepeats} more time{(_mugetsuRepeats == 1 ? string.Empty : "s")})\n");
+        _mugetsuRepeats = 0;
+    }
+
     private void FlushLocked()
     {
-        if (_pending.Length == 0)
+        if (_pending.Length == 0 && _pendingMugetsu.Length == 0)
             return;
 
         if (!IsEnabled())
         {
             if (_enabled == false || _pending.Length > 1_000_000)
                 _pending.Clear();
+            if (_enabled == false || _pendingMugetsu.Length > 1_000_000)
+                _pendingMugetsu.Clear();
             return;
         }
 
         string text = _pending.ToString();
         _pending.Clear();
+        string mugetsuText = _pendingMugetsu.ToString();
+        _pendingMugetsu.Clear();
         try
         {
             Directory.CreateDirectory(_directory);
@@ -143,9 +182,18 @@ internal sealed partial class LogFileWriter : IDisposable
                 _cleanedUp = true;
                 DeleteOldFiles();
             }
-            string currentLogPath = CurrentFile();
-            File.AppendAllText(currentLogPath, text, Encoding.UTF8);
-            ClientFileSources.RestrictFilePermissions(currentLogPath);
+            if (text.Length > 0)
+            {
+                string currentLogPath = CurrentFile(suffix: null);
+                File.AppendAllText(currentLogPath, text, Encoding.UTF8);
+                ClientFileSources.RestrictFilePermissions(currentLogPath);
+            }
+            if (mugetsuText.Length > 0)
+            {
+                string mugetsuLogPath = CurrentFile(suffix: "mugetsu");
+                File.AppendAllText(mugetsuLogPath, mugetsuText, Encoding.UTF8);
+                ClientFileSources.RestrictFilePermissions(mugetsuLogPath);
+            }
         }
         catch (IOException)
         {
@@ -173,9 +221,11 @@ internal sealed partial class LogFileWriter : IDisposable
         }
     }
 
-    private string CurrentFile()
+    private string CurrentFile(string? suffix)
     {
-        string name = $"{_account}_{DateTime.Now:yyyy-MM-dd}";
+        string name = string.IsNullOrEmpty(suffix)
+            ? $"{_account}_{DateTime.Now:yyyy-MM-dd}"
+            : $"{_account}_{suffix}_{DateTime.Now:yyyy-MM-dd}";
         string path = Path.Combine(_directory, name + ".log");
         for (int part = 2; File.Exists(path) && new FileInfo(path).Length >= MaxFileBytes; part++)
             path = Path.Combine(_directory, $"{name}_{part}.log");

@@ -93,6 +93,7 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
 
     private readonly IMessenger _messenger;
     private readonly Lazy<IScriptManager> _lazyManager;
+    private readonly ILogService? _logger;
     private readonly ConcurrentDictionary<int, PendingCall> _pending = new();
     private readonly ConcurrentBag<PendingCall> _pendingPool = new();
     private readonly ConcurrentDictionary<ReadCacheKey, CachedReadValue> _readCache = new();
@@ -108,9 +109,9 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
     private NetworkStream? _bridgeStream;
     private byte[]? _lastVisiblePayloadBytes;
     private byte[]? _lastMutedPayloadBytes;
-    private byte[]? _lastFocusPayloadBytes;
     private byte[]? _lastResizePayloadBytes;
     private byte[]? _pendingFreeMemoryPayloadBytes;
+    private volatile bool _deferHiddenUntilLoaded;
     private readonly Dictionary<string, byte[]> _lastMugetsuSettings = new(StringComparer.Ordinal);
     private long _cacheEpoch;
     private int _nextId;
@@ -133,10 +134,11 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
     [DllImport("libc", SetLastError = true)]
     private static extern int getsockopt(int sockfd, int level, int optname, out LinuxUcred optval, ref uint optlen);
 
-    public FlashUtil(IMessenger messenger, Lazy<IScriptManager> manager)
+    public FlashUtil(IMessenger messenger, Lazy<IScriptManager> manager, ILogService? logger = null)
     {
         _messenger = messenger;
         _lazyManager = manager;
+        _logger = logger;
     }
 
     public event FlashCallHandler? FlashCall;
@@ -150,6 +152,7 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
 
     public void RestartGamePlayer()
     {
+        _deferHiddenUntilLoaded = true;
         InitializeFlash();
     }
 
@@ -291,12 +294,20 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             _acceptedPlayerPid = 0;
         }
 
+        lock (_sendLock)
+        {
+            Interlocked.Exchange(ref _bridgeStream, null)?.Dispose();
+        }
+
         try
         {
             if (oldPlayer is { HasExited: false })
+            {
                 oldPlayer.Kill(entireProcessTree: true);
+                oldPlayer.WaitForExit(2000);
+            }
         }
-        catch {  }
+        catch { }
         oldPlayer?.Dispose();
         TryDeleteMugetsuTelemetryFile();
     }
@@ -373,12 +384,10 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             {
                 if (_lastResizePayloadBytes != null)
                     stream.Write(_lastResizePayloadBytes);
-                if (_lastVisiblePayloadBytes != null)
+                if (_lastVisiblePayloadBytes != null && !_deferHiddenUntilLoaded)
                     stream.Write(_lastVisiblePayloadBytes);
                 if (_lastMutedPayloadBytes != null)
                     stream.Write(_lastMutedPayloadBytes);
-                if (_lastFocusPayloadBytes != null)
-                    stream.Write(_lastFocusPayloadBytes);
                 foreach (byte[] settingBytes in _lastMugetsuSettings.Values)
                     stream.Write(settingBytes);
                 if (_pendingFreeMemoryPayloadBytes != null)
@@ -460,6 +469,17 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
 
         InvalidateReadCache();
         string function = evProp.GetString()!;
+        if (function == "loaded" && _deferHiddenUntilLoaded)
+        {
+            _deferHiddenUntilLoaded = false;
+            lock (_sendLock)
+            {
+                if (_lastVisiblePayloadBytes != null && _bridgeStream is { } stream)
+                {
+                    try { stream.Write(_lastVisiblePayloadBytes); } catch { }
+                }
+            }
+        }
         _stats.RecordEvent(function, chars);
         object[] args = msg.TryGetProperty("args", out STJ.JsonElement argsProp) && argsProp.ValueKind == STJ.JsonValueKind.Array
             ? ConvertArgsArray(argsProp)
@@ -540,14 +560,15 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
                     _lastVisiblePayloadBytes = lineBytes;
                 else if (input == "muted")
                     _lastMutedPayloadBytes = lineBytes;
-                else if (input == "focus")
-                    _lastFocusPayloadBytes = lineBytes;
                 else if (input == "resize")
                     _lastResizePayloadBytes = lineBytes;
                 else if (input == "mugetsu_setting" && !string.IsNullOrEmpty(settingName))
                     _lastMugetsuSettings[settingName] = lineBytes;
                 else if (input == "free_memory" && _bridgeStream is null)
                     _pendingFreeMemoryPayloadBytes = lineBytes;
+
+                if (input == "visible" && _deferHiddenUntilLoaded)
+                    return;
 
                 if (_bridgeStream is { } stream)
                     stream.Write(lineBytes);
@@ -1015,6 +1036,7 @@ public class FlashUtil : IFlashUtil, IRestartableGamePlayer
             while (await reader.ReadLineAsync().ConfigureAwait(false) is { } line)
             {
                 try { echo.WriteLine(line); } catch { }
+                _logger?.MugetsuLog(line);
                 ParseMugetsuLogLine(line);
             }
         }

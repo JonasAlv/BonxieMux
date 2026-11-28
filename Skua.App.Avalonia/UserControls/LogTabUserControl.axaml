@@ -1,9 +1,42 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="clr-namespace:Skua.Shared.Avalonia.Controls.Icons;assembly=Skua.Shared.Avalonia"
              x:Class="Skua.App.Avalonia.UserControls.LogTabUserControl">
-  <Grid RowDefinitions="*,Auto" RowSpacing="{DynamicResource UiGapMd}">
+  <Grid RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource UiGapSm}">
+    <Grid x:Name="FilterBar" Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="{DynamicResource UiGapXs}">
+      <TextBox Grid.Column="0"
+               Text="{Binding SearchText, Mode=TwoWay}"
+               PlaceholderText="Filter logs..."
+               FontSize="{DynamicResource UiFontSmall}" />
+      <Button Grid.Column="1"
+              Classes="skua-button small"
+              Classes.primary="{Binding IsFilterAll}"
+              Command="{Binding SetFilterAllCommand}"
+              Content="All"
+              ToolTip.Tip="Show all log entries" />
+      <Button Grid.Column="2"
+              Classes="skua-button small"
+              Classes.primary="{Binding IsFilterIssues}"
+              Command="{Binding SetFilterIssuesCommand}"
+              Content="Issues"
+              ToolTip.Tip="Show warnings and errors only" />
+      <Button Grid.Column="3"
+              Classes="skua-button small"
+              Classes.primary="{Binding IsFilterSystem}"
+              Command="{Binding SetFilterSystemCommand}"
+              Content="System"
+              ToolTip.Tip="Show Relogin, Watchdog, Mugetsu, and system logs" />
+      <Button Grid.Column="4"
+              Classes="skua-button small"
+              Padding="{DynamicResource UiPaddingXs}"
+              Click="JumpToBottom_Click"
+              ToolTip.Tip="Jump to latest log entry">
+        <icons:Codicon Kind="ArrowDown" Width="{DynamicResource UiIconSm}" Height="{DynamicResource UiIconSm}" />
+      </Button>
+    </Grid>
+
     <ListBox x:Name="LogsListBox"
-             Grid.Row="0"
+             Grid.Row="1"
              ItemsSource="{Binding Logs}"
              SelectionMode="Multiple"
              KeyDown="LogsListBox_KeyDown"
@@ -17,36 +50,83 @@
              Foreground="{DynamicResource SkuaTextBrush}">
       <ListBox.ContextMenu>
         <ContextMenu>
-          <MenuItem Header="Copy Selected" Click="CopySelected_Click">
-          </MenuItem>
-          <MenuItem Header="Copy All" Command="{Binding CopyLogCommand}">
-          </MenuItem>
+          <MenuItem Header="Copy Selected" Click="CopySelected_Click" />
+          <MenuItem Header="Copy All" Command="{Binding CopyLogCommand}" />
           <Separator />
-          <MenuItem Header="Clear Logs" Command="{Binding ClearLogCommand}">
-          </MenuItem>
+          <MenuItem Header="Clear Logs" Command="{Binding ClearLogCommand}" />
         </ContextMenu>
       </ListBox.ContextMenu>
       <ListBox.Styles>
         <Style Selector="ListBoxItem">
-          <Setter Property="Padding" Value="4,2" />
-          <Setter Property="MinHeight" Value="18" />
+          <Setter Property="Padding" Value="{DynamicResource UiPaddingXs}" />
           <Setter Property="CornerRadius" Value="{DynamicResource UiRadiusControl}" />
         </Style>
-        <Style Selector="ListBox.wrap TextBlock">
+        <Style Selector="ListBox.wrap TextBlock.log-message">
           <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="icons|Codicon.log-gutter">
+          <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
+        </Style>
+        <Style Selector="icons|Codicon.log-gutter.log-error">
+          <Setter Property="Foreground" Value="{DynamicResource SkuaDangerBrush}" />
+        </Style>
+        <Style Selector="icons|Codicon.log-gutter.log-warning">
+          <Setter Property="Foreground" Value="{DynamicResource SkuaWarningBrush}" />
+        </Style>
+        <Style Selector="icons|Codicon.log-gutter.log-success">
+          <Setter Property="Foreground" Value="{DynamicResource SkuaSuccessBrush}" />
+        </Style>
+        <Style Selector="TextBlock.log-tag">
+          <Setter Property="Foreground" Value="{DynamicResource SkuaMutedTextBrush}" />
+        </Style>
+        <Style Selector="TextBlock.log-tag.log-error">
+          <Setter Property="Foreground" Value="{DynamicResource SkuaDangerBrush}" />
+        </Style>
+        <Style Selector="TextBlock.log-tag.log-warning">
+          <Setter Property="Foreground" Value="{DynamicResource SkuaWarningBrush}" />
+        </Style>
+        <Style Selector="TextBlock.log-tag.log-success">
+          <Setter Property="Foreground" Value="{DynamicResource SkuaSuccessBrush}" />
         </Style>
       </ListBox.Styles>
       <ListBox.ItemTemplate>
         <DataTemplate>
-          <TextBlock Text="{Binding}" />
+          <Grid ColumnDefinitions="Auto,Auto,Auto,*" ColumnSpacing="{DynamicResource UiGapSm}">
+            <icons:Codicon Grid.Column="0"
+                           Classes="log-gutter"
+                           Classes.log-error="{Binding IsError}"
+                           Classes.log-warning="{Binding IsWarning}"
+                           Classes.log-success="{Binding IsSuccess}"
+                           Kind="{Binding IconKind}"
+                           Width="{DynamicResource UiIconSm}"
+                           Height="{DynamicResource UiIconSm}"
+                           VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1"
+                       Text="{Binding Timestamp}"
+                       Foreground="{DynamicResource SkuaMutedTextBrush}"
+                       VerticalAlignment="Center" />
+            <TextBlock Grid.Column="2"
+                       Classes="log-tag"
+                       Classes.log-error="{Binding IsError}"
+                       Classes.log-warning="{Binding IsWarning}"
+                       Classes.log-success="{Binding IsSuccess}"
+                       Text="{Binding Tag}"
+                       IsVisible="{Binding HasTag}"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center" />
+            <TextBlock Grid.Column="3"
+                       Classes="log-message"
+                       Text="{Binding Message}"
+                       Foreground="{DynamicResource SkuaTextBrush}"
+                       VerticalAlignment="Center" />
+          </Grid>
         </DataTemplate>
       </ListBox.ItemTemplate>
     </ListBox>
 
-    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+    <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
       <TextBlock Grid.Column="0" x:Name="CountText" Text="0 lines" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
       <TextBlock Grid.Column="1" x:Name="CopyHint" Text="Ctrl+C or right-click to copy selected lines" FontSize="{DynamicResource UiFontSmall}" Foreground="{DynamicResource SkuaMutedTextBrush}" />
     </Grid>
   </Grid>
 </UserControl>
-

@@ -417,7 +417,8 @@ public partial class ScriptInterface
             }
             catch { }
 
-            if (level >= 2 && Flash is IRestartableGamePlayer player)
+            bool isServerRestarting = why.Contains("Server is Restarting", StringComparison.OrdinalIgnoreCase);
+            if (level >= 2 && !isServerRestarting && Flash is IRestartableGamePlayer player)
             {
                 // A fresh player clears whatever the game got stuck on (hung requests, half-open
                 // connections, broken login screen).
@@ -447,7 +448,7 @@ public partial class ScriptInterface
             // Same path as auto re-login: picks a server (avoiding the one that got stuck), logs in,
             // and restarts the script if one was running.
             // Spread out: when AQW hiccups, every client in the army recovers at once.
-            int delay = (level == 1 ? 1000 : 3000) + Random.Shared.Next(0, 5000);
+            int delay = (isServerRestarting ? 30000 : (level == 1 ? 1000 : 3000)) + Random.Shared.Next(0, 5000);
             WatchdogRelogin(delay); // the script restart is handled by _wdRestartScript
         }
         catch (Exception ex)

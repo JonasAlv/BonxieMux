@@ -124,11 +124,20 @@ public partial class LogTabUserControl : UserControl
         UpdateCountText();
     }
 
+    private void JumpToBottom_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_subscribed is { } vm)
+            ScrollToEnd(vm);
+    }
+
     private void UpdateCountText()
     {
-        int lines = _subscribed?.Logs.Count ?? 0;
+        int shown = _subscribed?.Logs.Count ?? 0;
+        int total = _subscribed?.TotalCount ?? shown;
         int selected = LogsListBox.SelectedItems?.Count ?? 0;
-        string text = lines == 1 ? "1 line" : $"{lines:N0} lines";
+        string text = shown == total
+            ? (shown == 1 ? "1 line" : $"{shown:N0} lines")
+            : $"{shown:N0} / {total:N0} lines";
         CountText.Text = selected > 0 ? $"{text} · {selected} selected" : text;
     }
 
